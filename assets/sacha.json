@@ -7,7 +7,7 @@
     "w": 32,
     "h": 32
    },
-   "duration": 100
+   "duration": 300
   },
   "idle_down1": {
    "frame": {
@@ -16,7 +16,7 @@
     "w": 32,
     "h": 32
    },
-   "duration": 100
+   "duration": 300
   },
   "idle_down2": {
    "frame": {
@@ -25,7 +25,7 @@
     "w": 32,
     "h": 32
    },
-   "duration": 100
+   "duration": 300
   },
   "idle_down3": {
    "frame": {
@@ -34,7 +34,7 @@
     "w": 32,
     "h": 32
    },
-   "duration": 100
+   "duration": 300
   },
   "walk_down0": {
    "frame": {
