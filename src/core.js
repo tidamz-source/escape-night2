@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v0.1.0';
+const VERSION = 'v0.1.1';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -69,6 +69,21 @@ function defaultSave() { return { started: false, maxHp: 6, chest: false, keys: 
 let SAVE = defaultSave();
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) SAVE = Object.assign(defaultSave(), s); } catch (_) {}
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (_) {} }
+
+// ---------- installation PWA ----------
+const PWA = {
+  deferred: null,
+  installed() { return window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true || localStorage.getItem('escape-night2-installed') === '1'; },
+  ios() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); },
+  async install() {
+    if (!this.deferred) return false;
+    this.deferred.prompt();
+    const r = await this.deferred.userChoice.catch(() => null); this.deferred = null;
+    return !!r;
+  },
+};
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); PWA.deferred = e; });
+window.addEventListener('appinstalled', () => { try { localStorage.setItem('escape-night2-installed', '1'); } catch (_) {} PWA.deferred = null; if (typeof Input !== 'undefined') Input.toast = { msg: 'Appli installée !', t: 2.5 }; });
 
 // ---------- audio (synthé) ----------
 let AC = null, MASTER = null;

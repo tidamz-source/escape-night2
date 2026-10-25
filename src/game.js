@@ -201,14 +201,36 @@ const G = {
     if (Input.pressed('down')) { this.menu = (this.menu + 1) % n; SFX.menu(); }
     if (Input.pressed('up')) { this.menu = (this.menu + n - 1) % n; SFX.menu(); }
   },
-  titleItems() { return SAVE.started && !SAVE.done ? ['Continuer', 'Nouvelle partie'] : ['Nouvelle partie']; },
+  titleItems() {
+    const items = SAVE.started && !SAVE.done ? ['Continuer', 'Nouvelle partie'] : ['Nouvelle partie'];
+    if (!PWA.installed()) items.push('Installer l\'appli');
+    return items;
+  },
   updateTitle() {
-    const items = this.titleItems(); this.menuNav(items.length);
-    if (Input.anyPressed()) {
+    const items = this.titleItems(); if (this.menu >= items.length) this.menu = 0;
+    if (this.installHelp) { if (Input.anyPressed() || Input.pressed('b')) { this.installHelp = false; SFX.menu(); } return; }
+    this.menuNav(items.length);
+    // sur mobile : toucher directement une ligne du menu
+    const tap = Input.lastTap; Input.lastTap = null;
+    let go = Input.anyPressed();
+    if (tap && performance.now() - tap.time < 250) { const i = Math.floor((tap.y - 102) / 16); if (i >= 0 && i < items.length && Math.abs(tap.x - W / 2) < 90) { this.menu = i; go = true; } }
+    if (go) {
       audioUnlock(); SFX.menu();
       const it = items[this.menu];
+      if (it.startsWith('Installer')) { PWA.install().then(ok => { if (!ok) this.installHelp = true; }); return; }
       this.fadeTo(() => it === 'Continuer' ? this.continueGame() : this.newGame());
     }
+  },
+  drawInstallHelp() {
+    R(0, 0, W, H, 'rgba(4,8,26,.88)');
+    const bw = 360, bx = (W - bw) / 2, by = 60, bh = 140;
+    R(bx - 2, by - 2, bw + 4, bh + 4, PAL.ink); R(bx, by, bw, bh, '#14244c'); R(bx + 1, by + 1, bw - 2, 1, PAL.lav);
+    text('Installer Escape Night 2', W / 2, by + 12, { size: 12, align: 'center', bold: true, color: PAL.glow });
+    const lines = PWA.ios()
+      ? ['Sur iPhone / iPad (Safari) :', '1. Touche le bouton Partager (carré avec une flèche).', '2. Choisis « Sur l\'écran d\'accueil ».', '3. Lance le jeu depuis la nouvelle icône.']
+      : ['Ouvre le menu du navigateur (⋮ en haut à droite),', 'puis choisis « Installer l\'application »', 'ou « Ajouter à l\'écran d\'accueil ».', 'Le jeu marchera ensuite en plein écran, même hors ligne.'];
+    lines.forEach((l, i) => text(l, bx + 20, by + 38 + i * 16, { size: 8, color: i === 0 && PWA.ios() ? PAL.warm : PAL.white }));
+    if (Math.floor(this.t * 2) % 2) text('A : fermer', W / 2, by + bh - 16, { size: 8, align: 'center', color: PAL.glow });
   },
   updatePause() {
     this.menuNav(3);
@@ -400,6 +422,7 @@ const G = {
     text('ESCAPE NIGHT 2', W / 2, 36, { size: 30, align: 'center', bold: true, color: PAL.glow, shadowColor: PAL.ink });
     text('La forêt des ombres', W / 2, 72, { size: 11, align: 'center', color: PAL.lav });
     this.drawMenu(this.titleItems(), W / 2, 104);
+    if (this.installHelp) this.drawInstallHelp();
     text(VERSION + ' · prototype', W - 6, H - 11, { size: 7, align: 'right', color: '#5a6a9a' });
     text(Input.gamepadName ? 'Manette prête' : 'Manette · clavier · tactile', 6, H - 11, { size: 7, color: '#5a6a9a' });
   },

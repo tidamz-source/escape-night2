@@ -19,6 +19,7 @@ const Input = {
   taps: new Set(), // touches appuyées puis relâchées entre deux images : on ne les perd pas
   touches: new Map(), // id -> { role, x, y }
   tapRoles: new Set(),
+  lastTap: null,
   stick: { x: 0, y: 0, active: false },
 
   pressed(k) { return this.held[k] && !this.prev[k]; },
@@ -105,7 +106,8 @@ cv.addEventListener('touchstart', e => {
   e.preventDefault(); audioUnlock(); Input.padVisible = true;
   for (const t of e.changedTouches) {
     const p = toInternal(t.clientX, t.clientY), role = roleFor(p);
-    Input.touches.set(t.identifier, { role, x: p.x, y: p.y }); if (role !== 'pad') Input.tapRoles.add(role);
+    Input.touches.set(t.identifier, { role, x: p.x, y: p.y }); Input.lastTap = { x: p.x, y: p.y, time: performance.now() };
+    if (role !== 'pad' && G.state !== 'title') Input.tapRoles.add(role);
     if (role === 'pad') { Input.stick.active = true; stickFrom(p); }
   }
 }, { passive: false });
