@@ -68,11 +68,25 @@ class Parts {
 // ---------- Sacha ----------
 const DIRS = ['down', 'up', 'left', 'right'];
 const DV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
-function drawSacha(x, y, dir, col, alpha = 1) {
-  const im = IMG.sacha; if (!im) { R(x - 6, y - 20, 12, 20, '#eee'); return; }
-  const row = DIRS.indexOf(dir), fw = 38, fh = 79;
+// Animations lues dans assets/sacha.json (export Aseprite) : idle_down, walk_down, walk_up.
+// Les vues de profil n'existent pas encore : gauche/droite réutilisent la vue de face en attendant.
+function sachaAnim(dir, moving) {
+  if (dir === 'up') return { name: 'walk_up', still: !moving };
+  return moving ? { name: 'walk_down' } : { name: 'idle_down' };
+}
+function sachaFrame(name, t, still) {
+  const tag = SACHA && SACHA.meta.frameTags.find(g => g.name === name); if (!tag) return null;
+  const list = []; for (let i = 0; i <= tag.to - tag.from; i++) list.push(SACHA.frames[name + i]);
+  if (still) return list[0].frame;
+  const total = list.reduce((s, f) => s + f.duration, 0); let ms = (t * 1000) % total;
+  for (const f of list) { if (ms < f.duration) return f.frame; ms -= f.duration; }
+  return list[0].frame;
+}
+function drawSacha(x, y, dir, moving, t, scale = 1, alpha = 1) {
+  const im = IMG.sacha, a = sachaAnim(dir, moving), f = im && sachaFrame(a.name, t, a.still);
+  if (!f) { R(x - 6, y - 24, 12, 24, '#eee'); return; }
   ctx.globalAlpha = alpha;
-  ctx.drawImage(im, col * fw, row * fh, fw, fh, half(x - fw / 4), half(y - fh / 2 + 1), fw / 2, fh / 2);
+  ctx.drawImage(im, f.x, f.y, f.w, f.h, half(x - 16.5 * scale), half(y - 31 * scale), f.w * scale, f.h * scale);
   ctx.globalAlpha = 1;
 }
 
@@ -83,7 +97,7 @@ class Player {
     this.anim = 0; this.moving = false; this.atk = 0; this.atkHit = new Set();
     this.inv = 0; this.kb = { x: 0, y: 0, t: 0 }; this.hp = SAVE.maxHp; this.bump = 0;
   }
-  body() { return { x: this.x - 6, y: this.y - 18, w: 12, h: 18 }; }
+  body() { return { x: this.x - 6, y: this.y - 16, w: 12, h: 16 }; }
   atkBox() {
     const x = this.x, y = this.y;
     switch (this.dir) {
@@ -135,11 +149,10 @@ class Player {
     if (this.inv > 0 && Math.floor(this.inv * 20) % 2) return;
     ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)');
     const attacking = this.atk > 0;
-    const col = attacking ? 0 : (this.moving ? 1 + Math.floor(this.anim * 14) % 8 : 0);
     const [vx, vy] = DV[this.dir], lunge = attacking ? 1.5 : 0;
     const p = attacking ? 1 - this.atk / ATK_TIME : 0;
     if (attacking && this.dir === 'up') this.drawBranch(p);
-    drawSacha(this.x + vx * lunge, this.y + vy * lunge, this.dir, col);
+    drawSacha(this.x + vx * lunge, this.y + vy * lunge, this.dir, this.moving && !attacking, this.moving ? this.anim : G.t);
     if (attacking && this.dir !== 'up') this.drawBranch(p);
   }
   drawBranch(p) {
@@ -147,7 +160,7 @@ class Player {
     const base = { down: Math.PI / 2, up: -Math.PI / 2, left: Math.PI, right: 0 }[this.dir];
     const sweep = this.dir === 'left' ? -1 : 1;
     const ang = base + sweep * lerp(-1.15, 1.15, Math.min(1, p * 1.6));
-    const hx = this.x + (this.dir === 'left' ? -4 : this.dir === 'right' ? 4 : 0), hy = this.y - (this.dir === 'up' ? 18 : 13);
+    const hx = this.x + (this.dir === 'left' ? -4 : this.dir === 'right' ? 4 : 0), hy = this.y - (this.dir === 'up' ? 13 : 9);
     const L = 17, ex = hx + Math.cos(ang) * L, ey = hy + Math.sin(ang) * L;
     ctx.lineCap = 'round';
     ctx.strokeStyle = '#3a2214'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();

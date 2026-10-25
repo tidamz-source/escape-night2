@@ -17,10 +17,13 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - `src/world.js` : cartes et rendu des tuiles
 - `src/entities.js` : Sacha, ennemis, coffre, porte, objets
 - `src/game.js` : zones, caméra, lumière, interface, boucle
-- `assets/sacha.png` + `sacha.json` : spritesheet au format Aseprite (4 directions × 9 frames)
+- `assets/src/*.ase` : sources Aseprite de Sacha (idle face, marche face, marche dos)
+- `assets/sacha.png` + `sacha.json` : spritesheet générée par `python3 tools/ase2sheet.py`
 - `assets/props/` : décors du camping
 
-Règle des assets : 1 pixel monde = 2 pixels dans les PNG (même densité qu'Escape Night).
+Règles des assets :
+- Sacha : vrai pixel art 1:1 (cases de 32×32, pieds sur la dernière ligne, centré). Pour mettre à jour : remplacer les .ase dans `assets/src/` puis lancer `python3 tools/ase2sheet.py`. Les durées de frames viennent d'Aseprite.
+- Décors du camping : 1 pixel monde = 2 pixels dans les PNG (repris d'Escape Night).
 
 ## Déploiement
 À chaque mise à jour : changer `VERSION` dans `src/core.js` et `sw.js`, et les `?v=` dans `index.html` et `sw.js`.

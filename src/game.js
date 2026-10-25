@@ -297,7 +297,7 @@ const G = {
     }
     // objet brandi au-dessus de la tête (coffre, cœur)
     if (this.raised) {
-      const x = P.x, y = P.y - 46 + Math.sin(this.t * 4);
+      const x = P.x, y = P.y - 40 + Math.sin(this.t * 4);
       ctx.globalAlpha = 0.35; ell(x, y, 12, 12, '#ffe27a'); ctx.globalAlpha = 1;
       if (this.raised.kind === 'key') drawKey(x, y, 2); else drawHeartShape(x, y, 2, '#ffcf3a', '#e09a20');
     }
@@ -396,7 +396,7 @@ const G = {
     text('Fin du prototype', W / 2, 70, { size: 20, align: 'center', bold: true, color: PAL.warm });
     text('Sacha a trouvé le cœur de luciole de la forêt des ombres.', W / 2, 106, { size: 8, align: 'center' });
     text('Merci d\'avoir joué ! La suite : un vrai donjon, un objet-clé et un boss.', W / 2, 122, { size: 8, align: 'center', color: '#9aa4c8' });
-    drawSacha(W / 2, 200, 'down', 0);
+    drawSacha(W / 2, 210, 'down', false, this.t, 2);
     if (this.endT > 1 && Math.floor(this.t * 2) % 2) text('Appuie sur A', W / 2, 226, { size: 8, align: 'center', color: PAL.glow });
   },
   drawStars(seed) {
@@ -416,7 +416,7 @@ const G = {
     }
     R(0, 240, W, 30, '#0a1420');
     ctx.globalAlpha = 0.25 + 0.1 * Math.sin(this.t * 2); ell(W / 2, 236, 40, 10, '#ffcf7a'); ctx.globalAlpha = 1;
-    drawSacha(W / 2, 244, 'up', 0);
+    drawSacha(W / 2, 246, 'up', false, this.t, 2);
     // titre
     ctx.globalAlpha = 0.5; text('ESCAPE NIGHT 2', W / 2 + 1, 37, { size: 30, align: 'center', bold: true, color: PAL.teal, shadow: false }); ctx.globalAlpha = 1;
     text('ESCAPE NIGHT 2', W / 2, 36, { size: 30, align: 'center', bold: true, color: PAL.glow, shadowColor: PAL.ink });
