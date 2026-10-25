@@ -96,6 +96,7 @@ class Player {
     this.x = x; this.y = y; this.w = 10; this.h = 6; this.dir = dir;
     this.anim = 0; this.moving = false; this.atk = 0; this.atkHit = new Set();
     this.inv = 0; this.kb = { x: 0, y: 0, t: 0 }; this.hp = SAVE.maxHp; this.bump = 0;
+    this.vx = 0; this.vy = 0; // vitesse lissée (accélération / freinage)
   }
   body() { return { x: this.x - 6, y: this.y - 16, w: 12, h: 16 }; }
   atkBox() {
@@ -119,9 +120,9 @@ class Player {
     const area = G.area;
     if (this.inv > 0) this.inv -= dt;
     if (this.bump > 0) this.bump -= dt;
-    if (this.kb.t > 0) { this.kb.t -= dt; moveEnt(area, this, this.kb.x * dt, 0, { noExit: true }); moveEnt(area, this, 0, this.kb.y * dt, { noExit: true }); return; }
+    if (this.kb.t > 0) { this.kb.t -= dt; this.vx = this.vy = 0; moveEnt(area, this, this.kb.x * dt, 0, { noExit: true }); moveEnt(area, this, 0, this.kb.y * dt, { noExit: true }); return; }
     if (this.atk > 0) {
-      this.atk -= dt;
+      this.atk -= dt; this.glide(dt, G, 0, 0, 14);
       if (this.atk < ATK_TIME - 0.04) G.attackHits(this);
       return;
     }
@@ -132,18 +133,30 @@ class Player {
       this.atk = ATK_TIME; this.atkHit.clear(); SFX.swing(); return;
     }
     let dx = Input.dx, dy = Input.dy;
-    this.moving = Math.hypot(dx, dy) > 0.2;
-    if (this.moving) {
+    const input = Math.hypot(dx, dy) > 0.2;
+    if (input) {
       // direction : on garde l'orientation courante en diagonale (comme ALttP)
       const want = Math.abs(dx) > Math.abs(dy) + 0.01 ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
       const cur = DV[this.dir], keep = (cur[0] && Math.sign(dx) === cur[0] && Math.abs(dx) > 0.3) || (cur[1] && Math.sign(dy) === cur[1] && Math.abs(dy) > 0.3);
       if (!keep) this.dir = want;
-      const sp = 76;
-      const hx = moveEnt(area, this, dx * sp * dt, 0, { slide: !dy || Math.abs(dy) < 0.2 });
-      const hy = moveEnt(area, this, 0, dy * sp * dt, { slide: !dx || Math.abs(dx) < 0.2 });
-      this.anim += dt;
-      if ((hx || hy) && this.bump <= 0) G.bumped(this);
-    } else this.anim = 0;
+    }
+    const SPEED = 76;
+    // accélération vive au démarrage, freinage plus doux à l'arrêt
+    const hit = this.glide(dt, G, input ? dx * SPEED : 0, input ? dy * SPEED : 0, input ? 20 : 9, input ? { x: dx, y: dy } : null);
+    const speed = Math.hypot(this.vx, this.vy);
+    this.moving = input || speed > 18;
+    if (this.moving) this.anim += dt * (input ? 1 : clamp(speed / SPEED, 0.4, 1)); else this.anim = 0;
+    if (hit && input && this.bump <= 0) G.bumped(this);
+  }
+  // fait tendre la vitesse vers (tx, ty) puis déplace Sacha ; renvoie true en cas de collision
+  glide(dt, G, tx, ty, k, inp) {
+    const f = 1 - Math.exp(-k * dt);
+    this.vx += (tx - this.vx) * f; this.vy += (ty - this.vy) * f;
+    if (!inp && Math.hypot(this.vx, this.vy) < 4) { this.vx = 0; this.vy = 0; return false; }
+    const sx = inp ? (!inp.y || Math.abs(inp.y) < 0.2) : false, sy = inp ? (!inp.x || Math.abs(inp.x) < 0.2) : false;
+    const hx = moveEnt(G.area, this, this.vx * dt, 0, { slide: sx }), hy = moveEnt(G.area, this, 0, this.vy * dt, { slide: sy });
+    if (hx) this.vx = 0; if (hy) this.vy = 0;
+    return hx || hy;
   }
   draw() {
     if (this.inv > 0 && Math.floor(this.inv * 20) % 2) return;
