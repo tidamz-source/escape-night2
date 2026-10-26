@@ -7,8 +7,10 @@ class Area {
     this.w = this.cols * TS; this.h = this.rows * TS;
     this.layer = renderLayer(grid, theme);
     this.props = []; this.ents = [];
+    this.rooms = null; // { cols, rows } pour les zones découpées en salles
   }
-  tile(tx, ty) { if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) return this.theme === 'forest' ? 'W' : '#'; return this.g[ty][tx]; }
+  rerender() { this.layer = renderLayer(this.g, this.theme); }
+  tile(tx, ty) { if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) return this.theme === 'camp' ? '#' : 'W'; return this.g[ty][tx]; }
   tileAt(x, y) { return this.tile(Math.floor(x / TS), Math.floor(y / TS)); }
   addProp(k, x, y, o = {}) {
     const im = IMG[k], iw = im ? im.width / 2 : 16, ih = im ? im.height / 2 : 16;
@@ -24,7 +26,7 @@ function blocked(area, b, self, opts = {}) {
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
     const t = area.tile(tx, ty);
     if (SOLID.has(t)) return true;
-    if (opts.noExit && (t === 'F' || t === 'E')) return true;
+    if (opts.noExit && EXITS.has(t)) return true;
   }
   for (const p of area.props) if (p.solid && rectHit(b, { x: p.x - p.fw / 2, y: p.y - p.fh, w: p.fw, h: p.fh })) return true;
   for (const e of area.ents) if (e !== self && e.solid && !e.dead && rectHit(b, boxOf(e))) return true;
@@ -37,7 +39,7 @@ function moveEnt(area, e, dx, dy, opts = {}) {
     e.x += dx;
     if (blocked(area, boxOf(e), e, opts)) {
       e.x -= dx; hit = true;
-      if (opts.slide && !dy) for (const o of [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6]) {
+      if (opts.slide && !dy) for (const o of [1, -1, 2, -2, 3, -3, 4, -4]) {
         const t = { x: e.x + dx - e.w / 2, y: e.y + o - e.h, w: e.w, h: e.h };
         if (!blocked(area, t, e, opts)) { e.y += Math.sign(o) * Math.min(Math.abs(dx), 1); break; }
       }
@@ -47,7 +49,7 @@ function moveEnt(area, e, dx, dy, opts = {}) {
     e.y += dy;
     if (blocked(area, boxOf(e), e, opts)) {
       e.y -= dy; hit = true;
-      if (opts.slide && !dx) for (const o of [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6]) {
+      if (opts.slide && !dx) for (const o of [1, -1, 2, -2, 3, -3, 4, -4]) {
         const t = { x: e.x + o - e.w / 2, y: e.y + dy - e.h, w: e.w, h: e.h };
         if (!blocked(area, t, e, opts)) { e.x += Math.sign(o) * Math.min(Math.abs(dy), 1); break; }
       }
@@ -97,6 +99,7 @@ class Player {
     this.anim = 0; this.moving = false; this.atk = 0; this.atkHit = new Set();
     this.inv = 0; this.kb = { x: 0, y: 0, t: 0 }; this.hp = SAVE.maxHp; this.bump = 0;
     this.vx = 0; this.vy = 0; // vitesse lissée (accélération / freinage)
+    this.shootCd = 0; this.shootT = 0; this.pushT = 0;
   }
   body() { return { x: this.x - 6, y: this.y - 16, w: 12, h: 16 }; }
   atkBox() {
@@ -120,13 +123,20 @@ class Player {
     const area = G.area;
     if (this.inv > 0) this.inv -= dt;
     if (this.bump > 0) this.bump -= dt;
+    if (this.shootCd > 0) this.shootCd -= dt;
+    if (this.shootT > 0) this.shootT -= dt;
     if (this.kb.t > 0) { this.kb.t -= dt; this.vx = this.vy = 0; moveEnt(area, this, this.kb.x * dt, 0, { noExit: true }); moveEnt(area, this, 0, this.kb.y * dt, { noExit: true }); return; }
     if (this.atk > 0) {
       this.atk -= dt; this.glide(dt, G, 0, 0, 14);
       if (this.atk < ATK_TIME - 0.04) G.attackHits(this);
       return;
     }
-    // interaction ou attaque
+    // B : lance-pierre
+    if (Input.pressed('b') && SAVE.slingshot && this.shootCd <= 0) {
+      this.shootCd = 0.3; this.shootT = 0.18; SFX.sling();
+      G.area.ents.push(new Pebble(this.x, this.y, this.dir, G.room));
+    }
+    // A : interaction ou attaque
     if (Input.pressed('a')) {
       const target = G.interactTarget(this);
       if (target) { target.interact(G, this); return; }
@@ -147,13 +157,24 @@ class Player {
     this.moving = input || speed > 18;
     if (this.moving) this.anim += dt * (input ? 1 : clamp(speed / SPEED, 0.4, 1)); else this.anim = 0;
     if (hit && input && this.bump <= 0) G.bumped(this);
+    // pousser un bloc : rester appuyé contre lui un court instant
+    let pushing = false;
+    if (hit && input) {
+      const [vx, vy] = DV[this.dir];
+      const aligned = vx ? Math.sign(dx) === vx && Math.abs(dy) < 0.5 : Math.sign(dy) === vy && Math.abs(dx) < 0.5;
+      const blk = aligned && G.frontEnt(this, e => e instanceof Block);
+      if (blk) { pushing = true; this.pushT += dt; if (this.pushT > 0.3) { blk.push(this.dir, G); this.pushT = 0; } }
+    }
+    if (!pushing) this.pushT = 0;
   }
   // fait tendre la vitesse vers (tx, ty) puis déplace Sacha ; renvoie true en cas de collision
   glide(dt, G, tx, ty, k, inp) {
     const f = 1 - Math.exp(-k * dt);
     this.vx += (tx - this.vx) * f; this.vy += (ty - this.vy) * f;
     if (!inp && Math.hypot(this.vx, this.vy) < 4) { this.vx = 0; this.vy = 0; return false; }
-    const sx = inp ? (!inp.y || Math.abs(inp.y) < 0.2) : false, sy = inp ? (!inp.x || Math.abs(inp.x) < 0.2) : false;
+    // pas d'aide dans les coins contre un bloc : on veut pouvoir le pousser
+    const nearBlock = inp && G.frontEnt(this, e => e instanceof Block);
+    const sx = inp && !nearBlock ? (!inp.y || Math.abs(inp.y) < 0.2) : false, sy = inp && !nearBlock ? (!inp.x || Math.abs(inp.x) < 0.2) : false;
     const hx = moveEnt(G.area, this, this.vx * dt, 0, { slide: sx }), hy = moveEnt(G.area, this, 0, this.vy * dt, { slide: sy });
     if (hx) this.vx = 0; if (hy) this.vy = 0;
     return hx || hy;
@@ -165,8 +186,15 @@ class Player {
     const [vx, vy] = DV[this.dir], lunge = attacking ? 1.5 : 0;
     const p = attacking ? 1 - this.atk / ATK_TIME : 0;
     if (attacking && this.dir === 'up') this.drawBranch(p);
+    if (this.shootT > 0 && this.dir === 'up') this.drawSling();
     drawSacha(this.x + vx * lunge, this.y + vy * lunge, this.dir, this.moving && !attacking, this.moving ? this.anim : G.t);
     if (attacking && this.dir !== 'up') this.drawBranch(p);
+    if (this.shootT > 0 && this.dir !== 'up') this.drawSling();
+  }
+  drawSling() {
+    const [vx, vy] = DV[this.dir], k = this.shootT / 0.18;
+    const x = this.x + vx * (7 + k * 2), y = this.y - 10 + vy * 4;
+    drawSlingIcon(x, y, 1, this.dir === 'left');
   }
   drawBranch(p) {
     // la branche balaie un arc de 130° devant Sacha
@@ -189,10 +217,10 @@ class Player {
 
 // ---------- ennemis ----------
 class Enemy {
-  constructor(x, y, o) { this.x = this.sx = x; this.y = this.sy = y; this.w = 12; this.h = 8; this.hp = this.maxHp = o.hp; this.dmg = o.dmg; this.kb = { x: 0, y: 0, t: 0 }; this.flash = 0; this.t = rand(0, 5); this.room = o.room; this.dead = false; this.vx = 0; this.vy = 0; this.face = 1; }
+  constructor(x, y, o) { this.x = this.sx = x; this.y = this.sy = y; this.w = 12; this.h = 8; this.hp = this.maxHp = o.hp; this.dmg = o.dmg; this.kb = { x: 0, y: 0, t: 0 }; this.flash = 0; this.t = rand(0, 5); this.room = o.room; this.dead = false; this.vx = 0; this.vy = 0; this.face = 1; this.isEnemy = true; }
   body() { return { x: this.x - this.w / 2, y: this.y - this.h - 6, w: this.w, h: this.h + 6 }; }
   reset() { this.x = this.sx; this.y = this.sy; this.hp = this.maxHp; this.kb.t = 0; this.flash = 0; }
-  hit(dmg, fx, fy, G) {
+  hit(dmg, fx, fy, G, src) {
     this.hp -= dmg; this.flash = 0.18; SFX.hit(); G.hitstop = 0.05; G.shake = 0.08;
     const a = Math.atan2(this.y - fy, this.x - fx); this.kb = { x: Math.cos(a) * 190, y: Math.sin(a) * 190, t: 0.14 };
     G.parts.burst(this.x, this.y - 8, 5, { c: ['#fff', PAL.glow], life: 0.25, smin: 30, smax: 90, r: 1 });
@@ -342,111 +370,10 @@ class Orb {
   body() { return { x: this.x - 3, y: this.y - this.alt - 3, w: 6, h: 6 }; }
   update(dt, G) {
     this.t += dt; this.x += this.vx * dt; this.y += this.vy * dt;
-    if (SOLID.has(G.area.tileAt(this.x, this.y - 2)) || this.t > 3) { this.dead = true; G.parts.burst(this.x, this.y - this.alt, 5, { c: ['#9fe8ff', '#fff'], life: 0.25, r: 1 }); return; }
+    if (WALLS.has(G.area.tileAt(this.x, this.y - 2)) || this.t > 3) { this.dead = true; G.parts.burst(this.x, this.y - this.alt, 5, { c: ['#9fe8ff', '#fff'], life: 0.25, r: 1 }); return; }
     const P = G.player; if (rectHit(this.body(), P.body())) { P.hurt(1, this.x, this.y, G); this.dead = true; }
   }
   hit(d, fx, fy, G) { this.dead = true; G.parts.burst(this.x, this.y - this.alt, 6, { c: ['#9fe8ff', '#fff'], life: 0.3, r: 1 }); SFX.hit(); }
   draw() { const y = this.y - this.alt; ell(this.x, this.y, 2.5, 1, 'rgba(0,0,0,.3)'); ell(this.x, y, 3.5, 3.5, '#6fd3ff'); ell(this.x, y, 2, 2, '#fff'); }
 }
 
-// ---------- objets ----------
-function drawHeartShape(x, y, s, c, dark) {
-  hi(x, y, false, () => {
-    const u = s; D(-4 * u, -3 * u, 3 * u, 2 * u, c); D(1 * u, -3 * u, 3 * u, 2 * u, c); D(-5 * u, -2 * u, 10 * u, 3 * u, c); D(-4 * u, 1 * u, 8 * u, 1 * u, c); D(-3 * u, 2 * u, 6 * u, 1 * u, c); D(-2 * u, 3 * u, 4 * u, 1 * u, c); D(-1 * u, 4 * u, 2 * u, 1 * u, c);
-    D(-4 * u, -2 * u, 2 * u, 1 * u, '#ffd0d8'); if (dark) D(1 * u, 1 * u, 3 * u, 1 * u, dark);
-  });
-}
-class HeartPickup {
-  constructor(x, y) { this.x = x; this.y = y; this.t = 0; this.w = 8; this.h = 6; this.vy = -60; this.z = 0; }
-  update(dt, G) {
-    this.t += dt; if (this.z < 0 || this.vy < 0) { this.vy += 300 * dt; this.z += this.vy * dt; if (this.z > 0) { this.z = 0; this.vy = 0; } }
-    if (this.t > 9) this.dead = true;
-    const P = G.player; if (rectHit({ x: this.x - 5, y: this.y - 8, w: 10, h: 10 }, P.body())) { this.dead = true; P.hp = Math.min(SAVE.maxHp, P.hp + 2); SFX.pickup(); G.parts.burst(this.x, this.y - 4, 6, { c: ['#ff8ab0', '#fff'], life: 0.3, r: 1 }); }
-  }
-  draw() { if (this.t > 6.5 && Math.floor(this.t * 10) % 2) return; ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.3)'); drawHeartShape(this.x, this.y - 5 + this.z + Math.sin(this.t * 4) * 0.8, 2, PAL.heart, '#c02848'); }
-}
-
-class Bush {
-  constructor(x, y) { this.x = x; this.y = y; this.w = 16; this.h = 8; this.solid = true; }
-  hit(d, fx, fy, G) {
-    this.dead = true; SFX.cut();
-    G.parts.burst(this.x, this.y - 6, 14, { c: ['#3a7a50', '#5aa060', '#2a5a3a', '#8ad080'], life: 0.6, smin: 20, smax: 70, up: 30, g: 120, r: 2, drag: 2 });
-    if (Math.random() < 0.25) G.area.ents.push(new HeartPickup(this.x, this.y));
-  }
-  draw() { const im = IMG.bush; if (im) ctx.drawImage(im, half(this.x - im.width / 4), half(this.y - im.height / 2 + 2), im.width / 2, im.height / 2); }
-}
-
-class Chest {
-  constructor(x, y) { this.x = x; this.y = y; this.w = 16; this.h = 8; this.solid = true; this.t = 0; this.light = { r: 26, c: 'rgba(255,207,122,' }; }
-  get open() { return SAVE.chest; }
-  canInteract() { return !this.open; }
-  interact(G, P) {
-    SAVE.chest = true; SAVE.keys += 1; persist(); SFX.chest(); this.light = null;
-    G.raise('key', this.x, this.y - 14);
-    G.say([{ text: 'Tu as trouvé une petite clé ! Elle doit ouvrir une porte de cette forêt.' }]);
-  }
-  update(dt) { this.t += dt; }
-  draw() {
-    ell(this.x, this.y, 10, 3, 'rgba(0,0,0,.4)');
-    hi(this.x, this.y, false, () => {
-      D(-15, -18, 30, 18, '#7a4a24'); D(-15, -18, 30, 2, '#a06a34'); D(-15, -2, 30, 2, '#4a2a14');
-      D(-15, -18, 3, 18, '#c8a040'); D(12, -18, 3, 18, '#c8a040');
-      if (!this.open) {
-        D(-16, -30, 32, 13, '#8a5a2c'); D(-16, -30, 32, 3, '#b07a3c'); D(-16, -30, 3, 13, '#e0b850'); D(13, -30, 3, 13, '#e0b850'); D(-16, -19, 32, 2, '#5a3418');
-        D(-4, -22, 8, 8, '#e0b850'); D(-2, -20, 4, 4, '#3a2410'); D(-1, -19, 2, 3, '#e0b850');
-        if (Math.floor(this.t * 2) % 3 === 0) D(8, -28, 2, 2, '#fff');
-      } else {
-        D(-16, -34, 32, 10, '#5a3418'); D(-16, -34, 32, 2, '#8a5a2c'); D(-13, -24, 26, 6, '#1a0e08');
-      }
-    });
-  }
-}
-
-class Door {
-  constructor(x, y) { this.x = x; this.y = y; this.w = 32; this.h = 32; this.solid = true; this.t = 0; this.light = { r: 30, c: 'rgba(255,207,122,' }; }
-  get dead() { return SAVE.door; }
-  canInteract() { return true; }
-  interact(G) { if (SAVE.keys > 0) this.unlock(G); else { SFX.locked(); G.say([{ text: 'Une grille en bois, fermée par un gros cadenas. Il faut une clé.' }]); } }
-  unlock(G) {
-    SAVE.keys -= 1; SAVE.door = true; persist(); SFX.door(); G.shake = 0.3;
-    G.parts.burst(this.x, this.y - 16, 22, { c: ['#8a5a2c', '#5a3418', '#e0b850', '#fff'], life: 0.7, smin: 20, smax: 80, r: 2, g: 80 });
-  }
-  update(dt) { this.t += dt; }
-  draw() {
-    hi(this.x, this.y, false, () => {
-      D(-32, -64, 64, 64, '#2a1810');
-      for (let i = 0; i < 4; i++) { D(-30 + i * 15, -62, 13, 62, '#6a4224'); D(-30 + i * 15, -62, 2, 62, '#8a5a34'); D(-19 + i * 15, -62, 2, 62, '#3a2414'); }
-      D(-32, -50, 64, 5, '#3a3d48'); D(-32, -18, 64, 5, '#3a3d48'); D(-32, -50, 64, 1, '#6a6e7a'); D(-32, -18, 64, 1, '#6a6e7a');
-      const g = Math.sin(this.t * 3) > 0.6 ? '#ffe9a0' : '#e0b850';
-      D(-8, -40, 16, 4, '#9a9aa8'); D(-8, -40, 4, 10, '#9a9aa8'); D(4, -40, 4, 10, '#9a9aa8');
-      D(-11, -32, 22, 18, g); D(-11, -32, 22, 2, '#fff2c0'); D(-11, -16, 22, 2, '#a07a20'); D(-2, -27, 4, 5, '#3a2410'); D(-1, -23, 2, 4, '#3a2410');
-    });
-  }
-}
-
-class Sign {
-  constructor(x, y, lines) { this.x = x; this.y = y; this.w = 12; this.h = 5; this.solid = true; this.lines = lines; }
-  canInteract() { return true; }
-  interact(G) { G.say(this.lines); }
-  draw() { const im = IMG.sign; if (im) ctx.drawImage(im, half(this.x - im.width / 4), half(this.y - im.height / 2 + 1), im.width / 2, im.height / 2); }
-}
-
-class FireflyHeart {
-  constructor(x, y) { this.x = x; this.y = y; this.w = 20; this.h = 10; this.solid = true; this.t = 0; this.light = { r: 60, c: 'rgba(255,230,140,' }; }
-  get taken() { return SAVE.firefly; }
-  canInteract() { return !this.taken; }
-  interact(G, P) {
-    SAVE.firefly = true; SAVE.maxHp += 2; P.hp = SAVE.maxHp; persist(); SFX.bigheart(); this.light = { r: 24, c: 'rgba(255,230,140,' };
-    G.raise('heart', this.x, this.y - 22);
-    G.say([{ text: 'Un cœur de luciole ! Ta vie maximale augmente d\'un cœur.' }, { who: 'Sacha', text: 'Alors c\'était ça, la lumière qu\'on voyait depuis le camping…' }], () => G.ending());
-  }
-  update(dt, G) { this.t += dt; if (!this.taken && Math.random() < dt * 6) G.parts.add({ x: this.x + rand(-10, 10), y: this.y - rand(10, 30), vy: -12, life: 1.2, c: pick(['#ffe27a', '#fff', '#8ff3ea']), r: 1 }); }
-  draw() {
-    ell(this.x, this.y, 13, 4, 'rgba(0,0,0,.4)');
-    hi(this.x, this.y, false, () => {
-      D(-20, -14, 40, 14, '#4a4e5a'); D(-20, -14, 40, 3, '#7a7e8a'); D(-16, -20, 32, 7, '#5a5e6a'); D(-16, -20, 32, 2, '#8a8e9a'); D(-20, -3, 40, 3, '#33363f');
-      D(-14, -10, 3, 3, '#2f5a46'); D(10, -8, 4, 3, '#2f5a46');
-    });
-    if (!this.taken) { const b = Math.sin(this.t * 3) * 1.5; ctx.globalAlpha = 0.4; ell(this.x, this.y - 22 + b, 10, 10, '#ffe27a'); ctx.globalAlpha = 1; drawHeartShape(this.x, this.y - 22 + b, 2, '#ffcf3a', '#e09a20'); }
-  }
-}

@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v0.1.5';
+const VERSION = 'v0.2.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -25,7 +25,7 @@ const half = v => Math.round(v * 2) / 2;
 function R(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 function ell(x, y, rx, ry, c) { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fill(); }
 // Dessin en "haute densité" : à l'intérieur de fn, 1 unité = 1 pixel écran (2 px par pixel monde), comme les sprites d'Escape Night.
-function hi(x, y, flip, fn) { ctx.save(); ctx.translate(half(x), half(y)); ctx.scale(flip ? -0.5 : 0.5, 0.5); fn(); ctx.restore(); }
+function hi(x, y, flip, fn, s = 1) { ctx.save(); ctx.translate(half(x), half(y)); ctx.scale((flip ? -0.5 : 0.5) * s, 0.5 * s); fn(); ctx.restore(); }
 const D = R;
 
 function text(str, x, y, o = {}) {
@@ -121,5 +121,15 @@ const SFX = {
   blip() { tone(1200, 0.025, { vol: 0.04 }); },
   menu() { tone(660, 0.05, { vol: 0.1 }); },
   shoot() { tone(900, 0.15, { to: 400, type: 'sine', vol: 0.12 }); },
+  sling() { tone(520, 0.06, { to: 1200, type: 'triangle', vol: 0.1 }); noise(0.05, { filter: 'highpass', freq: 3000, vol: 0.08 }); },
+  tink() { tone(1800, 0.05, { vol: 0.08, type: 'triangle' }); tone(2400, 0.08, { vol: 0.06, type: 'triangle', delay: 0.03 }); },
+  push() { noise(0.18, { freq: 300, vol: 0.18 }); },
+  secret() { [784, 740, 622, 440, 415, 659, 831, 1047].forEach((f, i) => tone(f, 0.14, { vol: 0.09, delay: i * 0.09, type: 'square' })); },
+  crystal() { [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, 0.3, { vol: 0.08, delay: i * 0.06, type: 'sine' })); },
+  shutter() { noise(0.25, { freq: 700, vol: 0.22 }); tone(90, 0.2, { vol: 0.12 }); },
+  roar() { tone(110, 0.9, { to: 55, type: 'sawtooth', vol: 0.18 }); noise(0.9, { freq: 500, vol: 0.2 }); },
+  stun() { tone(880, 0.12, { to: 220, type: 'square', vol: 0.14 }); tone(660, 0.3, { to: 1320, type: 'triangle', vol: 0.1, delay: 0.1 }); },
+  bossHit() { tone(160, 0.2, { to: 60, type: 'sawtooth', vol: 0.2 }); noise(0.15, { freq: 1500, vol: 0.2 }); },
+  bossDie() { for (let i = 0; i < 6; i++) { noise(0.3, { freq: 600 + i * 200, vol: 0.2, delay: i * 0.22 }); tone(300 - i * 30, 0.3, { to: 50, type: 'sawtooth', vol: 0.1, delay: i * 0.22 }); } },
   bigheart() { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, { vol: 0.1, delay: i * 0.09, type: 'triangle' })); },
 };
