@@ -1,0 +1,387 @@
+{
+ "frames": {
+  "idle_down0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_down0": {
+   "frame": {
+    "x": 32,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_down1": {
+   "frame": {
+    "x": 64,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_down2": {
+   "frame": {
+    "x": 96,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_down3": {
+   "frame": {
+    "x": 128,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_down4": {
+   "frame": {
+    "x": 160,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_down5": {
+   "frame": {
+    "x": 192,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_down6": {
+   "frame": {
+    "x": 224,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_down7": {
+   "frame": {
+    "x": 256,
+    "y": 0,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "idle_up0": {
+   "frame": {
+    "x": 0,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_up0": {
+   "frame": {
+    "x": 32,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_up1": {
+   "frame": {
+    "x": 64,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_up2": {
+   "frame": {
+    "x": 96,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_up3": {
+   "frame": {
+    "x": 128,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_up4": {
+   "frame": {
+    "x": 160,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_up5": {
+   "frame": {
+    "x": 192,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_up6": {
+   "frame": {
+    "x": 224,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_up7": {
+   "frame": {
+    "x": 256,
+    "y": 73,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "idle_left0": {
+   "frame": {
+    "x": 0,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_left0": {
+   "frame": {
+    "x": 32,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_left1": {
+   "frame": {
+    "x": 64,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_left2": {
+   "frame": {
+    "x": 96,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_left3": {
+   "frame": {
+    "x": 128,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_left4": {
+   "frame": {
+    "x": 160,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_left5": {
+   "frame": {
+    "x": 192,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_left6": {
+   "frame": {
+    "x": 224,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_left7": {
+   "frame": {
+    "x": 256,
+    "y": 146,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "idle_right0": {
+   "frame": {
+    "x": 0,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_right0": {
+   "frame": {
+    "x": 32,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_right1": {
+   "frame": {
+    "x": 64,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_right2": {
+   "frame": {
+    "x": 96,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_right3": {
+   "frame": {
+    "x": 128,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_right4": {
+   "frame": {
+    "x": 160,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_right5": {
+   "frame": {
+    "x": 192,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_right6": {
+   "frame": {
+    "x": 224,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  },
+  "walk_right7": {
+   "frame": {
+    "x": 256,
+    "y": 219,
+    "w": 32,
+    "h": 73
+   },
+   "duration": 70
+  }
+ },
+ "meta": {
+  "image": "rox.png",
+  "size": {
+   "w": 288,
+   "h": 292
+  },
+  "scale": "2",
+  "frameTags": [
+   {
+    "name": "idle_down",
+    "from": 0,
+    "to": 0,
+    "direction": "forward"
+   },
+   {
+    "name": "walk_down",
+    "from": 1,
+    "to": 8,
+    "direction": "forward"
+   },
+   {
+    "name": "idle_up",
+    "from": 9,
+    "to": 9,
+    "direction": "forward"
+   },
+   {
+    "name": "walk_up",
+    "from": 10,
+    "to": 17,
+    "direction": "forward"
+   },
+   {
+    "name": "idle_left",
+    "from": 18,
+    "to": 18,
+    "direction": "forward"
+   },
+   {
+    "name": "walk_left",
+    "from": 19,
+    "to": 26,
+    "direction": "forward"
+   },
+   {
+    "name": "idle_right",
+    "from": 27,
+    "to": 27,
+    "direction": "forward"
+   },
+   {
+    "name": "walk_right",
+    "from": 28,
+    "to": 35,
+    "direction": "forward"
+   }
+  ],
+  "note": "Placeholder repris d'Escape Night (densit\u00e9 \u00d72). \u00c0 remplacer par les .ase."
+ }
+}

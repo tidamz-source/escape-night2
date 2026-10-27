@@ -1,0 +1,9 @@
+{
+  "branche":      { "name": "Branche", "kind": "weapon", "dmg": 1, "desc": "Une branche solide ramassée au camping." },
+  "epee_bois":    { "name": "Épée de bois", "kind": "weapon", "dmg": 2, "desc": "Taillée par le forgeron. Frappe deux fois plus fort." },
+  "lance_pierre": { "name": "Lance-pierre", "kind": "tool", "ammo": "cailloux", "desc": "Tire des cailloux dans 8 directions." },
+  "bouclier":     { "name": "Bouclier en bois", "kind": "gear", "desc": "Bloque les projectiles qui arrivent de face." },
+  "bouteille":    { "name": "Bouteille vide", "kind": "bottle", "desc": "On peut la remplir de sirop chez l'épicière." },
+  "sirop":        { "name": "Sirop de grenadine", "kind": "drink", "heal": 99, "desc": "Rend toute la vie. Se boit depuis l'inventaire." },
+  "cailloux10":   { "name": "10 cailloux", "kind": "ammo", "ammo": "cailloux", "qty": 10, "desc": "Munitions pour le lance-pierre." }
+}

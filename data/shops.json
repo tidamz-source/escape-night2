@@ -1,0 +1,19 @@
+{
+  "epicerie": {
+    "name": "Chez Mère Grenadine", "keeper": "Mère Grenadine",
+    "hello": "Bienvenue, petit ! Tout est frais, même la nuit.",
+    "items": [
+      { "id": "sirop", "price": 20, "needs": "emptyBottle" },
+      { "id": "bouteille", "price": 50, "stock": 2 },
+      { "id": "cailloux10", "price": 10, "needs": "lance_pierre" }
+    ]
+  },
+  "forge": {
+    "name": "La Forge", "keeper": "Bertrand",
+    "hello": "Une arme digne de ce nom ? Tu es au bon endroit.",
+    "items": [
+      { "id": "epee_bois", "price": 80, "once": true },
+      { "id": "bouclier", "price": 60, "once": true }
+    ]
+  }
+}

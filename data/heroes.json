@@ -1,0 +1,6 @@
+{
+  "order": ["sacha", "cam", "rox"],
+  "sacha": { "name": "Sacha", "desc": "Le garçon au t-shirt blanc", "perk": "Équilibré", "sheet": "sacha", "reach": 1, "speed": 1, "roll": false, "he": "il" },
+  "cam": { "name": "Cam", "desc": "La grande au hoodie noir", "perk": "Portée de la branche +20 %", "sheet": "cam", "reach": 1.2, "speed": 1, "roll": false, "he": "elle" },
+  "rox": { "name": "Rox", "desc": "La petite en short", "perk": "Vitesse +10 % et roulade", "sheet": "rox", "reach": 1, "speed": 1.1, "roll": true, "he": "elle" }
+}

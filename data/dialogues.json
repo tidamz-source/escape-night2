@@ -1,0 +1,95 @@
+{
+  "objectives": [
+    { "if": "!got_branche", "text": "Prendre la branche près de la tente." },
+    { "if": "!crossed_rift", "text": "Suivre les lucioles jusqu'au lac du camping." },
+    { "if": "!quest1", "text": "Trouver le sage, dans la bibliothèque au nord-est de la place." },
+    { "if": "!slingshot", "text": "Explorer la grotte des lucioles, au nord des collines." },
+    { "if": "!boss", "text": "Vaincre le gardien au fond de la grotte." },
+    { "if": "!freed1", "text": "Libérer {enfant1} de sa cage." },
+    { "if": "!v1done", "text": "Retrouver {enfant1} sur la place du village." },
+    { "text": "Le Bois des murmures t'attend… dans la prochaine version !" }
+  ],
+
+  "prologue": [
+    { "who": "{hero}", "text": "Mmh… Quelle heure il est ? Il fait encore nuit noire.", "face": "o" },
+    { "who": "{hero}", "text": "{enfant1} ? {enfant2} ? Les tentes sont vides…", "face": "o" },
+    { "who": "{hero}", "text": "Et la laisse de Goyave qui traîne par terre. Ça ne me plaît pas du tout.", "face": "angry" },
+    { "text": "Stick ou flèches : se déplacer. Prends la branche près de la tente." }
+  ],
+  "got_branche": [
+    { "text": "Tu as trouvé une branche ! Bouton A : donner un coup." },
+    { "who": "{hero}", "text": "Les lucioles filent toutes vers le lac. Je les suis.", "face": "smile" }
+  ],
+  "rift_see": [
+    { "who": "Lumi", "text": "Psst ! Par ici ! N'aie pas peur, je suis une luciole. Je m'appelle Lumi." },
+    { "who": "Lumi", "text": "Tes amis ont été aspirés par cette faille. Ils sont de l'autre côté, dans le royaume d'Aube-Figée." },
+    { "who": "{hero}", "text": "Alors j'y vais. Tu viens avec moi ?", "face": "smile" },
+    { "who": "Lumi", "text": "Évidemment ! Entre dans la faille." }
+  ],
+  "arrival": [
+    { "who": "Lumi", "text": "Bienvenue à Bourg-Luciole ! Ici, il fait nuit depuis cent ans." },
+    { "who": "Lumi", "text": "Le vieux sage sait sûrement où sont tes amis. Sa bibliothèque est au nord-est de la place." },
+    { "text": "Pause : inventaire, carte et objectif du moment." }
+  ],
+
+  "sage": [
+    { "if": "!quest1", "set": "quest1", "lines": [
+      { "who": "Le sage", "text": "Un enfant de l'autre monde… Alors la faille s'est encore ouverte." },
+      { "who": "Le sage", "text": "C'est l'œuvre du Roi Minuit. Il a arrêté le temps à minuit, et il se nourrit de lumière." },
+      { "who": "Le sage", "text": "Il a fait enfermer tes proches dans six donjons. Leur lumière l'empêche de vieillir." },
+      { "who": "{hero}", "text": "Six donjons ?! Par lequel je commence ?", "face": "o" },
+      { "who": "Le sage", "text": "Cette nuit, on a vu une enfant… ou un enfant… emmené vers la grotte des lucioles, au nord des collines." },
+      { "who": "Le sage", "text": "Prends ces 20 écus. Achète-toi de quoi te défendre à la forge." }
+    ], "give": { "money": 20 } },
+    { "if": "!boss", "lines": [
+      { "who": "Le sage", "text": "La grotte des lucioles est au nord, après la palissade. Méfie-toi du gardien qui dort au fond." }
+    ] },
+    { "lines": [
+      { "who": "Le sage", "text": "Un fragment d'aube ! Regarde la fontaine : l'horloge a bougé. Tu nous rends l'espoir." }
+    ] }
+  ],
+  "garde": [
+    { "if": "!quest1", "lines": [
+      { "who": "Le garde", "text": "Halte ! Les collines sont pleines de bestioles la nuit. Va d'abord voir le sage." }
+    ] },
+    { "lines": [
+      { "who": "Le garde", "text": "Le sage t'a parlé ? Alors passe. Et casse les buissons : on y trouve des écus." }
+    ] }
+  ],
+  "aubergiste": [
+    { "lines": [
+      { "who": "L'aubergiste", "text": "Tu as une petite mine. Repose-toi un moment, c'est la maison qui offre." }
+    ], "heal": true }
+  ],
+  "villageois1": [
+    { "if": "!freed1", "lines": [ { "who": "Pierrette", "text": "Ça fait cent ans que je n'ai pas vu le soleil. Enfin… c'est ce que dit ma grand-mère." } ] },
+    { "lines": [ { "who": "Pierrette", "text": "Tu as vu ? Le ciel est un tout petit peu moins noir ce soir !" } ] }
+  ],
+  "villageois2": [
+    { "lines": [ { "who": "Gaspard", "text": "Les jarres et les buissons cachent souvent des écus. Les ennemis aussi en lâchent." } ] }
+  ],
+  "villageois3": [
+    { "lines": [ { "who": "Mahaut", "text": "L'épicière vend un sirop de grenadine qui soigne tout. Il te faut une bouteille, par contre." } ] }
+  ],
+  "forain": [
+    { "lines": [ { "who": "Le forain", "text": "Le champ de foire rouvrira bientôt ! Tir, courses de chariots… Reviens dans une prochaine version." } ] }
+  ],
+
+  "captive_cage": [
+    { "who": "{enfant1}", "text": "{hero} ! C'est toi ! Sors-moi de là !", "face": "o", "faceOf": "enfant1" }
+  ],
+  "freed": [
+    { "who": "{enfant1}", "text": "Tu es venu{e} jusqu'ici pour moi ? Je te revaudrai ça.", "face": "smile", "faceOf": "enfant1" },
+    { "who": "{hero}", "text": "Les autres sont prisonniers aussi. Le Roi Minuit les garde dans d'autres donjons.", "face": "angry" },
+    { "who": "{enfant1}", "text": "Alors on va les chercher. Je t'attends au village, sur la place.", "face": "wink", "faceOf": "enfant1" },
+    { "text": "Tu as obtenu un fragment d'aube ! Le ciel du royaume s'éclaircit un peu." }
+  ],
+  "reunion": [
+    { "who": "{enfant1}", "text": "Te voilà ! Regarde l'horloge de la fontaine : elle a avancé.", "face": "smile", "faceOf": "enfant1" },
+    { "who": "Lumi", "text": "Le prochain donjon, c'est le Bois des murmures. On dit qu'un frisbee magique y est caché." },
+    { "who": "{hero}", "text": "Alors on ne traîne pas. On a encore cinq personnes à ramener.", "face": "smile" }
+  ],
+  "enfant1": [
+    { "lines": [ { "who": "{enfant1}", "text": "Je garde la place. Reviens vite avec des nouvelles !", "face": "smile", "faceOf": "enfant1" } ] }
+  ]
+}

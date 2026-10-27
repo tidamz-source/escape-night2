@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v0.2.2';
+const VERSION = 'v1.0.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -44,15 +44,21 @@ function wrap(str, maxW, size = 8) {
 
 // ---------- images ----------
 const IMG = {};
-let SACHA = null; // métadonnées de la spritesheet (format Aseprite JSON)
+const SHEETS = {}; // planches des héros (format Aseprite JSON)
+const HERO_SHEETS = ['sacha', 'cam', 'rox'];
+const FACES = ['sacha', 'cam', 'rox', 'papa', 'amandine', 'claudine'].flatMap(w => ['smile', 'o', 'angry', 'wink'].map(m => `${w}_${m}`)).filter(k => k !== 'amandine_o' && k !== 'amandine_angry' && k !== 'amandine_wink' && k !== 'claudine_o' && k !== 'claudine_angry' && k !== 'claudine_wink');
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
 function loadImage(key, src) {
   return new Promise(r => { const i = new Image(); i.onload = () => { IMG[key] = i; r(); }; i.onerror = () => { console.warn('image manquante', src); r(); }; i.src = src; });
 }
 function loadAssets() {
   const jobs = PROPS.map(k => loadImage(k, `assets/props/${k}.png?v=${VERSION}`));
-  jobs.push(loadImage('sacha', `assets/sacha.png?v=${VERSION}`));
-  jobs.push(fetch(`assets/sacha.json?v=${VERSION}`).then(r => r.json()).then(j => { SACHA = j; }).catch(() => {}));
+  for (const h of HERO_SHEETS) {
+    jobs.push(loadImage('hero_' + h, `assets/${h}.png?v=${VERSION}`));
+    jobs.push(fetch(`assets/${h}.json?v=${VERSION}`).then(r => r.json()).then(j => { SHEETS[h] = j; }).catch(() => {}));
+  }
+  for (const f of FACES) jobs.push(loadImage('face_' + f, `assets/faces/${f}.png?v=${VERSION}`));
+  jobs.push(loadData());
   return Promise.all(jobs);
 }
 
@@ -63,12 +69,10 @@ function fit() {
 }
 window.addEventListener('resize', fit); fit();
 
-// ---------- sauvegarde ----------
-const SAVE_KEY = 'escape-night2-save';
-function defaultSave() { return { started: false, maxHp: 6, chest: false, keys: 0, door: false, firefly: false, done: false, muted: false }; }
-let SAVE = defaultSave();
-try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) SAVE = Object.assign(defaultSave(), s); } catch (_) {}
-function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (_) {} }
+// ---------- préférences (communes à toutes les sauvegardes) ----------
+const PREFS = { muted: false };
+try { Object.assign(PREFS, JSON.parse(localStorage.getItem('escape-night2-prefs')) || {}); } catch (_) {}
+function savePrefs() { try { localStorage.setItem('escape-night2-prefs', JSON.stringify(PREFS)); } catch (_) {} }
 
 // ---------- installation PWA ----------
 const PWA = {
@@ -92,7 +96,7 @@ function audioUnlock() {
   if (AC.state === 'suspended') AC.resume();
 }
 function tone(f, dur, o = {}) {
-  if (!AC || SAVE.muted) return;
+  if (!AC || PREFS.muted) return;
   const t = AC.currentTime + (o.delay || 0), osc = AC.createOscillator(), g = AC.createGain();
   osc.type = o.type || 'square'; osc.frequency.setValueAtTime(f, t);
   if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + dur);
@@ -100,7 +104,7 @@ function tone(f, dur, o = {}) {
   osc.connect(g); g.connect(MASTER); osc.start(t); osc.stop(t + dur + 0.02);
 }
 function noise(dur, o = {}) {
-  if (!AC || SAVE.muted) return;
+  if (!AC || PREFS.muted) return;
   const t = AC.currentTime + (o.delay || 0), n = Math.floor(AC.sampleRate * dur), buf = AC.createBuffer(1, n, AC.sampleRate), d = buf.getChannelData(0);
   for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
   const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
@@ -131,5 +135,11 @@ const SFX = {
   stun() { tone(880, 0.12, { to: 220, type: 'square', vol: 0.14 }); tone(660, 0.3, { to: 1320, type: 'triangle', vol: 0.1, delay: 0.1 }); },
   bossHit() { tone(160, 0.2, { to: 60, type: 'sawtooth', vol: 0.2 }); noise(0.15, { freq: 1500, vol: 0.2 }); },
   bossDie() { for (let i = 0; i < 6; i++) { noise(0.3, { freq: 600 + i * 200, vol: 0.2, delay: i * 0.22 }); tone(300 - i * 30, 0.3, { to: 50, type: 'sawtooth', vol: 0.1, delay: i * 0.22 }); } },
+  coin() { tone(1568, 0.05, { vol: 0.08, type: 'square' }); tone(2093, 0.09, { vol: 0.08, type: 'square', delay: 0.05 }); },
+  buy() { [659, 880, 1175].forEach((f, i) => tone(f, 0.1, { vol: 0.1, delay: i * 0.07, type: 'triangle' })); },
+  nope() { tone(220, 0.08, { vol: 0.12 }); tone(180, 0.12, { vol: 0.12, delay: 0.08 }); },
+  rift() { tone(220, 1.2, { to: 880, type: 'sine', vol: 0.12 }); tone(330, 1.2, { to: 1320, type: 'triangle', vol: 0.08 }); noise(1.2, { freq: 1500, vol: 0.1 }); },
+  roll() { noise(0.15, { freq: 700, vol: 0.15 }); },
+  drink() { [523, 659, 784].forEach((f, i) => tone(f, 0.12, { vol: 0.1, delay: i * 0.08, type: 'sine' })); },
   bigheart() { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, { vol: 0.1, delay: i * 0.09, type: 'triangle' })); },
 };

@@ -26,7 +26,7 @@ function blocked(area, b, self, opts = {}) {
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
     const t = area.tile(tx, ty);
     if (SOLID.has(t)) return true;
-    if (opts.noExit && EXITS.has(t)) return true;
+    if (opts.noExit && (EXITS.has(t) || t === 'g')) return true;
   }
   for (const p of area.props) if (p.solid && rectHit(b, { x: p.x - p.fw / 2, y: p.y - p.fh, w: p.fw, h: p.fh })) return true;
   for (const e of area.ents) if (e !== self && e.solid && !e.dead && rectHit(b, boxOf(e))) return true;
@@ -67,31 +67,9 @@ class Parts {
   draw() { for (const p of this.a) { const k = 1 - p.t / p.life; ctx.globalAlpha = p.fade === false ? 1 : clamp(k * 1.5, 0, 1); const s = p.r * (p.shrink ? k : 1); R(half(p.x - s / 2), half(p.y - s / 2), Math.max(0.5, half(s)), Math.max(0.5, half(s)), p.c); } ctx.globalAlpha = 1; }
 }
 
-// ---------- Sacha ----------
+// ---------- le héros ----------
 const DIRS = ['down', 'up', 'left', 'right'];
 const DV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
-// Animations lues dans assets/sacha.json (export Aseprite) : idle_down, walk_down, walk_up.
-// Les vues de profil n'existent pas encore : gauche/droite réutilisent la vue de face en attendant.
-function sachaAnim(dir, moving) {
-  if (dir === 'up') return { name: 'walk_up', still: !moving };
-  return moving ? { name: 'walk_down' } : { name: 'idle_down' };
-}
-function sachaFrame(name, t, still) {
-  const tag = SACHA && SACHA.meta.frameTags.find(g => g.name === name); if (!tag) return null;
-  const list = []; for (let i = 0; i <= tag.to - tag.from; i++) list.push(SACHA.frames[name + i]);
-  if (still) return list[0].frame;
-  const total = list.reduce((s, f) => s + f.duration, 0); let ms = (t * 1000) % total;
-  for (const f of list) { if (ms < f.duration) return f.frame; ms -= f.duration; }
-  return list[0].frame;
-}
-function drawSacha(x, y, dir, moving, t, scale = 1, alpha = 1) {
-  const im = IMG.sacha, a = sachaAnim(dir, moving), f = im && sachaFrame(a.name, t, a.still);
-  if (!f) { R(x - 6, y - 24, 12, 24, '#eee'); return; }
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(im, f.x, f.y, f.w, f.h, half(x - 16.5 * scale), half(y - 31 * scale), f.w * scale, f.h * scale);
-  ctx.globalAlpha = 1;
-}
-
 const ATK_TIME = 0.24;
 class Player {
   constructor(x, y, dir = 'down') {
@@ -100,20 +78,22 @@ class Player {
     this.inv = 0; this.kb = { x: 0, y: 0, t: 0 }; this.hp = SAVE.maxHp; this.bump = 0;
     this.vx = 0; this.vy = 0; // vitesse lissée (accélération / freinage)
     this.shootCd = 0; this.shootT = 0; this.pushT = 0; this.aim = DV[dir].slice();
+    this.roll = 0; this.rollCd = 0; this.rollV = [0, 0];
   }
+  get perk() { return Heroes.def(); }
   body() { return { x: this.x - 6, y: this.y - 16, w: 12, h: 16 }; }
   atkBox() {
-    const x = this.x, y = this.y;
+    const x = this.x, y = this.y, k = this.perk.reach, e = Math.round(22 * (k - 1)); // Cam : portée +20 %
     switch (this.dir) {
-      case 'down': return { x: x - 13, y: y - 4, w: 26, h: 20 };
-      case 'up': return { x: x - 13, y: y - 38, w: 26, h: 22 };
-      case 'left': return { x: x - 28, y: y - 24, w: 24, h: 26 };
-      default: return { x: x + 4, y: y - 24, w: 24, h: 26 };
+      case 'down': return { x: x - 13, y: y - 4, w: 26, h: 20 + e };
+      case 'up': return { x: x - 13, y: y - 38 - e, w: 26, h: 22 + e };
+      case 'left': return { x: x - 28 - e, y: y - 24, w: 24 + e, h: 26 };
+      default: return { x: x + 4, y: y - 24, w: 24 + e, h: 26 };
     }
   }
   frontBox() { const [vx, vy] = DV[this.dir]; return { x: this.x - 5 + vx * 10, y: this.y - 8 + vy * 10, w: 10, h: 10 }; }
   hurt(dmg, fx, fy, G) {
-    if (this.inv > 0 || G.state !== 'play') return;
+    if (this.inv > 0 || this.roll > 0 || G.state !== 'play') return;
     this.hp -= dmg; this.inv = 1.1; SFX.hurt(); G.shake = 0.25; G.hitstop = 0.06;
     const a = Math.atan2(this.y - 8 - fy, this.x - fx); this.kb = { x: Math.cos(a) * 170, y: Math.sin(a) * 170, t: 0.16 };
     this.atk = 0;
@@ -125,21 +105,33 @@ class Player {
     if (this.bump > 0) this.bump -= dt;
     if (this.shootCd > 0) this.shootCd -= dt;
     if (this.shootT > 0) this.shootT -= dt;
+    if (this.rollCd > 0) this.rollCd -= dt;
+    if (this.roll > 0) { // roulade : rapide, intouchable
+      this.roll -= dt; this.anim += dt * 2;
+      moveEnt(area, this, this.rollV[0] * dt, 0, { slide: true }); moveEnt(area, this, 0, this.rollV[1] * dt, { slide: true });
+      if (Math.random() < dt * 30) G.parts.add({ x: this.x + rand(-4, 4), y: this.y - 1, vy: -10, life: 0.3, c: '#9a8a7a', r: 1 });
+      return;
+    }
     if (this.kb.t > 0) { this.kb.t -= dt; this.vx = this.vy = 0; moveEnt(area, this, this.kb.x * dt, 0, { noExit: true }); moveEnt(area, this, 0, this.kb.y * dt, { noExit: true }); return; }
     if (this.atk > 0) {
       this.atk -= dt; this.glide(dt, G, 0, 0, 14);
       if (this.atk < ATK_TIME - 0.04) G.attackHits(this);
       return;
     }
-    // B : lance-pierre
-    if (Input.pressed('b') && SAVE.slingshot && this.shootCd <= 0) {
-      this.shootCd = 0.3; this.shootT = 0.18; SFX.sling();
-      G.area.ents.push(new Pebble(this.x, this.y, this.aim[0], this.aim[1], G.room));
+    // changer d'outil
+    if (Input.pressed('cycle')) Inventory.cycle(1);
+    // B : outil équipé
+    if (Input.pressed('b') && this.shootCd <= 0) this.useTool(G);
+    // roulade (Rox)
+    if (Input.pressed('r') && this.perk.roll && this.rollCd <= 0) {
+      const m = Math.hypot(Input.dx, Input.dy), v = m > 0.2 ? [Input.dx / m, Input.dy / m] : DV[this.dir];
+      this.roll = 0.3; this.rollCd = 0.7; this.rollV = [v[0] * 190, v[1] * 190]; SFX.roll(); return;
     }
     // A : interaction ou attaque
     if (Input.pressed('a')) {
       const target = G.interactTarget(this);
       if (target) { target.interact(G, this); return; }
+      if (!SAVE.got_branche) return; // pas encore d'arme
       this.atk = ATK_TIME; this.atkHit.clear(); SFX.swing(); return;
     }
     let dx = Input.dx, dy = Input.dy;
@@ -153,7 +145,7 @@ class Player {
       const cur = DV[this.dir], keep = (cur[0] && Math.sign(dx) === cur[0] && Math.abs(dx) > 0.3) || (cur[1] && Math.sign(dy) === cur[1] && Math.abs(dy) > 0.3);
       if (!keep) this.dir = want;
     }
-    const SPEED = 76;
+    const SPEED = 76 * this.perk.speed; // Rox : +10 %
     // accélération vive au démarrage, freinage plus doux à l'arrêt
     const hit = this.glide(dt, G, input ? dx * SPEED : 0, input ? dy * SPEED : 0, input ? 20 : 9, input ? { x: dx, y: dy } : null);
     const speed = Math.hypot(this.vx, this.vy);
@@ -169,6 +161,14 @@ class Player {
       if (blk) { pushing = true; this.pushT += dt; if (this.pushT > 0.3) { blk.push(this.dir, G); this.pushT = 0; } }
     }
     if (!pushing) this.pushT = 0;
+  }
+  useTool(G) {
+    const tool = Inventory.tool(); if (!tool) return;
+    if (tool === 'lance_pierre') {
+      if (!Inventory.useAmmo('cailloux')) { SFX.nope(); Input.toast = { msg: 'Plus de cailloux !', t: 1.5 }; this.shootCd = 0.4; return; }
+      this.shootCd = 0.3; this.shootT = 0.18; SFX.sling();
+      G.area.ents.push(new Pebble(this.x, this.y, this.aim[0], this.aim[1], G.room));
+    }
   }
   // fait tendre la vitesse vers (tx, ty) puis déplace Sacha ; renvoie true en cas de collision
   glide(dt, G, tx, ty, k, inp) {
@@ -190,9 +190,16 @@ class Player {
     const p = attacking ? 1 - this.atk / ATK_TIME : 0;
     if (attacking && this.dir === 'up') this.drawBranch(p);
     if (this.shootT > 0 && this.dir === 'up') this.drawSling();
-    drawSacha(this.x + vx * lunge, this.y + vy * lunge, this.dir, this.moving && !attacking, this.moving ? this.anim : G.t);
+    if (this.roll > 0) { const k = 1 - this.roll / 0.3; ctx.save(); ctx.translate(this.x, this.y - 8); ctx.rotate(Math.sign(this.rollV[0] || 1) * k * Math.PI * 2); ctx.translate(-this.x, -this.y + 8); }
+    drawHero(SAVE.hero, this.x + vx * lunge, this.y + vy * lunge, this.dir, (this.moving && !attacking) || this.roll > 0, this.moving ? this.anim : G.t);
+    if (this.roll > 0) ctx.restore();
+    if (Inventory.has('bouclier') && !attacking && this.roll <= 0 && this.dir !== 'up') this.drawShield();
     if (attacking && this.dir !== 'up') this.drawBranch(p);
     if (this.shootT > 0 && this.dir !== 'up') this.drawSling();
+  }
+  drawShield() {
+    const [vx] = DV[this.dir], x = this.x + (this.dir === 'down' ? 6 : vx * 6), y = this.y - 8;
+    hi(x, y, vx < 0, () => { D(-4, -8, 8, 12, '#7a4a24'); D(-4, -8, 8, 2, '#a06a34'); D(-4, -8, 2, 12, '#9a6a3a'); D(-1, -4, 2, 4, '#c8a040'); D(-4, 3, 8, 1, '#4a2a14'); });
   }
   drawSling() {
     const [vx, vy] = this.aim, k = this.shootT / 0.18;
@@ -205,14 +212,21 @@ class Player {
     const sweep = this.dir === 'left' ? -1 : 1;
     const ang = base + sweep * lerp(-1.15, 1.15, Math.min(1, p * 1.6));
     const hx = this.x + (this.dir === 'left' ? -4 : this.dir === 'right' ? 4 : 0), hy = this.y - (this.dir === 'up' ? 13 : 9);
-    const L = 17, ex = hx + Math.cos(ang) * L, ey = hy + Math.sin(ang) * L;
+    const L = Math.round(17 * this.perk.reach), ex = hx + Math.cos(ang) * L, ey = hy + Math.sin(ang) * L, sword = SAVE.inv.weapon === 'epee_bois';
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#3a2214'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
-    ctx.strokeStyle = '#8a5a34'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
-    ctx.strokeStyle = '#b07a48'; ctx.lineWidth = 0.75; ctx.beginPath(); ctx.moveTo(hx, hy - 0.5); ctx.lineTo(ex, ey - 0.5); ctx.stroke();
-    // feuilles au bout
-    const lx = hx + Math.cos(ang) * (L - 3), ly = hy + Math.sin(ang) * (L - 3);
-    R(half(lx - 1), half(ly - 2), 2.5, 2, '#4f9a5a'); R(half(ex - 1), half(ey - 1), 2, 2, '#6fc070');
+    if (sword) { // épée de bois : lame claire, garde
+      ctx.strokeStyle = '#3a2214'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.strokeStyle = '#d8b07a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(hx + Math.cos(ang) * 4, hy + Math.sin(ang) * 4); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.strokeStyle = '#f0d8a8'; ctx.lineWidth = 0.75; ctx.beginPath(); ctx.moveTo(hx + Math.cos(ang) * 5, hy + Math.sin(ang) * 5 - 0.5); ctx.lineTo(ex, ey - 0.5); ctx.stroke();
+      const gx = hx + Math.cos(ang) * 4, gy = hy + Math.sin(ang) * 4, px = -Math.sin(ang) * 3, py = Math.cos(ang) * 3;
+      ctx.strokeStyle = '#6a4224'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(gx - px, gy - py); ctx.lineTo(gx + px, gy + py); ctx.stroke();
+    } else {
+      ctx.strokeStyle = '#3a2214'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.strokeStyle = '#8a5a34'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.strokeStyle = '#b07a48'; ctx.lineWidth = 0.75; ctx.beginPath(); ctx.moveTo(hx, hy - 0.5); ctx.lineTo(ex, ey - 0.5); ctx.stroke();
+      const lx = hx + Math.cos(ang) * (L - 3), ly = hy + Math.sin(ang) * (L - 3);
+      R(half(lx - 1), half(ly - 2), 2.5, 2, '#4f9a5a'); R(half(ex - 1), half(ey - 1), 2, 2, '#6fc070');
+    }
     // trainée
     if (p < 0.75) { ctx.globalAlpha = 0.35 * (1 - p); ctx.strokeStyle = PAL.glow; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(hx, hy, L, ang - sweep * 0.9, ang, sweep < 0); ctx.stroke(); ctx.globalAlpha = 1; }
   }
@@ -224,7 +238,7 @@ class Enemy {
   body() { return { x: this.x - this.w / 2, y: this.y - this.h - 6, w: this.w, h: this.h + 6 }; }
   reset() { this.x = this.sx; this.y = this.sy; this.hp = this.maxHp; this.kb.t = 0; this.flash = 0; }
   hit(dmg, fx, fy, G, src) {
-    this.hp -= dmg; this.flash = 0.18; SFX.hit(); G.hitstop = 0.05; G.shake = 0.08;
+    this.hp -= dmg || 1; this.flash = 0.18; SFX.hit(); G.hitstop = 0.05; G.shake = 0.08;
     const a = Math.atan2(this.y - fy, this.x - fx); this.kb = { x: Math.cos(a) * 190, y: Math.sin(a) * 190, t: 0.14 };
     G.parts.burst(this.x, this.y - 8, 5, { c: ['#fff', PAL.glow], life: 0.25, smin: 30, smax: 90, r: 1 });
     if (this.hp <= 0) this.die(G);
@@ -232,19 +246,19 @@ class Enemy {
   die(G) {
     this.dead = true; SFX.kill();
     G.parts.burst(this.x, this.y - 6, 16, { c: this.poof || ['#c3b3ff', '#8ff3ea', '#fff'], life: 0.5, smin: 15, smax: 60, r: 2, shrink: true, drag: 3 });
-    if (Math.random() < 0.35) G.area.ents.push(new HeartPickup(this.x, this.y));
+    dropLoot(G, this.loot, this.x, this.y);
   }
   physics(dt, G, fly) {
     if (this.flash > 0) this.flash -= dt;
     if (this.kb.t > 0) { this.kb.t -= dt; if (fly) { this.x += this.kb.x * dt; this.y += this.kb.y * dt; this.clampArea(G); } else { moveEnt(G.area, this, this.kb.x * dt, 0, { noExit: true }); moveEnt(G.area, this, 0, this.kb.y * dt, { noExit: true }); } return true; }
     return false;
   }
-  clampArea(G) { const r = G.roomRect(); this.x = clamp(this.x, r.x + 20, r.x + r.w - 20); this.y = clamp(this.y, r.y + 24, r.y + r.h - 16); }
+  clampArea(G) { const r = G.area.enemyBounds || G.roomRect(); this.x = clamp(this.x, r.x + 20, r.x + r.w - 20); this.y = clamp(this.y, r.y + 24, r.y + r.h - 16); }
   touch(G) { const P = G.player; if (rectHit(this.body(), P.body())) P.hurt(this.dmg, this.x, this.y - 6, G); }
 }
 
 class Raccoon extends Enemy {
-  constructor(x, y, room) { super(x, y, { hp: 2, dmg: 1, room }); this.state = 'wander'; this.st = rand(0.5, 2); this.poof = ['#7a7f8c', '#c8ccd6', '#3a3d48']; }
+  constructor(x, y, room) { super(x, y, { hp: 2, dmg: 1, room }); this.state = 'wander'; this.st = rand(0.5, 2); this.poof = ['#7a7f8c', '#c8ccd6', '#3a3d48']; this.loot = 'raccoon'; }
   update(dt, G) {
     if (this.physics(dt, G)) return;
     this.t += dt; this.st -= dt; const P = G.player, d = dist(this.x, this.y, P.x, P.y);
@@ -287,7 +301,7 @@ class Raccoon extends Enemy {
 }
 
 class Bat extends Enemy {
-  constructor(x, y, room) { super(x, y, { hp: 1, dmg: 1, room }); this.w = 10; this.h = 6; this.state = 'idle'; this.st = rand(0, 1); this.alt = 14; this.poof = ['#3a2a4a', '#8a6aaa', '#fff']; }
+  constructor(x, y, room) { super(x, y, { hp: 1, dmg: 1, room }); this.w = 10; this.h = 6; this.state = 'idle'; this.st = rand(0, 1); this.alt = 14; this.poof = ['#3a2a4a', '#8a6aaa', '#fff']; this.loot = 'bat'; }
   body() { return { x: this.x - 6, y: this.y - this.alt - 6, w: 12, h: 10 }; }
   update(dt, G) {
     if (this.physics(dt, G, true)) return;
@@ -319,7 +333,7 @@ class Bat extends Enemy {
 }
 
 class Shadow extends Enemy {
-  constructor(x, y, room) { super(x, y, { hp: 3, dmg: 2, room }); this.w = 14; this.h = 8; this.st = 0; this.poof = ['#1a1030', '#4a2a7a', '#c3b3ff', '#000']; }
+  constructor(x, y, room) { super(x, y, { hp: 3, dmg: 2, room }); this.w = 14; this.h = 8; this.st = 0; this.poof = ['#1a1030', '#4a2a7a', '#c3b3ff', '#000']; this.loot = 'shadow'; }
   update(dt, G) {
     if (this.physics(dt, G)) return;
     this.t += dt; this.st -= dt; const P = G.player, d = dist(this.x, this.y, P.x, P.y);
@@ -343,7 +357,7 @@ class Shadow extends Enemy {
 }
 
 class Wisp extends Enemy {
-  constructor(x, y, room) { super(x, y, { hp: 2, dmg: 1, room }); this.w = 10; this.h = 6; this.cd = rand(1.5, 2.5); this.alt = 12; this.light = { r: 46, c: 'rgba(120,220,255,' }; this.poof = ['#dff8ff', '#6fd3ff', '#2a8aff']; }
+  constructor(x, y, room) { super(x, y, { hp: 2, dmg: 1, room }); this.w = 10; this.h = 6; this.cd = rand(1.5, 2.5); this.alt = 12; this.light = { r: 46, c: 'rgba(120,220,255,' }; this.poof = ['#dff8ff', '#6fd3ff', '#2a8aff']; this.loot = 'wisp'; }
   body() { return { x: this.x - 6, y: this.y - this.alt - 8, w: 12, h: 12 }; }
   update(dt, G) {
     if (this.physics(dt, G, true)) return;
@@ -374,7 +388,13 @@ class Orb {
   update(dt, G) {
     this.t += dt; this.x += this.vx * dt; this.y += this.vy * dt;
     if (WALLS.has(G.area.tileAt(this.x, this.y - 2)) || this.t > 3) { this.dead = true; G.parts.burst(this.x, this.y - this.alt, 5, { c: ['#9fe8ff', '#fff'], life: 0.25, r: 1 }); return; }
-    const P = G.player; if (rectHit(this.body(), P.body())) { P.hurt(1, this.x, this.y, G); this.dead = true; }
+    const P = G.player;
+    if (rectHit(this.body(), P.body())) {
+      const [fx, fy] = DV[P.dir], n = Math.hypot(this.vx, this.vy) || 1;
+      if (Inventory.has('bouclier') && P.atk <= 0 && (fx * this.vx + fy * this.vy) / n < -0.5) { SFX.tink(); G.parts.burst(this.x, this.y - this.alt, 6, { c: ['#fff', '#c8a040'], life: 0.25, r: 1 }); }
+      else P.hurt(1, this.x, this.y, G);
+      this.dead = true;
+    }
   }
   hit(d, fx, fy, G) { this.dead = true; G.parts.burst(this.x, this.y - this.alt, 6, { c: ['#9fe8ff', '#fff'], life: 0.3, r: 1 }); SFX.hit(); }
   draw() { const y = this.y - this.alt; ell(this.x, this.y, 2.5, 1, 'rgba(0,0,0,.3)'); ell(this.x, y, 3.5, 3.5, '#6fd3ff'); ell(this.x, y, 2, 2, '#fff'); }

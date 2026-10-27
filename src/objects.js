@@ -63,22 +63,39 @@ class Scratches {
 }
 
 // ---------- ramassables ----------
-class HeartPickup {
-  constructor(x, y) { this.x = x; this.y = y; this.t = 0; this.w = 8; this.h = 6; this.vy = -60; this.z = 0; }
+// cœurs, pièces et cailloux : rebondissent puis clignotent avant de disparaître
+const PICKUPS = {
+  heart:  { draw: (x, y) => drawHeartShape(x, y - 5, 2, PAL.heart, '#c02848'), take: G => { G.player.hp = Math.min(SAVE.maxHp, G.player.hp + 2); SFX.pickup(); } },
+  coin1:  { draw: (x, y, t) => drawCoin(x, y - 4, '#c8a060', '#8a6a3a', t), take: () => { Wallet.add(1); SFX.coin(); } },
+  coin5:  { draw: (x, y, t) => drawCoin(x, y - 4, '#d8dce8', '#8a90a8', t), take: () => { Wallet.add(5); SFX.coin(); } },
+  coin20: { draw: (x, y, t) => drawCoin(x, y - 4, '#ffd23a', '#c08a10', t), take: () => { Wallet.add(20); SFX.coin(); } },
+  stones: { draw: (x, y) => { R(x - 4, y - 4, 3, 3, '#8a8698'); R(x - 1, y - 5, 3, 3, '#a8a4b8'); R(x + 1, y - 3, 3, 3, '#7a7688'); R(x - 1, y - 5, 1, 1, '#e0dcf0'); }, take: () => { Inventory.addAmmo('cailloux', 5); SFX.pickup(); } },
+};
+function drawCoin(x, y, c, d, t) {
+  const w = Math.max(1, Math.round(Math.abs(Math.cos(t * 4)) * 3));
+  R(half(x - w), half(y - 3), w * 2, 6, d); R(half(x - w + 0.5), half(y - 3), Math.max(1, w * 2 - 1), 5, c); R(half(x - 0.5), half(y - 2), 1, 1, '#fff');
+}
+class Pickup {
+  constructor(x, y, kind) { this.x = x; this.y = y; this.kind = kind; this.t = 0; this.w = 8; this.h = 6; this.vy = -60; this.z = 0; this.isPickup = true; }
   update(dt, G) {
     this.t += dt; if (this.z < 0 || this.vy < 0) { this.vy += 300 * dt; this.z += this.vy * dt; if (this.z > 0) { this.z = 0; this.vy = 0; } }
-    if (this.t > 9) this.dead = true;
-    const P = G.player; if (rectHit({ x: this.x - 5, y: this.y - 8, w: 10, h: 10 }, P.body())) { this.dead = true; P.hp = Math.min(SAVE.maxHp, P.hp + 2); SFX.pickup(); G.parts.burst(this.x, this.y - 4, 6, { c: ['#ff8ab0', '#fff'], life: 0.3, r: 1 }); }
+    if (this.t > 10) this.dead = true;
+    const P = G.player;
+    if (rectHit({ x: this.x - 5, y: this.y - 8, w: 10, h: 10 }, P.body())) {
+      this.dead = true; PICKUPS[this.kind].take(G);
+      G.parts.burst(this.x, this.y - 4, 6, { c: this.kind === 'heart' ? ['#ff8ab0', '#fff'] : ['#ffe27a', '#fff'], life: 0.3, r: 1 });
+    }
   }
-  draw() { if (this.t > 6.5 && Math.floor(this.t * 10) % 2) return; ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.3)'); drawHeartShape(this.x, this.y - 5 + this.z + Math.sin(this.t * 4) * 0.8, 2, PAL.heart, '#c02848'); }
+  draw() { if (this.t > 7 && Math.floor(this.t * 10) % 2) return; ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.3)'); PICKUPS[this.kind].draw(this.x, this.y + this.z + Math.sin(this.t * 4) * 0.6, this.t); }
 }
+const HeartPickup = Pickup; // ancien nom
 
 class Bush {
   constructor(x, y) { this.x = x; this.y = y; this.w = 16; this.h = 8; this.solid = true; }
   hit(d, fx, fy, G) {
     this.dead = true; SFX.cut();
     G.parts.burst(this.x, this.y - 6, 14, { c: ['#3a7a50', '#5aa060', '#2a5a3a', '#8ad080'], life: 0.6, smin: 20, smax: 70, up: 30, g: 120, r: 2, drag: 2 });
-    if (Math.random() < 0.25) G.area.ents.push(new HeartPickup(this.x, this.y));
+    dropLoot(G, 'bush', this.x, this.y);
   }
   draw() { const im = IMG.bush; if (im) ctx.drawImage(im, half(this.x - im.width / 4), half(this.y - im.height / 2 + 2), im.width / 2, im.height / 2); }
 }
@@ -88,7 +105,7 @@ class Pot extends Bush {
   hit(d, fx, fy, G) {
     this.dead = true; noise(0.12, { freq: 2200, vol: 0.2 }); tone(700, 0.05, { vol: 0.08 });
     G.parts.burst(this.x, this.y - 6, 12, { c: ['#9a5a32', '#c08050', '#6a3a20', '#b06a3a'], life: 0.5, smin: 30, smax: 80, up: 40, g: 200, r: 2, drag: 1 });
-    if (Math.random() < 0.35) G.area.ents.push(new HeartPickup(this.x, this.y));
+    dropLoot(G, 'pot', this.x, this.y);
   }
   draw() {
     ell(this.x, this.y, 6, 2, 'rgba(0,0,0,.4)');
@@ -114,8 +131,9 @@ class Chest {
   interact(G) {
     SAVE[this.flag] = true;
     if (this.give === 'key') SAVE.keys += 1;
-    if (this.give === 'sling') SAVE.slingshot = true;
-    persist(); SFX.chest(); G.raise(this.give);
+    else if (this.give.startsWith('money:')) Wallet.add(Number(this.give.slice(6)));
+    else Inventory.give(this.give);
+    persist(); SFX.chest(); G.raise(this.give.startsWith('money') ? 'money' : this.give);
     G.say(this.msg || [{ text: 'Tu as trouvé une petite clé !' }]);
   }
   update(dt, G) {
@@ -313,11 +331,7 @@ class HeartContainer {
     const P = G.player;
     if (rectHit({ x: this.x - 8, y: this.y - 14, w: 16, h: 16 }, P.body())) {
       this.dead = true; SAVE.heart2 = true; SAVE.maxHp += 2; P.hp = SAVE.maxHp; persist(); SFX.bigheart(); G.raise('heart');
-      G.say([
-        { text: 'Le grand cœur de luciole ! Ta vie maximale augmente d\'un cœur.' },
-        { who: 'Sacha', text: 'Les lucioles sont libres… La grotte brille comme un ciel d\'été.' },
-        { who: 'Sacha', text: 'Allez, je rentre au camping avant que quelqu\'un remarque que je suis parti.' },
-      ], () => G.ending());
+      G.say([{ text: 'Un grand cœur de luciole ! Ta vie maximale augmente d\'un cœur.' }]);
     }
   }
   draw() {
@@ -333,7 +347,7 @@ class HeartContainer {
 // on a alors quelques secondes pour la frapper à la branche (3 coups maximum par étourdissement).
 class GreatShadow extends Enemy {
   constructor(x, y, room) {
-    super(x, y, { hp: 6, dmg: 2, room });
+    super(x, y, { hp: 8, dmg: 2, room });
     this.w = 30; this.h = 12; this.state = 'sleep'; this.st = 0; this.isBoss = true; this.eye = 0; this.phase = 1;
     this.cd = 2.5; this.hits = 0; this.spawned = false; this.rise = 0;
     this.poof = ['#1a1030', '#4a2a7a', '#c3b3ff', '#000', '#ff3a6a'];
@@ -352,10 +366,10 @@ class GreatShadow extends Enemy {
       return;
     }
     if (this.state === 'stun' && src !== 'stone') {
-      this.hp -= 1; this.hits += 1; this.flash = 0.2; SFX.bossHit(); G.hitstop = 0.08; G.shake = 0.15;
+      this.hp -= dmg || 1; this.hits += 1; this.flash = 0.2; SFX.bossHit(); G.hitstop = 0.08; G.shake = 0.15;
       const a = Math.atan2(this.y - fy, this.x - fx); this.kb = { x: Math.cos(a) * 110, y: Math.sin(a) * 110, t: 0.12 };
       G.parts.burst(this.x, this.y - 14, 10, { c: this.poof, life: 0.4, smin: 30, smax: 90, r: 2 });
-      if (this.hp <= 3 && this.phase === 1) this.phase = 2;
+      if (this.hp <= 4 && this.phase === 1) this.phase = 2;
       if (this.hp <= 0) {
         this.state = 'dying'; this.st = 2.2; SFX.bossDie(); G.shake = 0.5;
         for (const e of G.area.ents) { if (e !== this && e.isEnemy && !e.dead && e.room === this.room) e.die(G); if (e.isOrb) e.dead = true; }
@@ -384,6 +398,11 @@ class GreatShadow extends Enemy {
         if (this.st <= 0) { this.state = 'float'; this.st = 2.5; this.rise = 1; }
         return;
       case 'float': {
+        // jamais bloqué : s'il n'y a plus de cailloux, l'arène en fournit
+        this.stoneCd = (this.stoneCd || 0) - dt;
+        if (Inventory.ammo('cailloux') === 0 && this.stoneCd <= 0 && !G.area.ents.some(e => e.isPickup && e.kind === 'stones')) {
+          this.stoneCd = 4; const rr = G.roomRect(); G.area.ents.push(Object.assign(new Pickup(rr.x + rand(80, 400), rr.y + rand(170, 220), 'stones'), { room: this.room }));
+        }
         const sp = this.phase === 1 ? 30 : 46;
         this.vx = lerp(this.vx, Math.cos(a) * sp, dt * 2); this.vy = lerp(this.vy, Math.sin(a) * sp, dt * 2);
         this.x += (this.vx + Math.cos(this.t * 1.3) * 14) * dt; this.y += (this.vy + Math.sin(this.t * 1.9) * 8) * dt; this.clampArea(G);

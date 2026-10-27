@@ -3,8 +3,9 @@
 // Tuiles : '.' herbe  ',' herbe fleurie  '=' chemin  '~' eau  '#' forêt dense (mur)  'F' entrée de la forêt
 //          '_' sol  'm' mousse  'W' mur (racines / roche)  's' souche  'k' stalagmite
 //          'v' gouffre  'b' pont  'E' sortie  'G' entrée de la grotte
-const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v']); // bloque la marche
-const WALLS = new Set(['#', 'W', 's', 'k']);           // bloque les projectiles (ils passent au-dessus de l'eau et du gouffre)
+//          'c' pavés  'P' palissade  'g' porte de la palissade (les ennemis ne la franchissent pas)
+const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P']); // bloque la marche
+const WALLS = new Set(['#', 'W', 's', 'k', 'P']);           // bloque les projectiles (ils passent au-dessus de l'eau et du gouffre)
 const EXITS = new Set(['F', 'E', 'G']);
 const RW = 30, RH = 17;                                 // une salle = 30 × 17 tuiles = 480 × 272 px
 const ROOM_W = RW * TS, ROOM_H = RH * TS;
@@ -24,7 +25,7 @@ function buildOverworld() {
   for (let y = 4; y < h - 3; y++) { if (r() < 0.5) set(2, y, '#'); if (r() < 0.5) set(w - 3, y, '#'); }
   rect(2, 4, 4, 3, '#'); rect(39, 4, 7, 3, '#'); rect(2, 24, 4, 6, '#'); rect(43, 26, 3, 5, '#');
   // trouée vers la forêt
-  rect(20, 1, 8, 6, '.'); rect(22, 0, 4, 2, 'F'); rect(23, 2, 2, 17, '=');
+  rect(20, 1, 8, 6, '.'); rect(20, 0, 8, 2, '#'); rect(23, 3, 2, 16, '='); // la forêt du nord est fermée
   // chemins
   rect(5, 19, 37, 2, '='); rect(12, 11, 2, 8, '='); rect(40, 21, 2, 3, '=');
   // lac
@@ -49,6 +50,30 @@ function buildForest() {
   rect(14, 0, 2, 2, 'G');    // entrée de la grotte, au nord
   for (const [x, y] of [[6, 22], [23, 22], [6, 28], [23, 28], [7, 5], [22, 5], [7, 11], [22, 11]]) set(x, y, 's');
   for (let i = 0; i < 90; i++) { const x = 2 + Math.floor(r() * 26), y = 2 + Math.floor(r() * 30); if (g[y][x] === '_') g[y][x] = 'm'; }
+  return g;
+}
+
+// ---------- le royaume d'Aube-Figée : collines au nord, palissade, Bourg-Luciole au sud ----------
+const ROY = { gateY: 30, plaza: { x: 14, y: 39, w: 20, h: 10 } };
+function buildRoyaume() {
+  const g = makeGrid(48, 60, '.'), { w, h, set, rect } = gridTools(g), r = seeded(77);
+  rect(0, 0, w, 2, '#'); rect(0, 0, 2, h, '#'); rect(w - 2, 0, 2, h, '#'); rect(0, h - 2, w, 2, '#');
+  for (let x = 2; x < w - 2; x++) { if (r() < 0.5 && Math.abs(x - 23.5) > 3) set(x, 2, '#'); if (r() < 0.4) set(x, h - 3, '#'); }
+  for (let y = 2; y < h - 2; y++) { if (r() < 0.45) set(2, y, '#'); if (r() < 0.45) set(w - 3, y, '#'); }
+  // collines : sentier vers la grotte, bosquets, mare
+  rect(22, 0, 4, 2, 'G'); rect(23, 2, 2, 28, '=');
+  for (let i = 0; i < 16; i++) { const cx = 4 + Math.floor(r() * 39), cy = 4 + Math.floor(r() * 22); if (Math.abs(cx - 23.5) < 5) continue; rect(cx, cy, 2 + Math.floor(r() * 3), 2 + Math.floor(r() * 2), '#'); }
+  for (let y = 7; y < 17; y++) for (let x = 5; x < 17; x++) { const v = ((x + 0.5 - 10.5) / 4.6) ** 2 + ((y + 0.5 - 11.5) / 3.1) ** 2; if (v < 1) set(x, y, '~'); }
+  // palissade et sa porte
+  rect(2, ROY.gateY, w - 4, 1, 'P'); rect(22, ROY.gateY, 4, 1, 'g');
+  // village : grande rue, place, chemins vers les maisons
+  rect(3, ROY.gateY + 1, w - 6, h - ROY.gateY - 3, '.');
+  rect(22, ROY.gateY + 1, 4, 27, 'c');
+  rect(ROY.plaza.x, ROY.plaza.y, ROY.plaza.w, ROY.plaza.h, 'c');
+  rect(33, 37, 2, 2, 'c'); rect(12, 37, 2, 2, 'c');            // bibliothèque, auberge
+  rect(7, 45, 7, 2, 'c'); rect(34, 45, 7, 2, 'c');              // forge, épicerie
+  rect(8, 49, 2, 2, '='); rect(38, 49, 2, 2, '=');              // maisons du sud
+  for (let i = 0; i < 90; i++) { const x = Math.floor(r() * w), y = Math.floor(r() * h); if (g[y][x] === '.') g[y][x] = ','; }
   return g;
 }
 
@@ -111,12 +136,16 @@ function renderLayer(g, theme) {
     if (theme === 'cave') { floorCave(px, py, t === 'm'); return; }
     if (t === '.' || t === ',' || isWall(t) || t === 'F' || t === '~') {
       if (theme === 'forest') { floorForest(px, py); return; }
-      F(px, py, TP, TP, '#355c57');
-      for (let i = 0; i < 26; i++) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 1 + (r() < 0.3), 1, pick2(['#39625a', '#2f5250', '#26494b', '#3d6a60']));
-      if (r() < 0.5) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 1, 1, pick2(['#8ff3ea', '#c3b3ff', '#ffcf7a']));
-      for (let i = 0; i < 3; i++) { const gx = px + Math.floor(r() * 28), gy = py + Math.floor(r() * 28); F(gx, gy, 1, 3, '#46786c'); F(gx + 2, gy + 1, 1, 2, '#46786c'); }
-      if (t === ',') for (let i = 0; i < 3; i++) { const fx = px + 4 + Math.floor(r() * 22), fy = py + 4 + Math.floor(r() * 22), col = pick2(['#ff8ab0', '#ffe27a', '#c3b3ff', '#f4f7ff']); F(fx, fy, 2, 2, col); F(fx - 1, fy + 1, 1, 1, col); F(fx + 2, fy + 1, 1, 1, col); F(fx, fy + 3, 1, 2, '#2a5a40'); }
-    } else if (t === '=') {
+      floorGrass(px, py, t);
+    } else if (t === 'c') { // pavés
+      F(px, py, TP, TP, '#3a3448');
+      for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) {
+        const sx = px + i * 8 + ((j & 1) ? 4 : 0) - 2, sy = py + j * 8;
+        F(sx + 1, sy + 1, 6, 6, pick2(['#6a6478', '#5e5870', '#726c80', '#645e74'])); F(sx + 1, sy + 1, 6, 1, '#807a90');
+      }
+    } else if (t === 'P') {
+      floorGrass(px, py);
+    } else if (t === '=' || t === 'g') {
       F(px, py, TP, TP, '#6a545e');
       for (let i = 0; i < 18; i++) { const sx = px + Math.floor(r() * 30), sy = py + Math.floor(r() * 30); F(sx, sy, 2, 1, '#7b6673'); F(sx + 1, sy + 1, 2, 1, '#634f5c'); }
       for (let i = 0; i < 3; i++) F(px + Math.floor(r() * 30), py + Math.floor(r() * 30), 2, 2, '#897a92');
@@ -129,6 +158,13 @@ function renderLayer(g, theme) {
       }
     } else floorForest(px, py, t === 'm');
   });
+  function floorGrass(px, py, t) {
+    F(px, py, TP, TP, '#355c57');
+    for (let i = 0; i < 26; i++) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 1 + (r() < 0.3), 1, pick2(['#39625a', '#2f5250', '#26494b', '#3d6a60']));
+    if (r() < 0.5) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 1, 1, pick2(['#8ff3ea', '#c3b3ff', '#ffcf7a']));
+    for (let i = 0; i < 3; i++) { const gx = px + Math.floor(r() * 28), gy = py + Math.floor(r() * 28); F(gx, gy, 1, 3, '#46786c'); F(gx + 2, gy + 1, 1, 2, '#46786c'); }
+    if (t === ',') for (let i = 0; i < 3; i++) { const fx = px + 4 + Math.floor(r() * 22), fy = py + 4 + Math.floor(r() * 22), col = pick2(['#ff8ab0', '#ffe27a', '#c3b3ff', '#f4f7ff']); F(fx, fy, 2, 2, col); F(fx - 1, fy + 1, 1, 1, col); F(fx + 2, fy + 1, 1, 1, col); F(fx, fy + 3, 1, 2, '#2a5a40'); }
+  }
   function floorForest(px, py, moss) {
     F(px, py, TP, TP, '#22332f');
     for (let i = 0; i < 20; i++) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 2, 1, pick2(['#2a3d38', '#1c2b28', '#33302c', '#2b2a35']));
@@ -188,6 +224,10 @@ function renderLayer(g, theme) {
       F(px + 4, py + 10, 24, 16, '#4a3020'); F(px + 4, py + 10, 3, 16, '#5a3a26'); F(px + 22, py + 12, 4, 14, '#3a2418');
       F(px + 2, py + 22, 6, 4, '#4a3020'); F(px + 24, py + 22, 6, 4, '#3a2418');
       F(px + 4, py + 4, 24, 9, '#8a6a4a'); F(px + 6, py + 5, 20, 7, '#a07a50'); F(px + 10, py + 7, 12, 3, '#8a6a4a'); F(px + 14, py + 8, 4, 1, '#6a4a30');
+    } else if (t === 'P') { // pieux de la palissade
+      x2.fillStyle = 'rgba(0,0,0,.35)'; x2.fillRect(px, py + 26, TP, 6);
+      F(px, py + 10, TP, 4, '#5a3418'); F(px, py + 20, TP, 4, '#5a3418');
+      for (let i = 0; i < 4; i++) { const sx = px + i * 8; F(sx + 1, py - 6, 6, 34, '#7a4a24'); F(sx + 1, py - 6, 2, 34, '#9a6a3a'); F(sx + 2, py - 9, 4, 3, '#7a4a24'); F(sx + 3, py - 11, 2, 2, '#7a4a24'); }
     } else if (t === 'k') {
       x2.fillStyle = 'rgba(0,0,0,.45)'; x2.beginPath(); x2.ellipse(px + 16, py + 28, 14, 4, 0, 0, 7); x2.fill();
       F(px + 6, py + 20, 20, 8, '#2b2540'); F(px + 6, py + 20, 20, 2, '#3a3354');

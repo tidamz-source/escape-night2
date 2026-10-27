@@ -6,11 +6,13 @@ const BTN = {
   a: { x: 440, y: 212, r: 22, label: 'A' },
   b: { x: 394, y: 236, r: 16, label: 'B' },
   start: { x: 458, y: 20, r: 12, label: 'II' },
+  r: { x: 452, y: 168, r: 13, label: 'R' }, // roulade (Rox)
 };
+const hasRoll = () => typeof SAVE !== 'undefined' && DATA.heroes && Heroes.def() && Heroes.def().roll && G.view === 'world';
 
 const Input = {
   dx: 0, dy: 0,
-  held: { a: false, b: false, start: false, up: false, down: false, left: false, right: false },
+  held: { a: false, b: false, r: false, cycle: false, start: false, up: false, down: false, left: false, right: false },
   prev: {},
   padVisible: false,
   gamepadName: '',
@@ -26,7 +28,7 @@ const Input = {
 
   update() {
     this.prev = Object.assign({}, this.held);
-    let dx = 0, dy = 0, a = false, b = false, start = false;
+    let dx = 0, dy = 0, a = false, b = false, r = false, cycle = false, start = false;
     const k = new Set([...this.keys, ...this.taps]); this.taps.clear();
     // clavier (e.code = touches physiques : marche en AZERTY comme en QWERTY)
     if (k.has('ArrowLeft') || k.has('KeyA')) dx -= 1;
@@ -35,6 +37,8 @@ const Input = {
     if (k.has('ArrowDown') || k.has('KeyS')) dy += 1;
     if (k.has('Space') || k.has('KeyJ') || k.has('KeyX') || k.has('Enter')) a = true;
     if (k.has('KeyK') || k.has('KeyC') || k.has('ShiftLeft')) b = true;
+    if (k.has('KeyL') || k.has('ShiftRight')) r = true;
+    if (k.has('KeyE') || k.has('Tab')) cycle = true;
     if (k.has('Escape') || k.has('KeyP')) start = true;
 
     // manette
@@ -45,22 +49,24 @@ const Input = {
       if (Math.hypot(ax, ay) > 0.3) { dx += ax; dy += ay; }
       const bt = i => gp.buttons[i] && gp.buttons[i].pressed;
       if (bt(14)) dx -= 1; if (bt(15)) dx += 1; if (bt(12)) dy -= 1; if (bt(13)) dy += 1;
-      if (bt(0) || bt(2)) a = true;      // A / Croix (et X / Carré)
+      if (bt(0)) a = true;               // A / Croix
       if (bt(1) || bt(3)) b = true;      // B / Rond (et Y / Triangle)
+      if (bt(2)) r = true;               // X / Carré : roulade
+      if (bt(4) || bt(5)) cycle = true;  // LB / RB : changer d'outil
       if (bt(9) || bt(8)) start = true;  // Start / Options
       if (bt(0) || bt(1) || bt(9) || Math.hypot(ax, ay) > 0.5) this.padVisible = false;
     }
 
     // pad virtuel
     if (this.stick.active) { dx += this.stick.x; dy += this.stick.y; }
-    for (const t of this.touches.values()) { if (t.role === 'a') a = true; if (t.role === 'b') b = true; if (t.role === 'start') start = true; }
-    for (const r of this.tapRoles) { if (r === 'a') a = true; if (r === 'b') b = true; if (r === 'start') start = true; }
+    for (const t of this.touches.values()) { if (t.role === 'a') a = true; if (t.role === 'b') b = true; if (t.role === 'r') r = true; if (t.role === 'start') start = true; }
+    for (const q of this.tapRoles) { if (q === 'a') a = true; if (q === 'b') b = true; if (q === 'r') r = true; if (q === 'cycle') cycle = true; if (q === 'start') start = true; }
     this.tapRoles.clear();
 
     const m = Math.hypot(dx, dy);
     if (m > 1) { dx /= m; dy /= m; }
     this.dx = dx; this.dy = dy;
-    Object.assign(this.held, { a, b, start, up: dy < -0.5, down: dy > 0.5, left: dx < -0.5, right: dx > 0.5 });
+    Object.assign(this.held, { a, b, r, cycle, start, up: dy < -0.5, down: dy > 0.5, left: dx < -0.5, right: dx > 0.5 });
     if (this.toast.t > 0) this.toast.t -= 1 / 60;
   },
 
@@ -70,7 +76,7 @@ const Input = {
 // ---------- clavier ----------
 window.addEventListener('keydown', e => {
   audioUnlock();
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)) e.preventDefault();
   Input.keys.add(e.code); Input.taps.add(e.code); Input.padVisible = false;
 });
 window.addEventListener('keyup', e => Input.keys.delete(e.code));
@@ -106,6 +112,8 @@ function stickFrom(p) {
 function stickEnd() { const S = Input.stick; S.active = false; S.x = 0; S.y = 0; S.bx = S.kx = PAD.x; S.by = S.ky = PAD.y; }
 function roleFor(p) {
   if (dist(p.x, p.y, BTN.start.x, BTN.start.y) < BTN.start.r + 8) return 'start';
+  if (p.x < 30 && p.y > 16 && p.y < 44 && G.view === 'world') return 'cycle'; // toucher la case B : outil suivant
+  if (hasRoll() && dist(p.x, p.y, BTN.r.x, BTN.r.y) < BTN.r.r + 6) return 'r';
   if (p.x < W * 0.45) return 'pad';
   const da = dist(p.x, p.y, BTN.a.x, BTN.a.y), db = dist(p.x, p.y, BTN.b.x, BTN.b.y);
   if (db < BTN.b.r * 1.6 && db < da) return 'b';
@@ -116,7 +124,7 @@ cv.addEventListener('touchstart', e => {
   for (const t of e.changedTouches) {
     const p = toInternal(t.clientX, t.clientY), role = roleFor(p);
     Input.touches.set(t.identifier, { role, x: p.x, y: p.y }); Input.lastTap = { x: p.x, y: p.y, time: performance.now() };
-    if (role !== 'pad' && G.state !== 'title') Input.tapRoles.add(role);
+    if (role !== 'pad' && !['title', 'slots', 'heroes'].includes(G.state)) Input.tapRoles.add(role);
     if (role === 'pad') stickStart(p);
   }
 }, { passive: false });
@@ -158,11 +166,11 @@ function drawVirtualPad() {
   ell(S.kx - 3, S.ky - 3, 10, 10, S.active ? '#ffffff' : '#e2e8f8');
   ctx.globalAlpha = 1;
   // boutons
-  for (const key of ['a', 'b']) {
+  for (const key of hasRoll() ? ['a', 'b', 'r'] : ['a', 'b']) {
     const bt = BTN[key], on = Input.held[key];
     ctx.globalAlpha = 0.55; ell(bt.x, bt.y + 2, bt.r, bt.r, 'rgba(7,13,31,.6)');
-    ell(bt.x, bt.y + (on ? 1 : 0), bt.r, bt.r, on ? PAL.glow : (key === 'a' ? '#ff8a9a' : '#c3b3ff'));
-    ctx.globalAlpha = 0.9; text(bt.label, bt.x, bt.y - 6 + (on ? 1 : 0), { size: key === 'a' ? 12 : 10, align: 'center', color: PAL.ink, shadow: false, bold: true });
+    ell(bt.x, bt.y + (on ? 1 : 0), bt.r, bt.r, on ? PAL.glow : (key === 'a' ? '#ff8a9a' : key === 'b' ? '#c3b3ff' : '#ffcf7a'));
+    ctx.globalAlpha = 0.9; text(bt.label, bt.x, bt.y - (key === 'a' ? 6 : 5) + (on ? 1 : 0), { size: key === 'a' ? 12 : 10, align: 'center', color: PAL.ink, shadow: false, bold: true });
   }
   // pause
   ctx.globalAlpha = 0.6; ell(BTN.start.x, BTN.start.y, BTN.start.r, BTN.start.r, 'rgba(7,13,31,.6)');
