@@ -46,7 +46,7 @@ class Pebble {
 class Scratches {
   constructor(x, y, len) { this.x = x; this.y = y; this.len = len; this.ground = true; this.w = 16; this.h = 16; }
   draw() {
-    hi(this.x, this.y, false, () => {
+    hi(this.x, this.y, true, () => { // en miroir : les sillons partent vers la gauche
       const L = this.len * 32, end = L - 20;
       // 3 sillons continus laissés par la stèle, qui s'effilent vers la droite
       [[-24, 3], [-15, 0], [-6, 5]].forEach(([oy, ph]) => {

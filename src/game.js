@@ -152,7 +152,7 @@ function buildCaveArea() {
   const st = T(1, 2, 14, 12);
   A.start = { x: st.x + 8, y: st.y, dir: 'up' };
   A.name = 'La grotte des lucioles';
-  A.dark = 0.42;
+  A.dark = 0.26;
   return A;
 }
 
