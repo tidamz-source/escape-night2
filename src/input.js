@@ -1,7 +1,7 @@
 'use strict';
 // Entrées unifiées : clavier + manette (Gamepad API) + pad virtuel tactile.
 // Le jeu ne lit que Input.dx / Input.dy (-1..1) et Input.pressed('a'|'b'|'start'|'up'|'down').
-const PAD = { x: 64, y: 204, r: 40 };
+const PAD = { x: 70, y: 196, r: 34 };
 const BTN = {
   a: { x: 440, y: 212, r: 22, label: 'A' },
   b: { x: 394, y: 236, r: 16, label: 'B' },
@@ -20,7 +20,7 @@ const Input = {
   touches: new Map(), // id -> { role, x, y }
   tapRoles: new Set(),
   lastTap: null,
-  stick: { x: 0, y: 0, active: false },
+  stick: { x: 0, y: 0, active: false, bx: PAD.x, by: PAD.y, kx: PAD.x, ky: PAD.y },
 
   pressed(k) { return this.held[k] && !this.prev[k]; },
 
@@ -74,7 +74,7 @@ window.addEventListener('keydown', e => {
   Input.keys.add(e.code); Input.taps.add(e.code); Input.padVisible = false;
 });
 window.addEventListener('keyup', e => Input.keys.delete(e.code));
-window.addEventListener('blur', () => { Input.keys.clear(); Input.touches.clear(); Input.stick.active = false; });
+window.addEventListener('blur', () => { Input.keys.clear(); Input.touches.clear(); stickEnd(); });
 
 // ---------- manette ----------
 window.addEventListener('gamepadconnected', e => {
@@ -88,13 +88,22 @@ function toInternal(cx, cy) {
   const r = cv.getBoundingClientRect();
   return { x: (cx - r.left) / r.width * W, y: (cy - r.top) / r.height * H };
 }
-function stickFrom(p) {
-  const vx = p.x - PAD.x, vy = p.y - PAD.y, len = Math.hypot(vx, vy);
-  if (len < 7) { Input.stick.x = 0; Input.stick.y = 0; return; }
-  // 8 directions, comme une vraie croix directionnelle
-  const ang = Math.round(Math.atan2(vy, vx) / (Math.PI / 4)) * (Math.PI / 4);
-  Input.stick.x = Math.round(Math.cos(ang) * 100) / 100; Input.stick.y = Math.round(Math.sin(ang) * 100) / 100;
+// stick analogique flottant : sa base se pose sous le pouce, le bouton suit le doigt
+function stickStart(p) {
+  const S = Input.stick;
+  S.bx = clamp(p.x, PAD.r + 6, W * 0.45 - PAD.r * 0.5); S.by = clamp(p.y, PAD.r + 20, H - PAD.r - 6);
+  S.active = true; stickFrom(p);
 }
+function stickFrom(p) {
+  const S = Input.stick, vx = p.x - S.bx, vy = p.y - S.by, len = Math.hypot(vx, vy), R = PAD.r;
+  const k = len > R ? R / len : 1;
+  S.kx = S.bx + vx * k; S.ky = S.by + vy * k;
+  const m = Math.min(1, len / R), dead = 0.18;
+  if (m < dead) { S.x = 0; S.y = 0; return; }
+  const out = (m - dead) / (1 - dead) * 0.65 + 0.35; // petite poussée = marche lente, à fond = vitesse max
+  S.x = vx / len * out; S.y = vy / len * out;
+}
+function stickEnd() { const S = Input.stick; S.active = false; S.x = 0; S.y = 0; S.bx = S.kx = PAD.x; S.by = S.ky = PAD.y; }
 function roleFor(p) {
   if (dist(p.x, p.y, BTN.start.x, BTN.start.y) < BTN.start.r + 8) return 'start';
   if (p.x < W * 0.45) return 'pad';
@@ -108,7 +117,7 @@ cv.addEventListener('touchstart', e => {
     const p = toInternal(t.clientX, t.clientY), role = roleFor(p);
     Input.touches.set(t.identifier, { role, x: p.x, y: p.y }); Input.lastTap = { x: p.x, y: p.y, time: performance.now() };
     if (role !== 'pad' && G.state !== 'title') Input.tapRoles.add(role);
-    if (role === 'pad') { Input.stick.active = true; stickFrom(p); }
+    if (role === 'pad') stickStart(p);
   }
 }, { passive: false });
 cv.addEventListener('touchmove', e => {
@@ -123,7 +132,7 @@ function endTouch(e) {
   e.preventDefault();
   for (const t of e.changedTouches) {
     const s = Input.touches.get(t.identifier);
-    if (s && s.role === 'pad') { Input.stick.active = false; Input.stick.x = 0; Input.stick.y = 0; }
+    if (s && s.role === 'pad') stickEnd();
     Input.touches.delete(t.identifier);
   }
 }
@@ -136,24 +145,18 @@ window.addEventListener('mouseup', () => Input.keys.delete('Enter'));
 // ---------- rendu du pad virtuel ----------
 function drawVirtualPad() {
   if (!Input.padVisible) return;
-  const sx = Input.stick.x, sy = Input.stick.y;
-  ctx.save(); ctx.globalAlpha = 0.55;
-  // croix directionnelle
-  const arm = 13, len = 36;
-  const arms = [[0, -1], [0, 1], [-1, 0], [1, 0]];
-  ell(PAD.x, PAD.y, PAD.r + 4, PAD.r + 4, 'rgba(7,13,31,.45)');
-  for (const [ax, ay] of arms) {
-    const on = (ax && Math.sign(sx) === ax) || (ay && Math.sign(sy) === ay);
-    const x = ax ? (ax < 0 ? PAD.x - len : PAD.x) : PAD.x - arm / 2, y = ay ? (ay < 0 ? PAD.y - len : PAD.y) : PAD.y - arm / 2;
-    const w = ax ? len : arm, h = ay ? len : arm;
-    R(x, y, w, h, on ? PAL.glow : '#c8d2f0');
-    R(x, y + h - 2, w, 2, 'rgba(0,0,0,.25)');
-  }
-  R(PAD.x - arm / 2, PAD.y - arm / 2, arm, arm, '#c8d2f0');
-  // petits triangles
-  ctx.globalAlpha = 0.8; ctx.fillStyle = PAL.deep;
-  const tri = (x, y, r) => { ctx.save(); ctx.translate(x, y); ctx.rotate(r); ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(3, 2); ctx.lineTo(-3, 2); ctx.fill(); ctx.restore(); };
-  tri(PAD.x, PAD.y - 26, 0); tri(PAD.x, PAD.y + 26, Math.PI); tri(PAD.x - 26, PAD.y, -Math.PI / 2); tri(PAD.x + 26, PAD.y, Math.PI / 2);
+  const S = Input.stick;
+  ctx.save();
+  // stick rond : socle + bouton qui suit le doigt
+  ctx.globalAlpha = S.active ? 0.6 : 0.4;
+  ell(S.bx, S.by, PAD.r + 4, PAD.r + 4, 'rgba(7,13,31,.55)');
+  ctx.strokeStyle = S.active ? PAL.glow : '#c8d2f0'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(S.bx, S.by, PAD.r, 0, 7); ctx.stroke();
+  ctx.globalAlpha = S.active ? 0.25 : 0.12; ctx.strokeStyle = '#c8d2f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(S.bx, S.by, PAD.r * 0.55, 0, 7); ctx.stroke();
+  ctx.globalAlpha = S.active ? 0.85 : 0.55;
+  ell(S.kx, S.ky + 2, 17, 17, 'rgba(7,13,31,.6)');
+  ell(S.kx, S.ky, 17, 17, S.active ? '#d8f8f4' : '#c8d2f0');
+  ell(S.kx - 3, S.ky - 3, 10, 10, S.active ? '#ffffff' : '#e2e8f8');
+  ctx.globalAlpha = 1;
   // boutons
   for (const key of ['a', 'b']) {
     const bt = BTN[key], on = Input.held[key];

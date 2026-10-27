@@ -94,7 +94,7 @@ function buildCaveArea() {
       onClear(G) { const p = pos(R.boss, 240, 150); const h = new HeartContainer(p.x, p.y); h.room = R.boss; G.area.ents.push(h); },
     },
   };
-  A.roomDark = room => room === R.boss && SAVE.boss ? 0.45 : room === R.sling && SAVE.slingshot ? 0.74 : null;
+  A.roomDark = room => room === R.boss && SAVE.boss ? 0.28 : null;
   A.makeRoom = function (room) {
     const L = [];
     if (room === R.entry) L.push(mk(Pot, room, 4, 13), mk(Pot, room, 5, 13), mk(Pot, room, 24, 13), mk(Pot, room, 25, 13), mk(Bat, room, 9, 8), mk(Bat, room, 21, 9));
@@ -135,6 +135,7 @@ function buildCaveArea() {
       [R.arena, new Chest(pos(R.arena, 240, 150).x, pos(R.arena, 240, 150).y, { flag: 'caveKeyChest', reveal: 'arenaW', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de cette grotte.' }] })],
       [R.arena, mk(Brazier, R.arena, 4, 7)], [R.arena, mk(Brazier, R.arena, 25, 9)],
       [R.block, new Shutter(d3.x, d3.y, 'v', () => !SAVE.plateE)],
+      [R.block, mk(Scratches, R.block, 8, 9, 3)],
       [R.block, mk(Plate, R.block, 19, 6, 'plateE')],
       [R.block, mk(Brazier, R.block, 11, 3)], [R.block, mk(Brazier, R.block, 18, 3)],
       [R.sling, new Chest(pos(R.sling, 240, 140).x, pos(R.sling, 240, 140).y, { flag: 'slingChest', give: 'sling', big: true, msg: [{ text: 'Tu as trouvé le lance-pierre !' }, { text: 'Appuie sur B pour tirer un caillou. Parfait pour toucher ce qui est hors de portée.' }] })],
@@ -151,7 +152,7 @@ function buildCaveArea() {
   const st = T(1, 2, 14, 12);
   A.start = { x: st.x + 8, y: st.y, dir: 'up' };
   A.name = 'La grotte des lucioles';
-  A.dark = 0.74;
+  A.dark = 0.42;
   return A;
 }
 
@@ -446,7 +447,7 @@ const G = {
   },
   lightsList(cx, cy) {
     const A = this.area, P = this.player, L = [];
-    L.push({ x: P.x, y: P.y - 12, r: A.id === 'camp' ? 84 : 72, c: 'rgba(200,220,255,' });
+    L.push({ x: P.x, y: P.y - 12, r: A.id === 'camp' ? 96 : A.id === 'cave' ? 100 : 86, c: 'rgba(200,220,255,' });
     for (const p of A.props) if (p.light) L.push({ x: p.x, y: p.y + (p.light.oy || -8), r: p.light.r, c: p.light.c, flick: p.light.flick, warm: p.light.warm });
     for (const e of A.ents) { if (e.dead || (!this.slide && !this.inRoom(e))) continue; const li = e.light; if (li) L.push({ x: e.x, y: e.y - (e.alt || 6) - 6, r: li.r, c: li.c, flick: li.flick, warm: li.warm }); }
     return L.filter(l => l.x + l.r > cx && l.x - l.r < cx + W && l.y + l.r > cy && l.y - l.r < cy + H);
@@ -461,8 +462,8 @@ const G = {
     for (const o of L) {
       const r = (o.r + (o.flick ? Math.sin(this.t * 13) * 3 + Math.sin(this.t * 7.3) * 2 : 0)) * SC, x = (o.x - cx) * SC, y = (o.y - cy) * SC;
       const g = l.createRadialGradient(x, y, 0, x, y, r);
-      // anneaux "pixel" plutôt qu'un dégradé lisse
-      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.45, 'rgba(0,0,0,1)'); g.addColorStop(0.46, 'rgba(0,0,0,.72)'); g.addColorStop(0.7, 'rgba(0,0,0,.72)'); g.addColorStop(0.71, 'rgba(0,0,0,.38)'); g.addColorStop(0.92, 'rgba(0,0,0,.38)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      // dégradé continu : plein au centre, s'efface doucement jusqu'au bord
+      for (let i = 0; i <= 10; i++) { const t = i / 10, a = Math.pow(1 - t * t, 2); g.addColorStop(t, `rgba(0,0,0,${a.toFixed(3)})`); }
       l.fillStyle = g; l.beginPath(); l.arc(x, y, r, 0, 7); l.fill();
     }
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(this.light, 0, 0);
@@ -471,7 +472,7 @@ const G = {
     for (const o of L) {
       if (o.c.startsWith('rgba(200,220,255')) continue;
       const r = o.r * SC * (o.warm ? 0.8 : 0.6), x = (o.x - cx) * SC, y = (o.y - cy) * SC, k = o.flick ? 0.16 + Math.sin(this.t * 11) * 0.03 : 0.12;
-      const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, o.c + k + ')'); g.addColorStop(1, o.c + '0)');
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r); for (let i = 0; i <= 8; i++) { const t = i / 8; g.addColorStop(t, o.c + (k * 1.3 * Math.pow(1 - t * t, 2)).toFixed(3) + ')'); }
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
     }
     ctx.restore(); resetT();

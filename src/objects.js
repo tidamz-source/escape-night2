@@ -18,9 +18,9 @@ function drawSlingIcon(x, y, s = 1, flip = false) {
 }
 // ---------- caillou du lance-pierre ----------
 class Pebble {
-  constructor(x, y, dir, room) {
-    const [vx, vy] = DV[dir];
-    this.x = x + vx * 6; this.y = y + vy * 4 + (dir === 'up' ? -2 : 1); this.alt = 9;
+  constructor(x, y, vx, vy, room) {
+    const n = Math.hypot(vx, vy) || 1; vx /= n; vy /= n;
+    this.x = x + vx * 6; this.y = y + vy * 4 + (vy < 0 ? -2 : 1); this.alt = 9;
     this.vx = vx * 240; this.vy = vy * 240; this.t = 0; this.w = 4; this.h = 3; this.room = room; this.isShot = true;
   }
   poof(G) { this.dead = true; G.parts.burst(this.x, this.y - this.alt, 5, { c: ['#b8b4c8', '#fff', '#6a6480'], life: 0.25, smin: 20, smax: 60, r: 1 }); }
@@ -40,6 +40,26 @@ class Pebble {
     if (this.t > 1.1) this.poof(G);
   }
   draw() { ell(this.x, this.y, 2, 0.8, 'rgba(0,0,0,.35)'); const y = this.y - this.alt; R(half(this.x - 1.5), half(y - 1.5), 3, 3, '#8a8698'); R(half(this.x - 1.5), half(y - 1.5), 1.5, 1.5, '#d8d4e8'); }
+}
+
+// ---------- rayures au sol : indiquent qu'une stèle peut être poussée ----------
+class Scratches {
+  constructor(x, y, len) { this.x = x; this.y = y; this.len = len; this.ground = true; this.w = 16; this.h = 16; }
+  draw() {
+    hi(this.x, this.y, false, () => {
+      const L = this.len * 32, end = L - 20;
+      // 3 sillons continus laissés par la stèle, qui s'effilent vers la droite
+      [[-24, 3], [-15, 0], [-6, 5]].forEach(([oy, ph]) => {
+        for (let x = -12; x < end; x += 2) {
+          if (((x + ph * 7) % 23) > 20) continue;              // petites interruptions irrégulières
+          const wob = ((x + ph) >> 4) & 1, thin = x > end - 14;
+          D(x, oy + wob, 2, thin ? 1 : 2, '#0b0c15');
+          D(x, oy + wob + (thin ? 1 : 2), 2, 1, '#4c5174');
+        }
+      });
+      for (const [ex, ey] of [[20, -28], [44, -8], [70, -22], [-10, -2]]) if (ex < L - 18) D(ex, ey, 2, 2, '#4a4e6a');
+    });
+  }
 }
 
 // ---------- ramassables ----------

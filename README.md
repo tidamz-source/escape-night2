@@ -15,9 +15,9 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 ## Contrôles
 | | Clavier | Manette | Tactile |
 |---|---|---|---|
-| Se déplacer | Flèches / ZQSD | Stick gauche / croix | Croix virtuelle (gauche) |
+| Se déplacer | Flèches / ZQSD | Stick gauche / croix | Stick rond flottant (moitié gauche) |
 | A : branche, parler, ouvrir | Espace / J / Entrée | A (Croix) | Bouton A |
-| B : objet (à venir) | K / C | B (Rond) | Bouton B |
+| B : lance-pierre (8 directions) | K / C | B (Rond) | Bouton B |
 | Pause | Échap / P | Start | Bouton II |
 
 ## Structure

@@ -99,7 +99,7 @@ class Player {
     this.anim = 0; this.moving = false; this.atk = 0; this.atkHit = new Set();
     this.inv = 0; this.kb = { x: 0, y: 0, t: 0 }; this.hp = SAVE.maxHp; this.bump = 0;
     this.vx = 0; this.vy = 0; // vitesse lissée (accélération / freinage)
-    this.shootCd = 0; this.shootT = 0; this.pushT = 0;
+    this.shootCd = 0; this.shootT = 0; this.pushT = 0; this.aim = DV[dir].slice();
   }
   body() { return { x: this.x - 6, y: this.y - 16, w: 12, h: 16 }; }
   atkBox() {
@@ -134,7 +134,7 @@ class Player {
     // B : lance-pierre
     if (Input.pressed('b') && SAVE.slingshot && this.shootCd <= 0) {
       this.shootCd = 0.3; this.shootT = 0.18; SFX.sling();
-      G.area.ents.push(new Pebble(this.x, this.y, this.dir, G.room));
+      G.area.ents.push(new Pebble(this.x, this.y, this.aim[0], this.aim[1], G.room));
     }
     // A : interaction ou attaque
     if (Input.pressed('a')) {
@@ -145,6 +145,9 @@ class Player {
     let dx = Input.dx, dy = Input.dy;
     const input = Math.hypot(dx, dy) > 0.2;
     if (input) {
+      // visée en 8 directions pour le lance-pierre
+      const ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+      this.aim = [Math.round(Math.cos(ang) * 1000) / 1000, Math.round(Math.sin(ang) * 1000) / 1000];
       // direction : on garde l'orientation courante en diagonale (comme ALttP)
       const want = Math.abs(dx) > Math.abs(dy) + 0.01 ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
       const cur = DV[this.dir], keep = (cur[0] && Math.sign(dx) === cur[0] && Math.abs(dx) > 0.3) || (cur[1] && Math.sign(dy) === cur[1] && Math.abs(dy) > 0.3);
@@ -192,9 +195,9 @@ class Player {
     if (this.shootT > 0 && this.dir !== 'up') this.drawSling();
   }
   drawSling() {
-    const [vx, vy] = DV[this.dir], k = this.shootT / 0.18;
+    const [vx, vy] = this.aim, k = this.shootT / 0.18;
     const x = this.x + vx * (7 + k * 2), y = this.y - 10 + vy * 4;
-    drawSlingIcon(x, y, 1, this.dir === 'left');
+    drawSlingIcon(x, y, 1, vx < 0);
   }
   drawBranch(p) {
     // la branche balaie un arc de 130° devant Sacha

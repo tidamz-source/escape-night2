@@ -136,10 +136,10 @@ function renderLayer(g, theme) {
     if (moss) for (let i = 0; i < 10; i++) F(px + Math.floor(r() * 28), py + Math.floor(r() * 28), 3, 2, pick2(['#2f5a46', '#386a50', '#2a4d3d']));
   }
   function floorCave(px, py, moss) {
-    F(px, py, TP, TP, '#1b1d29');
-    if (r() < 0.55) F(px, py, TP, 1, '#151722');
-    if (r() < 0.55) F(px, py, 1, TP, '#151722');
-    for (let i = 0; i < 16; i++) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 2, 1, pick2(['#21243a', '#171925', '#25283c', '#1e2030']));
+    F(px, py, TP, TP, '#23263a');
+    if (r() < 0.55) F(px, py, TP, 1, '#1a1c2a');
+    if (r() < 0.55) F(px, py, 1, TP, '#1a1c2a');
+    for (let i = 0; i < 16; i++) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 2, 1, pick2(['#2a2e46', '#1d2030', '#2e3248', '#262940']));
     if (r() < 0.3) { const cx = px + 4 + Math.floor(r() * 20), cy = py + 4 + Math.floor(r() * 20); F(cx, cy, 5, 1, '#111320'); F(cx + 4, cy + 1, 3, 1, '#111320'); }
     if (r() < 0.25) F(px + Math.floor(r() * 26), py + Math.floor(r() * 26), 4, 3, '#262a3e');
     if (moss) for (let i = 0; i < 6; i++) { const mx = px + Math.floor(r() * 28), my = py + Math.floor(r() * 28); F(mx, my, 2, 2, '#1f4a4a'); if (r() < 0.5) F(mx, my, 1, 1, '#6fe0d0'); }
