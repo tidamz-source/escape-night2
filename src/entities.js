@@ -169,6 +169,11 @@ class Player {
       this.shootCd = 0.3; this.shootT = 0.18; SFX.sling();
       G.area.ents.push(new Pebble(this.x, this.y, this.aim[0], this.aim[1], G.room));
     }
+    if (tool === 'frisbee') {
+      if (G.area.ents.some(e => e.isFrisbee && !e.dead)) return; // un seul frisbee à la fois
+      this.shootCd = 0.25; this.shootT = 0.18; SFX.throw();
+      G.area.ents.push(new Frisbee(this, this.aim[0], this.aim[1], G.room));
+    }
   }
   // fait tendre la vitesse vers (tx, ty) puis déplace Sacha ; renvoie true en cas de collision
   glide(dt, G, tx, ty, k, inp) {
@@ -204,7 +209,8 @@ class Player {
   drawSling() {
     const [vx, vy] = this.aim, k = this.shootT / 0.18;
     const x = this.x + vx * (7 + k * 2), y = this.y - 10 + vy * 4;
-    drawSlingIcon(x, y, 1, vx < 0);
+    if (Inventory.tool() === 'frisbee') { if (!G.area.ents.some(e => e.isFrisbee)) drawFrisbeeIcon(x, y, 0.8); }
+    else drawSlingIcon(x, y, 1, vx < 0);
   }
   drawBranch(p) {
     // la branche balaie un arc de 130° devant Sacha
@@ -251,6 +257,7 @@ class Enemy {
   physics(dt, G, fly) {
     if (this.flash > 0) this.flash -= dt;
     if (this.kb.t > 0) { this.kb.t -= dt; if (fly) { this.x += this.kb.x * dt; this.y += this.kb.y * dt; this.clampArea(G); } else { moveEnt(G.area, this, this.kb.x * dt, 0, { noExit: true }); moveEnt(G.area, this, 0, this.kb.y * dt, { noExit: true }); } return true; }
+    if (this.stunT > 0) { this.stunT -= dt; this.touchStunned = true; return true; } // étourdi (frisbee)
     return false;
   }
   clampArea(G) { const r = G.area.enemyBounds || G.roomRect(); this.x = clamp(this.x, r.x + 20, r.x + r.w - 20); this.y = clamp(this.y, r.y + 24, r.y + r.h - 16); }

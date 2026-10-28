@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v1.0.0';
+const VERSION = 'v2.0.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -47,6 +47,7 @@ const IMG = {};
 const SHEETS = {}; // planches des héros (format Aseprite JSON)
 const HERO_SHEETS = ['sacha', 'cam', 'rox'];
 const FACES = ['sacha', 'cam', 'rox', 'papa', 'amandine', 'claudine'].flatMap(w => ['smile', 'o', 'angry', 'wink'].map(m => `${w}_${m}`)).filter(k => k !== 'amandine_o' && k !== 'amandine_angry' && k !== 'amandine_wink' && k !== 'claudine_o' && k !== 'claudine_angry' && k !== 'claudine_wink');
+const NPC_SPRITES = ['claudine', 'dog_down'];
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
 function loadImage(key, src) {
   return new Promise(r => { const i = new Image(); i.onload = () => { IMG[key] = i; r(); }; i.onerror = () => { console.warn('image manquante', src); r(); }; i.src = src; });
@@ -58,6 +59,7 @@ function loadAssets() {
     jobs.push(fetch(`assets/${h}.json?v=${VERSION}`).then(r => r.json()).then(j => { SHEETS[h] = j; }).catch(() => {}));
   }
   for (const f of FACES) jobs.push(loadImage('face_' + f, `assets/faces/${f}.png?v=${VERSION}`));
+  for (const k of NPC_SPRITES) jobs.push(loadImage('npc_' + k, `assets/npc/${k}.png?v=${VERSION}`));
   jobs.push(loadData());
   return Promise.all(jobs);
 }
@@ -141,5 +143,9 @@ const SFX = {
   rift() { tone(220, 1.2, { to: 880, type: 'sine', vol: 0.12 }); tone(330, 1.2, { to: 1320, type: 'triangle', vol: 0.08 }); noise(1.2, { freq: 1500, vol: 0.1 }); },
   roll() { noise(0.15, { freq: 700, vol: 0.15 }); },
   drink() { [523, 659, 784].forEach((f, i) => tone(f, 0.12, { vol: 0.1, delay: i * 0.08, type: 'sine' })); },
+  throw() { noise(0.25, { filter: 'bandpass', freq: 1400, vol: 0.12 }); tone(600, 0.2, { to: 900, type: 'sine', vol: 0.06 }); },
+  catch() { tone(980, 0.05, { vol: 0.08, type: 'triangle' }); },
+  hoot() { tone(330, 0.25, { to: 300, type: 'sine', vol: 0.18 }); tone(330, 0.35, { to: 280, type: 'sine', vol: 0.18, delay: 0.32 }); },
+  wind() { noise(1.6, { filter: 'bandpass', freq: 500, vol: 0.12 }); },
   bigheart() { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, { vol: 0.1, delay: i * 0.09, type: 'triangle' })); },
 };

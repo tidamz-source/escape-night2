@@ -69,11 +69,11 @@ function buildRoyaumeArea() {
     { x: 208, y: 592, o: { w: 6, d: 4, sign: 'inn', roof: '#8a3a3a', chimney: true } },
     { x: 128, y: 720, o: { w: 6, d: 4, sign: 'forge', roof: '#4a4450', wall: '#a8a0a8', chimney: true } },
     { x: 640, y: 720, o: { w: 6, d: 4, sign: 'shop', roof: '#a85a2a' } },
-    { x: 144, y: 864, o: { w: 6, d: 4, roof: '#6a5a3a' } },
+    { x: 144, y: 864, o: { w: 6, d: 4, roof: '#6a5a3a', sign: 'kitchen', chimney: true } },
     { x: 624, y: 864, o: { w: 6, d: 4, roof: '#3a6a4a' } },
   ];
   const keep = A.houses.map(h => ({ x: h.x - 60, y: h.y - 90, w: 120, h: 120 }));
-  keep.push({ x: px - 180, y: py - 110, w: 360, h: 220 }, { x: 330, y: gy - 30, w: 110, h: 60 }, { x: 330, y: 820, w: 110, h: 140 });
+  keep.push({ x: px - 180, y: py - 110, w: 360, h: 220 }, { x: 330, y: gy - 30, w: 110, h: 60 }, { x: 330, y: 820, w: 110, h: 140 }, { x: 0, y: 260, w: 140, h: 140 });
   scatter(A, 41, keep, { trees: 48, rocks: 14, flowers: 22, bushes: 34 });
   A.spawn = function () {
     this.ents = [];
@@ -92,6 +92,12 @@ function buildRoyaumeArea() {
     this.ents.push(new NPC(560, 770, { look: 'mahaut', talk: 'villageois3' }));
     this.ents.push(new NPC(270, 818, { look: 'forain', talk: 'forain' }), new Prop(270, 792, 'stall'));
     this.ents.push(new NPC(px + 30, py + 40, { hero: () => Heroes.captive(1), talk: 'enfant1', when: 'freed1' }));
+    this.ents.push(new NPC(144, 886, { sprite: 'claudine', shop: 'cuisine', when: 'freed2' }));
+    // la rivière de l'ouest : cible et pont-levis vers le Bois des murmures
+    const bx = ROY.bridge.x * TS, by = ROY.bridge.y * TS;
+    this.ents.push(new Target(56, by - 14, 'drawbridge', G => { G.area.syncTiles(); G.say(Story.script('bridge_down')); }));
+    this.ents.push(new DrawbridgeDeco(bx - 4, by + 18));
+    this.ents.push(new Sign(140, by - 6, [{ text: '« Pont-levis du Bois des murmures. Fermé par ordre du Roi Minuit. »' }, { who: '{hero}', text: 'Il y a une cible sur l\'autre rive… Si seulement je pouvais l\'atteindre.', face: 'o' }]));
     this.ents.push(new Prop(168, 734, 'anvil'), new Prop(680, 732, 'barrel'), new Prop(694, 742, 'crate'), new Prop(250, 600, 'barrel'));
     this.ents.push(new Sign(px + 36, gy - 4, [{ text: '« Collines du Nord. Au bout du sentier : la grotte des lucioles. »' }]));
     this.ents.push(new Rift(px, 928, { active: () => false, closed: 'La faille par laquelle tu es arrivé{e} s\'est refermée. Lumi dit qu\'elle se rouvrira quand le jour se lèvera.' }));
@@ -99,10 +105,17 @@ function buildRoyaumeArea() {
     this.ents.push(new Raccoon(170, 300), new Raccoon(620, 250), new Raccoon(300, 150), new Raccoon(660, 420), new Raccoon(120, 420));
     this.ents.push(new Bat(220, 110), new Bat(560, 90), new Bat(470, 300), new Shadow(430, 70));
   };
+  A.syncTiles = function () {
+    const want = SAVE.drawbridge ? 'b' : '~', B = ROY.bridge; let changed = false;
+    for (let y = B.y; y < B.y + B.h; y++) for (let x = B.x; x < B.x + B.w; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; changed = true; }
+    if (changed) this.rerender();
+  };
+  const spawn0 = A.spawn; A.spawn = function () { this.syncTiles(); spawn0.call(this); };
   A.enemyBounds = { x: 24, y: 24, w: A.w - 48, h: gy - 40 };
   A.roomDark = () => Math.max(0.2, 0.52 - 0.05 * (SAVE.fragments || 0));
   A.arrival = { x: px, y: 892, dir: 'up' };
   A.fromCave = { x: px, y: 56, dir: 'down' };
+  A.fromBois = { x: 48, y: ROY.bridge.y * TS + 24, dir: 'right' };
   A.start = { x: px, y: py + 50, dir: 'down' };
   A.name = 'Bourg-Luciole';
   A.dark = 0.52;
@@ -123,6 +136,7 @@ function placeFixed(A, list) { for (const [room, e] of list) { e.room = room; A.
 function buildCaveArea() {
   const A = new Area('cave', buildCave(), 'cave'), R = CAVE_ROOMS;
   A.rooms = { cols: 3, rows: 3, list: [R.entry, R.arena, R.block, R.sling, R.chasm, R.boss] };
+  A.map = { title: 'La grotte des lucioles', links: [[R.entry, R.arena], [R.entry, R.block], [R.entry, R.chasm], [R.block, R.sling], [R.chasm, R.boss]], boss: R.boss, bossFlag: 'boss' };
   const rxy = i => [i % 3, Math.floor(i / 3)];
   const at = (room, tx, ty) => { const [rx, ry] = rxy(room); return T(rx, ry, tx, ty); };
   const pos = (room, x, y) => { const [rx, ry] = rxy(room); return { x: rx * ROOM_W + x, y: ry * ROOM_H + y }; };
@@ -190,7 +204,7 @@ function buildCaveArea() {
       [R.chasm, mk(Sign, R.chasm, 11, 12, [{ text: '« Le pont dort tant que le cristal dort. »' }, { who: '{hero}', text: 'Le cristal est de l\'autre côté du gouffre… Impossible de l\'atteindre à la main.', face: 'o' }], 'stone')],
       [R.chasm, mk(Brazier, R.chasm, 4, 11)], [R.chasm, mk(Brazier, R.chasm, 25, 11)], [R.chasm, mk(Brazier, R.chasm, 5, 3)],
       [R.boss, new Shutter(d4.x, d4.y, 'v', arenaShut(R.boss))],
-      [R.boss, new Cage(cg.x, cg.y)],
+      [R.boss, new Cage(cg.x, cg.y, { n: 1, boss: 'boss', drawCaptive: (x, y, t) => drawHero(Heroes.captive(1), x, y, 'down', false, t) })],
       [R.boss, mk(Brazier, R.boss, 4, 3)], [R.boss, mk(Brazier, R.boss, 25, 3)], [R.boss, mk(Brazier, R.boss, 4, 13)], [R.boss, mk(Brazier, R.boss, 25, 13)],
     ]);
     if (SAVE.boss && !SAVE.heart2) { const p = pos(R.boss, 240, 170); placeFixed(this, [[R.boss, new HeartContainer(p.x, p.y)]]); }
@@ -200,5 +214,73 @@ function buildCaveArea() {
   A.start = { x: st.x + 8, y: st.y, dir: 'up' };
   A.name = 'La grotte des lucioles';
   A.dark = 0.26;
+  return A;
+}
+
+// ---------- donjon 2 : le Bois des murmures ----------
+function buildBoisArea() {
+  const A = new Area('bois', buildBois(), 'forest'), R = BOIS_ROOMS;
+  A.rooms = { cols: 3, rows: 3, list: [R.entry, R.arena, R.pond, R.mill, R.frisbee, R.switches, R.boss] };
+  A.map = { title: 'Le Bois des murmures', links: [[R.entry, R.arena], [R.entry, R.pond], [R.entry, R.mill], [R.mill, R.frisbee], [R.mill, R.switches], [R.mill, R.boss]], boss: R.boss, bossFlag: 'boss2' };
+  const rxy = i => [i % 3, Math.floor(i / 3)];
+  const at = (room, tx, ty) => { const [rx, ry] = rxy(room); return T(rx, ry, tx, ty); };
+  const pos = (room, x, y) => { const [rx, ry] = rxy(room); return { x: rx * ROOM_W + x, y: ry * ROOM_H + y }; };
+  const mk = (C, room, tx, ty, ...args) => { const p = at(room, tx, ty); return new C(p.x, p.y, ...args); };
+  const bush = (room, tx, ty) => Object.assign(mk(Bush, room, tx, ty), { loot: 'bushBois' });
+  const pot = (room, tx, ty) => Object.assign(mk(Pot, room, tx, ty), { loot: 'potBois' });
+  A.windRoom = R.mill; // le vent du moulin souffle vers le sud, par rafales
+  A.arenas = {
+    [R.arena]: { flag: 'arenaB' },
+    [R.boss]: {
+      flag: 'boss2',
+      onStart(G) { const b = G.area.ents.find(e => e.isBoss); if (b) b.wake(G); G.banner = { text: 'Le Grand-Duc', t: 2.2 }; },
+      onClear(G) { const p = pos(R.boss, 240, 170); const h = Object.assign(new HeartContainer(p.x, p.y), { flag: 'heart3' }); h.room = R.boss; G.area.ents.push(h); },
+    },
+  };
+  A.roomDark = room => room === R.boss && SAVE.boss2 ? 0.12 : null;
+  A.makeRoom = function (room) {
+    const L = [];
+    if (room === R.entry) L.push(bush(room, 4, 4), bush(room, 25, 4), bush(room, 4, 12), bush(room, 25, 12), mk(Boar, room, 20, 8), mk(Crow, room, 9, 6), mk(Crow, room, 20, 5));
+    if (room === R.arena) { L.push(pot(room, 4, 3), pot(room, 25, 3), pot(room, 4, 13)); if (!SAVE.arenaB) L.push(mk(Boar, room, 6, 8), mk(Boar, room, 23, 8), mk(Squirrel, room, 14, 4), mk(Squirrel, room, 10, 12)); }
+    if (room === R.pond) L.push(mk(Crow, room, 6, 4), mk(Crow, room, 24, 4), mk(Squirrel, room, 25, 12), bush(room, 4, 13), bush(room, 25, 13), bush(room, 4, 3));
+    if (room === R.mill) L.push(mk(Boar, room, 15, 5), mk(Squirrel, room, 4, 3), mk(Squirrel, room, 25, 12), bush(room, 3, 13), bush(room, 26, 3), pot(room, 26, 13));
+    if (room === R.frisbee) L.push(mk(Crow, room, 8, 7), mk(Crow, room, 21, 7), mk(Boar, room, 14, 12), pot(room, 3, 3), pot(room, 26, 3));
+    if (room === R.switches) L.push(mk(Squirrel, room, 14, 4), mk(Squirrel, room, 14, 11), mk(Boar, room, 6, 11), bush(room, 3, 13), bush(room, 26, 13));
+    if (room === R.boss) { if (!SAVE.boss2) { const p = pos(R.boss, 240, 130); L.push(new GreatOwl(p.x, p.y, R.boss)); } L.push(pot(room, 3, 12), pot(room, 26, 12)); }
+    return L;
+  };
+  A.spawn = function () {
+    this.ents = [];
+    const door = (room, side) => side === 'N' ? pos(room, 240, 32) : side === 'S' ? pos(room, 240, 272) : side === 'E' ? pos(room, 464, 144) : pos(room, 16, 144);
+    const arenaShut = room => () => G.area.arenaOn === room;
+    const dN = door(R.entry, 'N'), dA = door(R.arena, 'E'), dE = door(R.mill, 'E'), dB = door(R.mill, 'N'), dS = door(R.boss, 'S');
+    const ac = pos(R.arena, 240, 150), fc = pos(R.frisbee, 240, 140), cg = pos(R.boss, 240, 66), isl = pos(R.pond, 240, 144);
+    const shrooms = (room, pts) => pts.map(([x, y]) => [room, mk(Glowshroom, room, x, y)]);
+    placeFixed(this, [
+      [R.entry, new KeyDoor(dN.x, dN.y, 'boisDoor1')],
+      [R.entry, mk(Sign, R.entry, 14, 10, [{ text: '« Bois des murmures. Le vent du vieux moulin ne souffle jamais longtemps. »' }])],
+      [R.arena, new Shutter(dA.x, dA.y, 'h', arenaShut(R.arena))],
+      [R.arena, new Chest(ac.x, ac.y, { flag: 'boisKeyChest', reveal: 'arenaB', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ce bois.' }] })],
+      [R.pond, new KeyPickup(isl.x, isl.y, 'boisKey2')],
+      [R.pond, mk(Sign, R.pond, 14, 13, [{ text: '« Ce qui brille sur l\'îlot ne se rapporte qu\'en volant. »' }, { who: '{hero}', text: 'Une clé, là-bas… Trop loin pour nager.', face: 'o' }])],
+      [R.mill, new KeyDoor(dE.x, dE.y, 'boisDoor2')],
+      [R.mill, new Shutter(dB.x, dB.y, 'v', () => !SAVE.switchesB)],
+      [R.mill, mk(Sign, R.mill, 14, 13, [{ text: '« Au nord, le nid du Grand-Duc. La grille ne s\'ouvre que lorsque brillent les deux lanternes de l\'est. »' }])],
+      [R.frisbee, new Chest(fc.x, fc.y, { flag: 'frisbeeChest', give: 'frisbee', big: true, msg: [{ text: 'Tu as trouvé le frisbee !' }, { text: 'Bouton B : il part en arc et revient. Il étourdit les ennemis, rapporte les objets et passe au-dessus des souches et de l\'eau.' }, { text: 'Change d\'outil avec E, les gâchettes LB/RB, ou en touchant la case B.' }] })],
+      [R.switches, mk(FrisbeeSwitch, R.switches, 8, 4, 'switchesB')], [R.switches, mk(FrisbeeSwitch, R.switches, 21, 4, 'switchesB')],
+      [R.switches, mk(Sign, R.switches, 14, 9, [{ text: '« Deux lanternes, un seul souffle. Elles ne brillent ensemble que quelques secondes. »' }])],
+      [R.boss, new Shutter(dS.x, dS.y, 'v', arenaShut(R.boss))],
+      [R.boss, new Cage(cg.x, cg.y, { n: 2, boss: 'boss2', drawCaptive: (x, y) => drawSprite('claudine', x, y) })],
+      ...shrooms(R.entry, [[3, 7], [26, 9]]), ...shrooms(R.arena, [[3, 8], [26, 6]]), ...shrooms(R.pond, [[3, 6], [26, 8]]),
+      ...shrooms(R.mill, [[3, 8], [26, 6]]), ...shrooms(R.frisbee, [[9, 9], [20, 9]]), ...shrooms(R.switches, [[3, 8], [26, 8]]),
+      ...shrooms(R.boss, [[3, 3], [26, 3], [3, 13], [26, 13]]),
+    ]);
+    if (SAVE.boss2 && !SAVE.heart3) { const p = pos(R.boss, 240, 170); placeFixed(this, [[R.boss, Object.assign(new HeartContainer(p.x, p.y), { flag: 'heart3' })]]); }
+    for (const r of this.rooms.list) spawnRoom(this, r);
+  };
+  const st = T(1, 2, 14, 12);
+  A.start = { x: st.x + 8, y: st.y, dir: 'up' };
+  A.name = 'Le Bois des murmures';
+  A.dark = 0.36;
   return A;
 }

@@ -1,7 +1,7 @@
 'use strict';
 // Histoire : drapeaux de progression, objectif du moment, dialogues (variantes selon le héros)
 const Story = {
-  flag(k) { if (k === 'slingshot') return Inventory.has('lance_pierre'); return !!SAVE[k]; },
+  flag(k) { if (k === 'slingshot') return Inventory.has('lance_pierre'); if (k === 'frisbee') return Inventory.has('frisbee'); return !!SAVE[k]; },
   set(k) { SAVE[k] = true; persist(); Bus.emit('story:advanced', { flag: k }); },
   cond(c) { if (!c) return true; return c.split('&').every(t => { t = t.trim(); const neg = t[0] === '!'; const v = this.flag(neg ? t.slice(1) : t); return neg ? !v : v; }); },
   names() { return { hero: Heroes.name(SAVE.hero), enfant1: Heroes.name(Heroes.captive(1)), enfant2: Heroes.name(Heroes.captive(2)), e: Heroes.def().he === 'elle' ? 'e' : '' }; },

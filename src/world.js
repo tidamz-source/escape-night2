@@ -6,7 +6,7 @@
 //          'c' pavés  'P' palissade  'g' porte de la palissade (les ennemis ne la franchissent pas)
 const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P']); // bloque la marche
 const WALLS = new Set(['#', 'W', 's', 'k', 'P']);           // bloque les projectiles (ils passent au-dessus de l'eau et du gouffre)
-const EXITS = new Set(['F', 'E', 'G']);
+const EXITS = new Set(['F', 'E', 'G', 'H']); // 'H' : sortie vers le Bois des murmures
 const RW = 30, RH = 17;                                 // une salle = 30 × 17 tuiles = 480 × 272 px
 const ROOM_W = RW * TS, ROOM_H = RH * TS;
 
@@ -54,7 +54,7 @@ function buildForest() {
 }
 
 // ---------- le royaume d'Aube-Figée : collines au nord, palissade, Bourg-Luciole au sud ----------
-const ROY = { gateY: 30, plaza: { x: 14, y: 39, w: 20, h: 10 } };
+const ROY = { gateY: 30, plaza: { x: 14, y: 39, w: 20, h: 10 }, bridge: { x: 5, y: 21, w: 2, h: 2 } };
 function buildRoyaume() {
   const g = makeGrid(48, 60, '.'), { w, h, set, rect } = gridTools(g), r = seeded(77);
   rect(0, 0, w, 2, '#'); rect(0, 0, 2, h, '#'); rect(w - 2, 0, 2, h, '#'); rect(0, h - 2, w, 2, '#');
@@ -64,6 +64,9 @@ function buildRoyaume() {
   rect(22, 0, 4, 2, 'G'); rect(23, 2, 2, 28, '=');
   for (let i = 0; i < 16; i++) { const cx = 4 + Math.floor(r() * 39), cy = 4 + Math.floor(r() * 22); if (Math.abs(cx - 23.5) < 5) continue; rect(cx, cy, 2 + Math.floor(r() * 3), 2 + Math.floor(r() * 2), '#'); }
   for (let y = 7; y < 17; y++) for (let x = 5; x < 17; x++) { const v = ((x + 0.5 - 10.5) / 4.6) ** 2 + ((y + 0.5 - 11.5) / 3.1) ** 2; if (v < 1) set(x, y, '~'); }
+  // à l'ouest : la rivière, le pont-levis (relevé au départ) et le chemin du Bois des murmures
+  rect(2, 3, 3, ROY.gateY - 3, '.'); rect(5, 3, 2, ROY.gateY - 3, '~');
+  rect(0, ROY.bridge.y, 2, 2, 'H'); rect(2, ROY.bridge.y, 3, 2, '='); rect(7, ROY.bridge.y, 16, 2, '=');
   // palissade et sa porte
   rect(2, ROY.gateY, w - 4, 1, 'P'); rect(22, ROY.gateY, 4, 1, 'g');
   // village : grande rue, place, chemins vers les maisons
@@ -74,6 +77,45 @@ function buildRoyaume() {
   rect(7, 45, 7, 2, 'c'); rect(34, 45, 7, 2, 'c');              // forge, épicerie
   rect(8, 49, 2, 2, '='); rect(38, 49, 2, 2, '=');              // maisons du sud
   for (let i = 0; i < 90; i++) { const x = Math.floor(r() * w), y = Math.floor(r() * h); if (g[y][x] === '.') g[y][x] = ','; }
+  return g;
+}
+
+// ---------- donjon 2 : le Bois des murmures (7 salles, thème forêt) ----------
+//           [ ]     [BOSS]     [ ]
+//        [FRISBEE] [MOULIN] [INTERRUPTEURS]
+//        [ARÈNE]   [ENTRÉE]  [ÉTANG]
+const BOIS_ROOMS = { boss: 1, frisbee: 3, mill: 4, switches: 5, arena: 6, entry: 7, pond: 8 };
+function buildBois() {
+  const g = makeGrid(RW * 3, RH * 3, 'W'), { set, rect } = gridTools(g), r = seeded(33);
+  const rooms = [[1, 2], [0, 2], [2, 2], [1, 1], [0, 1], [2, 1], [1, 0]];
+  for (const [rx, ry] of rooms) {
+    const ox = rx * RW, oy = ry * RH;
+    rect(ox + 2, oy + 2, 26, 13, '_');
+    for (const [cx, cy] of [[2, 2], [27, 2], [2, 14], [27, 14]]) set(ox + cx, oy + cy, 'W');
+    for (let x = 3; x < 27; x++) { if (Math.abs(x - 14.5) > 2.5 && r() < 0.3) set(ox + x, oy + 2, 'W'); if (Math.abs(x - 14.5) > 2.5 && r() < 0.3) set(ox + x, oy + 14, 'W'); }
+    for (let y = 3; y < 14; y++) { if (Math.abs(y - 7.5) > 2 && r() < 0.3) set(ox + 2, oy + y, 'W'); if (Math.abs(y - 7.5) > 2 && r() < 0.3) set(ox + 27, oy + y, 'W'); }
+  }
+  const link = (rx, ry, side) => {
+    const ox = rx * RW, oy = ry * RH;
+    if (side === 'N') { rect(ox + 14, oy, 2, 3, '_'); rect(ox + 14, oy - 3, 2, 3, '_'); }
+    if (side === 'E') { rect(ox + 27, oy + 7, 3, 2, '_'); rect(ox + 30, oy + 7, 3, 2, '_'); }
+  };
+  link(0, 2, 'E'); link(1, 2, 'E'); link(1, 2, 'N'); link(0, 1, 'E'); link(1, 1, 'E'); link(1, 1, 'N');
+  rect(RW + 14, 2 * RH + 14, 2, 1, '_'); rect(RW + 14, 2 * RH + 15, 2, 2, 'E'); // sortie vers les collines
+  const st = (rx, ry, pts) => pts.forEach(([x, y]) => set(rx * RW + x, ry * RH + y, 's'));
+  // entrée, arène
+  st(1, 2, [[6, 5], [23, 5], [6, 11], [23, 11]]);
+  st(0, 2, [[8, 5], [21, 5], [14, 11]]);
+  // étang avec son îlot (salle 8)
+  for (let y = 4; y < 13; y++) for (let x = 6; x < 24; x++) { const v = ((x + 0.5 - 15) / 8) ** 2 + ((y + 0.5 - 8.5) / 4.2) ** 2; if (v < 1) set(2 * RW + x, 2 * RH + y, '~'); }
+  rect(2 * RW + 14, 2 * RH + 8, 2, 1, '_');
+  // salle du moulin : souches qui servent d'abri contre le vent
+  st(1, 1, [[5, 5], [10, 7], [19, 5], [24, 8], [8, 11], [21, 11], [14, 9]]);
+  // salle des interrupteurs : chaque interrupteur est entouré de souches (le caillou ne passe pas, le frisbee si)
+  st(2, 1, [[5, 3], [5, 4], [5, 5], [6, 6], [7, 6], [8, 6], [9, 6], [10, 6], [11, 5], [11, 4], [11, 3], [18, 3], [18, 4], [18, 5], [19, 6], [20, 6], [21, 6], [22, 6], [23, 6], [24, 5], [24, 4], [24, 3]]);
+  // salle du frisbee
+  st(0, 1, [[6, 4], [23, 4], [6, 12], [23, 12]]);
+  for (let i = 0; i < 300; i++) { const x = Math.floor(r() * RW * 3), y = Math.floor(r() * RH * 3); if (g[y][x] === '_') g[y][x] = 'm'; }
   return g;
 }
 

@@ -4,6 +4,9 @@
 // icônes d'objets (centrées sur x, y)
 function drawItemIcon(id, x, y, s = 1) {
   if (id === 'lance_pierre') return drawSlingIcon(x, y + 1, s);
+  if (id === 'frisbee') return drawFrisbeeIcon(x, y, s);
+  if (id === 'champignons') return PICKUPS.mushroom.draw(x, y + 5 * s);
+  if (id === 'soupe') return drawItemIcon('sirop', x, y, s);
   if (id === 'cle') return drawKey(x, y, s);
   hi(x, y, false, () => {
     const u = 2;
@@ -50,7 +53,7 @@ const UIMixin = {
     if (boss && this.state !== 'slide') {
       const bw = 160, bx = (W - bw) / 2, by = H - 16;
       R(bx - 2, by - 12, bw + 4, 18, 'rgba(7,13,31,.75)');
-      text('La Grande Ombre', W / 2, by - 11, { size: 7, align: 'center', color: PAL.lav });
+      text(boss.name || 'La Grande Ombre', W / 2, by - 11, { size: 7, align: 'center', color: PAL.lav });
       R(bx, by, bw, 4, '#2a1d38'); R(bx, by, Math.round(bw * Math.max(0, boss.hp) / boss.maxHp), 4, boss.state === 'stun' ? PAL.warm : PAL.red); R(bx, by, bw, 1, 'rgba(255,255,255,.2)');
     }
     if (this.banner && this.state !== 'pause') {
@@ -95,6 +98,7 @@ const UIMixin = {
   },
   updatePause() {
     if (Input.pressed('start') || Input.pressed('b')) { this.state = 'play'; SFX.menu(); return; }
+    const tx = Input.lastTap; if (tx && performance.now() - tx.time < 250 && tx.x > W - 34 && tx.y < 32) { Input.lastTap = null; this.state = 'play'; SFX.menu(); return; }
     if (Input.pressed('right')) { this.ptab = (this.ptab + 1) % 3; this.psel = 0; this.menu = 0; SFX.menu(); }
     if (Input.pressed('left')) { this.ptab = (this.ptab + 2) % 3; this.psel = 0; this.menu = 0; SFX.menu(); }
     const tap = Input.lastTap; Input.lastTap = null;
@@ -125,6 +129,9 @@ const UIMixin = {
       text(t, x + 50, 11, { size: 10, align: 'center', color: on ? PAL.white : '#7a84a8', bold: on });
     });
     text('◂ ▸', W / 2 + 165, 12, { size: 9, color: '#5a6a9a' });
+    // croix pour fermer le menu
+    R(W - 28, 6, 22, 22, 'rgba(20,36,76,.9)'); R(W - 28, 6, 22, 1, PAL.lav); R(W - 28, 27, 22, 1, PAL.lav); R(W - 28, 6, 1, 22, PAL.lav); R(W - 7, 6, 1, 22, PAL.lav);
+    ctx.strokeStyle = PAL.white; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(W - 22, 12); ctx.lineTo(W - 12, 22); ctx.moveTo(W - 12, 12); ctx.lineTo(W - 22, 22); ctx.stroke();
     const obj = Story.objective();
     if (obj) { R(24, 32, W - 48, 18, 'rgba(255,207,122,.12)'); text('Objectif : ' + obj, W / 2, 36, { size: 8, align: 'center', color: PAL.warm }); }
     if (this.ptab === 0) this.drawInventory();
@@ -153,7 +160,8 @@ const UIMixin = {
     const rx = 262; text('Sacoche', rx, y0, { size: 9, color: PAL.lav, bold: true });
     const rows = [['money', `${Wallet.get()} / ${Wallet.cap()} écus`], ['fragment', `${SAVE.fragments || 0} / 6 fragments d'aube`]];
     if (Inventory.has('lance_pierre')) rows.push(['cailloux', `${Inventory.ammo('cailloux')} / ${Inventory.ammoMax('cailloux')} cailloux`]);
-    if (this.area.id === 'cave') rows.push(['cle', `${SAVE.keys} petite${SAVE.keys > 1 ? 's' : ''} clé${SAVE.keys > 1 ? 's' : ''}`]);
+    if (Inventory.ingredient('champignons') || SAVE.freed2) rows.push(['champignons', `${Inventory.ingredient('champignons')} champignon${Inventory.ingredient('champignons') > 1 ? 's' : ''}`]);
+    if (this.area.rooms) rows.push(['cle', `${SAVE.keys} petite${SAVE.keys > 1 ? 's' : ''} clé${SAVE.keys > 1 ? 's' : ''}`]);
     rows.forEach(([ic, t], i) => { drawItemIcon(ic, rx + 10, y0 + 22 + i * 22); text(t, rx + 24, y0 + 17 + i * 22, { size: 8 }); });
     // description
     const sel = L[this.psel], it = sel && Inventory.item(sel.id);
@@ -161,7 +169,7 @@ const UIMixin = {
   },
   drawMapTab() {
     const A = this.area;
-    if (A.id === 'cave') { this.drawMap(W / 2 - 72, 64); return; }
+    if (A.map) { this.drawMap(W / 2 - 72, 64); return; }
     const bw = 360, bh = 160, s = Math.min(bw / A.w, bh / A.h), w = A.w * s, h = A.h * s, x0 = (W - w) / 2, y0 = 60;
     R(x0 - 3, y0 - 3, w + 6, h + 6, PAL.ink); ctx.drawImage(A.layer, x0, y0, w, h); R(x0, y0, w, h, 'rgba(4,8,26,.35)');
     for (const e of A.ents) if (e instanceof House) R(x0 + (e.x - e.w / 2) * s, y0 + (e.y - e.h) * s, e.w * s, e.h * s, '#a85a3a');
@@ -173,18 +181,18 @@ const UIMixin = {
     } else text(A.name, x0 + w / 2, y0 + 4, { size: 7, align: 'center', color: PAL.warm });
   },
   drawMap(x0, y0) {
-    const A = this.area, cw = 48, ch = 28, R0 = CAVE_ROOMS;
-    text('La grotte des lucioles', x0 + 72, y0, { size: 8, align: 'center', color: PAL.lav });
-    const links = [[R0.entry, R0.arena], [R0.entry, R0.block], [R0.entry, R0.chasm], [R0.block, R0.sling], [R0.chasm, R0.boss]];
+    const A = this.area, cw = 48, ch = 28, M = A.map;
+    text(M.title, x0 + 72, y0, { size: 8, align: 'center', color: PAL.lav });
+    const links = M.links;
     const cell = i => ({ x: x0 + (i % 3) * cw, y: y0 + 16 + Math.floor(i / 3) * ch });
-    const seen = i => SAVE.visited && SAVE.visited['cave' + i];
+    const seen = i => SAVE.visited && SAVE.visited[A.id + i];
     for (const [a, b] of links) { if (!seen(a) && !seen(b)) continue; const p = cell(a), q = cell(b); R(Math.min(p.x, q.x) + cw / 2 - 2, Math.min(p.y, q.y) + ch / 2 - 2, Math.abs(p.x - q.x) + 4, Math.abs(p.y - q.y) + 4, '#3a3354'); }
     for (const i of A.rooms.list) {
       if (!seen(i)) continue;
       const p = cell(i), cur = i === this.room;
       R(p.x + 4, p.y + 3, cw - 8, ch - 6, cur ? '#2a5a66' : '#2b2540'); R(p.x + 4, p.y + 3, cw - 8, 1, cur ? PAL.glow : '#4a4266');
       if (cur && Math.floor(this.t * 3) % 2) R(p.x + cw / 2 - 2, p.y + ch / 2 - 2, 4, 4, PAL.glow);
-      if (i === R0.boss) text(SAVE.boss ? '✓' : '☠', p.x + cw / 2, p.y + 7, { size: 9, align: 'center', color: SAVE.boss ? PAL.green : PAL.red });
+      if (i === M.boss) text(SAVE[M.bossFlag] ? '✓' : '☠', p.x + cw / 2, p.y + 7, { size: 9, align: 'center', color: SAVE[M.bossFlag] ? PAL.green : PAL.red });
     }
   },
 
@@ -198,7 +206,7 @@ const UIMixin = {
     if (Input.pressed('up')) { sh.sel = (sh.sel + items.length - 1) % items.length; SFX.menu(); }
     if (Input.pressed('a')) {
       const e = items[sh.sel], res = Shop.buy(sh.id, e);
-      if (res.ok) { SFX.buy(); sh.msg = 'Merci ! ' + Inventory.item(e.id).name + ' ajouté' + (e.id === 'sirop' ? ' dans ta bouteille.' : ' à ton inventaire.'); }
+      if (res.ok) { SFX.buy(); sh.msg = 'Merci ! ' + Inventory.item(e.id).name + ' ajouté' + (Inventory.item(e.id).kind === 'drink' ? 'e dans ta bouteille.' : ' à ton inventaire.'); }
       else { SFX.nope(); sh.msg = res.why + '.'; }
       sh.msgT = 2.2;
     }
@@ -214,7 +222,8 @@ const UIMixin = {
       drawItemIcon(e.id === 'cailloux10' ? 'cailloux' : e.id, bx + 28, y + 13);
       text(it.name, bx + 44, y + 4, { size: 9, color: st.ok ? PAL.white : '#7a84a8', bold: on });
       if (!st.ok) text(st.why, bx + 44, y + 15, { size: 6.5, color: '#c88a9a' });
-      drawItemIcon('money', bx + bw - 54, y + 13, 0.8); text(String(e.price), bx + bw - 46, y + 8, { size: 9, color: st.ok ? PAL.warm : '#7a84a8', bold: true });
+      if (e.cost) { const [k, n] = Object.entries(e.cost)[0]; drawItemIcon(k, bx + bw - 54, y + 13, 1); text(String(n), bx + bw - 46, y + 8, { size: 9, color: st.ok ? PAL.warm : '#7a84a8', bold: true }); }
+      else { drawItemIcon('money', bx + bw - 54, y + 13, 0.8); text(String(e.price), bx + bw - 46, y + 8, { size: 9, color: st.ok ? PAL.warm : '#7a84a8', bold: true }); }
     });
     const e = def.items[sh.sel], desc = sh.msgT > 0 ? sh.msg : Inventory.item(e.id).desc;
     R(bx + 10, by + bh - 40, bw - 20, 1, '#2a3a6a');
@@ -347,12 +356,17 @@ const UIMixin = {
   drawEnd() {
     R(0, 0, W, H, PAL.ink); this.drawStars(1);
     const g = ctx.createLinearGradient(0, 150, 0, H); g.addColorStop(0, 'rgba(255,140,120,0)'); g.addColorStop(1, 'rgba(255,140,120,.25)'); ctx.fillStyle = g; ctx.fillRect(0, 150, W, H - 150);
-    text('Fin de la version 1', W / 2, 30, { size: 20, align: 'center', bold: true, color: PAL.warm });
-    text(Story.fmt('{hero} a libéré {enfant1} de la grotte des lucioles.'), W / 2, 64, { size: 9, align: 'center' });
-    text(`${SAVE.maxHp / 2} cœurs  ·  ${Wallet.get()} écus  ·  ${Math.max(1, Math.floor((SAVE.playTime || 0) / 60))} min de jeu  ·  1 fragment d'aube sur 6`, W / 2, 82, { size: 8, align: 'center', color: '#9aa4c8' });
-    text('À suivre : le Bois des murmures, Mamie… et un frisbee magique.', W / 2, 100, { size: 8, align: 'center', color: PAL.lav });
-    drawHero(SAVE.hero, W / 2 - 24, 214, 'down', false, this.t, 60 / heroHeight(SAVE.hero));
-    drawHero(Heroes.captive(1), W / 2 + 24, 214, 'down', false, this.t + 1, 60 / heroHeight(Heroes.captive(1)));
+    const n = this.endN || 1, E = n === 1
+      ? { title: 'Donjon 1 terminé', line: '{hero} a libéré {enfant1} de la grotte des lucioles.', next: 'À suivre : le Bois des murmures, Mamie… et un frisbee magique.' }
+      : { title: 'Donjon 2 terminé', line: '{hero} a libéré Mamie du Bois des murmures.', next: 'À suivre : les Mines des gnomes, Amandine… et un grappin.' };
+    text(E.title, W / 2, 30, { size: 20, align: 'center', bold: true, color: PAL.warm });
+    text(Story.fmt(E.line), W / 2, 64, { size: 9, align: 'center' });
+    text(`${SAVE.maxHp / 2} cœurs  ·  ${Wallet.get()} écus  ·  ${Math.max(1, Math.floor((SAVE.playTime || 0) / 60))} min de jeu  ·  ${SAVE.fragments || 0} fragment${(SAVE.fragments || 0) > 1 ? 's' : ''} d'aube sur 6`, W / 2, 82, { size: 8, align: 'center', color: '#9aa4c8' });
+    text(E.next, W / 2, 100, { size: 8, align: 'center', color: PAL.lav });
+    const crew = [x => drawHero(SAVE.hero, x, 214, 'down', false, this.t, 60 / heroHeight(SAVE.hero))];
+    if (SAVE.freed1) crew.push(x => drawHero(Heroes.captive(1), x, 214, 'down', false, this.t + 1, 60 / heroHeight(Heroes.captive(1))));
+    if (SAVE.freed2 && IMG.npc_claudine) crew.push(x => { const im = IMG.npc_claudine, h = 62, w = im.width * h / im.height; ctx.drawImage(im, x - w / 2, 214 - h, w, h); });
+    crew.forEach((f, i) => f(W / 2 + (i - (crew.length - 1) / 2) * 52));
     for (let i = 0; i < 24; i++) { const a = this.t * 0.6 + i * 0.7, x = W / 2 + Math.cos(a) * (80 + (i % 5) * 18), y = 170 + Math.sin(a * 1.3) * 30, k = 0.5 + 0.5 * Math.sin(this.t * 3 + i); ctx.globalAlpha = k * 0.4; ell(x, y, 3, 3, '#ffe27a'); ctx.globalAlpha = k; R(half(x), half(y), 1, 1, '#fff6c0'); }
     ctx.globalAlpha = 1;
     if (this.endT > 1 && Math.floor(this.t * 2) % 2) text('A : continuer à explorer', W / 2, H - 22, { size: 8, align: 'center', color: PAL.glow });

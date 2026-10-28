@@ -34,6 +34,9 @@ function drawPerson(x, y, L, t) {
   });
 }
 
+// personnage dessiné depuis un sprite d'Escape Night (densité ×2)
+function drawSprite(key, x, y) { const im = IMG['npc_' + key]; if (im) ctx.drawImage(im, half(x - im.width / 4), half(y - im.height / 2), im.width / 2, im.height / 2); }
+
 class NPC {
   // o : { look, talk (id dans dialogues.json) | shop (id dans shops.json), when (condition d'apparition), hero (fonction → id d'un enfant) }
   constructor(x, y, o) { this.x = x; this.y = y; this.o = o; this.w = 12; this.h = 6; this.solid = true; this.t = rand(0, 5); this.isNPC = true; }
@@ -46,6 +49,7 @@ class NPC {
   update(dt) { this.t += dt; }
   draw() {
     if (this.o.hero) { ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)'); drawHero(this.o.hero(), this.x, this.y, 'down', false, this.t); }
+    else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }
     else drawPerson(this.x, this.y, LOOKS[this.o.look], this.t);
     if (G.player && dist(G.player.x, G.player.y, this.x, this.y) < 34 && G.state === 'play') { // bulle « parler »
       const b = Math.round(Math.sin(this.t * 5)); R(this.x - 4, this.y - 42 + b, 8, 7, '#f4f7ff'); R(this.x - 2, this.y - 35 + b, 2, 2, '#f4f7ff'); R(this.x - 3, this.y - 40 + b, 1, 1, '#14244c'); R(this.x, this.y - 40 + b, 1, 1, '#14244c'); R(this.x + 2, this.y - 40 + b, 1, 1, '#14244c');
@@ -56,6 +60,7 @@ class NPC {
 // maison vue de face en 3/4 : toit, façade, porte, fenêtres éclairées, enseigne
 const SIGNS = {
   forge: (x, y) => { D(x - 7, y - 3, 14, 4, '#3a3d48'); D(x - 4, y + 1, 8, 4, '#3a3d48'); D(x - 9, y - 3, 3, 2, '#3a3d48'); },
+  kitchen: (x, y) => { D(x - 7, y - 2, 14, 7, '#3a3d48'); D(x - 8, y - 4, 16, 3, '#5a5e6a'); D(x - 3, y - 8, 2, 4, '#c8c8d0'); D(x + 1, y - 9, 2, 5, '#c8c8d0'); },
   shop: (x, y) => { D(x - 3, y - 6, 6, 3, '#f0e8d8'); D(x - 5, y - 3, 10, 9, '#c83a4a'); D(x - 3, y - 1, 3, 3, '#ff8a9a'); },
   inn: (x, y) => { D(x - 7, y - 1, 14, 5, '#8a5a34'); D(x - 7, y - 4, 4, 4, '#f0e8d8'); D(x - 8, y + 4, 2, 3, '#5a3418'); D(x + 6, y + 4, 2, 3, '#5a3418'); },
   library: (x, y) => { D(x - 7, y - 5, 14, 10, '#3a6ab0'); D(x - 1, y - 5, 2, 10, '#f0e8d8'); D(x - 6, y - 4, 4, 1, '#f0e8d8'); D(x + 2, y - 4, 4, 1, '#f0e8d8'); },
@@ -188,17 +193,17 @@ class BranchPickup {
   }
 }
 
-// la cage du captif (salle du boss)
+// la cage d'un captif (salle du boss) — o : { n (numéro du donjon), boss (drapeau du boss), drawCaptive(x, y, t) }
 class Cage {
-  constructor(x, y) { this.x = x; this.y = y; this.w = 30; this.h = 10; this.solid = true; this.t = 0; }
-  get open() { return !!SAVE.freed1; }
+  constructor(x, y, o) { this.x = x; this.y = y; this.o = o; this.w = 30; this.h = 10; this.solid = true; this.t = 0; }
+  get open() { return !!SAVE['freed' + this.o.n]; }
   get light() { return this.open ? null : { r: 30, c: 'rgba(255,230,140,' }; }
   canInteract() { return !this.open; }
-  interact(G) { if (!SAVE.boss) G.say(Story.script('captive_cage')); else G.freeCaptive(); }
+  interact(G) { if (!SAVE[this.o.boss]) G.say(Story.script('captive_cage' + (this.o.n > 1 ? this.o.n : ''))); else G.freeCaptive(this.o.n); }
   update(dt) { this.t += dt; }
   draw() {
     ell(this.x, this.y, 18, 4, 'rgba(0,0,0,.45)');
-    if (!this.open) drawHero(Heroes.captive(1), this.x, this.y - 3, 'down', false, this.t);
+    if (!this.open) this.o.drawCaptive(this.x, this.y - 3, this.t);
     hi(this.x, this.y, false, () => {
       D(-34, -6, 68, 6, '#3a3d48'); D(-34, -6, 68, 2, '#6a6e7a');
       if (!this.open) { for (let i = 0; i < 7; i++) D(-32 + i * 10, -76, 4, 72, '#5a5e6a'); D(-34, -80, 68, 6, '#3a3d48'); D(-34, -80, 68, 2, '#6a6e7a'); D(-6, -42, 12, 10, '#c8a040'); D(-2, -38, 4, 4, '#3a2410'); }

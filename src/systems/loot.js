@@ -7,6 +7,10 @@ const LOOT = {
   raccoon: [[0.45, 'coin1'], [0.20, 'coin5'], [0.15, 'heart']],
   shadow:  [[0.35, 'coin5'], [0.20, 'heart'], [0.20, 'stones']],
   wisp:    [[0.45, 'coin1'], [0.25, 'stones']],
+  boar:     [[0.35, 'coin5'], [0.20, 'heart'], [0.25, 'mushroom']],
+  squirrel: [[0.40, 'coin1'], [0.15, 'stones'], [0.25, 'mushroom']],
+  bushBois: [[0.18, 'coin1'], [0.10, 'heart'], [0.10, 'stones'], [0.22, 'mushroom']],
+  potBois:  [[0.25, 'coin1'], [0.10, 'coin5'], [0.12, 'heart'], [0.18, 'stones'], [0.15, 'mushroom']],
 };
 function dropLoot(G, kind, x, y) {
   const table = LOOT[kind]; if (!table) return;

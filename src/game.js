@@ -7,7 +7,7 @@ const G = {
   ptab: 0, psel: 0, shop: null, slotSel: 0, heroSel: 0, erasing: false, moneyFlash: 0,
 
   init() {
-    this.areas.camp = buildCamp(); this.areas.royaume = buildRoyaumeArea(); this.areas.cave = buildCaveArea();
+    this.areas.camp = buildCamp(); this.areas.royaume = buildRoyaumeArea(); this.areas.cave = buildCaveArea(); this.areas.bois = buildBoisArea();
     for (let i = 0; i < 26; i++) this.flies.push({ x: rand(0, 768), y: rand(0, 900), p: rand(0, 6), s: rand(0.4, 1) });
     this.light = document.createElement('canvas'); this.light.width = W * SC; this.light.height = H * SC; this.lctx = this.light.getContext('2d');
     Bus.on('money:changed', () => { this.moneyFlash = 0.4; });
@@ -34,6 +34,8 @@ const G = {
     this.banner = { text: this.area.name, t: 2.2 };
     this.state = 'play'; this.view = 'world'; this.updateCam(true);
     if (id === 'cave' && !SAVE.caveIntro) { SAVE.caveIntro = true; persist(); this.pending = 'caveIntro'; }
+    if (id === 'bois' && !SAVE.boisIntro) { SAVE.boisIntro = true; persist(); this.pending = 'boisIntro'; }
+    this.wind = null; this.windT = 0;
   },
   visit() { if (this.area.rooms) { SAVE.visited = SAVE.visited || {}; SAVE.visited[this.area.id + this.room] = 1; } },
   fadeTo(fn, color) { if (this.fade) return; this.fade = { t: 0, dir: 1, fn, color }; this.state = 'fade'; },
@@ -100,22 +102,40 @@ const G = {
       if (ar.onClear) ar.onClear(this);
     }
   },
+  checkSwitches(group) {
+    const sw = this.area.ents.filter(e => e instanceof FrisbeeSwitch && e.group === group);
+    if (sw.length && sw.every(e => e.on > 0) && !SAVE[group]) { SAVE[group] = true; persist(); setTimeout(() => SFX.secret(), 250); this.shake = 0.25; Input.toast = { msg: 'Une grille s\'ouvre quelque part…', t: 2.5 }; }
+  },
+  // rafales du moulin : 2,5 s de vent, 2 s de calme ; les souches juste au nord abritent du vent
+  updateWind(dt) {
+    const A = this.area, P = this.player;
+    if (A.windRoom == null || this.room !== A.windRoom) { this.wind = null; return; }
+    this.windT += dt; const ph = this.windT % 4.5, gust = ph > 2, warn = ph > 1.4 && !gust;
+    const rr = this.roomRect();
+    if (gust || warn) { const n = gust ? 40 : 8; if (Math.random() < dt * n) this.parts.add({ x: rr.x + rand(30, 450), y: rr.y + rand(20, 60), vx: rand(-15, 15), vy: rand(150, 220), life: 1.2, c: pick(['#6a8a3a', '#8aa04a', '#a07a3a', '#c8d0b0']), r: 1.5 }); }
+    if (gust && ph < 2.05) SFX.wind();
+    this.wind = gust ? { x: 0, y: 70 } : null;
+    if (!gust || P.roll > 0) return;
+    const sheltered = ['s', 'W'].includes(A.tileAt(P.x, P.y - 14)) || ['s', 'W'].includes(A.tileAt(P.x, P.y - 28));
+    if (!sheltered) moveEnt(A, P, 0, 70 * dt, { noExit: true });
+  },
   // répliques : brutes ou déjà mises en forme par Story
   say(lines, done) { this.dialog = { lines: lines.map(l => l.who !== undefined && 'mood' in l ? l : Story.lines([l])[0]), i: 0, c: 0, done }; this.state = 'dialog'; },
   raise(kind) { this.raised = { kind, t: 1.6 }; },
   gameOver() { this.state = 'over'; this.overT = 0; this.menu = 0; },
 
   // ---------- scènes ----------
-  freeCaptive() {
-    this.say(Story.script('freed'), () => {
-      Story.set('freed1'); SAVE.fragments = Math.max(SAVE.fragments || 0, 1); persist(); SFX.bigheart();
-      this.fadeTo(() => { this.enter('royaume', this.areas.royaume.start, false); this.pending = 'reunion'; }, '#fff2c0');
+  freeCaptive(n = 1) {
+    this.say(Story.script(n === 1 ? 'freed' : 'freed' + n), () => {
+      Story.set('freed' + n); SAVE.fragments = Math.max(SAVE.fragments || 0, n); persist(); SFX.bigheart();
+      this.fadeTo(() => { this.enter('royaume', this.areas.royaume.start, false); this.pending = n === 1 ? 'reunion' : 'reunion' + n; }, '#fff2c0');
     });
   },
-  showEndV1() { Story.set('v1done'); this.fadeTo(() => { this.state = 'end'; this.view = 'end'; this.endT = 0; }); },
+  showEnd(n) { Story.set('v' + n + 'done'); this.endN = n; this.fadeTo(() => { this.state = 'end'; this.view = 'end'; this.endT = 0; }); },
   playPending() {
     const p = this.pending; this.pending = null;
-    if (p === 'reunion') return this.say(Story.script('reunion'), () => this.showEndV1());
+    if (p === 'reunion') return this.say(Story.script('reunion'), () => this.showEnd(1));
+    if (p === 'reunion2') return this.say(Story.script('reunion2'), () => this.showEnd(2));
     if (p === 'caveIntro') return this.say([{ who: '{hero}', text: 'Une grotte… et des braseros allumés. Qui a bien pu les allumer ?', face: 'o' }, { who: 'Lumi', text: 'Les lucioles d\'ici sont prisonnières, elles aussi. Et je sens la présence de {enfant1}… tout au fond.' }]);
     this.say(Story.script(p));
   },
@@ -148,6 +168,7 @@ const G = {
     SAVE.playTime = (SAVE.playTime || 0) + dt;
     const P = this.player, A = this.area;
     P.update(dt, this);
+    this.updateWind(dt);
     if (SAVE.met_lumi) Lumi.update(dt, P);
     for (const e of A.ents) {
       if (e.dead || !e.update || !this.inRoom(e)) continue;
@@ -161,6 +182,8 @@ const G = {
     const t = A.tileAt(P.x, P.y - 1);
     if (A.id === 'royaume' && t === 'G') this.fadeTo(() => this.enter('cave', this.areas.cave.start));
     if (A.id === 'cave' && t === 'E') this.fadeTo(() => this.enter('royaume', this.areas.royaume.fromCave));
+    if (A.id === 'royaume' && t === 'H') this.fadeTo(() => this.enter('bois', this.areas.bois.start));
+    if (A.id === 'bois' && t === 'E') this.fadeTo(() => this.enter('royaume', this.areas.royaume.fromBois));
     if (this.fade) return;
     if (A.rooms) { const r = this.roomOf(P.x, P.y); if (r !== this.room) this.startSlide(r); }
     this.updateCam();
@@ -251,7 +274,10 @@ const G = {
         const p = it.p; let im = IMG[p.k];
         if (p.k === 'campfire' && Math.floor(this.t * 7) % 2) im = IMG.campfire2 || im;
         if (im) ctx.drawImage(im, half(p.x - p.iw / 2), half(p.y - p.ih + 1), p.iw, p.ih);
-      } else it.e.draw();
+      } else {
+        it.e.draw();
+        if (it.e.stunT > 0 && !it.e.dead) for (let i = 0; i < 3; i++) { const a = this.t * 5 + i * 2.1; R(half(it.e.x + Math.cos(a) * 7), half(it.e.y - (it.e.alt || 0) - 22 + Math.sin(a) * 2), 1.5, 1.5, i % 2 ? '#ffe27a' : '#fff'); }
+      }
     }
     if (this.raised) {
       const x = P.x, y = P.y - 44 + Math.sin(this.t * 4), k = this.raised.kind;

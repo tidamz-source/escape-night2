@@ -10,7 +10,7 @@ const Inventory = {
     else if (it.kind === 'drink') { const i = inv.bottles.indexOf('vide'); if (i >= 0) inv.bottles[i] = id; }
     else inv.owned[id] = true;
     if (it.kind === 'weapon' && it.dmg > this.item(inv.weapon).dmg) inv.weapon = id;
-    if (it.kind === 'tool' && !inv.tool) inv.tool = id;
+    if (it.kind === 'tool') inv.tool = id; // un nouvel outil est équipé tout de suite
     if (id === 'lance_pierre') this.addAmmo('cailloux', 15);
     persist(); Bus.emit('item:obtained', { id });
   },
@@ -24,6 +24,9 @@ const Inventory = {
   ammoMax(type) { return SAVE.inv.ammoMax[type] || 0; },
   addAmmo(type, n) { const before = this.ammo(type); SAVE.inv.ammo[type] = clamp(before + n, 0, this.ammoMax(type)); persist(); Bus.emit('ammo:changed', { type }); return SAVE.inv.ammo[type] - before; },
   useAmmo(type) { if (this.ammo(type) <= 0) return false; SAVE.inv.ammo[type]--; Bus.emit('ammo:changed', { type }); return true; },
+  ingredient(k) { return (SAVE.inv.ingredients || {})[k] || 0; },
+  addIngredient(k, n) { SAVE.inv.ingredients = SAVE.inv.ingredients || {}; SAVE.inv.ingredients[k] = this.ingredient(k) + n; persist(); Bus.emit('ingredient:changed', { k }); },
+  useIngredient(k, n) { if (this.ingredient(k) < n) return false; SAVE.inv.ingredients[k] -= n; persist(); return true; },
   hasEmptyBottle() { return SAVE.inv.bottles.includes('vide'); },
   drink(i, P) {
     const b = SAVE.inv.bottles[i], it = b && this.item(b); if (!it || it.kind !== 'drink') return false;

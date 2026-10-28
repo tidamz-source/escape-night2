@@ -69,6 +69,7 @@ const PICKUPS = {
   coin1:  { draw: (x, y, t) => drawCoin(x, y - 4, '#c8a060', '#8a6a3a', t), take: () => { Wallet.add(1); SFX.coin(); } },
   coin5:  { draw: (x, y, t) => drawCoin(x, y - 4, '#d8dce8', '#8a90a8', t), take: () => { Wallet.add(5); SFX.coin(); } },
   coin20: { draw: (x, y, t) => drawCoin(x, y - 4, '#ffd23a', '#c08a10', t), take: () => { Wallet.add(20); SFX.coin(); } },
+  mushroom: { draw: (x, y) => { R(x - 1, y - 4, 2, 4, '#e8dcc8'); R(x - 4, y - 7, 8, 3, '#d8504a'); R(x - 3, y - 8, 6, 1, '#e86a5a'); R(x - 2, y - 7, 1, 1, '#fff'); R(x + 1, y - 6, 1, 1, '#fff'); }, take: () => { Inventory.addIngredient('champignons', 1); SFX.pickup(); } },
   stones: { draw: (x, y) => { R(x - 4, y - 4, 3, 3, '#8a8698'); R(x - 1, y - 5, 3, 3, '#a8a4b8'); R(x + 1, y - 3, 3, 3, '#7a7688'); R(x - 1, y - 5, 1, 1, '#e0dcf0'); }, take: () => { Inventory.addAmmo('cailloux', 5); SFX.pickup(); } },
 };
 function drawCoin(x, y, c, d, t) {
@@ -76,10 +77,10 @@ function drawCoin(x, y, c, d, t) {
   R(half(x - w), half(y - 3), w * 2, 6, d); R(half(x - w + 0.5), half(y - 3), Math.max(1, w * 2 - 1), 5, c); R(half(x - 0.5), half(y - 2), 1, 1, '#fff');
 }
 class Pickup {
-  constructor(x, y, kind) { this.x = x; this.y = y; this.kind = kind; this.t = 0; this.w = 8; this.h = 6; this.vy = -60; this.z = 0; this.isPickup = true; }
+  constructor(x, y, kind) { this.x = x; this.y = y; this.kind = kind; this.t = 0; this.w = 8; this.h = 6; this.vy = -60; this.z = 0; this.isPickup = true; this.fetchable = true; }
   update(dt, G) {
     this.t += dt; if (this.z < 0 || this.vy < 0) { this.vy += 300 * dt; this.z += this.vy * dt; if (this.z > 0) { this.z = 0; this.vy = 0; } }
-    if (this.t > 10) this.dead = true;
+    if (this.t > 10 && !this.carried) this.dead = true;
     const P = G.player;
     if (rectHit({ x: this.x - 5, y: this.y - 8, w: 10, h: 10 }, P.body())) {
       this.dead = true; PICKUPS[this.kind].take(G);
@@ -95,7 +96,7 @@ class Bush {
   hit(d, fx, fy, G) {
     this.dead = true; SFX.cut();
     G.parts.burst(this.x, this.y - 6, 14, { c: ['#3a7a50', '#5aa060', '#2a5a3a', '#8ad080'], life: 0.6, smin: 20, smax: 70, up: 30, g: 120, r: 2, drag: 2 });
-    dropLoot(G, 'bush', this.x, this.y);
+    dropLoot(G, this.loot || 'bush', this.x, this.y);
   }
   draw() { const im = IMG.bush; if (im) ctx.drawImage(im, half(this.x - im.width / 4), half(this.y - im.height / 2 + 2), im.width / 2, im.height / 2); }
 }
@@ -105,7 +106,7 @@ class Pot extends Bush {
   hit(d, fx, fy, G) {
     this.dead = true; noise(0.12, { freq: 2200, vol: 0.2 }); tone(700, 0.05, { vol: 0.08 });
     G.parts.burst(this.x, this.y - 6, 12, { c: ['#9a5a32', '#c08050', '#6a3a20', '#b06a3a'], life: 0.5, smin: 30, smax: 80, up: 40, g: 200, r: 2, drag: 1 });
-    dropLoot(G, 'pot', this.x, this.y);
+    dropLoot(G, this.loot || 'pot', this.x, this.y);
   }
   draw() {
     ell(this.x, this.y, 6, 2, 'rgba(0,0,0,.4)');
@@ -330,7 +331,7 @@ class HeartContainer {
     if (Math.random() < dt * 10) G.parts.add({ x: this.x + rand(-12, 12), y: this.y - rand(6, 34), vy: -14, life: 1.2, c: pick(['#ffe27a', '#fff', '#8ff3ea']), r: 1 });
     const P = G.player;
     if (rectHit({ x: this.x - 8, y: this.y - 14, w: 16, h: 16 }, P.body())) {
-      this.dead = true; SAVE.heart2 = true; SAVE.maxHp += 2; P.hp = SAVE.maxHp; persist(); SFX.bigheart(); G.raise('heart');
+      this.dead = true; SAVE[this.flag || 'heart2'] = true; SAVE.maxHp += 2; P.hp = SAVE.maxHp; persist(); SFX.bigheart(); G.raise('heart');
       G.say([{ text: 'Un grand cœur de luciole ! Ta vie maximale augmente d\'un cœur.' }]);
     }
   }

@@ -124,7 +124,8 @@ cv.addEventListener('touchstart', e => {
   for (const t of e.changedTouches) {
     const p = toInternal(t.clientX, t.clientY), role = roleFor(p);
     Input.touches.set(t.identifier, { role, x: p.x, y: p.y }); Input.lastTap = { x: p.x, y: p.y, time: performance.now() };
-    if (role !== 'pad' && !['title', 'slots', 'heroes'].includes(G.state)) Input.tapRoles.add(role);
+    const closeX = G.state === 'pause' && p.x > W - 34 && p.y < 32; // croix de fermeture du menu
+    if (role !== 'pad' && !closeX && !['title', 'slots', 'heroes'].includes(G.state)) Input.tapRoles.add(role);
     if (role === 'pad') stickStart(p);
   }
 }, { passive: false });
@@ -147,7 +148,12 @@ function endTouch(e) {
 cv.addEventListener('touchend', endTouch, { passive: false });
 cv.addEventListener('touchcancel', endTouch, { passive: false });
 // souris (ordinateur) : un clic = A, utile pour les menus
-cv.addEventListener('mousedown', () => { audioUnlock(); Input.keys.add('Enter'); Input.taps.add('Enter'); });
+cv.addEventListener('mousedown', e => {
+  audioUnlock();
+  const p = toInternal(e.clientX, e.clientY);
+  if (G.state === 'pause') { Input.lastTap = { x: p.x, y: p.y, time: performance.now() }; if (p.x > W - 34 && p.y < 32) return; } // croix de fermeture
+  Input.keys.add('Enter'); Input.taps.add('Enter');
+});
 window.addEventListener('mouseup', () => Input.keys.delete('Enter'));
 
 // ---------- rendu du pad virtuel ----------
