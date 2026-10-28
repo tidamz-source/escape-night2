@@ -191,6 +191,7 @@ const G = {
     }
     A.ents = A.ents.filter(e => !e.dead);
     this.checkArena();
+    if (A.update) A.update(this, dt);
     this.parts.update(dt);
     if (this.state !== 'play') return;
     // transitions entre zones

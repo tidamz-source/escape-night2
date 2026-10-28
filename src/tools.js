@@ -34,7 +34,7 @@ function drawSwimmer(id, x, y, dir, t, diving) {
   if (diving) { ctx.globalAlpha = 0.35; ell(x, y - 2, 8, 3, '#0a1a4a'); ctx.globalAlpha = 1; if (Math.floor(t * 8) % 2) R(half(x + 2), half(y - 6), 1.5, 1.5, '#cfe0ff'); return; }
   const im = IMG['swim_' + id + (Math.floor(t * 4) % 2)]; if (!im) { ell(x, y - 2, 6, 3, '#eee'); return; }
   ctx.globalAlpha = 0.4; ell(x, y, 10, 3, '#cfe0ff'); ctx.globalAlpha = 1;
-  const w = im.width / 2, h = im.height / 2;
+  const w = im.width * 0.7, h = im.height * 0.7;
   ctx.save(); ctx.translate(half(x), half(y - 3));
   if (dir === 'left') ctx.scale(-1, 1); else if (dir === 'up') ctx.rotate(-Math.PI / 2); else if (dir === 'down') ctx.rotate(Math.PI / 2);
   ctx.drawImage(im, -w / 2, -h / 2, w, h); ctx.restore();

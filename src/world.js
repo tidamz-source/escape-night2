@@ -82,7 +82,7 @@ function buildRoyaume() {
   rect(36, 2, 1, 3, '#'); rect(41, 2, 1, 3, '#');
   rect(29, 4, 7, 6, 'v'); rect(31, 6, 3, 2, '.');
   // au sud-est : le chemin du lac
-  rect(43, 52, 2, 6, '='); rect(42, 56, 4, 4, '#'); rect(43, 57, 2, 3, 'K'); rect(41, 52, 2, 2, '=');
+  rect(42, 56, 4, 4, '#'); rect(43, 52, 2, 5, '='); rect(43, 57, 2, 3, 'K'); rect(41, 52, 2, 2, '=');
   for (let i = 0; i < 90; i++) { const x = Math.floor(r() * w), y = Math.floor(r() * h); if (g[y][x] === '.') g[y][x] = ','; }
   return g;
 }
