@@ -186,7 +186,7 @@ class KeyDoor {
 // volet à barreaux : se ferme / s'ouvre selon une condition
 class Shutter {
   constructor(x, y, orient, closedFn) { this.x = x; this.y = y; this.w = 32; this.h = 32; this.orient = orient; this.closedFn = closedFn; this.want = closedFn() ? 1 : 0; this.k = this.want; }
-  get solid() { return this.k > 0.3; }
+  get solid() { return this.k > 0.3 && this.closedFn(); }
   update(dt) {
     const want = this.closedFn() ? 1 : 0;
     if (want !== this.want) { this.want = want; SFX.shutter(); }

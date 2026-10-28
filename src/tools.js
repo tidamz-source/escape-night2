@@ -213,7 +213,7 @@ class Fuse {
 }
 // torche à allumer par une explosion ; reste allumée quelques secondes
 class Torch {
-  constructor(x, y, group) { this.x = x; this.y = y; this.group = group; this.w = 10; this.h = 6; this.solid = true; this.on = 0; this.t = rand(0, 5); this.blastR = 22; }
+  constructor(x, y, group) { this.x = x; this.y = y; this.group = group; this.w = 10; this.h = 6; this.solid = true; this.on = 0; this.t = rand(0, 5); this.blastR = 28; }
   get lit() { return SAVE[this.group] || this.on > 0; }
   get light() { return this.lit ? { r: 64, c: 'rgba(255,160,70,', flick: true, warm: true } : null; }
   onBlast(G) { if (SAVE[this.group]) return; this.on = 6; SFX.fuse(); G.checkTorches(this.group); }
