@@ -161,7 +161,7 @@ const G = {
   },
   updatePlay(dt) {
     if (this.pending) { this.playPending(); return; }
-    if (Input.pressed('start')) { SFX.menu(); this.state = 'pause'; this.ptab = 0; this.psel = 0; this.menu = 0; return; }
+    if (Input.pressed('start')) { SFX.menu(); this.state = 'pause'; this.pauseAt = performance.now(); Input.lastTap = null; this.ptab = 0; this.psel = 0; this.menu = 0; return; }
     if (this.hitstop > 0) { this.hitstop -= dt; return; }
     if (this.shake > 0) this.shake -= dt;
     if (this.raised) { this.raised.t -= dt; if (this.raised.t <= 0) this.raised = null; }

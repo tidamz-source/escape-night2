@@ -98,7 +98,7 @@ const UIMixin = {
   },
   updatePause() {
     if (Input.pressed('start') || Input.pressed('b')) { this.state = 'play'; SFX.menu(); return; }
-    const tx = Input.lastTap; if (tx && performance.now() - tx.time < 250 && tx.x > W - 34 && tx.y < 32) { Input.lastTap = null; this.state = 'play'; SFX.menu(); return; }
+    const tx = Input.lastTap; if (tx && tx.time > (this.pauseAt || 0) && performance.now() - tx.time < 250 && tx.x > W - 34 && tx.y < 32) { Input.lastTap = null; this.state = 'play'; SFX.menu(); return; }
     if (Input.pressed('right')) { this.ptab = (this.ptab + 1) % 3; this.psel = 0; this.menu = 0; SFX.menu(); }
     if (Input.pressed('left')) { this.ptab = (this.ptab + 2) % 3; this.psel = 0; this.menu = 0; SFX.menu(); }
     const tap = Input.lastTap; Input.lastTap = null;
