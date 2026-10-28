@@ -575,10 +575,21 @@
  ],
  "mamie": [
   {
+   "if": "!boss6",
    "lines": [
     {
      "who": "Mamie",
      "text": "Trois champignons et une bouteille vide, et je te fais une soupe. C'est la maison qui offre le reste !",
+     "face": "smile",
+     "faceOf": "claudine"
+    }
+   ]
+  },
+  {
+   "lines": [
+    {
+     "who": "Mamie",
+     "text": "Des crêpes au lever du soleil, c'est la tradition. Même après un voyage dans le temps.",
      "face": "smile",
      "faceOf": "claudine"
     }
@@ -894,12 +905,73 @@
  ],
  "papa": [
   {
+   "if": "!theEnd",
    "lines": [
     {
      "who": "Papa",
      "text": "Le soleil, enfin ! Je n'aurais jamais cru dire ça, mais vivement le camping.",
      "face": "smile",
      "faceOf": "papa"
+    }
+   ]
+  },
+  {
+   "lines": [
+    {
+     "who": "Papa",
+     "text": "Le royaume, la faille… On en reparlera au petit-déjeuner, d'accord ?",
+     "face": "wink",
+     "faceOf": "papa"
+    }
+   ]
+  }
+ ],
+ "campDawn": [
+  {
+   "who": "Papa",
+   "text": "Tout le monde est là ? Mamie, Amandine, les enfants… Goyave ?",
+   "face": "smile",
+   "faceOf": "papa"
+  },
+  {
+   "text": "Goyave aboie et fait le tour du feu de camp en courant."
+  },
+  {
+   "who": "Mamie",
+   "text": "Quelle drôle de nuit. Je vais faire des crêpes, moi.",
+   "face": "smile",
+   "faceOf": "claudine"
+  },
+  {
+   "who": "{enfant1}",
+   "text": "Personne ne va nous croire.",
+   "face": "wink",
+   "faceOf": "enfant1"
+  },
+  {
+   "who": "{enfant2}",
+   "text": "Moi je m'en fiche. C'était la meilleure nuit de ma vie.",
+   "face": "smile",
+   "faceOf": "enfant2"
+  },
+  {
+   "who": "Lumi",
+   "text": "La faille restera ouverte encore un peu. Si tu veux revenir dire bonjour au royaume, tu sais où me trouver."
+  },
+  {
+   "who": "{hero}",
+   "text": "Merci, Lumi. Pour tout.",
+   "face": "smile"
+  }
+ ],
+ "amandineCamp": [
+  {
+   "lines": [
+    {
+     "who": "Amandine",
+     "text": "Mon comptoir va me manquer… Je garde la grande bourse en souvenir !",
+     "face": "smile",
+     "faceOf": "amandine"
     }
    ]
   }

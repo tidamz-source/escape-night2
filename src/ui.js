@@ -191,10 +191,11 @@ const UIMixin = {
     } else text(A.name, x0 + w / 2, y0 + 4, { size: 7, align: 'center', color: PAL.warm });
   },
   drawMap(x0, y0) {
-    const A = this.area, cw = 48, ch = 28, M = A.map;
-    text(M.title, x0 + 72, y0, { size: 8, align: 'center', color: PAL.lav });
+    const A = this.area, cw = 48, ch = 28, M = A.map, C = A.rooms.cols;
+    x0 -= (C - 3) * cw / 2;
+    text(M.title, x0 + C * cw / 2, y0, { size: 8, align: 'center', color: PAL.lav });
     const links = M.links;
-    const cell = i => ({ x: x0 + (i % 3) * cw, y: y0 + 16 + Math.floor(i / 3) * ch });
+    const cell = i => ({ x: x0 + (i % C) * cw, y: y0 + 16 + Math.floor(i / C) * ch });
     const seen = i => SAVE.visited && SAVE.visited[A.id + i];
     for (const [a, b] of links) { if (!seen(a) && !seen(b)) continue; const p = cell(a), q = cell(b); R(Math.min(p.x, q.x) + cw / 2 - 2, Math.min(p.y, q.y) + ch / 2 - 2, Math.abs(p.x - q.x) + 4, Math.abs(p.y - q.y) + 4, '#3a3354'); }
     for (const i of A.rooms.list) {
@@ -409,7 +410,7 @@ const UIMixin = {
     this.drawMenu(items, W / 2, 96);
   },
   // ---------- générique de fin ----------
-  updateCredits(dt) { if (this.endT > 4 && Input.anyPressed()) { if (this.creditsPage < 2) { this.creditsPage++; this.endT = 0; SFX.menu(); } else { SFX.menu(); this.state = 'play'; this.view = 'world'; } } },
+  updateCredits(dt) { if (this.endT > 3 && Input.anyPressed()) { if (this.creditsPage < 2) { this.creditsPage++; this.endT = 0; SFX.menu(); } else { SFX.menu(); Story.set('theEnd'); this.fadeTo(() => { this.state = 'play'; this.view = 'world'; }); } } },
   drawCredits() {
     const p = this.creditsPage || 0;
     const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, p === 2 ? '#ffd8a8' : '#1a2a5a'); g.addColorStop(1, p === 2 ? '#fff2d8' : '#ff9a7a'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -433,7 +434,7 @@ const UIMixin = {
       wrap('Goyave mâchonne un drôle d\'objet en fer, gravé d\'un soleil… Ce n\'était peut-être pas un rêve.', 380, 9).forEach((l, i) => text(l, W / 2, 50 + i * 13, { size: 9, align: 'center', color: '#5a2a1a', shadow: false }));
       text('FIN', W / 2, 96, { size: 20, align: 'center', bold: true, color: '#8a3a2a', shadow: false });
     }
-    if (this.endT > 4 && Math.floor(this.t * 2) % 2) text(p < 2 ? 'A : suite' : 'A : continuer à explorer', W / 2, H - 14, { size: 8, align: 'center', color: p === 2 ? '#6a3a2a' : '#fff' });
+    if (this.endT > 3 && Math.floor(this.t * 2) % 2) text(p < 2 ? 'A : suite' : 'A : continuer à explorer', W / 2, H - 14, { size: 8, align: 'center', color: p === 2 ? '#6a3a2a' : '#fff' });
   },
   drawStars(seed) {
     const r = seeded(seed * 77 + 1);

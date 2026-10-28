@@ -140,10 +140,17 @@ const G = {
       this.fadeTo(() => { this.enter('royaume', this.areas.royaume.start, false); this.pending = n === 1 ? 'reunion' : 'reunion' + n; }, '#fff2c0');
     });
   },
+  finale() {
+    this.say(Story.script('kingDown'), () => {
+      Story.set('boss6'); SAVE.fragments = 6; persist(); SFX.bigheart();
+      this.fadeTo(() => { this.enter('camp', this.areas.camp.dawn, false); this.pending = 'campDawn'; }, '#fff2c0');
+    });
+  },
   showEnd(n) { Story.set('v' + n + 'done'); this.endN = n; this.fadeTo(() => { this.state = 'end'; this.view = 'end'; this.endT = 0; }); },
   playPending() {
     const p = this.pending; this.pending = null;
     if (p === 'reunion') return this.say(Story.script('reunion'), () => this.showEnd(1));
+    if (p === 'campDawn') return this.say(Story.script('campDawn'), () => this.fadeTo(() => { this.creditsPage = 0; this.endT = 0; this.state = 'credits'; this.view = 'credits'; }, '#fff2c0'));
     const m = /^reunion(\d)$/.exec(p || ''); if (m) return this.say(Story.script(p), () => this.showEnd(Number(m[1])));
     if (p === 'caveIntro') return this.say([{ who: '{hero}', text: 'Une grotte… et des braseros allumés. Qui a bien pu les allumer ?', face: 'o' }, { who: 'Lumi', text: 'Les lucioles d\'ici sont prisonnières, elles aussi. Et je sens la présence de {enfant1}… tout au fond.' }]);
     this.say(Story.script(p));

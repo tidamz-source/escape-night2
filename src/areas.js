@@ -39,19 +39,27 @@ function buildCamp() {
     for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));
     this.ents.push(new BranchPickup(100, 152));
     this.ents.push(new Sign(346, 74, [{ text: '« Camping des Lucioles — Baignade interdite la nuit. »' }, { who: '{hero}', text: 'Personne ne se baigne, de toute façon. Il n\'y a plus personne.', face: 'o' }]));
-    this.ents.push(new Raccoon(640, 380), new Raccoon(300, 430), new Bat(180, 380));
+    if (SAVE.boss6) { // au lever du soleil : toute la famille autour du feu
+      this.ents.push(new NPC(176, 186, { hero: () => Heroes.captive(1), talk: 'enfant1' }), new NPC(244, 186, { hero: () => Heroes.captive(2), talk: 'enfant2' }));
+      this.ents.push(new NPC(150, 166, { sprite: 'claudine', talk: 'mamie' }), new NPC(270, 168, { sprite: 'amandine', talk: 'amandineCamp' }), Object.assign(new PapaNPC(208, 120), { talkId: 'papa' }));
+    } else this.ents.push(new Raccoon(640, 380), new Raccoon(300, 430), new Bat(180, 380));
     this.ents.push(new Rift(CAMP_RIFT.x, CAMP_RIFT.y, {
       lumi: true,
       active: () => true,
       near: G => { if (!SAVE.met_lumi && G.state === 'play') { Story.set('met_lumi'); Lumi.x = CAMP_RIFT.x + 20; Lumi.y = CAMP_RIFT.y - 40; G.say(Story.script('rift_see')); } },
       enter: G => {
         if (!SAVE.got_branche) { G.player.y += 18; G.say([{ who: 'Lumi', text: 'Attends ! Prends au moins la branche près de ta tente. Il y a des bêtes de l\'autre côté.' }]); return; }
-        Story.set('crossed_rift'); SFX.rift();
+        SFX.rift();
+        if (SAVE.boss6) { G.fadeTo(() => G.enter('royaume', G.areas.royaume.arrival, false), '#c8a8ff'); return; }
+        Story.set('crossed_rift');
         G.fadeTo(() => { G.enter('royaume', G.areas.royaume.arrival, false); G.pending = 'arrival'; }, '#c8a8ff');
       },
     }));
   };
   A.start = { x: 150, y: 142, dir: 'down' };
+  A.dawn = { x: 208, y: 200, dir: 'up' };
+  A.roomDark = () => SAVE.boss6 ? 0.04 : null;
+  A.sky = G => { if (SAVE.boss6) { ctx.globalAlpha = 0.16; R(0, 0, W, H, '#ffb070'); ctx.globalAlpha = 1; } };
   A.name = 'Le camping';
   A.dark = 0.58;
   return A;
@@ -109,7 +117,8 @@ function buildRoyaumeArea() {
     this.ents.push(new Sign(140, by - 6, [{ text: '« Pont-levis du Bois des murmures. Fermé par ordre du Roi Minuit. »' }, { who: '{hero}', text: 'Il y a une cible sur l\'autre rive… Si seulement je pouvais l\'atteindre.', face: 'o' }]));
     this.ents.push(new Prop(168, 734, 'anvil'), new Prop(680, 732, 'barrel'), new Prop(694, 742, 'crate'), new Prop(250, 600, 'barrel'));
     this.ents.push(new Sign(px + 36, gy - 4, [{ text: '« Collines du Nord. Au bout du sentier : la grotte des lucioles. »' }]));
-    this.ents.push(new Rift(px, 928, { active: () => false, closed: 'La faille par laquelle tu es arrivé{e} s\'est refermée. Lumi dit qu\'elle se rouvrira quand le jour se lèvera.' }));
+    this.ents.push(new Rift(px, 928, { active: () => !!SAVE.boss6, closed: 'La faille par laquelle tu es arrivé{e} s\'est refermée. Lumi dit qu\'elle se rouvrira quand le jour se lèvera.', enter: G => G.fadeTo(() => G.enter('camp', G.areas.camp.dawn, false), '#c8a8ff') }));
+    this.ents.push(new NPC(px - 40, py + 50, { sprite: 'papa_down', talk: 'papa', when: 'boss6' }));
     // bestioles des collines
     this.ents.push(new Raccoon(170, 300), new Raccoon(620, 250), new Raccoon(300, 150), new Raccoon(660, 420), new Raccoon(120, 420));
     this.ents.push(new Bat(220, 110), new Bat(560, 90), new Bat(470, 300), new Shadow(430, 70));
@@ -121,7 +130,8 @@ function buildRoyaumeArea() {
   };
   const spawn0 = A.spawn; A.spawn = function () { this.syncTiles(); spawn0.call(this); };
   A.enemyBounds = { x: 24, y: 24, w: A.w - 48, h: gy - 40 };
-  A.roomDark = () => Math.max(0.2, 0.52 - 0.05 * (SAVE.fragments || 0));
+  A.roomDark = () => SAVE.boss6 ? 0.06 : Math.max(0.2, 0.52 - 0.05 * (SAVE.fragments || 0));
+  A.sky = G => { if (SAVE.boss6) { ctx.globalAlpha = 0.12; R(0, 0, W, H, '#ffb070'); ctx.globalAlpha = 1; } };
   A.arrival = { x: px, y: 892, dir: 'up' };
   A.fromCave = { x: px, y: 56, dir: 'down' };
   A.fromBois = { x: 48, y: ROY.bridge.y * TS + 24, dir: 'right' };

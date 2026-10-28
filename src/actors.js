@@ -49,6 +49,7 @@ class NPC {
   update(dt) { this.t += dt; }
   draw() {
     if (this.o.hero) { ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)'); drawHero(this.o.hero(), this.x, this.y, 'down', false, this.t); }
+    else if (this.o.sprite === 'papa_down') { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, 'down', false, this.t); }
     else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }
     else drawPerson(this.x, this.y, LOOKS[this.o.look], this.t);
     if (G.player && dist(G.player.x, G.player.y, this.x, this.y) < 34 && G.state === 'play') { // bulle « parler »
