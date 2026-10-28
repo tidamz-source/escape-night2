@@ -6,12 +6,15 @@ const Inventory = {
   give(id) {
     const it = this.item(id), inv = SAVE.inv; if (!it) return;
     if (it.kind === 'ammo') { this.addAmmo(it.ammo, it.qty); return; }
+    if (it.kind === 'heartpiece') { SAVE.maxHp += 2; if (G.player) G.player.hp = SAVE.maxHp; persist(); return; }
     if (it.kind === 'bottle') { inv.bottles.push('vide'); }
     else if (it.kind === 'drink') { const i = inv.bottles.indexOf('vide'); if (i >= 0) inv.bottles[i] = id; }
     else inv.owned[id] = true;
     if (it.kind === 'weapon' && it.dmg > this.item(inv.weapon).dmg) inv.weapon = id;
     if (it.kind === 'tool') inv.tool = id; // un nouvel outil est équipé tout de suite
     if (id === 'lance_pierre') this.addAmmo('cailloux', 15);
+    if (id === 'petards') { inv.ammoMax.petards = Math.max(inv.ammoMax.petards || 0, 10); this.addAmmo('petards', 10); }
+    if (it.kind === 'upgrade') { if (it.wallet) SAVE.walletCap = Math.max(SAVE.walletCap, it.wallet); if (it.ammoMax) for (const [k, n] of Object.entries(it.ammoMax)) inv.ammoMax[k] = Math.max(inv.ammoMax[k] || 0, n); }
     persist(); Bus.emit('item:obtained', { id });
   },
   weapon() { return this.item(SAVE.inv.weapon); },

@@ -7,7 +7,14 @@ function drawItemIcon(id, x, y, s = 1) {
   if (id === 'frisbee') return drawFrisbeeIcon(x, y, s);
   if (id === 'champignons') return PICKUPS.mushroom.draw(x, y + 5 * s);
   if (id === 'soupe') return drawItemIcon('sirop', x, y, s);
-  if (id === 'cle') return drawKey(x, y, s);
+  if (id === 'cle' || id === 'key') return drawKey(x, y, s);
+  if (id === 'grappin') return drawHookIcon(x, y, s);
+  if (id === 'petards' || id === 'petards5') return drawPetardIcon(x, y, s);
+  if (id === 'palmes') return drawPalmesIcon(x, y, s);
+  if (id === 'seal') return drawSealIcon(x, y, s);
+  if (id === 'quart_coeur') return drawHeartShape(x, y, 2 * s, '#ff8ab0', '#c84a7a');
+  if (id === 'grande_bourse') return drawItemIcon('money', x, y, s * 1.3);
+  if (id === 'carquois') { drawItemIcon('cailloux', x - 3, y, s * 0.8); return drawPetardIcon(x + 4, y, s * 0.7); }
   hi(x, y, false, () => {
     const u = 2;
     if (id === 'branche') { for (let i = 0; i < 6; i++) D(-6 * u + i * 2 * u, 5 * u - i * 2 * u, 3 * u, 2 * u, '#8a5a34'); D(4 * u, -7 * u, 3 * u, 3 * u, '#4f9a5a'); }
@@ -47,7 +54,7 @@ const UIMixin = {
     const fl = this.moneyFlash > 0;
     R(x, 24, 40, 14, 'rgba(7,13,31,.55)'); drawItemIcon('money', x + 8, 31, 0.8);
     text(String(Wallet.get()).padStart(2, '0'), x + 15, 26, { size: 8, color: fl ? '#fff6c0' : PAL.warm, bold: fl });
-    if (SAVE.keys > 0 && this.area.id === 'cave') { R(x + 44, 24, 28, 14, 'rgba(7,13,31,.55)'); drawKey(x + 52, 31, 1); text('×' + SAVE.keys, x + 58, 26, { size: 8, color: PAL.warm }); }
+    if (SAVE.keys > 0 && this.area.rooms) { R(x + 44, 24, 28, 14, 'rgba(7,13,31,.55)'); drawKey(x + 52, 31, 1); text('×' + SAVE.keys, x + 58, 26, { size: 8, color: PAL.warm }); }
     // barre de vie du boss
     const boss = this.area.ents.find(e => e.isBoss && !e.dead && e.room === this.room && e.state !== 'sleep');
     if (boss && this.state !== 'slide') {
@@ -150,22 +157,25 @@ const UIMixin = {
     let y = y0 + 44;
     if (!L.length) text('Aucun outil pour l\'instant.', 34, y, { size: 8, color: '#7a84a8' });
     L.forEach((e, i) => {
-      const on = i === this.psel, label = e.kind === 'tool' ? Inventory.item(e.id).name + (Inventory.tool() === e.id ? '  (B)' : '') : (e.id === 'sirop' ? 'Sirop de grenadine' : 'Bouteille vide');
+      const on = i === this.psel, label = e.kind === 'tool' ? Inventory.item(e.id).name + (Inventory.tool() === e.id ? '  (B)' : '') : (e.id === 'vide' ? 'Bouteille vide' : Inventory.item(e.id).name);
       R(30, y - 4, 196, 20, on ? 'rgba(143,243,234,.14)' : 'rgba(20,36,76,.5)'); if (on) R(30, y - 4, 2, 20, PAL.glow);
       drawItemIcon(e.kind === 'tool' ? e.id : e.id, 46, y + 6); text(label, 60, y + 1, { size: 8, color: on ? PAL.white : '#b8c0e0' });
       y += 24;
     });
     if (Inventory.has('bouclier')) { drawItemIcon('bouclier', 46, y + 6); text('Bouclier en bois', 60, y + 1, { size: 8, color: '#b8c0e0' }); y += 24; }
+    if (Inventory.has('palmes')) { drawItemIcon('palmes', 46, y + 6); text('Palmes et tuba', 60, y + 1, { size: 8, color: '#b8c0e0' }); y += 24; }
     // colonne droite : sacoche
     const rx = 262; text('Sacoche', rx, y0, { size: 9, color: PAL.lav, bold: true });
     const rows = [['money', `${Wallet.get()} / ${Wallet.cap()} écus`], ['fragment', `${SAVE.fragments || 0} / 6 fragments d'aube`]];
     if (Inventory.has('lance_pierre')) rows.push(['cailloux', `${Inventory.ammo('cailloux')} / ${Inventory.ammoMax('cailloux')} cailloux`]);
+    if (Inventory.has('petards')) rows.push(['petards', `${Inventory.ammo('petards')} / ${Inventory.ammoMax('petards')} pétards`]);
+    if (this.area.id === 'castle') rows.push(['seal', `${SEALS.filter(q => SAVE[q[0]]).length} / 5 sceaux de l'aube`]);
     if (Inventory.ingredient('champignons') || SAVE.freed2) rows.push(['champignons', `${Inventory.ingredient('champignons')} champignon${Inventory.ingredient('champignons') > 1 ? 's' : ''}`]);
     if (this.area.rooms) rows.push(['cle', `${SAVE.keys} petite${SAVE.keys > 1 ? 's' : ''} clé${SAVE.keys > 1 ? 's' : ''}`]);
     rows.forEach(([ic, t], i) => { drawItemIcon(ic, rx + 10, y0 + 22 + i * 22); text(t, rx + 24, y0 + 17 + i * 22, { size: 8 }); });
     // description
     const sel = L[this.psel], it = sel && Inventory.item(sel.id);
-    if (it) { R(24, H - 58, W - 48, 26, 'rgba(20,36,76,.7)'); text(it.desc + (sel.kind === 'bottle' && sel.id === 'sirop' ? '  A : boire.' : sel.kind === 'tool' ? '  A : équiper sur B.' : ''), W / 2, H - 50, { size: 7.5, align: 'center', color: '#c8d0f0' }); }
+    if (it) { R(24, H - 58, W - 48, 26, 'rgba(20,36,76,.7)'); text(it.desc + (sel.kind === 'bottle' && sel.id !== 'vide' ? '  A : boire.' : sel.kind === 'tool' ? '  A : équiper sur B.' : ''), W / 2, H - 50, { size: 7.5, align: 'center', color: '#c8d0f0' }); }
   },
   drawMapTab() {
     const A = this.area;
@@ -356,20 +366,74 @@ const UIMixin = {
   drawEnd() {
     R(0, 0, W, H, PAL.ink); this.drawStars(1);
     const g = ctx.createLinearGradient(0, 150, 0, H); g.addColorStop(0, 'rgba(255,140,120,0)'); g.addColorStop(1, 'rgba(255,140,120,.25)'); ctx.fillStyle = g; ctx.fillRect(0, 150, W, H - 150);
-    const n = this.endN || 1, E = n === 1
-      ? { title: 'Donjon 1 terminé', line: '{hero} a libéré {enfant1} de la grotte des lucioles.', next: 'À suivre : le Bois des murmures, Mamie… et un frisbee magique.' }
-      : { title: 'Donjon 2 terminé', line: '{hero} a libéré Mamie du Bois des murmures.', next: 'À suivre : les Mines des gnomes, Amandine… et un grappin.' };
+    const n = this.endN || 1, E = [null,
+      { title: 'Donjon 1 terminé', line: '{hero} a libéré {enfant1} de la grotte des lucioles.', next: 'Prochaine étape : le Bois des murmures, à l\'ouest de la rivière.' },
+      { title: 'Donjon 2 terminé', line: '{hero} a libéré Mamie du Bois des murmures.', next: 'Prochaine étape : les Mines des gnomes, au nord-est des collines.' },
+      { title: 'Donjon 3 terminé', line: '{hero} a libéré Amandine des Mines des gnomes.', next: 'Prochaine étape : le lac, au sud du village, et son temple englouti.' },
+      { title: 'Donjon 4 terminé', line: '{hero} a libéré {enfant2} du Temple englouti.', next: 'Prochaine étape : la Tour des artificiers, sur l\'île du lac.' },
+      { title: 'Donjon 5 terminé', line: '{hero} a retrouvé Goyave dans la Tour des artificiers.', next: 'Dernière étape : le Château de Minuit. Papa y est retenu.' },
+    ][n] || { title: 'Bravo', line: '', next: '' };
     text(E.title, W / 2, 30, { size: 20, align: 'center', bold: true, color: PAL.warm });
     text(Story.fmt(E.line), W / 2, 64, { size: 9, align: 'center' });
     text(`${SAVE.maxHp / 2} cœurs  ·  ${Wallet.get()} écus  ·  ${Math.max(1, Math.floor((SAVE.playTime || 0) / 60))} min de jeu  ·  ${SAVE.fragments || 0} fragment${(SAVE.fragments || 0) > 1 ? 's' : ''} d'aube sur 6`, W / 2, 82, { size: 8, align: 'center', color: '#9aa4c8' });
     text(E.next, W / 2, 100, { size: 8, align: 'center', color: PAL.lav });
     const crew = [x => drawHero(SAVE.hero, x, 214, 'down', false, this.t, 60 / heroHeight(SAVE.hero))];
     if (SAVE.freed1) crew.push(x => drawHero(Heroes.captive(1), x, 214, 'down', false, this.t + 1, 60 / heroHeight(Heroes.captive(1))));
-    if (SAVE.freed2 && IMG.npc_claudine) crew.push(x => { const im = IMG.npc_claudine, h = 62, w = im.width * h / im.height; ctx.drawImage(im, x - w / 2, 214 - h, w, h); });
-    crew.forEach((f, i) => f(W / 2 + (i - (crew.length - 1) / 2) * 52));
+    const spr = (k, h) => x => { const im = IMG['npc_' + k]; if (!im) return; const w = im.width * h / im.height; ctx.drawImage(im, x - w / 2, 214 - h, w, h); };
+    if (SAVE.freed2) crew.push(spr('claudine', 62));
+    if (SAVE.freed3) crew.push(spr('amandine', 62));
+    if (SAVE.freed4) crew.push(x => drawHero(Heroes.captive(2), x, 214, 'down', false, this.t + 2, 60 / heroHeight(Heroes.captive(2))));
+    if (SAVE.freed5) crew.push(spr('dog_down', 28));
+    crew.forEach((f, i) => f(W / 2 + (i - (crew.length - 1) / 2) * 50));
     for (let i = 0; i < 24; i++) { const a = this.t * 0.6 + i * 0.7, x = W / 2 + Math.cos(a) * (80 + (i % 5) * 18), y = 170 + Math.sin(a * 1.3) * 30, k = 0.5 + 0.5 * Math.sin(this.t * 3 + i); ctx.globalAlpha = k * 0.4; ell(x, y, 3, 3, '#ffe27a'); ctx.globalAlpha = k; R(half(x), half(y), 1, 1, '#fff6c0'); }
     ctx.globalAlpha = 1;
     if (this.endT > 1 && Math.floor(this.t * 2) % 2) text('A : continuer à explorer', W / 2, H - 22, { size: 8, align: 'center', color: PAL.glow });
+  },
+  // ---------- voyage rapide (lucioles-relais) ----------
+  openTravel(from) { this.travel = { from, list: Object.keys(RELAYS).filter(k => SAVE.relays && SAVE.relays[k] && k !== from) }; this.menu = 0; this.state = 'travel'; if (!this.travel.list.length) { this.state = 'play'; this.say([{ who: 'Lumi', text: 'La luciole-relais est réveillée ! Active les autres relais du royaume : elles te transporteront de l\'une à l\'autre.' }]); } },
+  updateTravel() {
+    const L = this.travel.list, n = L.length + 1;
+    if (Input.pressed('b') || Input.pressed('start')) { this.state = 'play'; SFX.menu(); Input.prev.b = true; return; }
+    this.menuNav(n);
+    const ti = this.menuTap([...L.map(k => RELAYS[k].name), 'Rester ici'], 96); let go = Input.pressed('a'); if (ti >= 0) { this.menu = ti; go = true; }
+    if (!go) return;
+    if (this.menu >= L.length) { this.state = 'play'; SFX.menu(); return; }
+    const R0 = RELAYS[L[this.menu]]; SFX.rift(); this.state = 'play';
+    this.fadeTo(() => this.enter(R0.area, R0.pos(), false), '#fff2c0');
+  },
+  drawTravel() {
+    R(0, 0, W, H, 'rgba(4,8,26,.7)');
+    const L = this.travel.list, items = [...L.map(k => RELAYS[k].name), 'Rester ici'], bh = 50 + items.length * 16;
+    box(W / 2 - 110, 60, 220, bh);
+    text('Où veux-tu aller ?', W / 2, 70, { size: 10, align: 'center', bold: true, color: PAL.warm });
+    this.drawMenu(items, W / 2, 96);
+  },
+  // ---------- générique de fin ----------
+  updateCredits(dt) { if (this.endT > 4 && Input.anyPressed()) { if (this.creditsPage < 2) { this.creditsPage++; this.endT = 0; SFX.menu(); } else { SFX.menu(); this.state = 'play'; this.view = 'world'; } } },
+  drawCredits() {
+    const p = this.creditsPage || 0;
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, p === 2 ? '#ffd8a8' : '#1a2a5a'); g.addColorStop(1, p === 2 ? '#fff2d8' : '#ff9a7a'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if (p < 2) { ell(W / 2, H - 20 + Math.max(-60, -this.endT * 12), 40, 40, '#fff2c0'); }
+    if (p === 0) {
+      text('Le soleil se lève sur Aube-Figée', W / 2, 26, { size: 16, align: 'center', bold: true, color: '#fff' });
+      wrap(Story.fmt('Les six fragments réunis, le Roi Minuit a pris cent ans d\'un coup. Il passe ses journées à nourrir les pigeons de Bourg-Luciole. {hero}, sa famille et ses amis ont repassé la faille au lever du jour.'), 380, 9).forEach((l, i) => text(l, W / 2, 60 + i * 13, { size: 9, align: 'center', color: '#fff6e0' }));
+      const crew = [SAVE.hero, Heroes.captive(1), Heroes.captive(2)];
+      crew.forEach((h, i) => drawHero(h, W / 2 - 110 + i * 40, 220, 'down', false, this.t + i, 56 / heroHeight(h)));
+      [['papa_down', 76, 0], ['claudine', 62, 1], ['amandine', 62, 2], ['dog_down', 26, 3]].forEach(([k, h, i]) => { const im = IMG['npc_' + k]; if (!im) return; const fw = k === 'papa_down' ? im.width / 9 : im.width, w = fw * h / im.height; ctx.drawImage(im, 0, 0, fw, im.height, W / 2 + 20 + i * 38 - w / 2, 220 - h, w, h); });
+    } else if (p === 1) {
+      text('Escape Night 2', W / 2, 30, { size: 22, align: 'center', bold: true, color: '#fff' });
+      text('Le royaume d\'Aube-Figée', W / 2, 58, { size: 10, align: 'center', color: '#fff6e0' });
+      [['Une idée, un univers et des pixels de', 'Damien'], ['Personnages', 'Sacha, Cam, Rox, Papa, Mamie, Amandine et Goyave'], ['Code et énigmes', 'Damien et Claude'], ['Merci d\'avoir joué !', '']].forEach(([a, b], i) => { text(a, W / 2, 92 + i * 34, { size: 8, align: 'center', color: '#ffe8c8' }); text(b, W / 2, 104 + i * 34, { size: 10, align: 'center', bold: true, color: '#fff' }); });
+    } else {
+      text('Le lendemain matin, au camping…', W / 2, 24, { size: 12, align: 'center', bold: true, color: '#6a3a2a' });
+      R(120, 150, 240, 50, '#a8703a'); R(120, 150, 240, 6, '#c8905a'); R(130, 200, 8, 30, '#6a4224'); R(342, 200, 8, 30, '#6a4224');
+      for (let i = 0; i < 4; i++) { ell(160 + i * 50, 160, 12, 4, '#f4f0e8'); R(154 + i * 50, 156, 12, 4, i % 2 ? '#c84a2a' : '#e8c060'); }
+      const im = IMG.npc_dog_down; if (im) { const h = 34, w = im.width * h / im.height; ctx.drawImage(im, 300 - w / 2, 236 - h, w, h); }
+      hi(316, 230, false, () => { D(-2, -6, 18, 4, '#9a9eaa'); D(14, -10, 6, 12, '#c8a040'); D(15, -9, 4, 2, '#fff2c0'); }); // un bout d'épée médiévale
+      wrap('Goyave mâchonne un drôle d\'objet en fer, gravé d\'un soleil… Ce n\'était peut-être pas un rêve.', 380, 9).forEach((l, i) => text(l, W / 2, 50 + i * 13, { size: 9, align: 'center', color: '#5a2a1a', shadow: false }));
+      text('FIN', W / 2, 96, { size: 20, align: 'center', bold: true, color: '#8a3a2a', shadow: false });
+    }
+    if (this.endT > 4 && Math.floor(this.t * 2) % 2) text(p < 2 ? 'A : suite' : 'A : continuer à explorer', W / 2, H - 14, { size: 8, align: 'center', color: p === 2 ? '#6a3a2a' : '#fff' });
   },
   drawStars(seed) {
     const r = seeded(seed * 77 + 1);

@@ -70,6 +70,7 @@ const PICKUPS = {
   coin5:  { draw: (x, y, t) => drawCoin(x, y - 4, '#d8dce8', '#8a90a8', t), take: () => { Wallet.add(5); SFX.coin(); } },
   coin20: { draw: (x, y, t) => drawCoin(x, y - 4, '#ffd23a', '#c08a10', t), take: () => { Wallet.add(20); SFX.coin(); } },
   mushroom: { draw: (x, y) => { R(x - 1, y - 4, 2, 4, '#e8dcc8'); R(x - 4, y - 7, 8, 3, '#d8504a'); R(x - 3, y - 8, 6, 1, '#e86a5a'); R(x - 2, y - 7, 1, 1, '#fff'); R(x + 1, y - 6, 1, 1, '#fff'); }, take: () => { Inventory.addIngredient('champignons', 1); SFX.pickup(); } },
+  petards: { draw: (x, y) => drawPetardIcon(x, y - 4, 0.7), take: () => { Inventory.addAmmo('petards', 3); SFX.pickup(); } },
   stones: { draw: (x, y) => { R(x - 4, y - 4, 3, 3, '#8a8698'); R(x - 1, y - 5, 3, 3, '#a8a4b8'); R(x + 1, y - 3, 3, 3, '#7a7688'); R(x - 1, y - 5, 1, 1, '#e0dcf0'); }, take: () => { Inventory.addAmmo('cailloux', 5); SFX.pickup(); } },
 };
 function drawCoin(x, y, c, d, t) {
@@ -244,6 +245,8 @@ class Brazier {
 // ---------- énigmes ----------
 class Block {
   constructor(x, y) { this.x = x; this.y = y; this.w = 16; this.h = 16; this.solid = true; this.mv = null; }
+  // le grappin tire la stèle d'une case vers le héros
+  onHook(G) { const P = G.player, dx = P.x - this.x, dy = P.y - this.y; const dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'); this.push(dir, G); SFX.clank(); return true; }
   push(dir, G) {
     if (this.mv) return;
     const [vx, vy] = DV[dir], tb = { x: this.x - 8 + vx * 16, y: this.y - 16 + vy * 16, w: 16, h: 16 }, rr = G.roomRect();

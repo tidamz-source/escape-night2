@@ -55,5 +55,53 @@
     "name": "Champignons",
     "kind": "ingredient",
     "desc": "On en trouve dans le Bois des murmures. Mamie sait les cuisiner."
+  },
+  "grappin": {
+    "name": "Grappin",
+    "kind": "tool",
+    "desc": "Se plante dans les poteaux et te tire au-dessus du vide. Attire les petits ennemis et les objets."
+  },
+  "palmes": {
+    "name": "Palmes et tuba",
+    "kind": "gear",
+    "desc": "Pour nager en eau profonde. A ou B dans l'eau : plonger."
+  },
+  "petards": {
+    "name": "Pétards",
+    "kind": "tool",
+    "ammo": "petards",
+    "desc": "Explosent après un instant. Font sauter les murs fissurés et les rochers."
+  },
+  "petards5": {
+    "name": "5 pétards",
+    "kind": "ammo",
+    "ammo": "petards",
+    "qty": 5,
+    "desc": "Munitions explosives."
+  },
+  "grande_bourse": {
+    "name": "Grande bourse",
+    "kind": "upgrade",
+    "wallet": 300,
+    "desc": "Une bourse en cuir de gnome. Contient jusqu'à 300 écus."
+  },
+  "carquois": {
+    "name": "Grande sacoche",
+    "kind": "upgrade",
+    "ammoMax": {
+      "cailloux": 50,
+      "petards": 20
+    },
+    "desc": "Plus de place : 50 cailloux et 20 pétards."
+  },
+  "quart_coeur": {
+    "name": "Cœur de cristal",
+    "kind": "heartpiece",
+    "desc": "Un cœur taillé dans un cristal des mines. Un cœur de vie en plus."
+  },
+  "seal": {
+    "name": "Sceau de l'aube",
+    "kind": "key",
+    "desc": "Un sceau en forme de soleil."
   }
 }

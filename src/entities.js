@@ -25,7 +25,7 @@ function blocked(area, b, self, opts = {}) {
   const x0 = Math.floor(b.x / TS), x1 = Math.floor((b.x + b.w - 0.01) / TS), y0 = Math.floor(b.y / TS), y1 = Math.floor((b.y + b.h - 0.01) / TS);
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
     const t = area.tile(tx, ty);
-    if (SOLID.has(t)) return true;
+    if (SOLID.has(t) && !(opts.swim && t === '~')) return true;
     if (opts.noExit && (EXITS.has(t) || t === 'g')) return true;
   }
   for (const p of area.props) if (p.solid && rectHit(b, { x: p.x - p.fw / 2, y: p.y - p.fh, w: p.fw, h: p.fh })) return true;
@@ -79,6 +79,28 @@ class Player {
     this.vx = 0; this.vy = 0; // vitesse lissée (accélération / freinage)
     this.shootCd = 0; this.shootT = 0; this.pushT = 0; this.aim = DV[dir].slice();
     this.roll = 0; this.rollCd = 0; this.rollV = [0, 0];
+    this.dive = 0; this.diveCd = 0; this.pull = null; this.hooking = null; this.riding = null; this.safe = { x, y };
+  }
+  // déplacement à la nage : plus lent, pas d'attaque ni d'outil
+  swimMove(dt, G) {
+    const dx = Input.dx, dy = Input.dy, input = Math.hypot(dx, dy) > 0.2, SP = 52 * this.perk.speed;
+    if (input) { const want = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'); this.dir = want; }
+    if (G.area.current) { const c = G.area.current(this); if (c) { this.vx += c.x * dt * 3; this.vy += c.y * dt * 3; } }
+    this.glide(dt, G, input ? dx * SP : 0, input ? dy * SP : 0, input ? 8 : 4, input ? { x: dx, y: dy } : null);
+    this.moving = input; this.anim += dt * (input ? 1 : 0.4);
+    if (Math.random() < dt * 4) G.parts.add({ x: this.x + rand(-6, 6), y: this.y - 2, vy: -6, life: 0.5, c: '#9ab8ff', r: 1 });
+  }
+  // fin d'un vol au grappin : si on atterrit dans le vide, retour au dernier sol sûr
+  land(G) {
+    const t = G.area.tileAt(this.x, this.y - 2);
+    if (t === 'v' || t === 'T' || (t === '~' && !this.canSwim) || blocked(G.area, boxOf(this), this, { swim: this.canSwim })) {
+      // cherche une place libre tout près
+      for (const r of [4, 8, 12, 16, 20]) for (let k = 0; k < 8; k++) {
+        const a = k / 8 * Math.PI * 2, x = this.x + Math.cos(a) * r, y = this.y + Math.sin(a) * r, tt = G.area.tileAt(x, y - 2);
+        if (tt !== 'v' && tt !== 'T' && (tt !== '~' || this.canSwim) && !blocked(G.area, { x: x - this.w / 2, y: y - this.h, w: this.w, h: this.h }, this, { swim: this.canSwim })) { this.x = x; this.y = y; return; }
+      }
+      this.x = this.safe.x; this.y = this.safe.y;
+    }
   }
   get perk() { return Heroes.def(); }
   body() { return { x: this.x - 6, y: this.y - 16, w: 12, h: 16 }; }
@@ -93,15 +115,25 @@ class Player {
   }
   frontBox() { const [vx, vy] = DV[this.dir]; return { x: this.x - 5 + vx * 10, y: this.y - 8 + vy * 10, w: 10, h: 10 }; }
   hurt(dmg, fx, fy, G) {
-    if (this.inv > 0 || this.roll > 0 || G.state !== 'play') return;
+    if (this.inv > 0 || this.roll > 0 || this.dive > 0 || this.riding || G.state !== 'play') return;
     this.hp -= dmg; this.inv = 1.1; SFX.hurt(); G.shake = 0.25; G.hitstop = 0.06;
     const a = Math.atan2(this.y - 8 - fy, this.x - fx); this.kb = { x: Math.cos(a) * 170, y: Math.sin(a) * 170, t: 0.16 };
     this.atk = 0;
     if (this.hp <= 0) { this.hp = 0; G.gameOver(); }
   }
+  get canSwim() { return Inventory.has('palmes'); }
+  get swimming() { return this.canSwim && G.area.tileAt(this.x, this.y - 2) === '~'; }
   update(dt, G) {
     const area = G.area;
-    if (this.inv > 0) this.inv -= dt;
+    if (this.riding) { this.x = this.riding.x; this.y = this.riding.y + 2; this.vx = this.vy = 0; this.moving = false; if (this.inv > 0) this.inv -= dt; return; }
+    if (this.pull) { // grappin : on file vers le point d'accroche, au-dessus du vide et de l'eau
+      const pl = this.pull, a = Math.atan2(pl.y - this.y, pl.x - this.x), d = dist(this.x, this.y, pl.x, pl.y), step = Math.min(d, 260 * dt);
+      const nx = this.x + Math.cos(a) * step, ny = this.y + Math.sin(a) * step;
+      if (d < 2 || WALLS.has(area.tileAt(nx, ny - 2)) || (pl.t = (pl.t || 0) + dt) > 1.2) { this.pull = null; this.land(G); return; }
+      this.x = nx; this.y = ny; this.anim += dt; return;
+    }
+    if (this.hooking) { if (this.hooking.dead) this.hooking = null; else { this.glide(dt, G, 0, 0, 14); return; } }
+    if (this.dive > 0) { this.dive -= dt; if (this.dive <= 0 && this.swimming) SFX.splash(); }
     if (this.bump > 0) this.bump -= dt;
     if (this.shootCd > 0) this.shootCd -= dt;
     if (this.shootT > 0) this.shootT -= dt;
@@ -112,7 +144,7 @@ class Player {
       if (Math.random() < dt * 30) G.parts.add({ x: this.x + rand(-4, 4), y: this.y - 1, vy: -10, life: 0.3, c: '#9a8a7a', r: 1 });
       return;
     }
-    if (this.kb.t > 0) { this.kb.t -= dt; this.vx = this.vy = 0; moveEnt(area, this, this.kb.x * dt, 0, { noExit: true }); moveEnt(area, this, 0, this.kb.y * dt, { noExit: true }); return; }
+    if (this.kb.t > 0) { this.kb.t -= dt; this.vx = this.vy = 0; moveEnt(area, this, this.kb.x * dt, 0, { noExit: true, swim: this.canSwim }); moveEnt(area, this, 0, this.kb.y * dt, { noExit: true, swim: this.canSwim }); return; }
     if (this.atk > 0) {
       this.atk -= dt; this.glide(dt, G, 0, 0, 14);
       if (this.atk < ATK_TIME - 0.04) G.attackHits(this);
@@ -120,6 +152,12 @@ class Player {
     }
     // changer d'outil
     if (Input.pressed('cycle')) Inventory.cycle(1);
+    const swim = this.swimming;
+    if (swim) { // à la nage : A ou B pour plonger (on esquive tout, on ramasse ce qui brille au fond)
+      if ((Input.pressed('a') || Input.pressed('b')) && this.dive <= 0 && this.diveCd <= 0) { this.dive = 0.9; this.diveCd = 1.3; SFX.dive(); G.parts.burst(this.x, this.y - 4, 10, { c: ['#9ab8ff', '#fff'], life: 0.4, r: 1, up: 30, g: 120 }); }
+    }
+    if (this.diveCd > 0) this.diveCd -= dt;
+    if (swim) { this.swimMove(dt, G); return; }
     // B : outil équipé
     if (Input.pressed('b') && this.shootCd <= 0) this.useTool(G);
     // roulade (Rox)
@@ -174,6 +212,18 @@ class Player {
       this.shootCd = 0.25; this.shootT = 0.18; SFX.throw();
       G.area.ents.push(new Frisbee(this, this.aim[0], this.aim[1], G.room));
     }
+    if (tool === 'grappin') {
+      if (this.hooking) return;
+      this.shootCd = 0.3; this.vx = this.vy = 0; SFX.hook();
+      this.hooking = new Hook(this, this.aim[0], this.aim[1], G.room); G.area.ents.push(this.hooking);
+    }
+    if (tool === 'petards') {
+      if (G.area.ents.filter(e => e.isPetard && !e.dead).length >= 2) return;
+      if (!Inventory.useAmmo('petards')) { SFX.nope(); Input.toast = { msg: 'Plus de pétards !', t: 1.5 }; this.shootCd = 0.4; return; }
+      this.shootCd = 0.35; this.shootT = 0.18; SFX.throw();
+      const moving = Math.hypot(this.vx, this.vy) > 20;
+      G.area.ents.push(new Petard(this.x, this.y, this.aim[0], this.aim[1], moving ? 1 : 0.45, G.room));
+    }
   }
   // fait tendre la vitesse vers (tx, ty) puis déplace Sacha ; renvoie true en cas de collision
   glide(dt, G, tx, ty, k, inp) {
@@ -183,33 +233,39 @@ class Player {
     // pas d'aide dans les coins contre un bloc : on veut pouvoir le pousser
     const nearBlock = inp && G.frontEnt(this, e => e instanceof Block);
     const sx = inp && !nearBlock ? (!inp.y || Math.abs(inp.y) < 0.2) : false, sy = inp && !nearBlock ? (!inp.x || Math.abs(inp.x) < 0.2) : false;
-    const hx = moveEnt(G.area, this, this.vx * dt, 0, { slide: sx }), hy = moveEnt(G.area, this, 0, this.vy * dt, { slide: sy });
+    const sw = this.canSwim;
+    const hx = moveEnt(G.area, this, this.vx * dt, 0, { slide: sx, swim: sw }), hy = moveEnt(G.area, this, 0, this.vy * dt, { slide: sy, swim: sw });
     if (hx) this.vx = 0; if (hy) this.vy = 0;
+    const tt = G.area.tileAt(this.x, this.y - 2); if (tt !== '~' && tt !== 'v' && tt !== 'T') { this.safe.x = this.x; this.safe.y = this.y; }
     return hx || hy;
   }
   draw() {
     if (this.inv > 0 && Math.floor(this.inv * 20) % 2) return;
+    if (this.swimming && !this.pull) { drawSwimmer(SAVE.hero, this.x, this.y, this.dir, this.anim, this.dive > 0); return; }
+    if (this.riding) { drawHero(SAVE.hero, this.x, this.y - 6, 'down', false, G.t); return; }
     ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)');
     const attacking = this.atk > 0;
     const [vx, vy] = DV[this.dir], lunge = attacking ? 1.5 : 0;
     const p = attacking ? 1 - this.atk / ATK_TIME : 0;
     if (attacking && this.dir === 'up') this.drawBranch(p);
-    if (this.shootT > 0 && this.dir === 'up') this.drawSling();
+    if ((this.shootT > 0 || this.hooking) && this.dir === 'up') this.drawSling();
     if (this.roll > 0) { const k = 1 - this.roll / 0.3; ctx.save(); ctx.translate(this.x, this.y - 8); ctx.rotate(Math.sign(this.rollV[0] || 1) * k * Math.PI * 2); ctx.translate(-this.x, -this.y + 8); }
     drawHero(SAVE.hero, this.x + vx * lunge, this.y + vy * lunge, this.dir, (this.moving && !attacking) || this.roll > 0, this.moving ? this.anim : G.t);
     if (this.roll > 0) ctx.restore();
     if (Inventory.has('bouclier') && !attacking && this.roll <= 0 && this.dir !== 'up') this.drawShield();
     if (attacking && this.dir !== 'up') this.drawBranch(p);
-    if (this.shootT > 0 && this.dir !== 'up') this.drawSling();
+    if ((this.shootT > 0 || this.hooking) && this.dir !== 'up') this.drawSling();
   }
   drawShield() {
     const [vx] = DV[this.dir], x = this.x + (this.dir === 'down' ? 6 : vx * 6), y = this.y - 8;
     hi(x, y, vx < 0, () => { D(-4, -8, 8, 12, '#7a4a24'); D(-4, -8, 8, 2, '#a06a34'); D(-4, -8, 2, 12, '#9a6a3a'); D(-1, -4, 2, 4, '#c8a040'); D(-4, 3, 8, 1, '#4a2a14'); });
   }
   drawSling() {
-    const [vx, vy] = this.aim, k = this.shootT / 0.18;
+    const [vx, vy] = this.aim, k = Math.max(0, this.shootT) / 0.18;
     const x = this.x + vx * (7 + k * 2), y = this.y - 10 + vy * 4;
     if (Inventory.tool() === 'frisbee') { if (!G.area.ents.some(e => e.isFrisbee)) drawFrisbeeIcon(x, y, 0.8); }
+    else if (Inventory.tool() === 'grappin') drawHookIcon(x, y, 0.8);
+    else if (Inventory.tool() === 'petards') drawPetardIcon(x, y, 0.8);
     else drawSlingIcon(x, y, 1, vx < 0);
   }
   drawBranch(p) {
@@ -256,6 +312,7 @@ class Enemy {
   }
   physics(dt, G, fly) {
     if (this.flash > 0) this.flash -= dt;
+    if (this.hookT > 0) { this.hookT -= dt; const P = G.player, a = Math.atan2(P.y - this.y, P.x - this.x); if (dist(P.x, P.y, this.x, this.y) > 18) { if (fly) { this.x += Math.cos(a) * 200 * dt; this.y += Math.sin(a) * 200 * dt; } else { moveEnt(G.area, this, Math.cos(a) * 200 * dt, 0, { noExit: true }); moveEnt(G.area, this, 0, Math.sin(a) * 200 * dt, { noExit: true }); } } return true; }
     if (this.kb.t > 0) { this.kb.t -= dt; if (fly) { this.x += this.kb.x * dt; this.y += this.kb.y * dt; this.clampArea(G); } else { moveEnt(G.area, this, this.kb.x * dt, 0, { noExit: true }); moveEnt(G.area, this, 0, this.kb.y * dt, { noExit: true }); } return true; }
     if (this.stunT > 0) { this.stunT -= dt; this.touchStunned = true; return true; } // étourdi (frisbee)
     return false;

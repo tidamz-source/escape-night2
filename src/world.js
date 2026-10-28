@@ -4,9 +4,10 @@
 //          '_' sol  'm' mousse  'W' mur (racines / roche)  's' souche  'k' stalagmite
 //          'v' gouffre  'b' pont  'E' sortie  'G' entrée de la grotte
 //          'c' pavés  'P' palissade  'g' porte de la palissade (les ennemis ne la franchissent pas)
-const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P']); // bloque la marche
+//          'r' rails (au sol)  'T' tréteau de rails au-dessus du gouffre  'J' 'K' 'M' 'N' 'O' sorties (mines, lac, temple, tour, château)
+const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P', 'T']); // bloque la marche
 const WALLS = new Set(['#', 'W', 's', 'k', 'P']);           // bloque les projectiles (ils passent au-dessus de l'eau et du gouffre)
-const EXITS = new Set(['F', 'E', 'G', 'H']); // 'H' : sortie vers le Bois des murmures
+const EXITS = new Set(['F', 'E', 'G', 'H', 'J', 'K', 'M', 'N', 'O']);
 const RW = 30, RH = 17;                                 // une salle = 30 × 17 tuiles = 480 × 272 px
 const ROOM_W = RW * TS, ROOM_H = RH * TS;
 
@@ -76,6 +77,12 @@ function buildRoyaume() {
   rect(33, 37, 2, 2, 'c'); rect(12, 37, 2, 2, 'c');            // bibliothèque, auberge
   rect(7, 45, 7, 2, 'c'); rect(34, 45, 7, 2, 'c');              // forge, épicerie
   rect(8, 49, 2, 2, '='); rect(38, 49, 2, 2, '=');              // maisons du sud
+  // au nord-est : le chemin des Mines des gnomes, et la corniche de la clé au-dessus d'un ravin
+  rect(36, 0, 6, 2, '#'); rect(37, 0, 4, 2, 'J'); rect(38, 2, 2, 12, '='); rect(25, 12, 15, 2, '=');
+  rect(36, 2, 1, 3, '#'); rect(41, 2, 1, 3, '#');
+  rect(29, 4, 7, 6, 'v'); rect(31, 6, 3, 2, '.');
+  // au sud-est : le chemin du lac
+  rect(43, 52, 2, 6, '='); rect(42, 56, 4, 4, '#'); rect(43, 57, 2, 3, 'K'); rect(41, 52, 2, 2, '=');
   for (let i = 0; i < 90; i++) { const x = Math.floor(r() * w), y = Math.floor(r() * h); if (g[y][x] === '.') g[y][x] = ','; }
   return g;
 }
@@ -158,9 +165,82 @@ function buildCave() {
   return g;
 }
 
+// ---------- générateur de donjon : salles 30 × 17 sur une grille, passages de 2 tuiles ----------
+// def : { cols, rows, rooms: [[rx, ry]], links: [[rx, ry, 'N'|'E']], exit: [rx, ry], seed, rough }
+function buildDungeon(def) {
+  const g = makeGrid(RW * def.cols, RH * def.rows, 'W'), { set, rect } = gridTools(g), r = seeded(def.seed || 1), rough = def.rough == null ? 0.25 : def.rough;
+  for (const [rx, ry] of def.rooms) {
+    const ox = rx * RW, oy = ry * RH;
+    rect(ox + 2, oy + 2, 26, 13, '_');
+    for (const [cx, cy] of [[2, 2], [27, 2], [2, 14], [27, 14]]) set(ox + cx, oy + cy, 'W');
+    for (let x = 3; x < 27; x++) { if (Math.abs(x - 14.5) > 2.5 && r() < rough) set(ox + x, oy + 2, 'W'); if (Math.abs(x - 14.5) > 2.5 && r() < rough) set(ox + x, oy + 14, 'W'); }
+    for (let y = 3; y < 14; y++) { if (Math.abs(y - 7.5) > 2 && r() < rough) set(ox + 2, oy + y, 'W'); if (Math.abs(y - 7.5) > 2 && r() < rough) set(ox + 27, oy + y, 'W'); }
+  }
+  for (const [rx, ry, side] of def.links) {
+    const ox = rx * RW, oy = ry * RH;
+    if (side === 'N') { rect(ox + 14, oy, 2, 3, '_'); rect(ox + 14, oy - 3, 2, 3, '_'); }
+    if (side === 'E') { rect(ox + 27, oy + 7, 3, 2, '_'); rect(ox + 30, oy + 7, 3, 2, '_'); }
+  }
+  if (def.exit) { const [rx, ry] = def.exit; rect(rx * RW + 14, ry * RH + 14, 2, 1, '_'); rect(rx * RW + 14, ry * RH + 15, 2, 2, 'E'); }
+  // outils pour décorer une salle en coordonnées locales
+  const room = (rx, ry) => ({
+    set: (x, y, c) => set(rx * RW + x, ry * RH + y, c),
+    rect: (x, y, w, h, c) => rect(rx * RW + x, ry * RH + y, w, h, c),
+    get: (x, y) => g[ry * RH + y][rx * RW + x],
+  });
+  if (def.decorate) def.decorate(room, g);
+  if (def.moss) for (let i = 0; i < def.moss; i++) { const x = Math.floor(r() * RW * def.cols), y = Math.floor(r() * RH * def.rows); if (g[y][x] === '_') g[y][x] = 'm'; }
+  return g;
+}
+// trace des rails entre deux tuiles (même ligne ou même colonne) : 'r' sur le sol, 'T' au-dessus du gouffre
+function railLine(room, x0, y0, x1, y1) {
+  const dx = Math.sign(x1 - x0), dy = Math.sign(y1 - y0); let x = x0, y = y0;
+  for (;;) { const t = room.get(x, y); room.set(x, y, t === 'v' || t === 'T' ? 'T' : 'r'); if (x === x1 && y === y1) break; x += dx; y += dy; }
+}
+
+// ---------- le lac : au sud du village (ravin, temple englouti, île de la tour, chemin du château) ----------
+const LAC = { w: 60, h: 46, ravine: 7 };
+function buildLac() {
+  const g = makeGrid(LAC.w, LAC.h, '.'), { w, h, set, rect } = gridTools(g), r = seeded(91);
+  rect(0, 0, w, 2, '#'); rect(0, 0, 2, h, '#'); rect(w - 2, 0, 2, h, '#'); rect(0, h - 2, w, 2, '#');
+  for (let x = 2; x < w - 2; x++) { if (r() < 0.45) set(x, 2, '#'); if (r() < 0.4) set(x, h - 3, '#'); }
+  for (let y = 2; y < h - 2; y++) { if (r() < 0.45) set(2, y, '#'); if (r() < 0.45) set(w - 3, y, '#'); }
+  // arrivée du village (en haut à droite) et sa corniche
+  rect(48, 0, 6, 2, '#'); rect(49, 0, 4, 2, 'K'); rect(50, 2, 2, 4, '=');
+  rect(2, 3, w - 4, 3, '#'); rect(44, 2, 12, 4, '.'); rect(50, 2, 2, 4, '=');
+  // le ravin
+  rect(2, LAC.ravine - 1, w - 4, 3, 'v');
+  // le lac
+  for (let y = 12; y < 40; y++) for (let x = 6; x < 54; x++) {
+    const v = ((x + 0.5 - 30) / 21) ** 2 + ((y + 0.5 - 26) / 11.5) ** 2;
+    if (v < 1 + (r() - 0.5) * 0.12) set(x, y, '~');
+  }
+  // le temple englouti : une chaussée depuis la rive ouest
+  rect(9, 25, 12, 2, '='); rect(19, 21, 7, 8, '='); rect(20, 20, 5, 1, '#'); rect(21, 19, 3, 2, '#'); rect(21, 20, 3, 1, 'M');
+  // l'île de la tour, à l'est
+  for (let y = 21; y < 32; y++) for (let x = 36; x < 48; x++) { const v = ((x + 0.5 - 42) / 5.2) ** 2 + ((y + 0.5 - 26.5) / 4.6) ** 2; if (v < 1) set(x, y, '.'); }
+  rect(40, 22, 4, 1, '#'); rect(41, 22, 2, 1, 'N');
+  // le chemin du château, au sud-ouest, dans un défilé
+  rect(2, 40, 10, 4, '#'); rect(5, 38, 4, 6, '='); rect(5, 44, 4, 2, 'O'); rect(2, 36, 3, 6, '#'); rect(9, 36, 4, 6, '#');
+  // sentiers
+  rect(50, 9, 2, 4, '='); rect(12, 10, 40, 2, '='); rect(4, 10, 8, 2, '='); rect(4, 12, 2, 13, '='); rect(4, 25, 6, 2, '=');
+  rect(5, 27, 2, 11, '=');
+  for (let i = 0; i < 70; i++) { const x = Math.floor(r() * w), y = Math.floor(r() * h); if (g[y][x] === '.') g[y][x] = ','; }
+  return g;
+}
+
 // ---------- rendu des tuiles (2 px écran par pixel monde, pré-rendu dans un canvas) ----------
 const TP = TS * 2; // taille d'une tuile en pixels "haute densité"
+// palettes des donjons en pierre : sol, détails, mousse, parois
+const STONE = {
+  cave:   { fl: '#2c3048', ln: '#22253a', sp: ['#343956', '#262a40', '#383d5a', '#30344e'], cr: '#111320', pa: '#262a3e', m1: '#1f4a4a', m2: '#6fe0d0', wall: '#191526', wsp: ['#18142a', '#1c1830', '#141022', '#201a32'], top: '#3a3354', s1: '#2a2440', s2: '#1c1830', sr: '#1a1528', face: '#2b2540', fl2: '#221d33', fsp: ['#3a3354', '#342e4c', '#262036'], ft: '#4a4266' },
+  mine:   { fl: '#3a2e2a', ln: '#2c221e', sp: ['#463830', '#30261f', '#4a3a2e', '#3e3028'], cr: '#150f0c', pa: '#2e2420', m1: '#4a3a5a', m2: '#c88aff', wall: '#1a120e', wsp: ['#1e1510', '#22180f', '#160f0b', '#261b14'], top: '#5a4434', s1: '#3a2a20', s2: '#24180f', sr: '#1e140e', face: '#4a3628', fl2: '#382818', fsp: ['#5a4434', '#4e3a2c', '#3a2a1e'], ft: '#6a5240' },
+  temple: { fl: '#24424a', ln: '#1a343c', sp: ['#2c4e56', '#1e3a42', '#30565e', '#284850'], cr: '#0e1e24', pa: '#1e3a40', m1: '#1f5a4a', m2: '#7fffd0', wall: '#0c1a20', wsp: ['#0e1e26', '#10222a', '#0a161c', '#12262e'], top: '#3a6a72', s1: '#244a52', s2: '#16323a', sr: '#12282e', face: '#2e5860', fl2: '#244a50', fsp: ['#3a6a72', '#346068', '#24484e'], ft: '#4e8a90' },
+  tower:  { fl: '#3a3438', ln: '#2a2428', sp: ['#443e42', '#322c30', '#4a4246', '#3e383c'], cr: '#141012', pa: '#302a2e', m1: '#5a3a2a', m2: '#ffb050', wall: '#160f10', wsp: ['#1c1214', '#201618', '#140c0e', '#24181a'], top: '#6a3a32', s1: '#3a2422', s2: '#241614', sr: '#1e1212', face: '#5a302a', fl2: '#46241e', fsp: ['#6a3a32', '#7a463a', '#4a2a24'], ft: '#8a5040' },
+  castle: { fl: '#2a2440', ln: '#1e1a30', sp: ['#322a4c', '#241e38', '#383052', '#2e2846'], cr: '#0e0a18', pa: '#221c36', m1: '#3a2a6a', m2: '#c3b3ff', wall: '#100c1c', wsp: ['#140e22', '#181028', '#0e0a18', '#1c142e'], top: '#4a3a7a', s1: '#2e2450', s2: '#1e1836', sr: '#181230', face: '#3a2c66', fl2: '#2e2252', fsp: ['#4a3a7a', '#42346e', '#2e2452'], ft: '#5e4c96' },
+};
 function renderLayer(g, theme) {
+  const SP = STONE[theme] || STONE.cave;
   const h = g.length, w = g[0].length, c = document.createElement('canvas');
   c.width = w * TP; c.height = h * TP;
   const x2 = c.getContext('2d');
@@ -175,7 +255,7 @@ function renderLayer(g, theme) {
 
   // passe 1 : sols
   each(1, (t, tx, ty, px, py) => {
-    if (theme === 'cave') { floorCave(px, py, t === 'm'); return; }
+    if (STONE[theme]) { floorCave(px, py, t === 'm' || t === 'r'); return; }
     if (t === '.' || t === ',' || isWall(t) || t === 'F' || t === '~') {
       if (theme === 'forest') { floorForest(px, py); return; }
       floorGrass(px, py, t);
@@ -214,13 +294,19 @@ function renderLayer(g, theme) {
     if (moss) for (let i = 0; i < 10; i++) F(px + Math.floor(r() * 28), py + Math.floor(r() * 28), 3, 2, pick2(['#2f5a46', '#386a50', '#2a4d3d']));
   }
   function floorCave(px, py, moss) {
-    F(px, py, TP, TP, '#2c3048');
-    if (r() < 0.55) F(px, py, TP, 1, '#22253a');
-    if (r() < 0.55) F(px, py, 1, TP, '#22253a');
-    for (let i = 0; i < 16; i++) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 2, 1, pick2(['#343956', '#262a40', '#383d5a', '#30344e']));
-    if (r() < 0.3) { const cx = px + 4 + Math.floor(r() * 20), cy = py + 4 + Math.floor(r() * 20); F(cx, cy, 5, 1, '#111320'); F(cx + 4, cy + 1, 3, 1, '#111320'); }
-    if (r() < 0.25) F(px + Math.floor(r() * 26), py + Math.floor(r() * 26), 4, 3, '#262a3e');
-    if (moss) for (let i = 0; i < 6; i++) { const mx = px + Math.floor(r() * 28), my = py + Math.floor(r() * 28); F(mx, my, 2, 2, '#1f4a4a'); if (r() < 0.5) F(mx, my, 1, 1, '#6fe0d0'); }
+    const p = SP;
+    F(px, py, TP, TP, p.fl);
+    if (theme === 'tower' || theme === 'castle' || theme === 'temple') { // dalles
+      F(px, py, TP, 1, p.ln); F(px, py, 1, TP, p.ln); F(px + 16, py, 1, TP, theme === 'castle' ? p.ln : p.fl);
+      if (theme === 'castle' && ((px / TP + py / TP) & 1)) F(px + 1, py + 1, TP - 1, TP - 1, p.sp[1]);
+    } else {
+      if (r() < 0.55) F(px, py, TP, 1, p.ln);
+      if (r() < 0.55) F(px, py, 1, TP, p.ln);
+    }
+    for (let i = 0; i < 16; i++) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 2, 1, pick2(p.sp));
+    if (r() < 0.3) { const cx = px + 4 + Math.floor(r() * 20), cy = py + 4 + Math.floor(r() * 20); F(cx, cy, 5, 1, p.cr); F(cx + 4, cy + 1, 3, 1, p.cr); }
+    if (r() < 0.25) F(px + Math.floor(r() * 26), py + Math.floor(r() * 26), 4, 3, p.pa);
+    if (moss) for (let i = 0; i < 6; i++) { const mx = px + Math.floor(r() * 28), my = py + Math.floor(r() * 28); F(mx, my, 2, 2, p.m1); if (r() < 0.5) F(mx, my, 1, 1, p.m2); }
   }
 
   // passe 2 : eau
@@ -228,15 +314,15 @@ function renderLayer(g, theme) {
     if (t !== '~') return;
     F(px, py, TP, TP, '#1b3f8f');
     for (let i = 0; i < 5; i++) { const wx = px + Math.floor(r() * 24), wy = py + Math.floor(r() * 28); F(wx, wy, 6, 1, '#2a5bc0'); F(wx + 2, wy + 1, 4, 1, '#22489f'); }
-    const nw = n => n !== '~';
-    if (nw(at(tx, ty - 1))) { F(px, py, TP, 4, '#6a545e'); F(px, py + 4, TP, 2, '#6b94ff'); }
-    if (nw(at(tx, ty + 1))) { F(px, py + TP - 3, TP, 3, '#4f3f48'); }
-    if (nw(at(tx - 1, ty))) { F(px, py, 3, TP, '#6a545e'); F(px + 3, py, 1, TP, '#6b94ff'); }
-    if (nw(at(tx + 1, ty))) { F(px + TP - 3, py, 3, TP, '#6a545e'); F(px + TP - 4, py, 1, TP, '#6b94ff'); }
+    const nw = n => n !== '~', bank = STONE[theme] ? SP.face : '#6a545e', bank2 = STONE[theme] ? SP.s2 : '#4f3f48';
+    if (nw(at(tx, ty - 1))) { F(px, py, TP, 4, bank); F(px, py + 4, TP, 2, '#6b94ff'); }
+    if (nw(at(tx, ty + 1))) { F(px, py + TP - 3, TP, 3, bank2); }
+    if (nw(at(tx - 1, ty))) { F(px, py, 3, TP, bank); F(px + 3, py, 1, TP, '#6b94ff'); }
+    if (nw(at(tx + 1, ty))) { F(px + TP - 3, py, 3, TP, bank); F(px + TP - 4, py, 1, TP, '#6b94ff'); }
   });
 
   // passe 3 : gouffre et pont
-  const pit = t => t === 'v' || t === 'b';
+  const pit = t => t === 'v' || t === 'b' || t === 'T';
   each(3, (t, tx, ty, px, py) => {
     if (!pit(t)) return;
     F(px, py, TP, TP, '#03040a');
@@ -250,13 +336,28 @@ function renderLayer(g, theme) {
     }
   });
 
+  // passe 3b : rails (au sol 'r', sur tréteaux 'T')
+  const rail = t => t === 'r' || t === 'T';
+  each(8, (t, tx, ty, px, py) => {
+    if (!rail(t)) return;
+    const h = rail(at(tx - 1, ty)) || rail(at(tx + 1, ty)), v = rail(at(tx, ty - 1)) || rail(at(tx, ty + 1));
+    if (t === 'T') { // poutres du tréteau
+      if (v && !h) { F(px + 4, py, 4, TP, '#4a2a14'); F(px + 24, py, 4, TP, '#4a2a14'); for (let k = 0; k < TP; k += 10) F(px + 4, py + k, 24, 2, '#3a2010'); }
+      else { F(px, py + 4, TP, 4, '#4a2a14'); F(px, py + 24, TP, 4, '#4a2a14'); for (let k = 0; k < TP; k += 10) F(px + k, py + 4, 2, 24, '#3a2010'); }
+    }
+    const sleeper = '#6a4224', steel = '#9a9eaa', steelD = '#5a5e6a';
+    if (v) { for (let k = 2; k < TP; k += 8) { F(px + 6, py + k, 20, 4, sleeper); F(px + 6, py + k, 20, 1, '#8a5a34'); } F(px + 9, py, 2, TP, steel); F(px + 21, py, 2, TP, steel); F(px + 10, py, 1, TP, steelD); F(px + 22, py, 1, TP, steelD); }
+    if (h) { for (let k = 2; k < TP; k += 8) { F(px + k, py + 6, 4, 20, sleeper); F(px + k, py + 6, 1, 20, '#8a5a34'); } F(px, py + 9, TP, 2, steel); F(px, py + 21, TP, 2, steel); F(px, py + 11, TP, 1, steelD); F(px, py + 23, TP, 1, steelD); }
+    if (!h && !v) { F(px + 6, py + 12, 20, 8, sleeper); }
+  });
+
   // passe 4 : sorties sombres
   each(4, (t, tx, ty, px, py) => {
     if (!EXITS.has(t)) return;
     F(px, py, TP, TP, '#05080f');
     const next = at(tx, ty + 1);
-    if (!EXITS.has(next)) for (let i = 0; i < TP; i += 2) F(px + i, py + TP - 6 + Math.floor(r() * 4), 2, 8, theme === 'cave' ? '#141626' : '#0b1420');
-    if (t === 'E' && theme === 'cave' && !EXITS.has(at(tx, ty - 1))) for (let i = 0; i < TP; i += 2) F(px + i, py, 2, 4 + Math.floor(r() * 4), '#141626');
+    if (!EXITS.has(next)) for (let i = 0; i < TP; i += 2) F(px + i, py + TP - 6 + Math.floor(r() * 4), 2, 8, STONE[theme] ? SP.wall : '#0b1420');
+    if (t === 'E' && STONE[theme] && !EXITS.has(at(tx, ty - 1))) for (let i = 0; i < TP; i += 2) F(px + i, py, 2, 4 + Math.floor(r() * 4), SP.wall);
   });
 
   // passe 5 : souches (forêt) et stalagmites (grotte)
@@ -280,23 +381,28 @@ function renderLayer(g, theme) {
   });
 
   // passe 6 : murs
-  if (theme === 'cave') {
+  if (STONE[theme]) {
+    const p = SP;
     each(6, (t, tx, ty, px, py) => {
       if (!isWall(t)) return;
       const open = n => !isWall(n);
-      F(px, py, TP, TP, '#191526');
-      for (let i = 0; i < 4; i++) F(px + Math.floor(r() * 26), py + Math.floor(r() * 26), 4 + Math.floor(r() * 5), 3, pick2(['#18142a', '#1c1830', '#141022', '#201a32']));
-      if (open(at(tx, ty - 1))) { F(px, py, TP, 2, '#3a3354'); for (let i = 0; i < TP; i += 4) if (r() < 0.5) F(px + i, py + 2, 4, 1, '#2b2540'); }
-      if (open(at(tx - 1, ty))) { F(px, py, 2, TP, '#2a2440'); F(px + 2, py, 1, TP, '#1c1830'); }
-      if (open(at(tx + 1, ty))) { F(px + TP - 2, py, 2, TP, '#1a1528'); }
+      F(px, py, TP, TP, p.wall);
+      for (let i = 0; i < 4; i++) F(px + Math.floor(r() * 26), py + Math.floor(r() * 26), 4 + Math.floor(r() * 5), 3, pick2(p.wsp));
+      if (open(at(tx, ty - 1))) { F(px, py, TP, 2, p.top); for (let i = 0; i < TP; i += 4) if (r() < 0.5) F(px + i, py + 2, 4, 1, p.face); }
+      if (open(at(tx - 1, ty))) { F(px, py, 2, TP, p.s1); F(px + 2, py, 1, TP, p.s2); }
+      if (open(at(tx + 1, ty))) { F(px + TP - 2, py, 2, TP, p.sr); }
       if (open(at(tx, ty + 1))) { // face de la paroi, vue de face
         const fh = 16, fy = py + TP - fh;
-        F(px, fy, TP, fh, '#2b2540');
-        for (let yy = fy + 4; yy < py + TP; yy += 4) F(px, yy, TP, 1, '#221d33');
-        for (let i = 0; i < 4; i++) F(px + Math.floor(r() * 28), fy + 2 + Math.floor(r() * 12), 3 + Math.floor(r() * 4), 2, pick2(['#3a3354', '#342e4c', '#262036']));
-        F(px, fy, TP, 2, '#4a4266'); F(px, fy + 2, TP, 1, '#3a3354');
+        F(px, fy, TP, fh, p.face);
+        if (theme === 'tower' || theme === 'castle') { for (let yy = fy + 4; yy < py + TP; yy += 5) { F(px, yy, TP, 1, p.fl2); for (let xx = px + ((yy / 5) & 1) * 4; xx < px + TP; xx += 8) F(xx, yy - 4, 1, 4, p.fl2); } }
+        else for (let yy = fy + 4; yy < py + TP; yy += 4) F(px, yy, TP, 1, p.fl2);
+        for (let i = 0; i < 4; i++) F(px + Math.floor(r() * 28), fy + 2 + Math.floor(r() * 12), 3 + Math.floor(r() * 4), 2, pick2(p.fsp));
+        F(px, fy, TP, 2, p.ft); F(px, fy + 2, TP, 1, p.top);
         F(px, py + TP, TP, 3, 'rgba(0,0,0,.45)');
-        if (r() < 0.3) { const sx = px + 6 + Math.floor(r() * 18); F(sx, py + TP, 3, 3, '#3a3354'); F(sx + 1, py + TP + 3, 1, 2, '#3a3354'); } // petite stalactite
+        if (theme === 'cave' && r() < 0.3) { const sx = px + 6 + Math.floor(r() * 18); F(sx, py + TP, 3, 3, p.top); F(sx + 1, py + TP + 3, 1, 2, p.top); } // petite stalactite
+        if (theme === 'mine' && r() < 0.18) { const sx = px + 4 + Math.floor(r() * 22); F(sx, fy - 2, 3, 16, '#6a4224'); F(sx, fy - 2, 1, 16, '#8a5a34'); } // étai
+        if (theme === 'mine' && r() < 0.12) { const sx = px + 6 + Math.floor(r() * 18), sy = fy + 4 + Math.floor(r() * 6); F(sx, sy, 3, 3, pick2(['#c88aff', '#8ff3ea', '#ffcf7a'])); F(sx, sy, 1, 1, '#fff'); } // cristal
+        if (theme === 'temple' && r() < 0.2) { const sx = px + 6 + Math.floor(r() * 18); F(sx, fy + 2, 2, 12, '#1f5a4a'); F(sx + 2, fy + 6, 2, 8, '#2a7a5a'); } // algues
       }
     });
     return c;

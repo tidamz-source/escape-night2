@@ -18,6 +18,11 @@
         "id": "cailloux10",
         "price": 10,
         "needs": "lance_pierre"
+      },
+      {
+        "id": "petards5",
+        "price": 20,
+        "needs": "petards"
       }
     ]
   },
@@ -54,6 +59,33 @@
         "id": "bouteille",
         "price": 50,
         "stock": 1
+      }
+    ]
+  },
+  "comptoir": {
+    "name": "Le comptoir d'Amandine",
+    "keeper": "Amandine",
+    "hello": "Bienvenue au comptoir ! Ici, on échange des choses rares contre de bons écus.",
+    "items": [
+      {
+        "id": "grande_bourse",
+        "price": 60,
+        "once": true
+      },
+      {
+        "id": "carquois",
+        "price": 80,
+        "once": true
+      },
+      {
+        "id": "quart_coeur",
+        "price": 150,
+        "stock": 1
+      },
+      {
+        "id": "petards5",
+        "price": 15,
+        "needs": "petards"
       }
     ]
   }

@@ -1,433 +1,907 @@
 {
-  "objectives": [
+ "objectives": [
+  {
+   "if": "!got_branche",
+   "text": "Prendre la branche près de la tente."
+  },
+  {
+   "if": "!crossed_rift",
+   "text": "Suivre les lucioles jusqu'au lac du camping."
+  },
+  {
+   "if": "!quest1",
+   "text": "Trouver le sage, dans la bibliothèque au nord-est de la place."
+  },
+  {
+   "if": "!slingshot",
+   "text": "Explorer la grotte des lucioles, au nord des collines."
+  },
+  {
+   "if": "!boss",
+   "text": "Vaincre le gardien au fond de la grotte."
+  },
+  {
+   "if": "!freed1",
+   "text": "Libérer {enfant1} de sa cage."
+  },
+  {
+   "if": "!v1done",
+   "text": "Retrouver {enfant1} sur la place du village."
+  },
+  {
+   "if": "!drawbridge",
+   "text": "Abaisser le pont-levis à l'ouest des collines : il y a une cible de l'autre côté de la rivière."
+  },
+  {
+   "if": "!frisbee",
+   "text": "Explorer le Bois des murmures, à l'ouest de la rivière."
+  },
+  {
+   "if": "!boss2",
+   "text": "Vaincre le Grand-Duc au cœur du bois."
+  },
+  {
+   "if": "!freed2",
+   "text": "Libérer Mamie de sa cage."
+  },
+  {
+   "if": "!v2done",
+   "text": "Retrouver Mamie au village."
+  },
+  {
+   "if": "!minesKey",
+   "text": "Récupérer la clé des Mines : elle est sur une corniche, au nord-est des collines."
+  },
+  {
+   "if": "!minesOpen",
+   "text": "Ouvrir la grille des Mines des gnomes, tout au nord-est des collines."
+  },
+  {
+   "if": "!grappin",
+   "text": "Explorer les Mines des gnomes."
+  },
+  {
+   "if": "!boss3",
+   "text": "Vaincre la Taupe de fer au fond des mines."
+  },
+  {
+   "if": "!freed3",
+   "text": "Libérer Amandine de sa cage."
+  },
+  {
+   "if": "!v3done",
+   "text": "Retrouver Amandine au village."
+  },
+  {
+   "if": "!lacCrossed",
+   "text": "Prendre le chemin du lac, au sud-est du village, et franchir le ravin."
+  },
+  {
+   "if": "!palmes",
+   "text": "Explorer le Temple englouti, au milieu du lac."
+  },
+  {
+   "if": "!boss4",
+   "text": "Vaincre la Reine des remous."
+  },
+  {
+   "if": "!freed4",
+   "text": "Libérer {enfant2} de sa cage."
+  },
+  {
+   "if": "!v4done",
+   "text": "Retrouver {enfant2} au village."
+  },
+  {
+   "if": "!petards",
+   "text": "Nager jusqu'à l'île du lac et explorer la Tour des artificiers."
+  },
+  {
+   "if": "!boss5",
+   "text": "Vaincre le Chevalier de fer."
+  },
+  {
+   "if": "!freed5",
+   "text": "Libérer Goyave."
+  },
+  {
+   "if": "!v5done",
+   "text": "Retrouver Goyave au village."
+  },
+  {
+   "if": "!castleOpen",
+   "text": "Faire sauter l'éboulement du défilé, au sud-ouest du lac."
+  },
+  {
+   "if": "!sealGateSeen",
+   "text": "Trouver les cinq sceaux de l'aube dans les ailes du Château de Minuit."
+  },
+  {
+   "if": "!papaFreed",
+   "text": "Délivrer Papa du sort du Roi Minuit."
+  },
+  {
+   "if": "!boss6",
+   "text": "Vaincre le Roi Minuit."
+  },
+  {
+   "text": "Le soleil s'est levé sur Aube-Figée. Profite du royaume !"
+  }
+ ],
+ "prologue": [
+  {
+   "who": "{hero}",
+   "text": "Mmh… Quelle heure il est ? Il fait encore nuit noire.",
+   "face": "o"
+  },
+  {
+   "who": "{hero}",
+   "text": "{enfant1} ? {enfant2} ? Les tentes sont vides…",
+   "face": "o"
+  },
+  {
+   "who": "{hero}",
+   "text": "Et la laisse de Goyave qui traîne par terre. Ça ne me plaît pas du tout.",
+   "face": "angry"
+  },
+  {
+   "text": "Stick ou flèches : se déplacer. Prends la branche près de la tente."
+  }
+ ],
+ "got_branche": [
+  {
+   "text": "Tu as trouvé une branche ! Bouton A : donner un coup."
+  },
+  {
+   "who": "{hero}",
+   "text": "Les lucioles filent toutes vers le lac. Je les suis.",
+   "face": "smile"
+  }
+ ],
+ "rift_see": [
+  {
+   "who": "Lumi",
+   "text": "Psst ! Par ici ! N'aie pas peur, je suis une luciole. Je m'appelle Lumi."
+  },
+  {
+   "who": "Lumi",
+   "text": "Tes amis ont été aspirés par cette faille. Ils sont de l'autre côté, dans le royaume d'Aube-Figée."
+  },
+  {
+   "who": "{hero}",
+   "text": "Alors j'y vais. Tu viens avec moi ?",
+   "face": "smile"
+  },
+  {
+   "who": "Lumi",
+   "text": "Évidemment ! Entre dans la faille."
+  }
+ ],
+ "arrival": [
+  {
+   "who": "Lumi",
+   "text": "Bienvenue à Bourg-Luciole ! Ici, il fait nuit depuis cent ans."
+  },
+  {
+   "who": "Lumi",
+   "text": "Le vieux sage sait sûrement où sont tes amis. Sa bibliothèque est au nord-est de la place."
+  },
+  {
+   "text": "Pause : inventaire, carte et objectif du moment."
+  }
+ ],
+ "sage": [
+  {
+   "if": "!quest1",
+   "set": "quest1",
+   "lines": [
     {
-      "if": "!got_branche",
-      "text": "Prendre la branche près de la tente."
+     "who": "Le sage",
+     "text": "Un enfant de l'autre monde… Alors la faille s'est encore ouverte."
     },
     {
-      "if": "!crossed_rift",
-      "text": "Suivre les lucioles jusqu'au lac du camping."
+     "who": "Le sage",
+     "text": "C'est l'œuvre du Roi Minuit. Il a arrêté le temps à minuit, et il se nourrit de lumière."
     },
     {
-      "if": "!quest1",
-      "text": "Trouver le sage, dans la bibliothèque au nord-est de la place."
+     "who": "Le sage",
+     "text": "Il a fait enfermer tes proches dans six donjons. Leur lumière l'empêche de vieillir."
     },
     {
-      "if": "!slingshot",
-      "text": "Explorer la grotte des lucioles, au nord des collines."
+     "who": "{hero}",
+     "text": "Six donjons ?! Par lequel je commence ?",
+     "face": "o"
     },
     {
-      "if": "!boss",
-      "text": "Vaincre le gardien au fond de la grotte."
+     "who": "Le sage",
+     "text": "Cette nuit, on a vu une enfant… ou un enfant… emmené vers la grotte des lucioles, au nord des collines."
     },
     {
-      "if": "!freed1",
-      "text": "Libérer {enfant1} de sa cage."
-    },
-    {
-      "if": "!v1done",
-      "text": "Retrouver {enfant1} sur la place du village."
-    },
-    {
-      "if": "!drawbridge",
-      "text": "Abaisser le pont-levis à l'ouest des collines : il y a une cible de l'autre côté de la rivière."
-    },
-    {
-      "if": "!frisbee",
-      "text": "Explorer le Bois des murmures, à l'ouest de la rivière."
-    },
-    {
-      "if": "!boss2",
-      "text": "Vaincre le Grand-Duc au cœur du bois."
-    },
-    {
-      "if": "!freed2",
-      "text": "Libérer Mamie de sa cage."
-    },
-    {
-      "if": "!v2done",
-      "text": "Retrouver Mamie au village."
-    },
-    {
-      "text": "Les Mines des gnomes t'attendent… dans la prochaine version !"
+     "who": "Le sage",
+     "text": "Prends ces 20 écus. Achète-toi de quoi te défendre à la forge."
     }
-  ],
-  "prologue": [
+   ],
+   "give": {
+    "money": 20
+   }
+  },
+  {
+   "if": "!boss",
+   "lines": [
     {
-      "who": "{hero}",
-      "text": "Mmh… Quelle heure il est ? Il fait encore nuit noire.",
-      "face": "o"
-    },
-    {
-      "who": "{hero}",
-      "text": "{enfant1} ? {enfant2} ? Les tentes sont vides…",
-      "face": "o"
-    },
-    {
-      "who": "{hero}",
-      "text": "Et la laisse de Goyave qui traîne par terre. Ça ne me plaît pas du tout.",
-      "face": "angry"
-    },
-    {
-      "text": "Stick ou flèches : se déplacer. Prends la branche près de la tente."
+     "who": "Le sage",
+     "text": "La grotte des lucioles est au nord, après la palissade. Méfie-toi du gardien qui dort au fond."
     }
-  ],
-  "got_branche": [
+   ]
+  },
+  {
+   "if": "!drawbridge",
+   "lines": [
     {
-      "text": "Tu as trouvé une branche ! Bouton A : donner un coup."
+     "who": "Le sage",
+     "text": "Un fragment d'aube ! Regarde la fontaine : l'horloge a bougé. Tu nous rends l'espoir."
     },
     {
-      "who": "{hero}",
-      "text": "Les lucioles filent toutes vers le lac. Je les suis.",
-      "face": "smile"
+     "who": "Le sage",
+     "text": "Le prochain donjon est le Bois des murmures, à l'ouest de la rivière. Le pont-levis est relevé depuis cent ans."
+    },
+    {
+     "who": "Le sage",
+     "text": "On dit qu'une vieille cible commande le mécanisme. Il faudrait la toucher depuis l'autre rive…"
     }
-  ],
-  "rift_see": [
+   ]
+  },
+  {
+   "if": "!freed2",
+   "lines": [
     {
-      "who": "Lumi",
-      "text": "Psst ! Par ici ! N'aie pas peur, je suis une luciole. Je m'appelle Lumi."
-    },
-    {
-      "who": "Lumi",
-      "text": "Tes amis ont été aspirés par cette faille. Ils sont de l'autre côté, dans le royaume d'Aube-Figée."
-    },
-    {
-      "who": "{hero}",
-      "text": "Alors j'y vais. Tu viens avec moi ?",
-      "face": "smile"
-    },
-    {
-      "who": "Lumi",
-      "text": "Évidemment ! Entre dans la faille."
+     "who": "Le sage",
+     "text": "Le Grand-Duc garde le bois. Il vole trop haut pour ta branche : trouve de quoi le faire tomber."
     }
-  ],
-  "arrival": [
+   ]
+  },
+  {
+   "if": "!freed3",
+   "lines": [
     {
-      "who": "Lumi",
-      "text": "Bienvenue à Bourg-Luciole ! Ici, il fait nuit depuis cent ans."
+     "who": "Le sage",
+     "text": "Deux fragments d'aube… Les Mines des gnomes sont au nord-est des collines."
     },
     {
-      "who": "Lumi",
-      "text": "Le vieux sage sait sûrement où sont tes amis. Sa bibliothèque est au nord-est de la place."
-    },
-    {
-      "text": "Pause : inventaire, carte et objectif du moment."
+     "who": "Le sage",
+     "text": "Leur grille est fermée. La clé ? Sur la corniche du vieux gardien, au-dessus du ravin. Ce qui va et revient pourrait la rapporter."
     }
-  ],
-  "sage": [
+   ]
+  },
+  {
+   "if": "!freed4",
+   "lines": [
     {
-      "if": "!quest1",
-      "set": "quest1",
-      "lines": [
-        {
-          "who": "Le sage",
-          "text": "Un enfant de l'autre monde… Alors la faille s'est encore ouverte."
-        },
-        {
-          "who": "Le sage",
-          "text": "C'est l'œuvre du Roi Minuit. Il a arrêté le temps à minuit, et il se nourrit de lumière."
-        },
-        {
-          "who": "Le sage",
-          "text": "Il a fait enfermer tes proches dans six donjons. Leur lumière l'empêche de vieillir."
-        },
-        {
-          "who": "{hero}",
-          "text": "Six donjons ?! Par lequel je commence ?",
-          "face": "o"
-        },
-        {
-          "who": "Le sage",
-          "text": "Cette nuit, on a vu une enfant… ou un enfant… emmené vers la grotte des lucioles, au nord des collines."
-        },
-        {
-          "who": "Le sage",
-          "text": "Prends ces 20 écus. Achète-toi de quoi te défendre à la forge."
-        }
-      ],
-      "give": {
-        "money": 20
-      }
+     "who": "Le sage",
+     "text": "Trois fragments ! Le lac est au sud-est du village, derrière un ravin."
     },
     {
-      "if": "!boss",
-      "lines": [
-        {
-          "who": "Le sage",
-          "text": "La grotte des lucioles est au nord, après la palissade. Méfie-toi du gardien qui dort au fond."
-        }
-      ]
-    },
-    {
-      "if": "!drawbridge",
-      "lines": [
-        {
-          "who": "Le sage",
-          "text": "Un fragment d'aube ! Regarde la fontaine : l'horloge a bougé. Tu nous rends l'espoir."
-        },
-        {
-          "who": "Le sage",
-          "text": "Le prochain donjon est le Bois des murmures, à l'ouest de la rivière. Le pont-levis est relevé depuis cent ans."
-        },
-        {
-          "who": "Le sage",
-          "text": "On dit qu'une vieille cible commande le mécanisme. Il faudrait la toucher depuis l'autre rive…"
-        }
-      ]
-    },
-    {
-      "if": "!freed2",
-      "lines": [
-        {
-          "who": "Le sage",
-          "text": "Le Grand-Duc garde le bois. Il vole trop haut pour ta branche : trouve de quoi le faire tomber."
-        }
-      ]
-    },
-    {
-      "lines": [
-        {
-          "who": "Le sage",
-          "text": "Deux fragments d'aube… Les Mines des gnomes sont la prochaine étape. Repose-toi d'abord."
-        }
-      ]
+     "who": "Le sage",
+     "text": "Au milieu du lac dort un temple englouti. On raconte qu'on y nage mieux avec des palmes."
     }
-  ],
-  "garde": [
+   ]
+  },
+  {
+   "if": "!freed5",
+   "lines": [
     {
-      "if": "!quest1",
-      "lines": [
-        {
-          "who": "Le garde",
-          "text": "Halte ! Les collines sont pleines de bestioles la nuit. Va d'abord voir le sage."
-        }
-      ]
+     "who": "Le sage",
+     "text": "La Tour des artificiers se dresse sur l'île du lac. On y fabriquait les feux d'artifice du royaume."
     },
     {
-      "lines": [
-        {
-          "who": "Le garde",
-          "text": "Le sage t'a parlé ? Alors passe. Et casse les buissons : on y trouve des écus."
-        }
-      ]
+     "who": "Le sage",
+     "text": "Ses murs fendus n'attendent qu'une étincelle."
     }
-  ],
-  "aubergiste": [
+   ]
+  },
+  {
+   "if": "!boss6",
+   "lines": [
     {
-      "lines": [
-        {
-          "who": "L'aubergiste",
-          "text": "Tu as une petite mine. Repose-toi un moment, c'est la maison qui offre."
-        }
-      ],
-      "heal": true
+     "who": "Le sage",
+     "text": "Cinq fragments… Il ne manque que le dernier. Le Château de Minuit est au bout du défilé, au sud-ouest du lac."
+    },
+    {
+     "who": "Le sage",
+     "text": "Le Roi s'y cache. Et ton père… Sois prudent{e}."
     }
-  ],
-  "villageois1": [
+   ]
+  },
+  {
+   "lines": [
     {
-      "if": "!freed1",
-      "lines": [
-        {
-          "who": "Pierrette",
-          "text": "Ça fait cent ans que je n'ai pas vu le soleil. Enfin… c'est ce que dit ma grand-mère."
-        }
-      ]
-    },
-    {
-      "lines": [
-        {
-          "who": "Pierrette",
-          "text": "Tu as vu ? Le ciel est un tout petit peu moins noir ce soir !"
-        }
-      ]
+     "who": "Le sage",
+     "text": "Le soleil ! Cent ans que je ne l'avais pas vu. Merci, enfant de l'autre monde."
     }
-  ],
-  "villageois2": [
+   ]
+  }
+ ],
+ "garde": [
+  {
+   "if": "!quest1",
+   "lines": [
     {
-      "if": "!drawbridge",
-      "lines": [
-        {
-          "who": "Gaspard",
-          "text": "Le pont-levis de l'ouest ? Mon grand-père disait qu'il suffit de viser la cible au centre. Mais avec quoi…"
-        }
-      ]
-    },
-    {
-      "lines": [
-        {
-          "who": "Gaspard",
-          "text": "Les jarres et les buissons cachent souvent des écus. Les ennemis aussi en lâchent."
-        }
-      ]
+     "who": "Le garde",
+     "text": "Halte ! Les collines sont pleines de bestioles la nuit. Va d'abord voir le sage."
     }
-  ],
-  "villageois3": [
+   ]
+  },
+  {
+   "lines": [
     {
-      "lines": [
-        {
-          "who": "Mahaut",
-          "text": "L'épicière vend un sirop de grenadine qui soigne tout. Il te faut une bouteille, par contre."
-        }
-      ]
+     "who": "Le garde",
+     "text": "Le sage t'a parlé ? Alors passe. Et casse les buissons : on y trouve des écus."
     }
-  ],
-  "forain": [
+   ]
+  }
+ ],
+ "aubergiste": [
+  {
+   "lines": [
     {
-      "lines": [
-        {
-          "who": "Le forain",
-          "text": "Le champ de foire rouvrira bientôt ! Tir, courses de chariots… Reviens dans une prochaine version."
-        }
-      ]
+     "who": "L'aubergiste",
+     "text": "Tu as une petite mine. Repose-toi un moment, c'est la maison qui offre."
     }
-  ],
-  "captive_cage": [
+   ],
+   "heal": true
+  }
+ ],
+ "villageois1": [
+  {
+   "if": "!freed1",
+   "lines": [
     {
-      "who": "{enfant1}",
-      "text": "{hero} ! C'est toi ! Sors-moi de là !",
-      "face": "o",
-      "faceOf": "enfant1"
+     "who": "Pierrette",
+     "text": "Ça fait cent ans que je n'ai pas vu le soleil. Enfin… c'est ce que dit ma grand-mère."
     }
-  ],
-  "freed": [
+   ]
+  },
+  {
+   "lines": [
     {
-      "who": "{enfant1}",
-      "text": "Tu es venu{e} jusqu'ici pour moi ? Je te revaudrai ça.",
-      "face": "smile",
-      "faceOf": "enfant1"
-    },
-    {
-      "who": "{hero}",
-      "text": "Les autres sont prisonniers aussi. Le Roi Minuit les garde dans d'autres donjons.",
-      "face": "angry"
-    },
-    {
-      "who": "{enfant1}",
-      "text": "Alors on va les chercher. Je t'attends au village, sur la place.",
-      "face": "wink",
-      "faceOf": "enfant1"
-    },
-    {
-      "text": "Tu as obtenu un fragment d'aube ! Le ciel du royaume s'éclaircit un peu."
+     "who": "Pierrette",
+     "text": "Tu as vu ? Le ciel est un tout petit peu moins noir ce soir !"
     }
-  ],
-  "reunion": [
+   ]
+  }
+ ],
+ "villageois2": [
+  {
+   "if": "!drawbridge",
+   "lines": [
     {
-      "who": "{enfant1}",
-      "text": "Te voilà ! Regarde l'horloge de la fontaine : elle a avancé.",
-      "face": "smile",
-      "faceOf": "enfant1"
-    },
-    {
-      "who": "Lumi",
-      "text": "Le prochain donjon, c'est le Bois des murmures. On dit qu'un frisbee magique y est caché."
-    },
-    {
-      "who": "{hero}",
-      "text": "Alors on ne traîne pas. On a encore cinq personnes à ramener.",
-      "face": "smile"
+     "who": "Gaspard",
+     "text": "Le pont-levis de l'ouest ? Mon grand-père disait qu'il suffit de viser la cible au centre. Mais avec quoi…"
     }
-  ],
-  "enfant1": [
+   ]
+  },
+  {
+   "if": "!minesOpen",
+   "lines": [
     {
-      "lines": [
-        {
-          "who": "{enfant1}",
-          "text": "Je garde la place. Reviens vite avec des nouvelles !",
-          "face": "smile",
-          "faceOf": "enfant1"
-        }
-      ]
+     "who": "Gaspard",
+     "text": "Les gnomes ? Ils ont fermé leur grille il y a cent ans. Et le gardien a laissé tomber sa clé sur une corniche, l'étourdi."
     }
-  ],
-  "bridge_down": [
+   ]
+  },
+  {
+   "if": "!palmes",
+   "lines": [
     {
-      "text": "Le pont-levis s'abaisse dans un grand fracas !"
-    },
-    {
-      "who": "Lumi",
-      "text": "La route du Bois des murmures est ouverte !"
+     "who": "Gaspard",
+     "text": "Le temple du lac a les pieds dans l'eau. Ses vannes font monter et descendre l'eau, dit-on."
     }
-  ],
-  "boisIntro": [
+   ]
+  },
+  {
+   "lines": [
     {
-      "who": "{hero}",
-      "text": "Ce bois chuchote… On dirait que les arbres parlent entre eux.",
-      "face": "o"
-    },
-    {
-      "who": "Lumi",
-      "text": "C'est le vent du vieux moulin. Il souffle par rafales : abrite-toi derrière les souches."
-    },
-    {
-      "who": "Lumi",
-      "text": "Et je sens quelqu'un, tout au fond. Quelqu'un qui sent bon la soupe…"
+     "who": "Gaspard",
+     "text": "Les jarres et les buissons cachent souvent des écus. Les ennemis aussi en lâchent."
     }
-  ],
-  "captive_cage2": [
+   ]
+  }
+ ],
+ "villageois3": [
+  {
+   "if": "!freed3",
+   "lines": [
     {
-      "who": "Mamie",
-      "text": "{hero} ! Mon petit cœur ! Fais attention à ce gros hibou, il a des serres comme des fourchettes à rôti.",
-      "face": "smile",
-      "faceOf": "claudine"
+     "who": "Mahaut",
+     "text": "L'épicière vend un sirop de grenadine qui soigne tout. Il te faut une bouteille, par contre."
     }
-  ],
-  "freed2": [
+   ]
+  },
+  {
+   "lines": [
     {
-      "who": "Mamie",
-      "text": "Ah, enfin ! J'avais des fourmis dans les jambes, coincée là-dedans.",
-      "face": "smile",
-      "faceOf": "claudine"
-    },
-    {
-      "who": "{hero}",
-      "text": "Mamie ! Tu n'as rien ? Goyave n'était pas avec toi ?",
-      "face": "o"
-    },
-    {
-      "who": "Mamie",
-      "text": "On nous a séparés en arrivant… Il est quelque part dans ce royaume, je le sens.",
-      "face": "smile",
-      "faceOf": "claudine"
-    },
-    {
-      "who": "Mamie",
-      "text": "Bon ! Je file au village. Rapporte-moi des champignons, je te ferai une soupe qui requinque.",
-      "face": "smile",
-      "faceOf": "claudine"
-    },
-    {
-      "text": "Tu as obtenu un deuxième fragment d'aube ! Le ciel s'éclaircit encore."
+     "who": "Mahaut",
+     "text": "Le comptoir de ton amie Amandine a une grande bourse. Pratique quand on a plein d'écus !"
     }
-  ],
-  "reunion2": [
+   ]
+  }
+ ],
+ "forain": [
+  {
+   "lines": [
     {
-      "who": "Mamie",
-      "text": "Voilà ma cuisine ! Bon, ce n'est pas la mienne, mais les gens d'ici me la prêtent.",
-      "face": "smile",
-      "faceOf": "claudine"
-    },
-    {
-      "who": "{enfant1}",
-      "text": "Mamie ! L'horloge de la fontaine indique deux heures du matin maintenant.",
-      "face": "smile",
-      "faceOf": "enfant1"
-    },
-    {
-      "who": "Lumi",
-      "text": "Prochaine étape : les Mines des gnomes. Le frisbee t'ouvrira le chemin."
+     "who": "Le forain",
+     "text": "Le champ de foire rouvrira bientôt ! Tir, courses de chariots… Reviens dans une prochaine version."
     }
-  ],
-  "mamie": [
+   ]
+  }
+ ],
+ "captive_cage": [
+  {
+   "who": "{enfant1}",
+   "text": "{hero} ! C'est toi ! Sors-moi de là !",
+   "face": "o",
+   "faceOf": "enfant1"
+  }
+ ],
+ "freed": [
+  {
+   "who": "{enfant1}",
+   "text": "Tu es venu{e} jusqu'ici pour moi ? Je te revaudrai ça.",
+   "face": "smile",
+   "faceOf": "enfant1"
+  },
+  {
+   "who": "{hero}",
+   "text": "Les autres sont prisonniers aussi. Le Roi Minuit les garde dans d'autres donjons.",
+   "face": "angry"
+  },
+  {
+   "who": "{enfant1}",
+   "text": "Alors on va les chercher. Je t'attends au village, sur la place.",
+   "face": "wink",
+   "faceOf": "enfant1"
+  },
+  {
+   "text": "Tu as obtenu un fragment d'aube ! Le ciel du royaume s'éclaircit un peu."
+  }
+ ],
+ "reunion": [
+  {
+   "who": "{enfant1}",
+   "text": "Te voilà ! Regarde l'horloge de la fontaine : elle a avancé.",
+   "face": "smile",
+   "faceOf": "enfant1"
+  },
+  {
+   "who": "Lumi",
+   "text": "Le prochain donjon, c'est le Bois des murmures. On dit qu'un frisbee magique y est caché."
+  },
+  {
+   "who": "{hero}",
+   "text": "Alors on ne traîne pas. On a encore cinq personnes à ramener.",
+   "face": "smile"
+  }
+ ],
+ "enfant1": [
+  {
+   "lines": [
     {
-      "lines": [
-        {
-          "who": "Mamie",
-          "text": "Trois champignons et une bouteille vide, et je te fais une soupe. C'est la maison qui offre le reste !",
-          "face": "smile",
-          "faceOf": "claudine"
-        }
-      ]
+     "who": "{enfant1}",
+     "text": "Je garde la place. Reviens vite avec des nouvelles !",
+     "face": "smile",
+     "faceOf": "enfant1"
     }
-  ]
+   ]
+  }
+ ],
+ "bridge_down": [
+  {
+   "text": "Le pont-levis s'abaisse dans un grand fracas !"
+  },
+  {
+   "who": "Lumi",
+   "text": "La route du Bois des murmures est ouverte !"
+  }
+ ],
+ "boisIntro": [
+  {
+   "who": "{hero}",
+   "text": "Ce bois chuchote… On dirait que les arbres parlent entre eux.",
+   "face": "o"
+  },
+  {
+   "who": "Lumi",
+   "text": "C'est le vent du vieux moulin. Il souffle par rafales : abrite-toi derrière les souches."
+  },
+  {
+   "who": "Lumi",
+   "text": "Et je sens quelqu'un, tout au fond. Quelqu'un qui sent bon la soupe…"
+  }
+ ],
+ "captive_cage2": [
+  {
+   "who": "Mamie",
+   "text": "{hero} ! Mon petit cœur ! Fais attention à ce gros hibou, il a des serres comme des fourchettes à rôti.",
+   "face": "smile",
+   "faceOf": "claudine"
+  }
+ ],
+ "freed2": [
+  {
+   "who": "Mamie",
+   "text": "Ah, enfin ! J'avais des fourmis dans les jambes, coincée là-dedans.",
+   "face": "smile",
+   "faceOf": "claudine"
+  },
+  {
+   "who": "{hero}",
+   "text": "Mamie ! Tu n'as rien ? Goyave n'était pas avec toi ?",
+   "face": "o"
+  },
+  {
+   "who": "Mamie",
+   "text": "On nous a séparés en arrivant… Il est quelque part dans ce royaume, je le sens.",
+   "face": "smile",
+   "faceOf": "claudine"
+  },
+  {
+   "who": "Mamie",
+   "text": "Bon ! Je file au village. Rapporte-moi des champignons, je te ferai une soupe qui requinque.",
+   "face": "smile",
+   "faceOf": "claudine"
+  },
+  {
+   "text": "Tu as obtenu un deuxième fragment d'aube ! Le ciel s'éclaircit encore."
+  }
+ ],
+ "reunion2": [
+  {
+   "who": "Mamie",
+   "text": "Voilà ma cuisine ! Bon, ce n'est pas la mienne, mais les gens d'ici me la prêtent.",
+   "face": "smile",
+   "faceOf": "claudine"
+  },
+  {
+   "who": "{enfant1}",
+   "text": "Mamie ! L'horloge de la fontaine indique deux heures du matin maintenant.",
+   "face": "smile",
+   "faceOf": "enfant1"
+  },
+  {
+   "who": "Lumi",
+   "text": "Prochaine étape : les Mines des gnomes. Le frisbee t'ouvrira le chemin."
+  }
+ ],
+ "mamie": [
+  {
+   "lines": [
+    {
+     "who": "Mamie",
+     "text": "Trois champignons et une bouteille vide, et je te fais une soupe. C'est la maison qui offre le reste !",
+     "face": "smile",
+     "faceOf": "claudine"
+    }
+   ]
+  }
+ ],
+ "minesIntro": [
+  {
+   "who": "{hero}",
+   "text": "Des rails, des wagonnets… Et ça sent la poussière de cristal.",
+   "face": "o"
+  },
+  {
+   "who": "Lumi",
+   "text": "Les gnomes ont creusé ces galeries pour le Roi Minuit. Amandine est au fond, je sens son courage d'ici."
+  },
+  {
+   "who": "Lumi",
+   "text": "Les leviers d'aiguillage décident où va le wagonnet. Regarde bien les panneaux."
+  }
+ ],
+ "captive_cage3": [
+  {
+   "who": "Amandine",
+   "text": "{hero} ?! Fais attention, cette machine creuse le sol comme du beurre ! Elle a des plaques partout…",
+   "face": "smile",
+   "faceOf": "amandine"
+  }
+ ],
+ "freed3": [
+  {
+   "who": "Amandine",
+   "text": "Merci, {hero} ! J'ai cru que j'allais finir en pépite.",
+   "face": "smile",
+   "faceOf": "amandine"
+  },
+  {
+   "who": "{hero}",
+   "text": "Les autres ont besoin de nous. Il en reste encore trois.",
+   "face": "angry"
+  },
+  {
+   "who": "Amandine",
+   "text": "Je file au village. Je vais ouvrir un comptoir : il y a des choses rares à échanger, ici.",
+   "face": "smile",
+   "faceOf": "amandine"
+  },
+  {
+   "text": "Tu as obtenu un troisième fragment d'aube ! Le ciel prend une teinte violette."
+  }
+ ],
+ "reunion3": [
+  {
+   "who": "Amandine",
+   "text": "Voilà mon comptoir ! Une grande bourse, une sacoche plus grande… Passe me voir.",
+   "face": "smile",
+   "faceOf": "amandine"
+  },
+  {
+   "who": "Lumi",
+   "text": "Prochaine étape : le lac, au sud-est du village. Un ravin le coupe du royaume, mais ton grappin fera l'affaire."
+  }
+ ],
+ "lacIntro": [
+  {
+   "who": "{hero}",
+   "text": "Le lac… Et un ravin juste devant moi.",
+   "face": "o"
+  },
+  {
+   "who": "Lumi",
+   "text": "Il y a un poteau de l'autre côté. Vise-le avec le grappin !"
+  }
+ ],
+ "lacNoHook": [
+  {
+   "who": "{hero}",
+   "text": "Trop large pour sauter. Il me faudrait de quoi m'accrocher au poteau d'en face.",
+   "face": "o"
+  }
+ ],
+ "templeIntro": [
+  {
+   "who": "{hero}",
+   "text": "De l'eau partout… On dirait la piscine du camping, en plus effrayant.",
+   "face": "o"
+  },
+  {
+   "who": "Lumi",
+   "text": "Les vannes font monter et descendre l'eau dans tout le temple. Quand l'eau baisse, les bassins peu profonds se vident… mais les grands deviennent des gouffres."
+  },
+  {
+   "who": "Lumi",
+   "text": "{enfant2} est ici. Je sens sa lumière, tout au fond."
+  }
+ ],
+ "captive_cage4": [
+  {
+   "who": "{enfant2}",
+   "text": "{hero} ! Ce poisson tourne en rond depuis des heures. Il saute hors de l'eau quand il a faim…",
+   "face": "o",
+   "faceOf": "enfant2"
+  }
+ ],
+ "freed4": [
+  {
+   "who": "{enfant2}",
+   "text": "Tu es venu{e} me chercher jusqu'au fond du lac ? Tu es la meilleure personne du monde.",
+   "face": "smile",
+   "faceOf": "enfant2"
+  },
+  {
+   "who": "{hero}",
+   "text": "Il manque encore Goyave et Papa. On y va ensemble ?",
+   "face": "smile"
+  },
+  {
+   "who": "{enfant2}",
+   "text": "Je rentre au village : j'ai une idée avec les lucioles. Tu verras !",
+   "face": "wink",
+   "faceOf": "enfant2"
+  },
+  {
+   "text": "Tu as obtenu un quatrième fragment d'aube ! Une lueur rose borde l'horizon."
+  }
+ ],
+ "reunion4": [
+  {
+   "who": "{enfant2}",
+   "text": "J'ai réveillé les lucioles-relais ! Touche une lanterne de pierre et elle t'emmène jusqu'aux autres.",
+   "face": "smile",
+   "faceOf": "enfant2"
+  },
+  {
+   "who": "Lumi",
+   "text": "La Tour des artificiers est sur l'île, à l'est du lac. Avec tes palmes, tu peux y nager."
+  }
+ ],
+ "towerIntro": [
+  {
+   "who": "{hero}",
+   "text": "Ça sent la poudre… Et ce mur fendu sonne creux.",
+   "face": "o"
+  },
+  {
+   "who": "Lumi",
+   "text": "J'entends aboyer tout en haut. C'est Goyave !"
+  }
+ ],
+ "captive_cage5": [
+  {
+   "who": "Goyave",
+   "text": "Ouaf ! Ouaf ouaf !"
+  },
+  {
+   "who": "{hero}",
+   "text": "Tiens bon, Goyave ! J'arrive !",
+   "face": "angry"
+  }
+ ],
+ "freed5": [
+  {
+   "text": "Goyave te saute dessus et te lèche toute la figure !"
+  },
+  {
+   "who": "{hero}",
+   "text": "Goyave ! Tu nous as tellement manqué !",
+   "face": "smile"
+  },
+  {
+   "who": "Lumi",
+   "text": "Il a un flair incroyable. Quand il s'arrête et aboie, il a senti quelque chose : laisse-le creuser."
+  },
+  {
+   "text": "Tu as obtenu un cinquième fragment d'aube ! Le ciel devient rose."
+  }
+ ],
+ "reunion5": [
+  {
+   "who": "Mamie",
+   "text": "Goyave ! Mon toutou ! Viens là que je te gratouille.",
+   "face": "smile",
+   "faceOf": "claudine"
+  },
+  {
+   "who": "Lumi",
+   "text": "Il ne reste que Papa. Le Château de Minuit est au bout du défilé, au sud-ouest du lac."
+  },
+  {
+   "who": "Lumi",
+   "text": "Un éboulement bloque la route. Tes pétards vont faire du bruit !"
+  }
+ ],
+ "castleIntro": [
+  {
+   "who": "{hero}",
+   "text": "Le château du Roi Minuit… Toutes les horloges sont arrêtées sur minuit.",
+   "face": "o"
+  },
+  {
+   "who": "Lumi",
+   "text": "Frappe une horloge : elle fige toute la salle quelques secondes. Les pièges s'arrêtent avec elle."
+  },
+  {
+   "who": "Lumi",
+   "text": "La grande porte du hall est scellée. Il faut cinq sceaux de l'aube : un dans chaque aile, et chaque aile demande un de tes outils."
+  }
+ ],
+ "papaIntro": [
+  {
+   "who": "Le Chevalier Minuit",
+   "text": "Nul… ne… passe."
+  },
+  {
+   "who": "{hero}",
+   "text": "Cette voix… Papa ?!",
+   "face": "o"
+  },
+  {
+   "who": "Lumi",
+   "text": "Le Roi l'a ensorcelé ! Étourdis-le, puis frappe son armure pour briser le sort !"
+  }
+ ],
+ "papaFreed": [
+  {
+   "who": "Papa",
+   "text": "Hein ? Où suis-je ? {hero} ?!",
+   "face": "o",
+   "faceOf": "papa"
+  },
+  {
+   "who": "Papa",
+   "text": "J'ai fait un drôle de rêve. Je portais une armure et je criais « Nul ne passe » à tout le monde.",
+   "face": "wink",
+   "faceOf": "papa"
+  },
+  {
+   "who": "{hero}",
+   "text": "C'était pas un rêve, Papa !",
+   "face": "angry"
+  },
+  {
+   "who": "Papa",
+   "text": "Bon. Ce Roi Minuit va m'entendre. Je viens avec toi !",
+   "face": "angry",
+   "faceOf": "papa"
+  }
+ ],
+ "kingIntro": [
+  {
+   "who": "Le Roi Minuit",
+   "text": "Enfin. L'enfant qui ne dormait pas. Ta lumière sera la dernière que je boirai."
+  },
+  {
+   "who": "Papa",
+   "text": "Personne ne boit la lumière de mes enfants !",
+   "face": "angry",
+   "faceOf": "papa"
+  },
+  {
+   "who": "Lumi",
+   "text": "Ses cristaux le protègent. Brise-les de loin !"
+  }
+ ],
+ "king2": [
+  {
+   "who": "Le Roi Minuit",
+   "text": "Tu crois m'atteindre ? Mon bouclier d'ombre est éternel !"
+  },
+  {
+   "who": "Lumi",
+   "text": "Arrache-lui son bouclier au grappin !"
+  }
+ ],
+ "king3": [
+  {
+   "who": "Le Roi Minuit",
+   "text": "Assez ! Je vais éteindre toutes les lumières !"
+  },
+  {
+   "who": "Papa",
+   "text": "Fais-le tomber, je l'attrape !",
+   "face": "angry",
+   "faceOf": "papa"
+  }
+ ],
+ "kingDown": [
+  {
+   "who": "Le Roi Minuit",
+   "text": "Non… la lumière… je sens… cent ans qui me tombent dessus…"
+  },
+  {
+   "text": "Les six fragments d'aube s'illuminent ensemble. Le soleil se lève sur le royaume !"
+  },
+  {
+   "who": "Papa",
+   "text": "Bravo, {hero}. On rentre à la maison ?",
+   "face": "smile",
+   "faceOf": "papa"
+  }
+ ],
+ "enfant2": [
+  {
+   "lines": [
+    {
+     "who": "{enfant2}",
+     "text": "Les lucioles-relais t'emmènent partout. Pratique, non ?",
+     "face": "wink",
+     "faceOf": "enfant2"
+    }
+   ]
+  }
+ ],
+ "papa": [
+  {
+   "lines": [
+    {
+     "who": "Papa",
+     "text": "Le soleil, enfin ! Je n'aurais jamais cru dire ça, mais vivement le camping.",
+     "face": "smile",
+     "faceOf": "papa"
+    }
+   ]
+  }
+ ]
 }

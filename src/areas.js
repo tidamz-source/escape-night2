@@ -74,6 +74,7 @@ function buildRoyaumeArea() {
   ];
   const keep = A.houses.map(h => ({ x: h.x - 60, y: h.y - 90, w: 120, h: 120 }));
   keep.push({ x: px - 180, y: py - 110, w: 360, h: 220 }, { x: 330, y: gy - 30, w: 110, h: 60 }, { x: 330, y: 820, w: 110, h: 140 }, { x: 0, y: 260, w: 140, h: 140 });
+  keep.push({ x: 26 * TS, y: 0, w: 18 * TS, h: 17 * TS }, { x: 38 * TS, y: 49 * TS, w: 10 * TS, h: 11 * TS });
   scatter(A, 41, keep, { trees: 48, rocks: 14, flowers: 22, bushes: 34 });
   A.spawn = function () {
     this.ents = [];
@@ -93,6 +94,14 @@ function buildRoyaumeArea() {
     this.ents.push(new NPC(270, 818, { look: 'forain', talk: 'forain' }), new Prop(270, 792, 'stall'));
     this.ents.push(new NPC(px + 30, py + 40, { hero: () => Heroes.captive(1), talk: 'enfant1', when: 'freed1' }));
     this.ents.push(new NPC(144, 886, { sprite: 'claudine', shop: 'cuisine', when: 'freed2' }));
+    this.ents.push(new NPC(px - 92, py - 24, { sprite: 'amandine', shop: 'comptoir', when: 'freed3' }), new Prop(px - 92, py - 46, 'stall'));
+    this.ents.push(new NPC(px + 96, py + 44, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4' }));
+    this.ents.push(new Relay(px + 64, py + 46, 'village'), new Relay(41 * TS, 15 * TS, 'collines'));
+    // au nord-est : la grille des Mines et sa clé, perchée sur une corniche au-dessus du ravin
+    this.ents.push(new IronGate(38 * TS + 16, 3 * TS, { flag: 'minesOpen', key: 'minesKey', w: 64, closedMsg: [{ text: '« Mines des gnomes. Fermé jusqu\'à nouvel ordre. »' }, { who: '{hero}', text: 'Une grille fermée à clé… La clé ne doit pas être loin.', face: 'o' }], openMsg: [{ text: 'La clé tourne dans la serrure. La grille des Mines s\'ouvre !' }] }));
+    this.ents.push(new SpecialKey(32 * TS + 8, 7 * TS + 12, 'minesKey', [{ text: 'Tu as récupéré la clé de la grille des Mines !' }, { who: 'Lumi', text: 'La grille est juste au nord-est. Les gnomes vont être surpris !' }]));
+    this.ents.push(new Sign(35 * TS, 12 * TS + 4, [{ text: '« Corniche du vieux gardien. Il y a perdu sa clé il y a cent ans. Personne n\'a jamais pu la rattraper. »' }, { who: '{hero}', text: 'Une clé, sur la corniche… Il faudrait quelque chose qui aille la chercher et qui revienne.', face: 'o' }]));
+    this.ents.push(new Sign(41 * TS + 8, 52 * TS, [{ text: '« Chemin du lac. Attention au ravin. »' }]));
     // la rivière de l'ouest : cible et pont-levis vers le Bois des murmures
     const bx = ROY.bridge.x * TS, by = ROY.bridge.y * TS;
     this.ents.push(new Target(56, by - 14, 'drawbridge', G => { G.area.syncTiles(); G.say(Story.script('bridge_down')); }));
@@ -116,6 +125,9 @@ function buildRoyaumeArea() {
   A.arrival = { x: px, y: 892, dir: 'up' };
   A.fromCave = { x: px, y: 56, dir: 'down' };
   A.fromBois = { x: 48, y: ROY.bridge.y * TS + 24, dir: 'right' };
+  A.fromMines = { x: 38 * TS + 16, y: 5 * TS, dir: 'down' };
+  A.fromLac = { x: 44 * TS, y: 55 * TS, dir: 'up' };
+  A.exits = { J: G => G.enter('mines', G.areas.mines.start), K: G => { if (G.areas.lac) G.enter('lac', G.areas.lac.start); else { G.player.y -= 14; G.say([{ text: 'Le chemin du lac est encore fermé.' }]); } } };
   A.start = { x: px, y: py + 50, dir: 'down' };
   A.name = 'Bourg-Luciole';
   A.dark = 0.52;

@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v2.0.1';
+const VERSION = 'v3.0.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -47,7 +47,8 @@ const IMG = {};
 const SHEETS = {}; // planches des héros (format Aseprite JSON)
 const HERO_SHEETS = ['sacha', 'cam', 'rox'];
 const FACES = ['sacha', 'cam', 'rox', 'papa', 'amandine', 'claudine'].flatMap(w => ['smile', 'o', 'angry', 'wink'].map(m => `${w}_${m}`)).filter(k => k !== 'amandine_o' && k !== 'amandine_angry' && k !== 'amandine_wink' && k !== 'claudine_o' && k !== 'claudine_angry' && k !== 'claudine_wink');
-const NPC_SPRITES = ['claudine', 'dog_down'];
+const NPC_SPRITES = ['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'];
+const SWIMMERS = ['sacha', 'cam', 'rox', 'papa'];
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
 function loadImage(key, src) {
   return new Promise(r => { const i = new Image(); i.onload = () => { IMG[key] = i; r(); }; i.onerror = () => { console.warn('image manquante', src); r(); }; i.src = src; });
@@ -60,6 +61,7 @@ function loadAssets() {
   }
   for (const f of FACES) jobs.push(loadImage('face_' + f, `assets/faces/${f}.png?v=${VERSION}`));
   for (const k of NPC_SPRITES) jobs.push(loadImage('npc_' + k, `assets/npc/${k}.png?v=${VERSION}`));
+  for (const k of SWIMMERS) for (const i of [0, 1]) jobs.push(loadImage('swim_' + k + i, `assets/swim/${k}${i}.png?v=${VERSION}`));
   jobs.push(loadData());
   return Promise.all(jobs);
 }
@@ -147,5 +149,18 @@ const SFX = {
   catch() { tone(980, 0.05, { vol: 0.08, type: 'triangle' }); },
   hoot() { tone(330, 0.25, { to: 300, type: 'sine', vol: 0.18 }); tone(330, 0.35, { to: 280, type: 'sine', vol: 0.18, delay: 0.32 }); },
   wind() { noise(1.6, { filter: 'bandpass', freq: 500, vol: 0.12 }); },
+  splash() { noise(0.3, { freq: 900, vol: 0.18 }); tone(300, 0.15, { to: 120, type: 'sine', vol: 0.08 }); },
+  dive() { noise(0.25, { freq: 600, vol: 0.18 }); tone(500, 0.3, { to: 150, type: 'sine', vol: 0.1 }); },
+  hook() { tone(300, 0.15, { to: 900, type: 'square', vol: 0.08 }); noise(0.15, { filter: 'highpass', freq: 3000, vol: 0.08 }); },
+  clank() { tone(1400, 0.06, { vol: 0.12, type: 'square' }); tone(900, 0.1, { vol: 0.1, type: 'triangle', delay: 0.04 }); },
+  boom() { noise(0.6, { freq: 400, vol: 0.4 }); tone(120, 0.5, { to: 40, type: 'sawtooth', vol: 0.2 }); },
+  fuse() { noise(0.3, { filter: 'highpass', freq: 4000, vol: 0.1 }); },
+  cart() { tone(200, 0.3, { to: 300, type: 'square', vol: 0.08 }); noise(0.3, { freq: 2500, vol: 0.1 }); },
+  rail() { noise(0.04, { filter: 'highpass', freq: 3500, vol: 0.05 }); },
+  lever() { tone(600, 0.05, { vol: 0.12 }); noise(0.1, { freq: 1500, vol: 0.12, delay: 0.04 }); },
+  valve() { noise(1.2, { freq: 500, vol: 0.2 }); tone(140, 1, { to: 90, type: 'sine', vol: 0.12 }); },
+  clock() { [1568, 1175, 1568, 1175].forEach((f, i) => tone(f, 0.12, { vol: 0.08, delay: i * 0.12, type: 'triangle' })); tone(110, 0.8, { type: 'sine', vol: 0.12 }); },
+  bark() { tone(700, 0.06, { to: 500, vol: 0.12 }); tone(750, 0.08, { to: 520, vol: 0.12, delay: 0.12 }); },
+  dig() { noise(0.15, { freq: 900, vol: 0.15 }); noise(0.15, { freq: 900, vol: 0.15, delay: 0.2 }); },
   bigheart() { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, { vol: 0.1, delay: i * 0.09, type: 'triangle' })); },
 };

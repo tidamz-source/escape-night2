@@ -8,6 +8,7 @@ const G = {
 
   init() {
     this.areas.camp = buildCamp(); this.areas.royaume = buildRoyaumeArea(); this.areas.cave = buildCaveArea(); this.areas.bois = buildBoisArea();
+    for (const [k, f] of [['mines', 'buildMinesArea'], ['lac', 'buildLacArea'], ['temple', 'buildTempleArea'], ['tower', 'buildTowerArea'], ['castle', 'buildCastleArea']]) if (typeof window[f] === 'function') this.areas[k] = window[f]();
     for (let i = 0; i < 26; i++) this.flies.push({ x: rand(0, 768), y: rand(0, 900), p: rand(0, 6), s: rand(0.4, 1) });
     this.light = document.createElement('canvas'); this.light.width = W * SC; this.light.height = H * SC; this.lctx = this.light.getContext('2d');
     Bus.on('money:changed', () => { this.moneyFlash = 0.4; });
@@ -35,7 +36,9 @@ const G = {
     this.state = 'play'; this.view = 'world'; this.updateCam(true);
     if (id === 'cave' && !SAVE.caveIntro) { SAVE.caveIntro = true; persist(); this.pending = 'caveIntro'; }
     if (id === 'bois' && !SAVE.boisIntro) { SAVE.boisIntro = true; persist(); this.pending = 'boisIntro'; }
-    this.wind = null; this.windT = 0;
+    for (const k of ['mines', 'lac', 'temple', 'tower', 'castle']) if (id === k && !SAVE[k + 'Intro']) { SAVE[k + 'Intro'] = true; persist(); this.pending = k + 'Intro'; }
+    this.wind = null; this.windT = 0; this.freezeT = 0; this.flashT = 0;
+    Dog.reset(this.player);
   },
   visit() { if (this.area.rooms) { SAVE.visited = SAVE.visited || {}; SAVE.visited[this.area.id + this.room] = 1; } },
   fadeTo(fn, color) { if (this.fade) return; this.fade = { t: 0, dir: 1, fn, color }; this.state = 'fade'; },
@@ -68,6 +71,8 @@ const G = {
   bumped(P) {
     const door = this.frontEnt(P, e => e instanceof KeyDoor);
     if (door) { P.bump = 1.5; if (SAVE.keys > 0) door.unlock(this); else { SFX.locked(); this.say([{ text: 'C\'est fermé à clé.' }]); } return; }
+    const ig = this.frontEnt(P, e => e instanceof IronGate && e.solid);
+    if (ig) { P.bump = 1.5; ig.interact(this); return; }
     const gate = this.frontEnt(P, e => e instanceof GateBlock && e.solid);
     if (gate) { P.bump = 2; gate.interact(this); }
   },
@@ -102,6 +107,10 @@ const G = {
       if (ar.onClear) ar.onClear(this);
     }
   },
+  checkTorches(group) {
+    const t = this.area.ents.filter(e => e instanceof Torch && e.group === group);
+    if (t.length && t.every(e => e.on > 0) && !SAVE[group]) { SAVE[group] = true; persist(); setTimeout(() => SFX.secret(), 250); this.shake = 0.25; Input.toast = { msg: 'Quelque chose s\'ouvre…', t: 2.5 }; }
+  },
   checkSwitches(group) {
     const sw = this.area.ents.filter(e => e instanceof FrisbeeSwitch && e.group === group);
     if (sw.length && sw.every(e => e.on > 0) && !SAVE[group]) { SAVE[group] = true; persist(); setTimeout(() => SFX.secret(), 250); this.shake = 0.25; Input.toast = { msg: 'Une grille s\'ouvre quelque part…', t: 2.5 }; }
@@ -135,7 +144,7 @@ const G = {
   playPending() {
     const p = this.pending; this.pending = null;
     if (p === 'reunion') return this.say(Story.script('reunion'), () => this.showEnd(1));
-    if (p === 'reunion2') return this.say(Story.script('reunion2'), () => this.showEnd(2));
+    const m = /^reunion(\d)$/.exec(p || ''); if (m) return this.say(Story.script(p), () => this.showEnd(Number(m[1])));
     if (p === 'caveIntro') return this.say([{ who: '{hero}', text: 'Une grotte… et des braseros allumés. Qui a bien pu les allumer ?', face: 'o' }, { who: 'Lumi', text: 'Les lucioles d\'ici sont prisonnières, elles aussi. Et je sens la présence de {enfant1}… tout au fond.' }]);
     this.say(Story.script(p));
   },
@@ -153,6 +162,8 @@ const G = {
       case 'dialog': this.parts.update(dt); if (SAVE.met_lumi) Lumi.update(dt, this.player); return this.updateDialog(dt);
       case 'pause': return this.updatePause();
       case 'shop': return this.updateShop(dt);
+      case 'travel': return this.updateTravel();
+      case 'credits': this.endT += dt; return this.updateCredits(dt);
       case 'over': this.overT += dt; return this.updateOver();
       case 'end': this.endT += dt; if (this.endT > 1 && Input.anyPressed()) { SFX.menu(); this.state = 'play'; this.view = 'world'; } return;
       case 'slide': return this.updateSlide(dt);
@@ -170,8 +181,12 @@ const G = {
     P.update(dt, this);
     this.updateWind(dt);
     if (SAVE.met_lumi) Lumi.update(dt, P);
+    if (this.freezeT > 0) this.freezeT -= dt;
+    if (this.flashT > 0) this.flashT -= dt;
+    Dog.update(dt, this);
     for (const e of A.ents) {
       if (e.dead || !e.update || !this.inRoom(e)) continue;
+      if (this.freezeT > 0 && ((e.isEnemy && !e.noFreeze) || e.isTrap || e.isOrb)) continue;
       e.update(dt, this);
     }
     A.ents = A.ents.filter(e => !e.dead);
@@ -184,6 +199,7 @@ const G = {
     if (A.id === 'cave' && t === 'E') this.fadeTo(() => this.enter('royaume', this.areas.royaume.fromCave));
     if (A.id === 'royaume' && t === 'H') this.fadeTo(() => this.enter('bois', this.areas.bois.start));
     if (A.id === 'bois' && t === 'E') this.fadeTo(() => this.enter('royaume', this.areas.royaume.fromBois));
+    if (A.exits && A.exits[t] && !this.fade) { const go = A.exits[t]; this.fadeTo(() => go(this)); }
     if (this.fade) return;
     if (A.rooms) { const r = this.roomOf(P.x, P.y); if (r !== this.room) this.startSlide(r); }
     this.updateCam();
@@ -241,14 +257,16 @@ const G = {
       this.drawFade(); drawVirtualPad(); return;
     }
     if (this.view === 'end') { this.drawEnd(); this.drawFade(); return; }
+    if (this.view === 'credits') { this.drawCredits(); this.drawFade(); return; }
     this.drawWorld();
     this.drawHUD();
     if (this.state === 'dialog') this.drawDialog();
     if (this.state === 'pause') this.drawPause();
     if (this.state === 'shop') this.drawShop();
+    if (this.state === 'travel') this.drawTravel();
     if (this.state === 'over') this.drawOver();
     this.drawFade();
-    if (this.state !== 'pause' && this.state !== 'shop') drawVirtualPad();
+    if (this.state !== 'pause' && this.state !== 'shop' && this.state !== 'travel') drawVirtualPad();
     if (Input.toast.t > 0) { const w = textW(Input.toast.msg, 8) + 16; R(W / 2 - w / 2, H - 30, w, 16, 'rgba(7,13,31,.85)'); text(Input.toast.msg, W / 2, H - 26, { align: 'center', color: PAL.glow }); }
   },
   drawWorld() {
@@ -268,6 +286,7 @@ const G = {
     for (const p of A.props) list.push({ y: p.y, p });
     for (const e of A.ents) if (!e.dead) { if (!this.slide && !this.inRoom(e)) continue; list.push({ y: e.ground ? -1e9 : e.y, e }); }
     list.push({ y: P.y, e: P });
+    if (Dog.on()) list.push({ y: Dog.y, e: Dog });
     list.sort((a, b) => a.y - b.y);
     for (const it of list) {
       if (it.p) {
@@ -288,6 +307,9 @@ const G = {
     this.parts.draw();
     ctx.restore();
     this.drawLight(cx, cy);
+    if (this.freezeT > 0) { ctx.globalAlpha = Math.min(0.22, this.freezeT * 0.2); R(0, 0, W, H, '#8fb8ff'); ctx.globalAlpha = 1; }
+    if (this.flashT > 0) { ctx.globalAlpha = this.flashT * 3; R(0, 0, W, H, '#fff6e0'); ctx.globalAlpha = 1; }
+    if (A.sky) A.sky(this);
     if (A.theme === 'camp') { // lucioles au-dessus de la nuit
       ctx.save(); ctx.translate(-cx, -cy);
       for (const f of this.flies) {
@@ -300,12 +322,13 @@ const G = {
   },
   lightsList(cx, cy) {
     const A = this.area, P = this.player, L = [];
-    L.push({ x: P.x, y: P.y - 12, r: A.id === 'cave' ? 100 : 92, c: 'rgba(200,220,255,' });
+    L.push({ x: P.x, y: P.y - 12, r: A.rooms ? 100 : 92, c: 'rgba(200,220,255,' });
+    if (Dog.on()) L.push({ x: Dog.x, y: Dog.y - 10, r: 30, c: 'rgba(255,230,180,' });
     if (SAVE.met_lumi) L.push(Lumi.light);
     for (const p of A.props) if (p.light) L.push({ x: p.x, y: p.y + (p.light.oy || -8), r: p.light.r, c: p.light.c, flick: p.light.flick, warm: p.light.warm });
     for (const e of A.ents) {
       if (e.dead || (!this.slide && !this.inRoom(e))) continue;
-      const li = e.light; if (li) L.push({ x: e.x, y: e.y - (e.alt || 6) - 6, r: li.r, c: li.c, flick: li.flick, warm: li.warm });
+      const li = e.light; if (li) { const lp = e.lightPos; L.push({ x: lp ? lp[0] : e.x, y: lp ? lp[1] - 6 : e.y - (e.alt || 6) - 6, r: li.r, c: li.c, flick: li.flick, warm: li.warm }); }
       if (e.lights) for (const l of e.lights) L.push({ x: e.x + l.dx, y: e.y + l.dy, r: l.r, c: l.c });
     }
     return L.filter(l => l.x + l.r > cx && l.x - l.r < cx + W && l.y + l.r > cy && l.y - l.r < cy + H);

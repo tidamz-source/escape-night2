@@ -7,7 +7,7 @@ function defaultSave(hero) {
     v: 1, hero: hero || 'sacha', started: false, playTime: 0, lastArea: 'camp',
     maxHp: 6, keys: 0, fragments: 0, visited: {},
     money: 0, walletCap: 99,                                       // porte-monnaie
-    inv: { weapon: 'branche', owned: {}, tool: null, ammo: { cailloux: 0 }, ammoMax: { cailloux: 30 }, bottles: [], ingredients: {} }, // inventaire
+    inv: { weapon: 'branche', owned: {}, tool: null, ammo: { cailloux: 0, petards: 0 }, ammoMax: { cailloux: 30, petards: 0 }, bottles: [], ingredients: {} }, // inventaire
     stock: {},                                                     // boutiques : articles déjà vendus
   };
 }
