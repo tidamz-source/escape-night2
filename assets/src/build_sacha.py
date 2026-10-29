@@ -13,6 +13,9 @@ T=[f.crop((0,0,48,46)) for f in frames('assets/src/sacha_turnaround.gif')]
 walks={'down':cycle(frames('assets/src/sacha_walk_down.gif'),56)}
 walks['right']=cycle(frames('assets/src/sacha_walk_right.gif'),53)
 walks['left']=[ImageOps.mirror(f) for f in walks['right']]
+walks['up']=cycle(frames('assets/src/sacha_walk_up.gif'),54)
+walks['up_right']=cycle(frames('assets/src/sacha_walk_up_right.gif'),54)
+walks['up_left']=[ImageOps.mirror(f) for f in walks['up_right']]
 W,Hh=48,48; rows=[]
 for d,i in [('down',0),('up',4),('left',6),('right',2),('down_right',1),('up_right',3),('up_left',5),('down_left',7)]:
   pose=Image.new('RGBA',(W,Hh)); pose.paste(T[i],(0,2)); bob=Image.new('RGBA',(W,Hh)); bob.paste(T[i],(0,1))
