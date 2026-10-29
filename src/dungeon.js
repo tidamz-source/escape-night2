@@ -89,6 +89,10 @@ function makeDungeon(spec) {
     placeFixed(this, list);
     if (SAVE[spec.bossFlag] && !SAVE[spec.heartFlag]) { const p = h.pos(spec.boss, 240, spec.heartY || 170); placeFixed(this, [[idx(spec.boss), Object.assign(new HeartContainer(p.x, p.y), { flag: spec.heartFlag })]]); }
     for (const r of this.rooms.list) spawnRoom(this, r);
+    // petites clés : clés ramassées − portes ouvertes = clés en poche (répare les sauvegardes d'avant la v7, dont les coffres étaient déjà ouverts)
+    const got = this.ents.filter(e => ((e instanceof Chest || e instanceof DiveSpot) && e.give === 'key' || e instanceof KeyPickup) && SAVE[e.flag]).length;
+    const used = this.ents.filter(e => e instanceof KeyDoor && SAVE[e.flag]).length;
+    SAVE.keysBy = SAVE.keysBy || {}; if ((SAVE.keysBy[spec.id] || 0) < got - used) { SAVE.keysBy[spec.id] = got - used; persist(); }
   };
   // le cœur de fin de boss
   const bossAr = A.arenas[idx(spec.boss)];
