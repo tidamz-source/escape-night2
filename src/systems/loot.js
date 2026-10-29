@@ -23,6 +23,8 @@ const LOOT = {
 };
 function dropLoot(G, kind, x, y) {
   const table = LOOT[kind]; if (!table) return;
+  // lance-pierre à sec : le prochain ennemi vaincu (ou buisson, jarre) lâche forcément des cailloux, sauf s'il y en a déjà au sol
+  if (Inventory.has('lance_pierre') && Inventory.ammo('cailloux') === 0 && !G.area.ents.some(e => e instanceof Pickup && e.kind === 'stones' && !e.dead)) { G.area.ents.push(new Pickup(x, y, 'stones')); return; }
   let r = Math.random();
   for (const [p, what] of table) {
     if (r < p) { let w = what; if (w === 'stones' && !Inventory.has('lance_pierre')) w = 'coin1'; if (w === 'petards' && !Inventory.has('petards')) w = 'coin1'; G.area.ents.push(new Pickup(x, y, w)); return; }
