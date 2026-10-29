@@ -125,15 +125,18 @@ class Player {
   get swimming() { return this.canSwim && G.area.tileAt(this.x, this.y - 2) === '~'; }
   update(dt, G) {
     const area = G.area;
-    if (this.riding) { this.x = this.riding.x; this.y = this.riding.y + 2; this.vx = this.vy = 0; this.moving = false; if (this.inv > 0) this.inv -= dt; return; }
+    // minuteurs : toujours décomptés, quoi que fasse le héros (sinon il peut rester invincible)
+    if (this.inv > 0) this.inv -= dt;
+    if (this.dive > 0) { this.dive -= dt; if (this.dive <= 0 && this.swimming) SFX.splash(); }
+    if (this.hooking && (this.hooking.dead || !area.ents.includes(this.hooking))) this.hooking = null;
+    if (this.riding) { this.x = this.riding.x; this.y = this.riding.y + 2; this.vx = this.vy = 0; this.moving = false; return; }
     if (this.pull) { // grappin : on file vers le point d'accroche, au-dessus du vide et de l'eau
       const pl = this.pull, a = Math.atan2(pl.y - this.y, pl.x - this.x), d = dist(this.x, this.y, pl.x, pl.y), step = Math.min(d, 260 * dt);
       const nx = this.x + Math.cos(a) * step, ny = this.y + Math.sin(a) * step;
       if (d < 2 || WALLS.has(area.tileAt(nx, ny - 2)) || (pl.t = (pl.t || 0) + dt) > 1.2) { this.pull = null; this.land(G); return; }
       this.x = nx; this.y = ny; this.anim += dt; return;
     }
-    if (this.hooking) { if (this.hooking.dead) this.hooking = null; else { this.glide(dt, G, 0, 0, 14); return; } }
-    if (this.dive > 0) { this.dive -= dt; if (this.dive <= 0 && this.swimming) SFX.splash(); }
+    if (this.hooking) { this.glide(dt, G, 0, 0, 14); return; }
     if (this.bump > 0) this.bump -= dt;
     if (this.shootCd > 0) this.shootCd -= dt;
     if (this.shootT > 0) this.shootT -= dt;
@@ -274,12 +277,12 @@ class Player {
     const sweep = this.dir === 'left' ? -1 : 1;
     const ang = base + sweep * lerp(-1.15, 1.15, Math.min(1, p * 1.6));
     const hx = this.x + (this.dir === 'left' ? -4 : this.dir === 'right' ? 4 : 0), hy = this.y - (this.dir === 'up' ? 13 : 9);
-    const L = Math.round(17 * this.perk.reach), ex = hx + Math.cos(ang) * L, ey = hy + Math.sin(ang) * L, sword = SAVE.inv.weapon === 'epee_bois';
+    const L = Math.round(17 * this.perk.reach), ex = hx + Math.cos(ang) * L, ey = hy + Math.sin(ang) * L, sword = SAVE.inv.weapon === 'epee_bois' || SAVE.inv.weapon === 'epee_fer', iron = SAVE.inv.weapon === 'epee_fer';
     ctx.lineCap = 'round';
     if (sword) { // épée de bois : lame claire, garde
       ctx.strokeStyle = '#3a2214'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
-      ctx.strokeStyle = '#d8b07a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(hx + Math.cos(ang) * 4, hy + Math.sin(ang) * 4); ctx.lineTo(ex, ey); ctx.stroke();
-      ctx.strokeStyle = '#f0d8a8'; ctx.lineWidth = 0.75; ctx.beginPath(); ctx.moveTo(hx + Math.cos(ang) * 5, hy + Math.sin(ang) * 5 - 0.5); ctx.lineTo(ex, ey - 0.5); ctx.stroke();
+      ctx.strokeStyle = iron ? '#c8ccd8' : '#d8b07a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(hx + Math.cos(ang) * 4, hy + Math.sin(ang) * 4); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.strokeStyle = iron ? '#ffffff' : '#f0d8a8'; ctx.lineWidth = 0.75; ctx.beginPath(); ctx.moveTo(hx + Math.cos(ang) * 5, hy + Math.sin(ang) * 5 - 0.5); ctx.lineTo(ex, ey - 0.5); ctx.stroke();
       const gx = hx + Math.cos(ang) * 4, gy = hy + Math.sin(ang) * 4, px = -Math.sin(ang) * 3, py = Math.cos(ang) * 3;
       ctx.strokeStyle = '#6a4224'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(gx - px, gy - py); ctx.lineTo(gx + px, gy + py); ctx.stroke();
     } else {
@@ -309,6 +312,7 @@ class Enemy {
     this.dead = true; SFX.kill();
     G.parts.burst(this.x, this.y - 6, 16, { c: this.poof || ['#c3b3ff', '#8ff3ea', '#fff'], life: 0.5, smin: 15, smax: 60, r: 2, shrink: true, drag: 3 });
     dropLoot(G, this.loot, this.x, this.y);
+    Quests.onKill(G, this);
   }
   physics(dt, G, fly) {
     if (this.flash > 0) this.flash -= dt;

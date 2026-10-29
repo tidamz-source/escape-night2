@@ -147,89 +147,62 @@ class Shock { // onde de choc au sol (Chevalier de fer, phase 2) : on la saute e
   draw() { ctx.globalAlpha = clamp(1 - this.r / 150, 0, 1); ctx.strokeStyle = '#ffb02e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r, this.r * 0.55, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
 }
 
-// ---------- la zone ----------
-//              [ ]         [BOSS]          [ ]
-//          [TORCHES]   [MÈCHE (carrefour)] [BOULETS]
-//          [ARÈNE]        [ENTRÉE]        [PÉTARDS]
-const TOWER_ROOMS = { boss: 1, torches: 3, hub: 4, balls: 5, arena: 6, entry: 7, petards: 8 };
-function buildTower() {
-  return buildDungeon({
-    cols: 3, rows: 3, seed: 83, rough: 0.18, moss: 60,
-    rooms: [[1, 2], [0, 2], [2, 2], [1, 1], [0, 1], [2, 1], [1, 0]],
-    links: [[0, 2, 'E'], [1, 2, 'E'], [1, 2, 'N'], [0, 1, 'E'], [1, 1, 'E'], [1, 1, 'N']],
-    exit: [1, 2],
-    decorate(room) {
-      const b = room(2, 1); for (let x = 5; x < 26; x++) { b.set(x, 5, 'W'); b.set(x, 10, 'W'); } b.rect(23, 5, 2, 1, '_'); b.rect(5, 10, 2, 1, '_'); // couloirs des boulets
-      for (const [x, y] of [[6, 4], [23, 4], [6, 12], [23, 12]]) room(1, 2).set(x, y, 'k');
-      for (const [x, y] of [[5, 5], [24, 5], [5, 11], [24, 11]]) room(1, 0).set(x, y, 'k');
-      const t = room(0, 1); t.rect(9, 3, 12, 1, 'W'); t.rect(9, 3, 1, 4, 'W'); t.rect(20, 3, 1, 4, 'W');
+
+// ---------- la zone : la Tour des artificiers (Côte) — 10 salles ----------
+//            .          [BOSS]          .            .
+//       [SECRET]     [GARGOUILLES]       .            .
+//       [TORCHES]  [MÈCHE (carrefour)] [BOULETS]  [GRANDE CLÉ]
+//        [ARÈNE]      [ENTRÉE]        [PÉTARDS]      .
+function buildTowerArea() {
+  return makeDungeon({
+    id: 'tower', zone: 'cote', name: 'La Tour des artificiers', theme: 'tower', seed: 83, rough: 0.18, moss: 60, dark: 0.34,
+    bossFlag: 'boss5', heartFlag: 'heart6', potLoot: 'potTower',
+    rooms: { entry: [1, 3], arena: [0, 3], petards: [2, 3], hub: [1, 2], torches: [0, 2], balls: [2, 2], bigkey: [3, 2], gargoyle: [1, 1], secret: [0, 1], boss: [1, 0] },
+    entry: 'entry', boss: 'boss',
+    links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'petards', { key: 'towerDoor1' }], ['entry', 'hub', { crack: 'towerWall1' }], ['hub', 'torches', { shut: () => !SAVE.fuseT }], ['hub', 'balls'], ['balls', 'bigkey', { crack: 'towerWall2' }], ['hub', 'gargoyle', { key: 'towerDoor2' }], ['gargoyle', 'secret', { crack: 'towerWall3' }], ['gargoyle', 'boss', { big: true }]],
+    tiles(room) {
+      const b = room('balls'); for (let x = 5; x < 26; x++) { b.set(x, 5, 'W'); b.set(x, 10, 'W'); } b.rect(23, 5, 2, 1, '_'); b.rect(5, 10, 2, 1, '_');
+      for (const [x, y] of [[6, 4], [23, 4], [6, 12], [23, 12]]) room('entry').set(x, y, 'k');
+      for (const [x, y] of [[5, 5], [24, 5], [5, 11], [24, 11]]) { room('boss').set(x, y, 'k'); room('gargoyle').set(x, y, 'k'); }
+      const t = room('torches'); t.rect(9, 3, 12, 1, 'W'); t.rect(9, 3, 1, 4, 'W'); t.rect(20, 3, 1, 4, 'W');
+      for (const [x, y] of [[8, 6], [21, 6], [8, 11], [21, 11]]) room('bigkey').set(x, y, 'k');
+    },
+    arenas: { arena: arenaStd('arenaR'), boss: bossArena('boss5', 'Le Chevalier de fer') },
+    make(n, L, h) {
+      const { mk } = h, pot = (x, y) => h.pot(n, x, y);
+      if (n === 'entry') L.push(pot(4, 13), pot(25, 13), mk(SkeletonKnight, n, 20, 9), mk(Gargoyle, n, 9, 6));
+      if (n === 'arena') { L.push(pot(4, 3), pot(25, 13)); if (!SAVE.arenaR) L.push(mk(SkeletonKnight, n, 8, 6), mk(SkeletonKnight, n, 21, 6), mk(Gargoyle, n, 6, 11), mk(Gargoyle, n, 23, 11)); }
+      if (n === 'petards') L.push(mk(Gargoyle, n, 8, 5), mk(Gargoyle, n, 21, 5), pot(4, 13), pot(25, 13), pot(25, 3));
+      if (n === 'hub') L.push(mk(SkeletonKnight, n, 20, 6), pot(25, 13), pot(25, 3), mk(Barrel, n, 22, 10), mk(Barrel, n, 12, 4));
+      if (n === 'torches') L.push(mk(SkeletonKnight, n, 6, 11), mk(Gargoyle, n, 24, 10), pot(4, 13), pot(25, 13));
+      if (n === 'balls') L.push(pot(26, 3), pot(26, 13), mk(Gargoyle, n, 4, 13));
+      if (n === 'bigkey') L.push(mk(SkeletonKnight, n, 10, 8), mk(SkeletonKnight, n, 19, 8), pot(3, 3), pot(26, 3));
+      if (n === 'gargoyle') L.push(mk(Gargoyle, n, 8, 4), mk(Gargoyle, n, 21, 4), mk(Gargoyle, n, 8, 12), mk(Gargoyle, n, 21, 12), mk(SkeletonKnight, n, 14, 8), pot(3, 13), pot(26, 13));
+      if (n === 'secret') L.push(mk(Barrel, n, 8, 6), mk(Barrel, n, 21, 6), pot(3, 3), pot(26, 3), pot(3, 13), pot(26, 13));
+      if (n === 'boss') { if (!SAVE.boss5) { const p = h.pos(n, 240, 150); L.push(new IronKnight(p.x, p.y, h.R.boss)); } L.push(pot(3, 12), pot(26, 12), pot(3, 4), pot(26, 4)); }
+    },
+    fixed(h) {
+      const { mk, pos, at } = h, br = (n, pts) => pts.map(([x, y]) => [n, mk(Brazier, n, x, y)]);
+      const ac = pos('arena', 240, 150), pc = pos('petards', 240, 150), cg = pos('boss', 240, 66), tc = pos('torches', 240, 100);
+      const hp = (tx, ty) => { const p = at('hub', tx, ty); return [p.x, p.y - 4]; };
+      return [
+        ['entry', mk(Sign, 'entry', 11, 10, [{ text: '« Tour des artificiers. Nos murs sont solides… sauf ceux qui sont fendus. »' }])],
+        ['arena', new Chest(ac.x, ac.y, { flag: 'towerKeyChest', reveal: 'arenaR', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de cette tour.' }] })],
+        ['petards', new Chest(pc.x, pc.y, { flag: 'petardsChest', give: 'petards', big: true, msg: [{ text: 'Tu as trouvé les pétards ! Et 10 pétards pour commencer.' }, { text: 'Bouton B : en marchant, tu le lances ; à l\'arrêt, tu le poses. Boum après un instant : éloigne-toi !' }, { text: 'Les murs fendus, les rochers et les mèches n\'attendent que ça.' }] })],
+        ['hub', new Fuse([hp(18, 13), hp(10, 13), hp(10, 9), hp(5, 9), hp(5, 8), hp(3, 8)], 'fuseT')],
+        ['hub', mk(Sign, 'hub', 19, 13, [{ text: '« Mèche de la porte ouest. Allumer, puis reculer. »' }])],
+        ['torches', new Torch(tc.x - 16, tc.y, 'torchesT')], ['torches', new Torch(tc.x + 16, tc.y, 'torchesT')], ['torches', new Torch(tc.x, tc.y - 16, 'torchesT')],
+        ['torches', new Chest(pos('torches', 240, 210).x, pos('torches', 240, 210).y, { flag: 'towerBossKey', reveal: 'torchesT', msg: [{ text: 'Une petite clé !' }] })],
+        ['torches', mk(Sign, 'torches', 8, 12, [{ text: '« Trois torches, une seule étincelle. »' }])],
+        ['balls', new Blade(pos('balls', 80, 112).x, pos('balls', 80, 112).y, 1, 0, 320, 90, 'ball')],
+        ['balls', new Blade(pos('balls', 400, 208).x, pos('balls', 400, 208).y, -1, 0, 320, 110, 'ball')],
+        ['balls', mk(Sign, 'balls', 24, 8, [{ text: '« Ce mur sonne creux. »' }])],
+        ['bigkey', mk(Chest, 'bigkey', 14, 8, { flag: 'towerBigKey', give: 'bigkey:tower', big: true, msg: [{ text: 'La grande clé de la tour ! Elle ouvre la salle du Chevalier de fer.' }] })],
+        ['secret', mk(Chest, 'secret', 14, 8, { flag: 'towerHeart', give: 'quart_coeur', big: true, msg: [{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }] })],
+        ['gargoyle', mk(Sign, 'gargoyle', 4, 8, [{ text: '« Ici dort la réserve secrète. »' }])],
+        ['boss', new Cage(cg.x, cg.y, { n: 5, boss: 'boss5', drawCaptive: (x, y) => { const im = IMG.npc_dog_down; if (im) ctx.drawImage(im, half(x - im.width / 5.2), half(y - im.height / 2.6), im.width / 2.6, im.height / 2.6); } })],
+        ...[['entry', 3, 3], ['entry', 26, 3], ['arena', 14, 3], ['petards', 3, 3], ['petards', 26, 8], ['hub', 26, 3], ['torches', 3, 3], ['balls', 3, 3], ['boss', 4, 3], ['boss', 25, 3], ['bigkey', 3, 8], ['gargoyle', 3, 3], ['gargoyle', 26, 3], ['secret', 14, 3]].map(([r, x, y]) => [r, mk(Brazier, r, x, y)]),
+      ];
     },
   });
-}
-function buildTowerArea() {
-  const A = new Area('tower', buildTower(), 'tower'), R = TOWER_ROOMS;
-  A.rooms = { cols: 3, rows: 3, list: [R.entry, R.arena, R.petards, R.hub, R.torches, R.balls, R.boss] };
-  A.map = { title: 'La Tour des artificiers', links: [[R.entry, R.arena], [R.entry, R.petards], [R.entry, R.hub], [R.hub, R.torches], [R.hub, R.balls], [R.hub, R.boss]], boss: R.boss, bossFlag: 'boss5' };
-  const rxy = i => [i % 3, Math.floor(i / 3)];
-  const at = (room, tx, ty) => { const [rx, ry] = rxy(room); return T(rx, ry, tx, ty); };
-  const pos = (room, x, y) => { const [rx, ry] = rxy(room); return { x: rx * ROOM_W + x, y: ry * ROOM_H + y }; };
-  const mk = (C, room, tx, ty, ...args) => { const p = at(room, tx, ty); return new C(p.x, p.y, ...args); };
-  const pot = (room, tx, ty) => Object.assign(mk(Pot, room, tx, ty), { loot: 'potTower' });
-  A.arenas = {
-    [R.arena]: { flag: 'arenaR' },
-    [R.boss]: {
-      flag: 'boss5',
-      onStart(G) { const b = G.area.ents.find(e => e.isBoss); if (b) b.wake(G); G.banner = { text: 'Le Chevalier de fer', t: 2.2 }; },
-      onClear(G) { const p = pos(R.boss, 240, 170); const h = Object.assign(new HeartContainer(p.x, p.y), { flag: 'heart6' }); h.room = R.boss; G.area.ents.push(h); },
-    },
-  };
-  A.roomDark = room => room === R.boss && SAVE.boss5 ? 0.12 : null;
-  A.makeRoom = function (room) {
-    const L = [];
-    if (room === R.entry) L.push(pot(room, 4, 13), pot(room, 25, 13), mk(SkeletonKnight, room, 20, 9), mk(Gargoyle, room, 9, 6));
-    if (room === R.arena) { L.push(pot(room, 4, 3), pot(room, 25, 13)); if (!SAVE.arenaR) L.push(mk(SkeletonKnight, room, 8, 6), mk(SkeletonKnight, room, 21, 6), mk(Gargoyle, room, 6, 11), mk(Gargoyle, room, 23, 11)); }
-    if (room === R.petards) L.push(mk(Gargoyle, room, 8, 5), mk(Gargoyle, room, 21, 5), pot(room, 4, 13), pot(room, 25, 13), pot(room, 25, 3));
-    if (room === R.hub) L.push(mk(SkeletonKnight, room, 20, 6), pot(room, 25, 13), pot(room, 25, 3), mk(Barrel, room, 22, 10), mk(Barrel, room, 12, 4));
-    if (room === R.torches) L.push(mk(SkeletonKnight, room, 6, 11), mk(Gargoyle, room, 24, 10), pot(room, 4, 13), pot(room, 25, 13));
-    if (room === R.balls) L.push(pot(room, 26, 3), pot(room, 26, 13), mk(Gargoyle, room, 4, 13));
-    if (room === R.boss) { if (!SAVE.boss5) { const p = pos(R.boss, 240, 150); L.push(new IronKnight(p.x, p.y, R.boss)); } L.push(pot(room, 3, 12), pot(room, 26, 12), pot(room, 3, 4), pot(room, 26, 4)); }
-    return L;
-  };
-  A.spawn = function () {
-    this.ents = [];
-    const door = (room, side) => side === 'N' ? pos(room, 240, 32) : side === 'S' ? pos(room, 240, 272) : side === 'E' ? pos(room, 464, 144) : pos(room, 16, 144);
-    const arenaShut = room => () => G.area.arenaOn === room;
-    const dN = door(R.entry, 'N'), dE = door(R.entry, 'E'), dA = door(R.arena, 'E'), dW = door(R.torches, 'E'), dB = door(R.hub, 'N'), dS = door(R.boss, 'S');
-    const ac = pos(R.arena, 240, 150), pc = pos(R.petards, 240, 150), cg = pos(R.boss, 240, 66), tc = pos(R.torches, 240, 100);
-    const hp = (tx, ty) => { const p = at(R.hub, tx, ty); return [p.x, p.y - 4]; };
-    placeFixed(this, [
-      [R.entry, new CrackedWall(dN.x, dN.y, 'towerWall1')],
-      [R.entry, new KeyDoor(dE.x, dE.y, 'towerDoor1')],
-      [R.entry, mk(Sign, R.entry, 11, 10, [{ text: '« Tour des artificiers. Nos murs sont solides… sauf ceux qui sont fendus. »' }])],
-      [R.arena, new Shutter(dA.x, dA.y, 'h', arenaShut(R.arena))],
-      [R.arena, new Chest(ac.x, ac.y, { flag: 'towerKeyChest', reveal: 'arenaR', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de cette tour.' }] })],
-      [R.petards, new Chest(pc.x, pc.y, { flag: 'petardsChest', give: 'petards', big: true, msg: [{ text: 'Tu as trouvé les pétards ! Et 10 pétards pour commencer.' }, { text: 'Bouton B : en marchant, tu le lances ; à l\'arrêt, tu le poses. Boum après un instant : éloigne-toi !' }, { text: 'Les murs fendus, les rochers et les mèches n\'attendent que ça.' }] })],
-      [R.hub, new Fuse([hp(18, 13), hp(10, 13), hp(10, 9), hp(5, 9), hp(5, 8), hp(3, 8)], 'fuseT')],
-      [R.hub, new Shutter(pos(R.hub, 16, 144).x, pos(R.hub, 16, 144).y, 'h', () => !SAVE.fuseT)],
-      [R.hub, mk(Sign, R.hub, 19, 13, [{ text: '« Mèche de la porte ouest. Allumer, puis reculer. »' }])],
-      [R.hub, new KeyDoor(dB.x, dB.y, 'towerDoor2')],
-      [R.torches, new Torch(tc.x - 16, tc.y, 'torchesT')], [R.torches, new Torch(tc.x + 16, tc.y, 'torchesT')], [R.torches, new Torch(tc.x, tc.y - 16, 'torchesT')],
-      [R.torches, new Chest(pos(R.torches, 240, 210).x, pos(R.torches, 240, 210).y, { flag: 'towerBossKey', reveal: 'torchesT', msg: [{ text: 'Une petite clé ! Celle de la porte du haut, sûrement.' }] })],
-      [R.torches, mk(Sign, R.torches, 8, 12, [{ text: '« Trois torches, une seule étincelle. »' }])],
-      [R.balls, new Blade(pos(R.balls, 80, 112).x, pos(R.balls, 80, 112).y, 1, 0, 320, 90, 'ball')],
-      [R.balls, new Blade(pos(R.balls, 400, 208).x, pos(R.balls, 400, 208).y, -1, 0, 320, 110, 'ball')],
-      [R.balls, mk(Chest, R.balls, 14, 3, { flag: 'towerCoins', give: 'quart_coeur', big: true, msg: [{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }] })],
-      [R.boss, new Shutter(dS.x, dS.y, 'v', arenaShut(R.boss))],
-      [R.boss, new Cage(cg.x, cg.y, { n: 5, boss: 'boss5', drawCaptive: (x, y) => { const im = IMG.npc_dog_down; if (im) ctx.drawImage(im, half(x - im.width / 5.2), half(y - im.height / 2.6), im.width / 2.6, im.height / 2.6); } })],
-      ...[[R.entry, 3, 3], [R.entry, 26, 3], [R.arena, 14, 3], [R.petards, 3, 3], [R.petards, 26, 8], [R.hub, 26, 3], [R.torches, 3, 3], [R.balls, 3, 3], [R.boss, 4, 3], [R.boss, 25, 3]].map(([r, x, y]) => [r, mk(Brazier, r, x, y)]),
-    ]);
-    if (SAVE.boss5 && !SAVE.heart6) { const p = pos(R.boss, 240, 170); placeFixed(this, [[R.boss, Object.assign(new HeartContainer(p.x, p.y), { flag: 'heart6' })]]); }
-    for (const r of this.rooms.list) spawnRoom(this, r);
-  };
-  const st = T(1, 2, 14, 12);
-  A.start = { x: st.x + 8, y: st.y, dir: 'up' };
-  A.exits = { E: G => G.enter('lac', G.areas.lac.fromTower) };
-  A.name = 'La Tour des artificiers';
-  A.dark = 0.34;
-  return A;
 }

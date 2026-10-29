@@ -2,7 +2,7 @@
   "epicerie": {
     "name": "Chez Mère Grenadine",
     "keeper": "Mère Grenadine",
-    "hello": "Bienvenue, petit ! Tout est frais, même la nuit.",
+    "hello": "Bienvenue, petit ! Tout est frais, même la nuit. Et ce tissu que tu portes, c'est quoi ? On dirait de la toile à voile !",
     "items": [
       {
         "id": "sirop",
@@ -20,6 +20,11 @@
         "needs": "lance_pierre"
       },
       {
+        "id": "bourse",
+        "price": 40,
+        "once": true
+      },
+      {
         "id": "petards5",
         "price": 20,
         "needs": "petards"
@@ -29,7 +34,7 @@
   "forge": {
     "name": "La Forge",
     "keeper": "Bertrand",
-    "hello": "Une arme digne de ce nom ? Tu es au bon endroit.",
+    "hello": "Une arme digne de ce nom ? Tu es au bon endroit. Mais d'abord, ces vêtements… c'est une armure de ton pays ?",
     "items": [
       {
         "id": "epee_bois",
@@ -40,6 +45,12 @@
         "id": "bouclier",
         "price": 60,
         "once": true
+      },
+      {
+        "id": "epee_fer",
+        "price": 180,
+        "once": true,
+        "when": "freed2"
       }
     ]
   },
@@ -69,7 +80,7 @@
     "items": [
       {
         "id": "grande_bourse",
-        "price": 60,
+        "price": 120,
         "once": true
       },
       {
@@ -82,6 +93,40 @@
         "price": 150,
         "stock": 1
       },
+      {
+        "id": "petards5",
+        "price": 15,
+        "needs": "petards"
+      }
+    ]
+  },
+  "herboriste": {
+    "name": "L'herboristerie",
+    "keeper": "L'herboriste",
+    "hello": "Des herbes, des potions… et pas de questions sur tes chaussures lumineuses, promis.",
+    "items": [
+      {
+        "id": "sirop",
+        "price": 25,
+        "needs": "emptyBottle"
+      },
+      {
+        "id": "bouteille",
+        "price": 60,
+        "stock": 1
+      },
+      {
+        "id": "cailloux10",
+        "price": 10,
+        "needs": "lance_pierre"
+      }
+    ]
+  },
+  "artifices": {
+    "name": "L'atelier",
+    "keeper": "L'artificière",
+    "hello": "Des pétards ? J'en ai des caisses !",
+    "items": [
       {
         "id": "petards5",
         "price": 15,

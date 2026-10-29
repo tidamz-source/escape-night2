@@ -5,8 +5,8 @@ const slotKey = i => `escape-night2-v1-slot${i}`;
 function defaultSave(hero) {
   return {
     v: 1, hero: hero || 'sacha', started: false, playTime: 0, lastArea: 'camp',
-    maxHp: 6, keys: 0, fragments: 0, visited: {},
-    money: 0, walletCap: 99,                                       // porte-monnaie
+    maxHp: 6, keys: 0, keysBy: {}, fragments: 0, visited: {}, q: {}, qc: {}, souv: {},
+    money: 0, walletCap: 200,                                       // porte-monnaie
     inv: { weapon: 'branche', owned: {}, tool: null, ammo: { cailloux: 0, petards: 0 }, ammoMax: { cailloux: 30, petards: 0 }, bottles: [], ingredients: {} }, // inventaire
     stock: {},                                                     // boutiques : articles déjà vendus
   };
@@ -16,8 +16,15 @@ function readSlot(i) { try { const s = JSON.parse(localStorage.getItem(slotKey(i
 function loadSlot(i) {
   const s = readSlot(i), d = defaultSave(s && s.hero);
   SLOT = i; SAVE = s ? Object.assign(d, s, { inv: Object.assign(d.inv, s.inv || {}) }) : d;
+  SAVE.walletCap = Math.max(SAVE.walletCap, 200); SAVE.keysBy = SAVE.keysBy || {}; SAVE.q = SAVE.q || {}; SAVE.qc = SAVE.qc || {}; SAVE.souv = SAVE.souv || {};
   Bus.emit('save:loaded', { slot: i });
 }
 function newSlot(i, hero) { SLOT = i; SAVE = defaultSave(hero); SAVE.started = true; persist(); Bus.emit('save:loaded', { slot: i }); }
 function persist() { if (SLOT < 0) return; try { localStorage.setItem(slotKey(SLOT), JSON.stringify(SAVE)); } catch (_) {} }
 function eraseSlot(i) { try { localStorage.removeItem(slotKey(i)); } catch (_) {} }
+// petites clés : comptées par donjon
+const Keys = {
+  zone() { return (G.area && (G.area.dungeon || G.area.id)) || 'x'; },
+  get() { return (SAVE.keysBy || {})[this.zone()] || 0; },
+  add(n) { SAVE.keysBy = SAVE.keysBy || {}; SAVE.keysBy[this.zone()] = this.get() + n; persist(); },
+};

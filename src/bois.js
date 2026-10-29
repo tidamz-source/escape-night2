@@ -251,7 +251,7 @@ class KeyPickup { // clé posée au sol (l'îlot de l'étang) : à ramasser, ou 
   update(dt, G) {
     this.t += dt;
     if (rectHit({ x: this.x - 6, y: this.y - 10, w: 12, h: 12 }, G.player.body())) {
-      SAVE[this.flag] = true; SAVE.keys += 1; persist(); SFX.chest(); G.raise('key');
+      SAVE[this.flag] = true; Keys.add(1); persist(); SFX.chest(); G.raise('key');
       G.say([{ text: 'Tu as récupéré une petite clé !' }]);
     }
   }
@@ -296,4 +296,66 @@ class DrawbridgeDeco { // poteaux du pont-levis, et le tablier relevé tant qu'i
       if (up) { D(-8, -70, 14, 72, '#6a4224'); for (let y = -66; y < 0; y += 8) D(-8, y, 14, 2, '#4a2a14'); D(-2, -76, 2, 10, '#9a9eaa'); }
     });
   }
+}
+
+// ---------- la zone : le Bois des murmures (Forêt) — 10 salles ----------
+//            .          [BOSS]          .           .
+//            .      [TRÉSOR] [HAUTEURS] [GRANDE CLÉ]
+//            .      [FRISBEE] [MOULIN]  [LANTERNES]
+//            .      [ÉTANG]   [ENTRÉE]   [ARÈNE]
+function buildBoisArea() {
+  return makeDungeon({
+    id: 'bois', zone: 'foret', name: 'Le Bois des murmures', theme: 'forest', seed: 33, rough: 0.3, moss: 420, dark: 0.36,
+    bossFlag: 'boss2', heartFlag: 'heart3', potLoot: 'potBois',
+    rooms: { entry: [2, 3], arena: [3, 3], pond: [1, 3], wind: [2, 2], frisbee: [1, 2], switches: [3, 2], bigkey: [3, 1], upper: [2, 1], treasure: [1, 1], boss: [2, 0] },
+    entry: 'entry', boss: 'boss',
+    links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'pond'], ['entry', 'wind'], ['wind', 'frisbee', { key: 'boisK1' }], ['wind', 'switches'], ['switches', 'bigkey', { shut: () => !SAVE.switchesB }], ['wind', 'upper', { key: 'boisK2' }], ['upper', 'treasure'], ['upper', 'boss', { big: true }]],
+    tiles(room) {
+      const st = (n, pts) => pts.forEach(([x, y]) => room(n).set(x, y, 's'));
+      st('entry', [[6, 5], [23, 5], [6, 11], [23, 11]]);
+      st('arena', [[8, 5], [21, 5], [14, 11]]);
+      const p = room('pond'); for (let y = 4; y < 13; y++) for (let x = 6; x < 24; x++) { const v = ((x + 0.5 - 15) / 8) ** 2 + ((y + 0.5 - 8.5) / 4.2) ** 2; if (v < 1) p.set(x, y, '~'); } p.rect(14, 8, 2, 1, '_');
+      st('wind', [[5, 5], [10, 7], [19, 5], [24, 8], [8, 11], [21, 11], [14, 9], [16, 4], [12, 3]]);
+      st('switches', [[5, 3], [5, 4], [5, 5], [6, 6], [7, 6], [8, 6], [9, 6], [10, 6], [11, 5], [11, 4], [11, 3], [18, 3], [18, 4], [18, 5], [19, 6], [20, 6], [21, 6], [22, 6], [23, 6], [24, 5], [24, 4], [24, 3]]);
+      st('frisbee', [[6, 4], [23, 4], [6, 12], [23, 12]]);
+      for (let i = 0; i < 9; i++) room('upper').set(4 + i * 3, 5 + (i % 2) * 5, 's');
+      st('upper', [[8, 8], [21, 8], [11, 12], [18, 12]]);
+      st('treasure', [[8, 5], [21, 5], [8, 11], [21, 11]]);
+      st('bigkey', [[7, 4], [22, 4], [7, 12], [22, 12], [14, 8]]);
+    },
+    arenas: { arena: arenaStd('arenaB'), boss: bossArena('boss2', 'Le Grand-Duc') },
+    after(A, h) { A.windRoom = h.R.wind; A.roomDark = room => room === h.R.boss && SAVE.boss2 ? 0.12 : null; },
+    make(n, L, h) {
+      const { mk } = h, bush = (tx, ty) => Object.assign(mk(Bush, n, tx, ty), { loot: 'bushBois' }), pot = (tx, ty) => h.pot(n, tx, ty);
+      if (n === 'entry') L.push(bush(4, 4), bush(25, 4), bush(4, 12), bush(25, 12), mk(Boar, n, 20, 8), mk(Crow, n, 9, 6));
+      if (n === 'arena') { L.push(pot(4, 3), pot(25, 3), pot(4, 13)); if (!SAVE.arenaB) L.push(mk(Boar, n, 6, 8), mk(Boar, n, 23, 8), mk(Squirrel, n, 14, 4), mk(Squirrel, n, 10, 12)); }
+      if (n === 'pond') L.push(mk(Crow, n, 6, 3), mk(Crow, n, 24, 3), mk(Squirrel, n, 25, 12), bush(4, 13), bush(25, 13));
+      if (n === 'wind') L.push(mk(Boar, n, 15, 6), mk(Squirrel, n, 4, 3), bush(3, 13), bush(26, 3), pot(26, 13));
+      if (n === 'frisbee') L.push(mk(Crow, n, 8, 7), mk(Crow, n, 21, 7), mk(Boar, n, 14, 12), pot(3, 3), pot(26, 3));
+      if (n === 'switches') L.push(mk(Squirrel, n, 14, 4), mk(Squirrel, n, 14, 11), mk(Boar, n, 6, 11), bush(3, 13), bush(26, 13));
+      if (n === 'bigkey') L.push(mk(Boar, n, 8, 8), mk(Boar, n, 21, 8), mk(Crow, n, 14, 4), pot(3, 13), pot(26, 13));
+      if (n === 'upper') L.push(mk(Squirrel, n, 6, 3), mk(Squirrel, n, 23, 3), mk(Crow, n, 14, 9), pot(3, 13), pot(26, 13));
+      if (n === 'treasure') L.push(mk(Crow, n, 10, 8), mk(Crow, n, 19, 8), pot(3, 3), pot(26, 3), bush(3, 13), bush(26, 13));
+      if (n === 'boss') { if (!SAVE.boss2) { const p = h.pos(n, 240, 130); L.push(new GreatOwl(p.x, p.y, h.R.boss)); } L.push(pot(3, 12), pot(26, 12)); }
+    },
+    fixed(h) {
+      const { mk, pos } = h, sh = (n, pts) => pts.map(([x, y]) => [n, mk(Glowshroom, n, x, y)]);
+      const ac = pos('arena', 240, 150), fc = pos('frisbee', 240, 140), cg = pos('boss', 240, 66), isl = pos('pond', 240, 144), bc = pos('bigkey', 240, 210);
+      return [
+        ['entry', mk(Sign, 'entry', 14, 10, [{ text: '« Bois des murmures. Le vent du vieux moulin ne souffle jamais longtemps. »' }])],
+        ['arena', new Chest(ac.x, ac.y, { flag: 'boisKeyChest', reveal: 'arenaB', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ce bois.' }] })],
+        ['pond', new KeyPickup(isl.x, isl.y, 'boisKey2')],
+        ['pond', mk(Sign, 'pond', 14, 13, [{ text: '« Ce qui brille sur l\'îlot ne se rapporte qu\'en volant. »' }])],
+        ['wind', mk(Sign, 'wind', 14, 13, [{ text: '« Au nord, le nid du Grand-Duc. Abritez-vous derrière les souches quand le vent souffle. »' }])],
+        ['frisbee', new Chest(fc.x, fc.y, { flag: 'frisbeeChest', give: 'frisbee', big: true, msg: [{ text: 'Tu as trouvé le frisbee !' }, { text: 'Bouton B : il part en arc et revient. Il étourdit les ennemis, rapporte les objets et passe au-dessus des souches et de l\'eau.' }, { text: 'Change d\'outil avec E, les gâchettes LB/RB, ou en touchant la case B.' }] })],
+        ['switches', mk(FrisbeeSwitch, 'switches', 8, 4, 'switchesB')], ['switches', mk(FrisbeeSwitch, 'switches', 21, 4, 'switchesB')],
+        ['switches', mk(Sign, 'switches', 14, 9, [{ text: '« Deux lanternes, un seul souffle. Elles ne brillent ensemble que quelques secondes. »' }])],
+        ['bigkey', new Chest(bc.x, bc.y, { flag: 'boisBigKey', give: 'bigkey:bois', big: true, msg: [{ text: 'La grande clé du bois ! Elle ouvre le nid du Grand-Duc.' }] })],
+        ['treasure', mk(Chest, 'treasure', 14, 8, { flag: 'boisTreasure', give: 'money:50', msg: [{ text: 'Un trésor d\'écureuil : 50 écus !' }] })],
+        ['boss', new Cage(cg.x, cg.y, { n: 2, boss: 'boss2', drawCaptive: (x, y) => drawSprite('claudine', x, y) })],
+        ...sh('entry', [[3, 7], [26, 9]]), ...sh('arena', [[3, 8], [26, 6]]), ...sh('pond', [[3, 6], [26, 8]]), ...sh('wind', [[3, 8], [26, 6]]), ...sh('frisbee', [[9, 9], [20, 9]]),
+        ...sh('switches', [[3, 8], [26, 8]]), ...sh('upper', [[3, 8], [26, 8]]), ...sh('treasure', [[14, 4]]), ...sh('bigkey', [[3, 8], [26, 8]]), ...sh('boss', [[3, 3], [26, 3], [3, 13], [26, 13]]),
+      ];
+    },
+  });
 }

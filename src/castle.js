@@ -217,124 +217,85 @@ class PapaAlly { // Papa, dans la salle du Roi : il suit le héros et attrape le
   draw() { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, this.dir, this.moving, this.t); }
 }
 
-// ---------- la zone : 4 × 3 salles ----------
-//          [ ]      [CHEVALIER MINUIT] [ROI MINUIT]   [ ]
-//      [GRAPPIN]        [HALL]          [PALMES]   [FRISBEE]
-//      [PÉTARDS]       [ENTRÉE]      [LANCE-PIERRE]   [ ]
-const CASTLE_ROOMS = { papa: 1, king: 2, hook: 4, hall: 5, swim: 6, frisbee: 7, blast: 8, entry: 9, sling: 10 };
-const CASTLE_BRIDGE = { x: 2 * RW + 10, y: 2 * RH + 7, w: 5, h: 2 };
-function buildCastle() {
-  return buildDungeon({
-    cols: 4, rows: 3, seed: 97, rough: 0.15, moss: 40,
-    rooms: [[1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2]],
-    links: [[1, 2, 'N'], [0, 2, 'E'], [1, 2, 'E'], [0, 1, 'E'], [1, 1, 'E'], [2, 1, 'E'], [1, 1, 'N'], [1, 0, 'E']],
-    exit: [1, 2],
-    decorate(room) {
-      const b = room(0, 2); b.rect(14, 2, 2, 13, 'W'); b.rect(14, 7, 2, 2, '_');                       // aile des pétards : un mur fendu
-      const s = room(2, 2); s.rect(10, 2, 5, 13, 'v');                                                   // aile du lance-pierre : un gouffre
-      const h = room(0, 1); h.rect(3, 2, 20, 13, 'v'); h.rect(4, 6, 7, 5, '_'); h.rect(14, 7, 4, 3, '_'); // aile du grappin
-      const w = room(2, 1); w.rect(5, 3, 21, 11, '~'); w.rect(13, 7, 4, 3, '_');                         // aile des palmes
-      const f = room(3, 1);                                                                             // aile du frisbee : une alcôve à barreaux
+
+// ---------- la zone : le Château de Minuit (Terres de Minuit) — 12 salles ----------
+//            .          [ROI MINUIT]        .            .
+//       [ARMURERIE]  [CHEVALIER MINUIT] [GRANDE CLÉ]     .
+//        [GRAPPIN]      [HALL]           [PALMES]    [FRISBEE]
+//        [PÉTARDS]     [ENTRÉE]       [LANCE-PIERRE] [GALERIE]
+function buildCastleArea() {
+  const br = { x: 2 * RW + 10, y: 3 * RH + 7 };
+  return makeDungeon({
+    id: 'castle', zone: 'terres', name: 'Le Château de Minuit', theme: 'castle', seed: 97, rough: 0.15, moss: 40, dark: 0.36,
+    bossFlag: 'boss6', heartFlag: 'heart7', potLoot: 'potCastle',
+    rooms: { blast: [0, 3], entry: [1, 3], sling: [2, 3], gallery: [3, 3], hook: [0, 2], hall: [1, 2], swim: [2, 2], frisbee: [3, 2], armory: [0, 1], papa: [1, 1], bigkey: [2, 1], king: [1, 0] },
+    entry: 'entry', boss: 'king',
+    links: [['entry', 'blast'], ['entry', 'sling'], ['sling', 'gallery'], ['entry', 'hall'], ['hall', 'hook'], ['hall', 'swim'], ['swim', 'frisbee'],
+      ['hall', 'papa', { seal: true }], ['papa', 'armory', { key: 'castleDoor1' }], ['papa', 'bigkey', { shut: () => !SAVE.papaFreed || G.area.arenaOn === G.area.h.R.papa }], ['papa', 'king', { big: true }]],
+    tiles(room) {
+      const b = room('blast'); b.rect(14, 2, 2, 13, 'W'); b.rect(14, 7, 2, 2, '_');
+      const s = room('sling'); s.rect(10, 2, 5, 13, 'v');
+      const h = room('hook'); h.rect(3, 2, 20, 13, 'v'); h.rect(4, 6, 7, 5, '_'); h.rect(14, 7, 4, 3, '_');
+      const w = room('swim'); w.rect(5, 3, 21, 11, '~'); w.rect(13, 7, 4, 3, '_');
+      const f = room('frisbee');
       f.rect(11, 2, 1, 4, 'W'); f.rect(18, 2, 1, 4, 'W'); f.rect(11, 5, 3, 1, 'W'); f.rect(16, 5, 3, 1, 'W');
       for (const [cx, cy] of [[5, 4], [24, 4]]) for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]) f.set(cx + dx, cy + dy, 'k');
-      for (const [x, y] of [[5, 4], [24, 4], [5, 12], [24, 12]]) { room(1, 1).set(x, y, 'k'); room(1, 0).set(x, y, 'k'); room(2, 0).set(x, y, 'k'); }
+      for (const n of ['hall', 'papa', 'king', 'armory']) for (const [x, y] of [[5, 4], [24, 4], [5, 12], [24, 12]]) room(n).set(x, y, 'k');
+      const g = room('gallery'); g.rect(2, 5, 26, 1, 'W'); g.rect(24, 5, 2, 1, '_'); g.rect(2, 10, 26, 1, 'W'); g.rect(3, 10, 2, 1, '_');
+    },
+    syncTiles() { const want = SAVE.castleBridge ? 'b' : 'v'; let ch = false; for (let y = br.y; y < br.y + 2; y++) for (let x = br.x; x < br.x + 5; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; ch = true; } if (ch) this.rerender(); },
+    arenas: {
+      papa: { flag: 'papaFight', onStart(G) { const b = G.area.ents.find(e => e.isBoss && e.room === G.room); if (b) G.say(Story.script('papaIntro'), () => b.wake(G)); G.banner = { text: 'Le Chevalier Minuit', t: 2.2 }; }, onClear(G) { G.say(Story.script('papaFreed'), () => { Story.set('papaFreed'); }); } },
+      king: { flag: 'boss6', onStart(G) { const b = G.area.ents.find(e => e.isBoss && e.room === G.room); if (b) G.say(Story.script('kingIntro'), () => b.wake(G)); G.banner = { text: 'Le Roi Minuit', t: 2.2 }; }, onClear(G) { G.finale(); } },
+    },
+    after(A, h) { A.roomDark = room => room === h.R.king && SAVE.boss6 ? 0.05 : null; },
+    make(n, L, h) {
+      const { mk } = h, pot = (x, y) => h.pot(n, x, y);
+      if (n === 'entry') L.push(pot(4, 13), pot(25, 13), mk(Shadow, n, 8, 5), mk(Wisp, n, 22, 5));
+      if (n === 'blast') L.push(mk(SkeletonKnight, n, 22, 6), mk(SkeletonKnight, n, 22, 11), pot(4, 13), pot(4, 3), pot(25, 13));
+      if (n === 'sling') L.push(mk(Wisp, n, 20, 4), mk(Wisp, n, 22, 12), pot(4, 13), pot(4, 3));
+      if (n === 'gallery') L.push(mk(Shadow, n, 14, 6), mk(Shadow, n, 14, 10), pot(26, 13));
+      if (n === 'hall') L.push(mk(Shadow, n, 9, 9), mk(Shadow, n, 20, 9), mk(Gargoyle, n, 4, 8), mk(Gargoyle, n, 25, 8), pot(3, 13), pot(26, 13));
+      if (n === 'hook') L.push(mk(Bat, n, 12, 4), mk(Bat, n, 18, 12), pot(26, 3));
+      if (n === 'swim') L.push(mk(Eel, n, 9, 5), mk(Eel, n, 21, 11), mk(Eel, n, 20, 5));
+      if (n === 'frisbee') L.push(mk(Gargoyle, n, 8, 11), mk(Gargoyle, n, 21, 11), mk(SkeletonKnight, n, 14, 10), pot(4, 13), pot(25, 13));
+      if (n === 'armory') L.push(mk(SkeletonKnight, n, 10, 8), mk(SkeletonKnight, n, 19, 8), pot(3, 3), pot(26, 3), pot(3, 13), pot(26, 13), pot(14, 13));
+      if (n === 'bigkey') L.push(mk(Wisp, n, 6, 4), mk(Wisp, n, 23, 4), pot(3, 13), pot(26, 13));
+      if (n === 'papa') { if (!SAVE.papaFight) { const p = h.pos(n, 240, 120); L.push(new MidnightKnight(p.x, p.y, h.R.papa)); } L.push(pot(3, 12), pot(26, 12)); }
+      if (n === 'king') { if (!SAVE.boss6) { const p = h.pos(n, 240, 110); L.push(new MidnightKing(p.x, p.y, h.R.king)); } L.push(pot(3, 12), pot(26, 12), pot(3, 4), pot(26, 4)); }
+    },
+    fixed(h) {
+      const { mk, pos, door, R } = h, P = (n, x, y) => pos(n, x, y);
+      const clocks = (n, pts) => pts.map(([x, y]) => [n, mk(ClockPost, n, x, y)]);
+      const blade = (n, x, y, dx, dy, len, sp) => [n, new Blade(P(n, x, y).x, P(n, x, y).y, dx, dy, len, sp)];
+      const altar = (n, x, y, f) => [n, mk(SealAltar, n, x, y, f)];
+      const L = [
+        ...clocks('entry', [[8, 10], [21, 10]]), blade('entry', 160, 96, 1, 0, 160, 120), blade('entry', 320, 60, -1, 0, 160, 100),
+        ['entry', mk(Sign, 'entry', 11, 13, [{ text: '« Ici, le temps s\'arrête quand on frappe l\'horloge. »' }])],
+        ['blast', new CrackedWall(P('blast', 15 * TS, 9 * TS).x, P('blast', 15 * TS, 9 * TS).y, 'castleWall')], altar('blast', 8, 8, 'sealP'),
+        ['sling', mk(Crystal, 'sling', 22, 3, 'castleBridge', G => { G.area.syncTiles(); G.shake = 0.3; SFX.secret(); })], altar('sling', 21, 6, 'sealS'),
+        blade('sling', 288, 64, 0, 1, 150, 110), ...clocks('sling', [[5, 4]]),
+        ['sling', mk(Sign, 'sling', 6, 12, [{ text: '« Aile du tir. Le pont dort tant que le cristal dort. »' }])],
+        ...clocks('gallery', [[4, 9]]), blade('gallery', 110, 136, 1, 0, 300, 150), blade('gallery', 360, 72, -1, 0, 260, 140),
+        ['gallery', mk(Chest, 'gallery', 25, 3, { flag: 'castleKeyChest', msg: [{ text: 'Une petite clé ! Elle ouvre l\'armurerie.' }] })],
+        ...clocks('hall', [[14, 12]]), blade('hall', 96, 144, 1, 0, 288, 90),
+        ['hook', mk(Post, 'hook', 16, 8)], ['hook', mk(Post, 'hook', 9, 8)], ['hook', mk(Post, 'hook', 24, 8)], altar('hook', 6, 8, 'sealG'),
+        ['swim', new DiveSpot(P('swim', 120, 210).x, P('swim', 120, 210).y, 'sealW', 'flag:sealW', [{ text: 'Au fond de l\'eau, un sceau de l\'aube !' }])],
+        ['swim', mk(Sign, 'swim', 15, 9, [{ text: '« Aile de l\'eau. Ce qui brille au fond se mérite. »' }])],
+        ['frisbee', mk(FrisbeeSwitch, 'frisbee', 5, 4, 'castleSw')], ['frisbee', mk(FrisbeeSwitch, 'frisbee', 24, 4, 'castleSw')],
+        ['frisbee', new Shutter(P('frisbee', 240, 96).x, P('frisbee', 240, 96).y, 'v', () => !SAVE.castleSw)], altar('frisbee', 14, 3, 'sealF'),
+        ['frisbee', mk(Sign, 'frisbee', 14, 12, [{ text: '« Deux lanternes en même temps, et la grille se lève. »' }])],
+        ['papa', new Shutter(door('papa', 'S').x, door('papa', 'S').y, 'v', () => G.area.arenaOn === R.papa)],
+        ['armory', mk(Chest, 'armory', 14, 7, { flag: 'castleHeart', give: 'quart_coeur', big: true, msg: [{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }] })],
+        ...clocks('bigkey', [[4, 8]]), blade('bigkey', 240, 70, 0, 1, 150, 130), blade('bigkey', 140, 150, 1, 0, 200, 120),
+        ['bigkey', mk(Chest, 'bigkey', 24, 8, { flag: 'castleBigKey', give: 'bigkey:castle', big: true, msg: [{ text: 'La grande clé du château ! Elle ouvre la salle du trône.' }] })],
+        ['king', new Shutter(door('king', 'S').x, door('king', 'S').y, 'v', () => G.area.arenaOn === R.king)],
+        ['king', new PapaAlly(P('king', 120, 220).x, P('king', 120, 220).y)],
+        ...clocks('king', [[5, 8], [24, 8]]),
+        ...[['entry', 3, 3], ['entry', 26, 3], ['hall', 3, 3], ['hall', 26, 3], ['blast', 3, 8], ['sling', 26, 13], ['hook', 26, 13], ['swim', 3, 3], ['frisbee', 3, 8], ['frisbee', 26, 8], ['papa', 3, 3], ['papa', 26, 3], ['king', 4, 3], ['king', 25, 3], ['armory', 3, 8], ['bigkey', 26, 3], ['gallery', 26, 13]].map(([r, x, y]) => [r, mk(Brazier, r, x, y)]),
+      ];
+      if (SAVE.papaFight) { const p = P('papa', 240, 140); L.push(['papa', new PapaNPC(p.x, p.y)]); }
+      return L;
     },
   });
-}
-function buildCastleArea() {
-  const A = new Area('castle', buildCastle(), 'castle'), R = CASTLE_ROOMS, C = 4;
-  A.rooms = { cols: C, rows: 3, list: [R.entry, R.blast, R.sling, R.hall, R.hook, R.swim, R.frisbee, R.papa, R.king] };
-  A.map = { title: 'Le Château de Minuit', links: [[R.entry, R.hall], [R.entry, R.blast], [R.entry, R.sling], [R.hall, R.hook], [R.hall, R.swim], [R.swim, R.frisbee], [R.hall, R.papa], [R.papa, R.king]], boss: R.king, bossFlag: 'boss6' };
-  const rxy = i => [i % C, Math.floor(i / C)];
-  const at = (room, tx, ty) => { const [rx, ry] = rxy(room); return T(rx, ry, tx, ty); };
-  const pos = (room, x, y) => { const [rx, ry] = rxy(room); return { x: rx * ROOM_W + x, y: ry * ROOM_H + y }; };
-  const mk = (C2, room, tx, ty, ...args) => { const p = at(room, tx, ty); return new C2(p.x, p.y, ...args); };
-  const pot = (room, tx, ty) => Object.assign(mk(Pot, room, tx, ty), { loot: 'potCastle' });
-  A.syncTiles = function () {
-    const want = SAVE.castleBridge ? 'b' : 'v', B = CASTLE_BRIDGE; let changed = false;
-    for (let y = B.y; y < B.y + B.h; y++) for (let x = B.x; x < B.x + B.w; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; changed = true; }
-    if (changed) this.rerender();
-  };
-  A.arenas = {
-    [R.papa]: {
-      flag: 'papaFight',
-      onStart(G) { const b = G.area.ents.find(e => e.isBoss && e.room === G.room); if (b) { G.say(Story.script('papaIntro'), () => b.wake(G)); } G.banner = { text: 'Le Chevalier Minuit', t: 2.2 }; },
-      onClear(G) { G.say(Story.script('papaFreed'), () => { Story.set('papaFreed'); }); },
-    },
-    [R.king]: {
-      flag: 'boss6',
-      onStart(G) { const b = G.area.ents.find(e => e.isBoss && e.room === G.room); if (b) G.say(Story.script('kingIntro'), () => b.wake(G)); G.banner = { text: 'Le Roi Minuit', t: 2.2 }; },
-      onClear(G) { G.finale(); },
-    },
-  };
-  A.roomDark = room => room === R.king && SAVE.boss6 ? 0.05 : null;
-  A.makeRoom = function (room) {
-    const L = [];
-    if (room === R.entry) L.push(pot(room, 4, 13), pot(room, 25, 13), mk(Shadow, room, 8, 5), mk(Wisp, room, 22, 5));
-    if (room === R.blast) L.push(mk(SkeletonKnight, room, 7, 6), mk(SkeletonKnight, room, 7, 11), pot(room, 4, 13), pot(room, 4, 3), pot(room, 25, 13));
-    if (room === R.sling) L.push(mk(Wisp, room, 20, 4), mk(Wisp, room, 22, 12), pot(room, 4, 13), pot(room, 4, 3));
-    if (room === R.hall) L.push(mk(Shadow, room, 9, 9), mk(Shadow, room, 20, 9), mk(Gargoyle, room, 4, 8), mk(Gargoyle, room, 25, 8), pot(room, 3, 13), pot(room, 26, 13));
-    if (room === R.hook) L.push(mk(Bat, room, 12, 4), mk(Bat, room, 18, 12), pot(room, 26, 3));
-    if (room === R.swim) L.push(mk(Eel, room, 9, 5), mk(Eel, room, 21, 11), mk(Eel, room, 20, 5));
-    if (room === R.frisbee) L.push(mk(Gargoyle, room, 8, 11), mk(Gargoyle, room, 21, 11), mk(SkeletonKnight, room, 14, 10), pot(room, 4, 13), pot(room, 25, 13));
-    if (room === R.papa) { if (!SAVE.papaFight) { const p = pos(R.papa, 240, 120); L.push(new MidnightKnight(p.x, p.y, R.papa)); } L.push(pot(room, 3, 12), pot(room, 26, 12)); }
-    if (room === R.king) { if (!SAVE.boss6) { const p = pos(R.king, 240, 110); L.push(new MidnightKing(p.x, p.y, R.king)); } L.push(pot(room, 3, 12), pot(room, 26, 12), pot(room, 3, 4), pot(room, 26, 4)); }
-    return L;
-  };
-  A.spawn = function () {
-    this.syncTiles();
-    this.ents = [];
-    const door = (room, side) => side === 'N' ? pos(room, 240, 32) : side === 'S' ? pos(room, 240, 272) : side === 'E' ? pos(room, 464, 144) : pos(room, 16, 144);
-    const arenaShut = room => () => G.area.arenaOn === room;
-    const P = (r, x, y) => pos(r, x, y);
-    const clocks = (r, pts) => pts.map(([x, y]) => [r, mk(ClockPost, r, x, y)]);
-    const blade = (r, x, y, dx, dy, len, sp) => [r, new Blade(P(r, x, y).x, P(r, x, y).y, dx, dy, len, sp)];
-    const altar = (r, x, y, f) => [r, mk(SealAltar, r, x, y, f)];
-    placeFixed(this, [
-      // entrée : des lames, une horloge
-      ...clocks(R.entry, [[8, 10], [21, 10]]),
-      blade(R.entry, 160, 96, 1, 0, 160, 120), blade(R.entry, 320, 60, -1, 0, 160, 100),
-      [R.entry, mk(Sign, R.entry, 11, 13, [{ text: '« Ici, le temps s\'arrête quand on frappe l\'horloge. »' }])],
-      // aile des pétards
-      [R.blast, new CrackedWall(P(R.blast, 15 * TS, 9 * TS).x, P(R.blast, 15 * TS, 9 * TS).y, 'castleWall')],
-      altar(R.blast, 8, 8, 'sealP'),
-      [R.blast, mk(Sign, R.blast, 22, 12, [{ text: '« Aile de la poudre. »' }])],
-      // aile du lance-pierre : le cristal fait apparaître le pont ; des lames gardent l'autel
-      [R.sling, mk(Crystal, R.sling, 22, 3, 'castleBridge', G => { G.area.syncTiles(); G.shake = 0.3; SFX.secret(); })],
-      altar(R.sling, 21, 8, 'sealS'),
-      blade(R.sling, 288, 64, 0, 1, 150, 110), blade(R.sling, 400, 220, 0, -1, 150, 90),
-      ...clocks(R.sling, [[5, 4]]),
-      [R.sling, mk(Sign, R.sling, 6, 12, [{ text: '« Aile du tir. Le pont dort tant que le cristal dort. »' }])],
-      // hall : la grande porte aux cinq sceaux, une horloge
-      [R.hall, new SealGate(door(R.hall, 'N').x, door(R.hall, 'N').y)],
-      ...clocks(R.hall, [[14, 12]]),
-      blade(R.hall, 96, 144, 1, 0, 288, 90),
-      // aile du grappin
-      [R.hook, mk(Post, R.hook, 16, 8)], [R.hook, mk(Post, R.hook, 9, 8)], [R.hook, mk(Post, R.hook, 24, 8)],
-      altar(R.hook, 6, 8, 'sealG'),
-      // aile des palmes : le sceau est au fond de l'eau
-      [R.swim, new DiveSpot(P(R.swim, 120, 210).x, P(R.swim, 120, 210).y, 'sealW', 'flag:sealW', [{ text: 'Au fond de l\'eau, un sceau de l\'aube ! (palmes)' }, { who: 'Lumi', text: 'Bien joué ! Plus que les autres.' }])],
-      [R.swim, mk(Sign, R.swim, 15, 9, [{ text: '« Aile de l\'eau. Ce qui brille au fond se mérite. »' }])],
-      // aile du frisbee : deux lanternes enfermées, une alcôve à barreaux
-      [R.frisbee, mk(FrisbeeSwitch, R.frisbee, 5, 4, 'castleSw')], [R.frisbee, mk(FrisbeeSwitch, R.frisbee, 24, 4, 'castleSw')],
-      [R.frisbee, new Shutter(P(R.frisbee, 240, 96).x, P(R.frisbee, 240, 96).y, 'v', () => !SAVE.castleSw)],
-      altar(R.frisbee, 14, 3, 'sealF'),
-      [R.frisbee, mk(Sign, R.frisbee, 14, 12, [{ text: '« Deux lanternes en même temps, et la grille se lève. »' }])],
-      // Papa et le Roi
-      [R.papa, new Shutter(door(R.papa, 'S').x, door(R.papa, 'S').y, 'v', arenaShut(R.papa))],
-      [R.papa, new Shutter(door(R.papa, 'E').x, door(R.papa, 'E').y, 'h', () => G.area.arenaOn === R.papa || !SAVE.papaFreed)],
-      [R.king, new Shutter(pos(R.king, 16, 144).x + 16, pos(R.king, 16, 144).y, 'h', arenaShut(R.king))],
-      [R.king, new PapaAlly(pos(R.king, 60, 150).x, pos(R.king, 60, 150).y)],
-      ...clocks(R.king, [[5, 8], [24, 8]]),
-      ...[[R.entry, 3, 3], [R.entry, 26, 3], [R.hall, 3, 3], [R.hall, 26, 3], [R.blast, 3, 8], [R.sling, 26, 13], [R.hook, 26, 13], [R.swim, 3, 3], [R.frisbee, 3, 8], [R.frisbee, 26, 8], [R.papa, 3, 3], [R.papa, 26, 3], [R.king, 4, 3], [R.king, 25, 3]].map(([r, x, y]) => [r, mk(Brazier, r, x, y)]),
-    ]);
-    if (SAVE.papaFight) { const p = pos(R.papa, 240, 140); placeFixed(this, [[R.papa, new PapaNPC(p.x, p.y)]]); }
-    for (const r of this.rooms.list) spawnRoom(this, r);
-  };
-  const st = T(1, 2, 14, 12);
-  A.start = { x: st.x + 8, y: st.y, dir: 'up' };
-  A.exits = { E: G => G.enter('lac', G.areas.lac.fromCastle) };
-  A.name = 'Le Château de Minuit';
-  A.dark = 0.36;
-  return A;
 }

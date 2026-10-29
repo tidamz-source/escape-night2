@@ -4,8 +4,9 @@ const Shop = {
   def(id) { return DATA.shops[id]; },
   state(shopId, e) {
     const it = Inventory.item(e.id), key = shopId + ':' + e.id, sold = SAVE.stock[key] || 0;
-    if (e.once && Inventory.has(e.id)) return { ok: false, why: 'Déjà acheté' };
-    if (e.stock && sold >= e.stock) return { ok: false, why: 'Épuisé' };
+    if (e.when && !Story.cond(e.when)) return { ok: false, gone: true, why: 'Pas encore en vente' };
+    if (e.once && Inventory.has(e.id)) return { ok: false, gone: true, why: 'Déjà acheté' };
+    if (e.stock && sold >= e.stock) return { ok: false, gone: true, why: 'Épuisé' };
     if (e.needs === 'emptyBottle' && !Inventory.hasEmptyBottle()) return { ok: false, why: 'Il te faut une bouteille vide' };
     if (e.needs && e.needs !== 'emptyBottle' && !Inventory.has(e.needs)) return { ok: false, why: 'Il te faut un ' + Inventory.item(e.needs).name.toLowerCase() };
     if (it.kind === 'ammo' && Inventory.ammo(it.ammo) >= Inventory.ammoMax(it.ammo)) return { ok: false, why: 'Sacoche pleine' };

@@ -82,8 +82,8 @@
   "grande_bourse": {
     "name": "Grande bourse",
     "kind": "upgrade",
-    "wallet": 300,
-    "desc": "Une bourse en cuir de gnome. Contient jusqu'à 300 écus."
+    "wallet": 600,
+    "desc": "Une bourse en cuir de gnome. Contient jusqu'à 600 écus."
   },
   "carquois": {
     "name": "Grande sacoche",
@@ -103,5 +103,17 @@
     "name": "Sceau de l'aube",
     "kind": "key",
     "desc": "Un sceau en forme de soleil."
+  },
+  "epee_fer": {
+    "name": "Épée de fer",
+    "kind": "weapon",
+    "dmg": 3,
+    "desc": "Forgée par Bertrand avec le fer des Mines. Trois fois plus fort qu'une branche."
+  },
+  "bourse": {
+    "name": "Bourse",
+    "kind": "upgrade",
+    "wallet": 300,
+    "desc": "Une bourse de cuir. Contient jusqu'à 300 écus."
   }
 }

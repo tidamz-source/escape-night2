@@ -7,8 +7,11 @@ const G = {
   ptab: 0, psel: 0, shop: null, slotSel: 0, heroSel: 0, erasing: false, moneyFlash: 0,
 
   init() {
-    this.areas.camp = buildCamp(); this.areas.royaume = buildRoyaumeArea(); this.areas.cave = buildCaveArea(); this.areas.bois = buildBoisArea();
-    for (const [k, f] of [['mines', 'buildMinesArea'], ['lac', 'buildLacArea'], ['temple', 'buildTempleArea'], ['tower', 'buildTowerArea'], ['castle', 'buildCastleArea']]) if (typeof window[f] === 'function') this.areas[k] = window[f]();
+    this.areas.camp = buildCamp(); this.areas.royaume = buildVillageArea();
+    this.areas.collines = buildCollinesArea(); this.areas.foret = buildForetArea(); this.areas.montagne = buildMontagneArea();
+    this.areas.lac = buildLacArea(); this.areas.cote = buildCoteArea(); this.areas.terres = buildTerresArea();
+    this.areas.cave = buildCaveArea(); this.areas.bois = buildBoisArea(); this.areas.mines = buildMinesArea();
+    this.areas.temple = buildTempleArea(); this.areas.tower = buildTowerArea(); this.areas.castle = buildCastleArea();
     for (let i = 0; i < 26; i++) this.flies.push({ x: rand(0, 768), y: rand(0, 900), p: rand(0, 6), s: rand(0.4, 1) });
     this.light = document.createElement('canvas'); this.light.width = W * SC; this.light.height = H * SC; this.lctx = this.light.getContext('2d');
     Bus.on('money:changed', () => { this.moneyFlash = 0.4; });
@@ -19,9 +22,20 @@ const G = {
   // ---------- parties ----------
   newGame(slot, hero) {
     newSlot(slot, hero);
-    this.fadeTo(() => { this.enter('camp', this.areas.camp.start, true); this.pending = 'prologue'; });
+    const camp = this.areas.camp; delete this.areas.in_bungalow; this.player = null;
+    this.fadeTo(() => { this.enterHouseNow(camp.home, camp); this.player.dir = 'down'; this.pending = 'prologue'; });
   },
-  continueGame() { const id = this.areas[SAVE.lastArea] ? SAVE.lastArea : 'camp'; this.enter(id, this.areas[id].start, true); },
+  continueGame() { let id = SAVE.lastArea; if (!this.areas[id] || (id || '').startsWith('in_')) id = SAVE.crossed_rift ? 'royaume' : 'camp'; this.enter(id, id === 'royaume' ? Object.assign({ dir: 'down' }, this.areas.royaume.plaza) : this.areas[id].start, true); },
+  // entrer dans une maison : son intérieur est construit à la première visite
+  enterHouse(h) { if (!INTERIORS[h.o.interior]) return; const from = this.area; this.fadeTo(() => this.enterHouseNow(h, from)); },
+  enterHouseNow(h, from) {
+    const id = h.o.interior, key = 'in_' + id;
+    if (!this.areas[key]) this.areas[key] = interiorArea(id, h, from.id);
+    const A = this.areas[key];
+    this.enter(key, id === 'bungalow' && !SAVE.got_branche && !SAVE.left_bungalow ? A.wake : A.start, !this.player);
+  },
+  // question à choix : la dernière réplique propose des réponses
+  ask(lines, choices, cb) { this.say(lines, null); const d = this.dialog; d.choices = choices; d.pick = 0; d.onPick = cb; },
 
   enter(id, pos, fresh) {
     this.area = this.areas[id]; this.area.arenaOn = null;
@@ -34,13 +48,11 @@ const G = {
     SAVE.lastArea = id; this.visit(); persist();
     this.banner = { text: this.area.name, t: 2.2 };
     this.state = 'play'; this.view = 'world'; this.updateCam(true);
-    if (id === 'cave' && !SAVE.caveIntro) { SAVE.caveIntro = true; persist(); this.pending = 'caveIntro'; }
-    if (id === 'bois' && !SAVE.boisIntro) { SAVE.boisIntro = true; persist(); this.pending = 'boisIntro'; }
-    for (const k of ['mines', 'lac', 'temple', 'tower', 'castle']) if (id === k && !SAVE[k + 'Intro']) { SAVE[k + 'Intro'] = true; persist(); this.pending = k + 'Intro'; }
+    for (const k of ['cave', 'bois', 'mines', 'lac', 'temple', 'tower', 'castle']) if (id === k && !SAVE[k + 'Intro']) { SAVE[k + 'Intro'] = true; persist(); this.pending = k + 'Intro'; }
     this.wind = null; this.windT = 0; this.freezeT = 0; this.flashT = 0;
-    Dog.reset(this.player);
+    this.camFocus = null; this.darkFrom = null;
   },
-  visit() { if (this.area.rooms) { SAVE.visited = SAVE.visited || {}; SAVE.visited[this.area.id + this.room] = 1; } },
+  visit() { if (this.area.zone) { SAVE.visitedZ = SAVE.visitedZ || {}; SAVE.visitedZ[this.area.id] = 1; } if (this.area.rooms) { SAVE.visited = SAVE.visited || {}; SAVE.visited[this.area.id + this.room] = 1; } },
   fadeTo(fn, color) { if (this.fade) return; this.fade = { t: 0, dir: 1, fn, color }; this.state = 'fade'; },
 
   // ---------- salles ----------
@@ -56,9 +68,10 @@ const G = {
   },
   inRoom(e) { return e.room == null || !this.area.rooms || e.room === this.room; },
   updateCam() {
-    const P = this.player, A = this.area;
+    const P = this.player, A = this.area, f = this.camFocus || { x: P.x, y: P.y - 12 };
     if (A.rooms) { const rr = this.roomRect(); this.cam.x = rr.x; this.cam.y = rr.y + 1; return; }
-    this.cam.x = clamp(P.x - W / 2, 0, A.w - W); this.cam.y = clamp(P.y - 12 - H / 2, 0, A.h - H);
+    this.cam.x = A.w <= W ? (A.w - W) / 2 : clamp(f.x - W / 2, 0, A.w - W);
+    this.cam.y = A.h <= H ? (A.h - H) / 2 - 8 : clamp(f.y - H / 2, 0, A.h - H);
   },
 
   // ---------- interactions ----------
@@ -70,7 +83,7 @@ const G = {
   frontEnt(P, pred) { const fb = P.frontBox(); return this.area.ents.find(e => !e.dead && pred(e) && rectHit(fb, boxOf(e))) || null; },
   bumped(P) {
     const door = this.frontEnt(P, e => e instanceof KeyDoor);
-    if (door) { P.bump = 1.5; if (SAVE.keys > 0) door.unlock(this); else { SFX.locked(); this.say([{ text: 'C\'est fermé à clé.' }]); } return; }
+    if (door) { P.bump = 1.5; if (Keys.get() > 0) door.unlock(this); else { SFX.locked(); this.say([{ text: 'C\'est fermé à clé.' }]); } return; }
     const ig = this.frontEnt(P, e => e instanceof IronGate && e.solid);
     if (ig) { P.bump = 1.5; ig.interact(this); return; }
     const gate = this.frontEnt(P, e => e instanceof GateBlock && e.solid);
@@ -101,7 +114,7 @@ const G = {
     const alive = A.ents.some(e => e.isEnemy && !e.dead && e.room === this.room);
     if (alive && A.arenaOn !== this.room) {
       const rr = this.roomRect(), P = this.player;
-      if (P.x > rr.x + 34 && P.x < rr.x + rr.w - 34 && P.y > rr.y + 40 && P.y < rr.y + rr.h - 40) { A.arenaOn = this.room; if (ar.onStart) ar.onStart(this); }
+      if (P.x > rr.x + 64 && P.x < rr.x + rr.w - 64 && P.y > rr.y + 60 && P.y < rr.y + rr.h - 52) { A.arenaOn = this.room; if (ar.onStart) ar.onStart(this); }
     } else if (!alive) {
       A.arenaOn = null; SAVE[ar.flag] = true; persist(); SFX.secret();
       if (ar.onClear) ar.onClear(this);
@@ -136,9 +149,59 @@ const G = {
   // ---------- scènes ----------
   freeCaptive(n = 1) {
     this.say(Story.script(n === 1 ? 'freed' : 'freed' + n), () => {
-      Story.set('freed' + n); SAVE.fragments = Math.max(SAVE.fragments || 0, n); persist(); SFX.bigheart();
-      this.fadeTo(() => { this.enter('royaume', this.areas.royaume.start, false); this.pending = n === 1 ? 'reunion' : 'reunion' + n; }, '#fff2c0');
+      Story.set('freed' + n); this.prevFragments = SAVE.fragments || 0; SAVE.fragments = Math.max(SAVE.fragments || 0, n); persist(); SFX.bigheart();
+      this.fadeTo(() => { this.enter('royaume', Object.assign({ dir: 'up' }, this.areas.royaume.plaza), false); this.pending = 'ceremony' + n; }, '#fff2c0');
     });
+  },
+  // ---------- cinématiques ----------
+  // la cérémonie du fragment : il descend du ciel jusqu'à la tour-horloge, les aiguilles avancent, une lanterne s'allume
+  ceremony(n) {
+    const tower = this.area.ents.find(e => e instanceof ClockTower), from = this.prevFragments != null ? this.prevFragments : n - 1;
+    if (!tower) return this.playReunion(n);
+    tower.shown = from; tower.hand = from; this.camFocus = { x: tower.x, y: tower.y - 70 }; this.updateCam();
+    const darkA = Math.max(0.12, 0.5 - 0.055 * from), darkB = Math.max(0.12, 0.5 - 0.055 * n);
+    let chimed = false, lit = false;
+    this.cut = {
+      t: 0,
+      update: dt => {
+        const c = this.cut; c.t += dt; this.parts.update(dt); tower.t += dt; this.t;
+        if (c.t < 1.6) { const k = c.t / 1.6; c.ox = tower.x + Math.sin(k * 9) * 30 * (1 - k); c.oy = lerp(tower.y - 300, tower.y - 160, k * k); if (Math.random() < dt * 40) this.parts.add({ x: c.ox, y: c.oy, vy: -10, vx: rand(-20, 20), life: 0.6, c: pick(['#ffe27a', '#fff', '#ffcf3a']), r: 1.5 }); }
+        else if (c.t < 3.4) { if (!chimed) { chimed = true; SFX.chime(); tower.glow = 1.2; this.shake = 0.3; this.parts.burst(tower.x, tower.y - 160, 40, { c: ['#ffe27a', '#fff', '#ffcf3a'], life: 1.2, smin: 30, smax: 150, r: 2, drag: 1.5 }); } tower.hand = lerp(from, n, clamp((c.t - 1.6) / 1.4, 0, 1)); this.darkFrom = lerp(darkA, darkB, clamp((c.t - 1.6) / 1.8, 0, 1)); }
+        else if (!lit) { lit = true; tower.shown = n; tower.hand = n; SFX.bigheart(); this.flashT = 0.2; }
+        if (c.t > 4.6) { this.cut = null; this.camFocus = null; this.darkFrom = null; this.state = 'play'; this.playReunion(n); }
+      },
+      draw: () => {
+        const c = this.cut; if (!c || c.t >= 1.6) { if (c && c.t > 1.6 && c.t < 3.4) { const a = Math.min(1, 3.4 - c.t); ctx.globalAlpha = a; text(`${n} h du matin`, W / 2, 30, { size: 14, align: 'center', bold: true, color: PAL.warm }); text(`Fragment d'aube ${n} / 6`, W / 2, 48, { size: 9, align: 'center', color: '#fff6c0' }); ctx.globalAlpha = 1; } return; }
+        const x = c.ox - this.cam.x, y = c.oy - this.cam.y;
+        ctx.globalAlpha = 0.4; ell(x, y, 12, 12, '#ffe27a'); ctx.globalAlpha = 1; drawItemIcon('fragment', x, y, 1.4);
+      },
+    };
+    this.state = 'cut';
+  },
+  playReunion(n) { this.pending = n === 1 ? 'reunion' : 'reunion' + n; },
+  // la porte aux cinq sceaux : chaque sceau vole jusqu'à sa serrure, la porte tremble puis s'ouvre dans un flot de lumière
+  sealCeremony() {
+    const gate = this.area.ents.find(e => e instanceof SealGate && e.room === this.room); if (!gate) return;
+    const P = this.player; let step = 0;
+    this.cut = {
+      t: 0,
+      update: dt => {
+        const c = this.cut; c.t += dt; this.parts.update(dt); gate.t += dt;
+        const k = Math.floor(c.t / 0.55);
+        if (k > step && step < 5) { step++; gate.lit = step; SFX.crystal(); this.shake = 0.15; this.parts.burst(gate.x - 13 + (step - 1) * 6, gate.y - 23, 14, { c: [SEALS[step - 1][1], '#fff'], life: 0.6, r: 2 }); }
+        if (c.t > 3 && c.t < 4.5) { this.shake = 0.3; if (Math.random() < dt * 6) SFX.push(); }
+        if (c.t > 3.2 && !c.boom) { c.boom = true; SFX.gate(); }
+        if (c.t > 3.2) gate.k = clamp((c.t - 3.2) / 1.6, 0, 1);
+        if (c.t > 3.6 && Math.random() < dt * 30) this.parts.add({ x: gate.x + rand(-16, 16), y: gate.y - rand(0, 32), vy: rand(20, 60), vx: rand(-30, 30), life: 1, c: pick(['#fff2c0', '#ffe27a', '#fff']), r: 1.5 });
+        if (c.t > 5.4) { SAVE.sealGateOpen = true; SAVE.sealGateSeen = true; persist(); this.cut = null; this.state = 'play'; SFX.secret(); this.say([{ who: 'Lumi', text: 'La grande porte est ouverte ! Papa est juste derrière. Je sens sa lumière… mais elle est toute violette.' }]); }
+      },
+      draw: () => {
+        const c = this.cut; if (!c) return;
+        for (let i = step; i < 5; i++) { const t = clamp((c.t - i * 0.55) / 0.55, 0, 1); if (t <= 0) { const x = P.x - this.cam.x - 12 + i * 6, y = P.y - 40 - this.cam.y; drawSealIcon(x, y, 0.8, SEALS[i][1]); continue; } const sx = P.x + (i - 2) * 8, sy = P.y - 40, tx = gate.x - 13 + i * 6, ty = gate.y - 23; const x = lerp(sx, tx, t) - this.cam.x, y = lerp(sy, ty, t) - this.cam.y - Math.sin(t * Math.PI) * 24; drawSealIcon(x, y, 0.8, SEALS[i][1]); }
+        if (c.t > 3.2) { const a = clamp((c.t - 3.2) / 1.2, 0, 1) * 0.5; const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, `rgba(255,240,190,${a})`); g.addColorStop(1, 'rgba(255,240,190,0)'); ctx.fillStyle = g; const gx = gate.x - this.cam.x; ctx.beginPath(); ctx.moveTo(gx - 16, gate.y - 32 - this.cam.y); ctx.lineTo(gx + 16, gate.y - 32 - this.cam.y); ctx.lineTo(gx + 70, H); ctx.lineTo(gx - 70, H); ctx.fill(); }
+      },
+    };
+    this.state = 'cut';
   },
   finale() {
     this.say(Story.script('kingDown'), () => {
@@ -149,6 +212,7 @@ const G = {
   showEnd(n) { Story.set('v' + n + 'done'); this.endN = n; this.fadeTo(() => { this.state = 'end'; this.view = 'end'; this.endT = 0; }); },
   playPending() {
     const p = this.pending; this.pending = null;
+    if (/^ceremony\d$/.test(p || '')) return this.ceremony(Number(p.slice(8)));
     if (p === 'reunion') return this.say(Story.script('reunion'), () => this.showEnd(1));
     if (p === 'campDawn') return this.say(Story.script('campDawn'), () => this.fadeTo(() => { this.creditsPage = 0; this.endT = 0; this.state = 'credits'; this.view = 'credits'; }, '#fff2c0'));
     const m = /^reunion(\d)$/.exec(p || ''); if (m) return this.say(Story.script(p), () => this.showEnd(Number(m[1])));
@@ -170,6 +234,7 @@ const G = {
       case 'pause': return this.updatePause();
       case 'shop': return this.updateShop(dt);
       case 'travel': return this.updateTravel();
+      case 'cut': if (this.cut) this.cut.update(dt); this.updateCam(); if (this.shake > 0) this.shake -= dt; return;
       case 'credits': this.endT += dt; return this.updateCredits(dt);
       case 'over': this.overT += dt; return this.updateOver();
       case 'end': this.endT += dt; if (this.endT > 1 && Input.anyPressed()) { SFX.menu(); this.state = 'play'; this.view = 'world'; } return;
@@ -190,7 +255,7 @@ const G = {
     if (SAVE.met_lumi) Lumi.update(dt, P);
     if (this.freezeT > 0) this.freezeT -= dt;
     if (this.flashT > 0) this.flashT -= dt;
-    Dog.update(dt, this);
+    if (A.id === 'castle' && !SAVE.sealGateOpen && SEALS.every(q => SAVE[q[0]]) && this.room === A.h.R.hall && P.y < this.roomRect().y + 200) { this.sealCeremony(); return; }
     for (const e of A.ents) {
       if (e.dead || !e.update || !this.inRoom(e)) continue;
       if (this.freezeT > 0 && ((e.isEnemy && !e.noFreeze) || e.isTrap || e.isOrb)) continue;
@@ -237,6 +302,13 @@ const G = {
     const d = this.dialog, line = d.lines[d.i], full = line.text.length;
     if (d.c < full) { const before = Math.floor(d.c); d.c += dt * 45; if (Math.floor(d.c) !== before && Math.floor(d.c) % 2 === 0) SFX.blip(); }
     if (this.raised) { this.raised.t -= dt; if (this.raised.t <= 0.3) this.raised.t = 0.3; }
+    if (d.choices && d.i === d.lines.length - 1 && d.c >= full) {
+      if (Input.pressed('down') || Input.pressed('right')) { d.pick = (d.pick + 1) % d.choices.length; SFX.menu(); }
+      if (Input.pressed('up') || Input.pressed('left')) { d.pick = (d.pick + d.choices.length - 1) % d.choices.length; SFX.menu(); }
+      const tap = Input.lastTap; if (tap && performance.now() - tap.time < 250) { Input.lastTap = null; const i = d.choices.findIndex((c, k) => tap.y > d.cy + k * 14 - 2 && tap.y < d.cy + k * 14 + 12 && tap.x > d.cx - 10); if (i >= 0) { d.pick = i; Input.held.a = true; Input.prev.a = false; } }
+      if (Input.pressed('a') || Input.pressed('b')) { const pick = Input.pressed('b') ? d.choices.length - 1 : d.pick; this.dialog = null; this.state = 'play'; this.player.atk = 0; Input.prev.a = true; Input.prev.b = true; SFX.menu(); d.onPick(pick); }
+      return;
+    }
     if (Input.pressed('a') || Input.pressed('b')) {
       if (d.c < full) d.c = full;
       else if (d.i < d.lines.length - 1) { d.i++; d.c = 0; SFX.menu(); }
@@ -272,9 +344,10 @@ const G = {
     if (this.state === 'pause') this.drawPause();
     if (this.state === 'shop') this.drawShop();
     if (this.state === 'travel') this.drawTravel();
+    if (this.state === 'cut' && this.cut) this.cut.draw();
     if (this.state === 'over') this.drawOver();
     this.drawFade();
-    if (this.state !== 'pause' && this.state !== 'shop' && this.state !== 'travel') drawVirtualPad();
+    if (this.state !== 'cut') drawVirtualPad();
     if (Input.toast.t > 0) { const w = textW(Input.toast.msg, 8) + 16; R(W / 2 - w / 2, H - 30, w, 16, 'rgba(7,13,31,.85)'); text(Input.toast.msg, W / 2, H - 26, { align: 'center', color: PAL.glow }); }
   },
   drawWorld() {
@@ -282,8 +355,8 @@ const G = {
     const sx = this.shake > 0 ? rand(-2, 2) : 0, sy = this.shake > 0 ? rand(-2, 2) : 0;
     const cx = Math.round(this.cam.x + sx), cy = Math.round(this.cam.y + sy);
     ctx.save(); ctx.translate(-cx, -cy);
-    const sxp = clamp(cx * 2, 0, A.layer.width - W * 2), syp = clamp(cy * 2, 0, A.layer.height - H * 2);
-    ctx.drawImage(A.layer, sxp, syp, W * 2, H * 2, sxp / 2, syp / 2, W, H);
+    if (A.w <= W || A.h <= H) ctx.drawImage(A.layer, 0, 0, A.w, A.h);
+    else { const sxp = clamp(cx * 2, 0, A.layer.width - W * 2), syp = clamp(cy * 2, 0, A.layer.height - H * 2); ctx.drawImage(A.layer, sxp, syp, W * 2, H * 2, sxp / 2, syp / 2, W, H); }
     if (A.theme === 'camp') for (let ty = Math.floor(cy / TS); ty <= Math.floor((cy + H) / TS); ty++) for (let tx = Math.floor(cx / TS); tx <= Math.floor((cx + W) / TS); tx++) {
       if (A.tile(tx, ty) !== '~') continue;
       const ph = Math.sin(this.t * 2 + tx * 1.7 + ty * 2.3);
@@ -294,7 +367,6 @@ const G = {
     for (const p of A.props) list.push({ y: p.y, p });
     for (const e of A.ents) if (!e.dead) { if (!this.slide && !this.inRoom(e)) continue; list.push({ y: e.ground ? -1e9 : e.y, e }); }
     list.push({ y: P.y, e: P });
-    if (Dog.on()) list.push({ y: Dog.y, e: Dog });
     list.sort((a, b) => a.y - b.y);
     for (const it of list) {
       if (it.p) {
@@ -331,7 +403,6 @@ const G = {
   lightsList(cx, cy) {
     const A = this.area, P = this.player, L = [];
     L.push({ x: P.x, y: P.y - 12, r: A.rooms ? 100 : 92, c: 'rgba(200,220,255,' });
-    if (Dog.on()) L.push({ x: Dog.x, y: Dog.y - 10, r: 30, c: 'rgba(255,230,180,' });
     if (SAVE.met_lumi) L.push(Lumi.light);
     for (const p of A.props) if (p.light) L.push({ x: p.x, y: p.y + (p.light.oy || -8), r: p.light.r, c: p.light.c, flick: p.light.flick, warm: p.light.warm });
     for (const e of A.ents) {
@@ -345,7 +416,7 @@ const G = {
     const A = this.area, l = this.lctx, L = this.lightsList(cx, cy);
     l.setTransform(1, 0, 0, 1, 0, 0); l.globalCompositeOperation = 'source-over';
     l.clearRect(0, 0, W * SC, H * SC);
-    const rd = A.roomDark ? A.roomDark(this.room) : null;
+    const rd = this.darkFrom != null ? this.darkFrom : A.roomDark ? A.roomDark(this.room) : null;
     l.fillStyle = `rgba(4,8,26,${rd != null ? rd : A.dark})`; l.fillRect(0, 0, W * SC, H * SC);
     l.globalCompositeOperation = 'destination-out';
     for (const o of L) {

@@ -11,6 +11,13 @@ const LOOKS = {
   pierrette:  { skin: '#f0c8a8', hair: '#d8a040', top: '#5a8ad0', legs: '#3a4a7a', long: true },
   gaspard:    { skin: '#a8704a', hair: '#1a1a1a', top: '#c08a3a', legs: '#4a3a2a' },
   mahaut:     { skin: '#e8b890', hair: '#6a2a1a', top: '#8a5aa8', legs: '#3a2a4a', long: true },
+  berger:     { skin: '#d8a880', hair: '#8a8a8a', top: '#7a6a3a', legs: '#4a3a2a', beard: true, hat: '#5a4a2a' },
+  bucheron:   { skin: '#c98a5e', hair: '#8a3a1a', top: '#a83a3a', legs: '#3a3a5a', beard: true },
+  herboriste: { skin: '#f0c8a8', hair: '#3a2a1a', top: '#3a7a4a', legs: '#2a4a2a', long: true, apron: '#c8b888' },
+  pecheur:    { skin: '#c8906a', hair: '#e8e8f0', top: '#3a5a8a', legs: '#2a3a4a', beard: true, hat: '#c8a040' },
+  artificiere:{ skin: '#e8b890', hair: '#2a2a2a', top: '#c83a3a', legs: '#3a2a2a', long: true, apron: '#3a3a42' },
+  gardien:    { skin: '#d8a880', hair: '#5a5a5a', top: '#2a3a6a', legs: '#2a2a3a', beard: true, hat: '#2a2a3a' },
+  ermite:     { skin: '#c8a8a0', hair: '#c8c8d0', top: '#4a3a5a', legs: '#2a2030', robe: true, beard: true },
   forain:     { skin: '#e0b48e', hair: '#2a2a2a', top: '#d84a4a', legs: '#2a2a3a', hat: '#2a2a3a' },
 };
 function shade(c, k) { const n = parseInt(c.slice(1), 16), f = v => clamp(Math.round(v * k), 0, 255); return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => f(v).toString(16).padStart(2, '0')).join(''); }
@@ -43,63 +50,22 @@ class NPC {
   get dead() { return this.o.when ? !Story.cond(this.o.when) : false; }
   canInteract() { return true; }
   interact(G) {
+    if (this.o.quest) return Quests.talk(this.o.quest, G);
+    if (this.o.fn) return this.o.fn(G);
     if (this.o.shop) { const sh = Shop.def(this.o.shop); G.say([{ who: sh.keeper, text: sh.hello }], () => G.openShop(this.o.shop)); }
     else G.say(Story.talk(this.o.talk));
   }
   update(dt) { this.t += dt; }
   draw() {
     if (this.o.hero) { ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)'); drawHero(this.o.hero(), this.x, this.y, 'down', false, this.t); }
+    else if (this.o.gnome) drawGnomeNPC(this.x, this.y, this.t);
+    else if (this.o.sprite === 'dog') { const im = IMG.npc_dog_down; ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); if (im) { const w = im.width / 2.6, h = im.height / 2.6; ctx.drawImage(im, half(this.x - w / 2), half(this.y - h + Math.abs(Math.sin(this.t * 3))), w, h); } }
     else if (this.o.sprite === 'papa_down') { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, 'down', false, this.t); }
     else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }
     else drawPerson(this.x, this.y, LOOKS[this.o.look], this.t);
     if (G.player && dist(G.player.x, G.player.y, this.x, this.y) < 34 && G.state === 'play') { // bulle « parler »
       const b = Math.round(Math.sin(this.t * 5)); R(this.x - 4, this.y - 42 + b, 8, 7, '#f4f7ff'); R(this.x - 2, this.y - 35 + b, 2, 2, '#f4f7ff'); R(this.x - 3, this.y - 40 + b, 1, 1, '#14244c'); R(this.x, this.y - 40 + b, 1, 1, '#14244c'); R(this.x + 2, this.y - 40 + b, 1, 1, '#14244c');
     }
-  }
-}
-
-// maison vue de face en 3/4 : toit, façade, porte, fenêtres éclairées, enseigne
-const SIGNS = {
-  forge: (x, y) => { D(x - 7, y - 3, 14, 4, '#3a3d48'); D(x - 4, y + 1, 8, 4, '#3a3d48'); D(x - 9, y - 3, 3, 2, '#3a3d48'); },
-  kitchen: (x, y) => { D(x - 7, y - 2, 14, 7, '#3a3d48'); D(x - 8, y - 4, 16, 3, '#5a5e6a'); D(x - 3, y - 8, 2, 4, '#c8c8d0'); D(x + 1, y - 9, 2, 5, '#c8c8d0'); },
-  shop: (x, y) => { D(x - 3, y - 6, 6, 3, '#f0e8d8'); D(x - 5, y - 3, 10, 9, '#c83a4a'); D(x - 3, y - 1, 3, 3, '#ff8a9a'); },
-  inn: (x, y) => { D(x - 7, y - 1, 14, 5, '#8a5a34'); D(x - 7, y - 4, 4, 4, '#f0e8d8'); D(x - 8, y + 4, 2, 3, '#5a3418'); D(x + 6, y + 4, 2, 3, '#5a3418'); },
-  library: (x, y) => { D(x - 7, y - 5, 14, 10, '#3a6ab0'); D(x - 1, y - 5, 2, 10, '#f0e8d8'); D(x - 6, y - 4, 4, 1, '#f0e8d8'); D(x + 2, y - 4, 4, 1, '#f0e8d8'); },
-};
-class House {
-  constructor(x, y, o) {
-    this.x = x; this.y = y; this.o = o; this.w = o.w * TS; this.h = o.d * TS; this.solid = true; this.t = rand(0, 5);
-    const hw = this.w / 2 - 14;
-    this.lights = [{ dx: -hw, dy: -12, r: 34, c: 'rgba(255,200,120,' }, { dx: hw, dy: -12, r: 34, c: 'rgba(255,200,120,' }];
-  }
-  update(dt) { this.t += dt; }
-  draw() {
-    const o = this.o, W2 = this.w * 2, D2 = this.h * 2, fh = 44, wall = o.wall || '#cbb898', timber = '#5a3a22', roof = o.roof || '#8a3a3a';
-    ell(this.x, this.y + 2, this.w / 2 + 4, 5, 'rgba(0,0,0,.4)');
-    hi(this.x, this.y, false, () => {
-      const L = -W2 / 2;
-      // toit (vu de dessus, en pente vers l'avant)
-      const ry = -D2 - 26, rh = D2 + 26 - fh + 6;
-      D(L - 6, ry, W2 + 12, rh, roof);
-      for (let yy = ry + 6; yy < ry + rh; yy += 8) D(L - 6, yy, W2 + 12, 2, shade(roof, 0.75));
-      for (let yy = ry + 2; yy < ry + rh; yy += 16) for (let xx = L - 6 + ((yy / 8) & 1) * 8; xx < L + W2 + 6; xx += 16) D(xx, yy, 2, 6, shade(roof, 0.8));
-      D(L - 6, ry, W2 + 12, 4, shade(roof, 1.3)); D(L - 6, ry + rh - 4, W2 + 12, 4, shade(roof, 0.55));
-      if (o.chimney) { D(L + W2 - 40, ry - 18, 16, 26, '#6a6070'); D(L + W2 - 42, ry - 22, 20, 6, '#4a4450'); }
-      // façade
-      D(L, -fh, W2, fh, wall); D(L, -fh, W2, 3, shade(wall, 1.12));
-      D(L, -fh, 6, fh, timber); D(L + W2 - 6, -fh, 6, fh, timber); D(L, -fh + 2, W2, 4, timber);
-      // porte
-      D(-12, -34, 24, 34, '#3a2414'); D(-10, -32, 20, 32, '#6a4224'); D(-1, -32, 2, 32, '#4a2a14'); D(5, -18, 3, 3, '#c8a040');
-      D(-14, -38, 28, 5, timber);
-      // fenêtres éclairées
-      const g = 0.85 + 0.15 * Math.sin(this.t * 2);
-      for (const sx of [-1, 1]) {
-        const wx = sx * (W2 / 2 - 28) - 9;
-        D(wx - 2, -34, 22, 20, timber); D(wx, -32, 18, 16, `rgba(255,207,122,${g})`); D(wx + 8, -32, 2, 16, timber); D(wx, -25, 18, 2, timber);
-      }
-      // enseigne
-      if (o.sign && SIGNS[o.sign]) { D(18, -50, 2, 8, '#3a2414'); D(18, -50, 26, 2, '#3a2414'); D(22, -46, 24, 18, '#d8c8a8'); D(22, -46, 24, 2, '#f0e8d8'); SIGNS[o.sign](34, -37); }
-    });
   }
 }
 
@@ -237,4 +203,15 @@ class Prop {
       if (this.kind === 'stall') { D(-24, -26, 48, 26, '#8a5a34'); D(-26, -30, 52, 6, '#6a4224'); for (let i = 0; i < 6; i++) D(-28 + i * 10, -46, 10, 16, i % 2 ? '#f0e8d8' : '#d84a4a'); D(-28, -48, 56, 3, '#a83a3a'); }
     });
   }
+}
+
+// petit gnome (PNJ) : barbe, casque à lampe
+function drawGnomeNPC(x, y, t) {
+  ell(x, y, 6, 2, 'rgba(0,0,0,.35)');
+  hi(x, y + Math.round(Math.sin(t * 2.2)), false, () => {
+    D(-6, -6, 4, 6, '#3a2a20'); D(2, -6, 4, 6, '#3a2a20'); D(-9, -22, 18, 16, '#4a6a9a'); D(-9, -10, 18, 2, '#3a2414');
+    D(-8, -30, 16, 9, '#e8b890'); D(-10, -24, 20, 10, '#e8e8f0'); D(-4, -14, 8, 4, '#e8e8f0');
+    D(-5, -28, 2, 2, '#1a1a22'); D(3, -28, 2, 2, '#1a1a22'); D(-2, -26, 4, 3, '#d88a7a');
+    D(-10, -38, 20, 9, '#c8a040'); D(-11, -31, 22, 3, '#a07a20'); D(-3, -40, 6, 5, '#fff6c0');
+  });
 }

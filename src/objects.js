@@ -132,10 +132,11 @@ class Chest {
   canInteract() { return !this.hidden && !this.open; }
   interact(G) {
     SAVE[this.flag] = true;
-    if (this.give === 'key') SAVE.keys += 1;
+    if (this.give === 'key') Keys.add(1);
     else if (this.give.startsWith('money:')) Wallet.add(Number(this.give.slice(6)));
+    else if (this.give.startsWith('bigkey:')) SAVE['bigkey_' + this.give.slice(7)] = true;
     else Inventory.give(this.give);
-    persist(); SFX.chest(); G.raise(this.give.startsWith('money') ? 'money' : this.give);
+    persist(); SFX.chest(); G.raise(this.give.startsWith('money') ? 'money' : this.give.startsWith('bigkey') ? 'bigkey' : this.give);
     G.say(this.msg || [{ text: 'Tu as trouvé une petite clé !' }]);
   }
   update(dt, G) {
@@ -146,7 +147,7 @@ class Chest {
     if (this.hidden) return;
     ell(this.x, this.y, this.big ? 14 : 10, this.big ? 4 : 3, 'rgba(0,0,0,.4)');
     hi(this.x, this.y, false, () => {
-      const g1 = this.big ? '#4a6ab0' : '#7a4a24', g2 = this.big ? '#6a8ad0' : '#a06a34', g3 = this.big ? '#2a3a70' : '#4a2a14', l1 = this.big ? '#5a7ac0' : '#8a5a2c', l2 = this.big ? '#8aaae0' : '#b07a3c', l3 = this.big ? '#1a2a5a' : '#5a3418';
+      const gold = this.give.startsWith('bigkey'), g1 = gold ? '#c08a10' : this.big ? '#4a6ab0' : '#7a4a24', g2 = gold ? '#ffd23a' : this.big ? '#6a8ad0' : '#a06a34', g3 = gold ? '#8a5a10' : this.big ? '#2a3a70' : '#4a2a14', l1 = gold ? '#e0a820' : this.big ? '#5a7ac0' : '#8a5a2c', l2 = gold ? '#fff2a0' : this.big ? '#8aaae0' : '#b07a3c', l3 = gold ? '#6a4a10' : this.big ? '#1a2a5a' : '#5a3418';
       D(-15, -18, 30, 18, g1); D(-15, -18, 30, 2, g2); D(-15, -2, 30, 2, g3);
       D(-15, -18, 3, 18, '#c8a040'); D(12, -18, 3, 18, '#c8a040');
       if (!this.open) {
@@ -174,9 +175,9 @@ class KeyDoor {
   constructor(x, y, flag) { this.x = x; this.y = y; this.flag = flag; this.w = 32; this.h = 32; this.solid = true; this.t = 0; this.light = { r: 30, c: 'rgba(255,207,122,' }; }
   get dead() { return !!SAVE[this.flag]; }
   canInteract() { return true; }
-  interact(G) { if (SAVE.keys > 0) this.unlock(G); else { SFX.locked(); G.say([{ text: 'Une porte fermée par un gros cadenas. Il faut une petite clé.' }]); } }
+  interact(G) { if (Keys.get() > 0) this.unlock(G); else { SFX.locked(); G.say([{ text: 'Une porte fermée par un gros cadenas. Il faut une petite clé.' }]); } }
   unlock(G) {
-    SAVE.keys -= 1; SAVE[this.flag] = true; persist(); SFX.door(); G.shake = 0.3;
+    Keys.add(-1); SAVE[this.flag] = true; persist(); SFX.door(); G.shake = 0.3;
     G.parts.burst(this.x, this.y - 16, 22, { c: ['#8a5a2c', '#5a3418', '#e0b850', '#fff'], life: 0.7, smin: 20, smax: 80, r: 2, g: 80 });
   }
   update(dt) { this.t += dt; }

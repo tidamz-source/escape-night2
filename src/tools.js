@@ -243,8 +243,8 @@ class DiveSpot {
     if (Math.random() < dt * 3) G.parts.add({ x: this.x + rand(-4, 4), y: this.y - 2, vy: -12, life: 0.7, c: '#cfe0ff', r: 1 });
     if (P.dive > 0 && dist(P.x, P.y, this.x, this.y) < 16) {
       SAVE[this.flag] = true;
-      if (this.give === 'key') SAVE.keys += 1; else if (this.give.startsWith('money:')) Wallet.add(Number(this.give.slice(6))); else if (this.give.startsWith('flag:')) SAVE[this.give.slice(5)] = true; else Inventory.give(this.give);
-      persist(); SFX.chest(); P.dive = 0; G.raise(this.give.startsWith('flag:') ? 'seal' : this.give.startsWith('money') ? 'money' : this.give);
+      if (this.give === 'key') Keys.add(1); else if (this.give.startsWith('money:')) Wallet.add(Number(this.give.slice(6))); else if (this.give.startsWith('flag:')) SAVE[this.give.slice(5)] = true; else Inventory.give(this.give);
+      persist(); if (this.onGet) this.onGet(); SFX.chest(); P.dive = 0; G.raise(this.give.startsWith('flag:') ? 'seal' : this.give.startsWith('money') ? 'money' : this.give);
       G.say(this.msg || [{ text: 'Au fond de l\'eau, une petite clé !' }]);
     }
   }
@@ -391,14 +391,17 @@ class IronGate { // grille fermée par une clé unique ou une condition
 
 // ---------- luciole-relais : voyage rapide (après la libération du deuxième enfant) ----------
 const RELAYS = {
-  village: { name: 'Bourg-Luciole', area: 'royaume', pos: () => ({ x: 384 + 40, y: 704 + 30, dir: 'down' }) },
-  collines: { name: 'Chemin des Mines', area: 'royaume', pos: () => ({ x: 39 * 16, y: 15 * 16 + 8, dir: 'down' }) },
-  lac: { name: 'Rive du lac', area: 'lac', pos: () => ({ x: 47 * 16, y: 11 * 16 + 4, dir: 'down' }) },
-  defile: { name: 'Défilé du château', area: 'lac', pos: () => ({ x: 7 * 16, y: 35 * 16, dir: 'down' }) },
+  village: { name: 'Bourg-Luciole', area: 'royaume', pos: () => ({ x: 26 * TS, y: 31 * TS + 4, dir: 'down' }) },
+  collines: { name: 'Les Collines', area: 'collines', pos: () => ({ x: 36 * TS, y: 42 * TS + 4, dir: 'down' }) },
+  foret: { name: 'La Forêt', area: 'foret', pos: () => ({ x: 54 * TS, y: 29 * TS + 4, dir: 'down' }) },
+  montagne: { name: 'La Montagne', area: 'montagne', pos: () => ({ x: 8 * TS, y: 27 * TS + 4, dir: 'down' }) },
+  lac: { name: 'Le Lac', area: 'lac', pos: () => ({ x: 38 * TS, y: 13 * TS + 4, dir: 'down' }) },
+  cote: { name: 'La Côte', area: 'cote', pos: () => ({ x: 10 * TS, y: 29 * TS + 4, dir: 'down' }) },
+  terres: { name: 'Les Terres de Minuit', area: 'terres', pos: () => ({ x: 50 * TS, y: 42 * TS + 4, dir: 'down' }) },
 };
 class Relay {
   constructor(x, y, id) { this.x = x; this.y = y; this.id = id; this.w = 12; this.h = 6; this.solid = true; this.t = rand(0, 5); }
-  get on() { return !!SAVE.freed4; }
+  get on() { return !!SAVE.freed1; }
   get light() { return { r: this.on ? 56 : 18, c: 'rgba(255,230,140,' }; }
   canInteract() { return true; }
   interact(G) {
@@ -428,52 +431,23 @@ class SealAltar {
     if (!SAVE[this.flag]) drawSealIcon(this.x, this.y - 22 + Math.sin(this.t * 3) * 1.5, 1.2, this.c);
   }
 }
-class SealGate {
-  constructor(x, y) { this.x = x; this.y = y; this.w = 32; this.h = 32; this.t = 0; }
-  get open() { return SEALS.every(s => SAVE[s[0]]); }
-  get solid() { return !this.open; }
-  get dead() { return this.open && SAVE.sealGateSeen; }
+class SealGate { // la grande porte du hall : cinq serrures-soleil ; s'ouvre en cinématique quand on a les cinq sceaux
+  constructor(x, y) { this.x = x; this.y = y; this.w = 32; this.h = 32; this.t = 0; this.k = SAVE.sealGateOpen ? 1 : 0; this.lit = SAVE.sealGateOpen ? 5 : 0; }
+  get open() { return !!SAVE.sealGateOpen; }
+  get solid() { return this.k < 0.9; }
+  get light() { return { r: 40 + this.lit * 12 + (this.k > 0 && this.k < 1 ? 80 : 0), c: 'rgba(255,220,140,' }; }
   canInteract() { return !this.open; }
-  interact(G) { G.say([{ text: `Une porte gravée de cinq serrures en forme de soleil. ${SEALS.filter(s => SAVE[s[0]]).length} sur 5 brillent.` }]); }
-  update(dt, G) { this.t += dt; if (this.open && !SAVE.sealGateSeen) { SAVE.sealGateSeen = true; persist(); SFX.secret(); G.shake = 0.4; } }
+  interact(G) { const n = SEALS.filter(s => SAVE[s[0]]).length; G.say([{ text: `Une porte immense, gravée de cinq serrures en forme de soleil. ${n} sceau${n > 1 ? 'x' : ''} sur 5.` }, { who: 'Lumi', text: n < 5 ? 'Chaque aile du château cache un sceau. Il t\'en manque ' + (5 - n) + '.' : 'Tu as les cinq ! Approche-toi…' }]); }
+  update(dt) { this.t += dt; }
   draw() {
+    const k = this.k;
     hi(this.x, this.y, false, () => {
-      D(-32, -64, 64, 64, '#2a1d4a'); D(-30, -62, 28, 62, '#3a2c66'); D(2, -62, 28, 62, '#3a2c66'); D(-1, -62, 2, 62, '#1a1030');
-      SEALS.forEach((s, i) => { const x = -24 + i * 12; D(x, -40, 8, 8, SAVE[s[0]] ? s[1] : '#1a1030'); D(x + 2, -38, 4, 4, SAVE[s[0]] ? '#fff' : '#2a2050'); });
+      D(-40, -76, 80, 76, '#1a1030'); D(-40, -76, 80, 6, '#4a3a7a'); D(-46, -84, 92, 10, '#3a2c66'); D(-10, -96, 20, 14, '#c8a040');
+      const off = Math.round(k * 30);
+      D(-32 - off, -66, 32, 66, '#3a2c66'); D(0 + off, -66, 32, 66, '#3a2c66'); D(-2 - off, -66, 2, 66, '#1a1030'); D(0 + off, -66, 2, 66, '#1a1030');
+      if (k > 0) { ctx.globalAlpha = Math.min(1, k * 2) * (k < 1 ? 1 : 0.5); D(-off + 0, -66, off * 2, 66, '#fff2c0'); ctx.globalAlpha = 1; }
+      SEALS.forEach((sx, i) => { const x = -26 + i * 12, on = i < this.lit; D(x - off * (x < 0 ? 1 : 0) + off * (x > 0 ? 1 : 0), -46, 8, 8, on ? sx[1] : '#1a1030'); });
     });
   }
 }
 
-// ---------- Goyave, le chien : suit le héros dans le royaume et creuse les endroits qui brillent ----------
-const Dog = {
-  x: 0, y: 0, t: 0, dir: 'down', dig: 0, digCd: 18, tx: null, ty: null, moving: false,
-  on() { return !!SAVE.freed5 && G.area && !G.area.rooms && G.area.id !== 'camp'; },
-  reset(P) { this.x = P.x - 16; this.y = P.y + 4; this.dig = 0; this.tx = null; this.digCd = 14; },
-  update(dt, G) {
-    if (!this.on()) return;
-    this.t += dt; const P = G.player;
-    if (this.dig > 0) {
-      this.dig -= dt; if (Math.random() < dt * 20) G.parts.add({ x: this.x + rand(-4, 4), y: this.y - 1, vx: rand(-40, 40), vy: rand(-60, -20), g: 220, life: 0.5, c: pick(['#5a4434', '#7a5a44', '#3a5a3a']), r: 1.5 });
-      if (this.dig <= 0) { const what = pick(['coin5', 'coin5', 'coin20', 'heart', 'coin1']); G.area.ents.push(new Pickup(this.x, this.y + 6, what)); SFX.bark(); this.tx = null; }
-      return;
-    }
-    if (P.moving) this.digCd -= dt;
-    let tx = P.x - DV[P.dir][0] * 22 - 10, ty = P.y - DV[P.dir][1] * 18 + 4;
-    if (this.digCd <= 0 && this.tx == null) { // a flairé quelque chose
-      for (let i = 0; i < 12; i++) { const x = P.x + rand(-80, 80), y = P.y + rand(-60, 60), t = G.area.tileAt(x, y - 2); if ((t === '.' || t === ',') && !blocked(G.area, { x: x - 5, y: y - 4, w: 10, h: 4 }, null)) { this.tx = x; this.ty = y; SFX.bark(); break; } }
-      this.digCd = rand(16, 26);
-    }
-    if (this.tx != null) { tx = this.tx; ty = this.ty; if (dist(this.x, this.y, tx, ty) < 4) { this.dig = 1.3; SFX.dig(); return; } }
-    const d = dist(this.x, this.y, tx, ty), sp = this.tx != null ? 110 : Math.min(130, d * 3);
-    this.moving = d > 6;
-    if (this.moving) { const a = Math.atan2(ty - this.y, tx - this.x); this.x += Math.cos(a) * Math.min(d, sp * dt); this.y += Math.sin(a) * Math.min(d, sp * dt); this.dir = Math.abs(Math.cos(a)) > 0.6 ? (Math.cos(a) < 0 ? 'left' : 'right') : (Math.sin(a) < 0 ? 'up' : 'down'); }
-    if (d > 260) { this.x = P.x - 16; this.y = P.y + 4; }
-  },
-  draw() {
-    const im = IMG['npc_dog_' + this.dir] || IMG.npc_dog_down; if (!im) return;
-    ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)');
-    const hop = this.moving ? Math.abs(Math.sin(this.t * 14)) * 1.5 : 0, w = im.width / 2.6, h = im.height / 2.6;
-    ctx.drawImage(im, half(this.x - w / 2), half(this.y - h - hop + (this.dig > 0 ? Math.sin(this.t * 30) : 0)), w, h);
-    if (this.tx != null && this.dig <= 0) text('!', this.x, this.y - h - 10, { size: 9, align: 'center', color: PAL.warm, bold: true });
-  },
-};

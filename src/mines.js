@@ -152,116 +152,81 @@ class IronMole extends Enemy {
   }
 }
 
-// ---------- la zone ----------
-//           [ ]          [BOSS]       [ ]
-//        [GRAPPIN] [CARREFOUR des wagonnets] [POTEAUX]
-//        [ARÈNE]       [ENTRÉE]      [CAISSE]
-const MINES_ROOMS = { boss: 1, grappin: 3, hub: 4, posts: 5, arena: 6, entry: 7, crate: 8 };
-function buildMines() {
-  return buildDungeon({
-    cols: 3, rows: 3, seed: 51, rough: 0.22, moss: 160,
-    rooms: [[1, 2], [0, 2], [2, 2], [1, 1], [0, 1], [2, 1], [1, 0]],
-    links: [[0, 2, 'E'], [1, 2, 'E'], [1, 2, 'N'], [0, 1, 'E'], [1, 1, 'E'], [1, 1, 'N']],
-    exit: [1, 2],
-    decorate(room) {
-      // carrefour : un grand gouffre, deux îlots, des rails sur tréteaux
-      const h = room(1, 1);
+
+// ---------- la zone : les Mines des gnomes (Montagne) — 10 salles ----------
+//            .          [BOSS]        .            .
+//       [ARAIGNÉES]   [GRANDE SALLE]   .            .
+//        [GRAPPIN]  [CARREFOUR des wagonnets] [POTEAUX]  .
+//         [ARÈNE]      [ENTRÉE]     [CAISSE]     [PUITS]
+function buildMinesArea() {
+  return makeDungeon({
+    id: 'mines', zone: 'montagne', name: 'Les Mines des gnomes', theme: 'mine', seed: 51, rough: 0.22, moss: 200, dark: 0.3,
+    bossFlag: 'boss3', heartFlag: 'heart4', potLoot: 'potMine',
+    rooms: { entry: [1, 3], arena: [0, 3], crate: [2, 3], shaft: [3, 3], hub: [1, 2], grappin: [0, 2], spider: [0, 1], posts: [2, 2], hall: [1, 1], boss: [1, 0] },
+    entry: 'entry', boss: 'boss',
+    links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'crate'], ['crate', 'shaft'], ['entry', 'hub', { key: 'minesDoor1' }], ['hub', 'grappin'], ['grappin', 'spider'], ['hub', 'posts'], ['hub', 'hall', { key: 'minesDoor2' }], ['hall', 'boss', { big: true }]],
+    tiles(room) {
+      const h = room('hub');
       h.rect(3, 2, 24, 2, '_'); h.rect(3, 13, 24, 2, '_');
       h.rect(3, 4, 24, 9, 'v'); h.rect(3, 6, 5, 5, '_'); h.rect(22, 6, 5, 5, '_');
       railLine(h, 11, 13, 11, 8); railLine(h, 11, 8, 6, 8); railLine(h, 11, 8, 23, 8); railLine(h, 19, 8, 19, 3);
-      // poteaux : un gouffre, deux îlots, une plate-forme
-      const p = room(2, 1);
+      const p = room('posts');
       p.rect(7, 2, 20, 1, 'W'); p.rect(7, 14, 20, 1, 'W'); p.rect(7, 3, 20, 11, 'v');
       p.rect(10, 7, 4, 3, '_'); p.rect(14, 3, 4, 3, '_'); p.rect(16, 9, 11, 5, '_');
-      // salle du grappin : un petit gouffre pour s'entraîner
-      const g = room(0, 1);
-      g.rect(16, 3, 11, 4, 'v'); g.rect(21, 3, 6, 3, '_');
-      // la caisse : une niche au nord
-      const c = room(2, 2);
-      c.rect(18, 3, 1, 4, 'W'); c.rect(20, 3, 1, 4, 'W'); c.set(19, 2, 'W');
-      // salle du boss : quelques étais
-      for (const [x, y] of [[5, 4], [24, 4], [5, 12], [24, 12]]) room(1, 0).set(x, y, 'k');
-      for (const [x, y] of [[6, 5], [23, 5], [6, 11], [23, 11]]) room(1, 2).set(x, y, 'k');
+      const g = room('grappin'); g.rect(16, 3, 11, 4, 'v'); g.rect(21, 3, 6, 3, '_');
+      const c = room('crate'); c.rect(18, 2, 1, 5, 'W'); c.rect(20, 2, 1, 5, 'W'); c.set(19, 2, 'W');
+      for (const [x, y] of [[5, 4], [24, 4], [5, 12], [24, 12]]) room('boss').set(x, y, 'k');
+      for (const [x, y] of [[6, 5], [23, 5], [6, 11], [23, 11]]) room('entry').set(x, y, 'k');
+      for (const [x, y] of [[8, 5], [21, 5], [8, 11], [21, 11], [14, 8]]) room('hall').set(x, y, 'k');
+      for (const [x, y] of [[10, 6], [19, 6], [10, 11], [19, 11]]) room('shaft').set(x, y, 'k');
+    },
+    roomDark: (room, R) => room === R.shaft ? 0.6 : null,
+    arenas: { arena: arenaStd('arenaM'), boss: bossArena('boss3', 'La Taupe de fer') },
+    make(n, L, h) {
+      const { mk } = h, pot = (x, y) => h.pot(n, x, y);
+      if (n === 'entry') L.push(pot(4, 13), pot(25, 13), pot(4, 3), mk(Gnome, n, 20, 9), mk(Bat, n, 9, 6));
+      if (n === 'arena') { L.push(pot(4, 3), pot(25, 3), pot(25, 13)); if (!SAVE.arenaM) L.push(mk(Gnome, n, 6, 6), mk(Gnome, n, 23, 6), mk(CrystalSpider, n, 10, 11), mk(CrystalSpider, n, 19, 11), mk(CrystalSpider, n, 14, 5)); }
+      if (n === 'crate') L.push(SAVE.crateM ? mk(Block, n, 19, 11) : mk(Block, n, 19, 5), mk(CrystalSpider, n, 8, 6), mk(CrystalSpider, n, 9, 11), pot(25, 13), pot(4, 13));
+      if (n === 'shaft') L.push(mk(Gnome, n, 8, 8), mk(Gnome, n, 21, 8), mk(Bat, n, 14, 4), pot(3, 3), pot(26, 3), pot(3, 13), pot(26, 13));
+      if (n === 'hub') L.push(mk(Bat, n, 14, 6), mk(Bat, n, 18, 10), pot(24, 2), pot(4, 2));
+      if (n === 'grappin') L.push(mk(Gnome, n, 8, 5), mk(Gnome, n, 8, 11), mk(CrystalSpider, n, 20, 11), pot(4, 13), pot(4, 3));
+      if (n === 'spider') L.push(mk(CrystalSpider, n, 8, 5), mk(CrystalSpider, n, 21, 5), mk(CrystalSpider, n, 8, 11), mk(CrystalSpider, n, 21, 11), pot(3, 13), pot(26, 13));
+      if (n === 'posts') L.push(mk(Bat, n, 12, 5), mk(Bat, n, 22, 12), pot(4, 13));
+      if (n === 'hall') L.push(mk(Gnome, n, 5, 8), mk(Gnome, n, 24, 8), mk(CrystalSpider, n, 14, 4), pot(3, 13), pot(26, 13));
+      if (n === 'boss') { if (!SAVE.boss3) { const p = h.pos(n, 240, 160); L.push(new IronMole(p.x, p.y, h.R.boss)); } L.push(pot(3, 12), pot(26, 12)); }
+    },
+    fixed(h) {
+      const { mk, pos, at } = h, lamps = (n, pts) => pts.map(([x, y]) => [n, mk(MineLamp, n, x, y)]);
+      const hx = (tx, ty) => { const p = at('hub', tx, ty); return [p.x, p.y - 4]; };
+      const ST = { S: hx(11, 13), J1: hx(11, 8), J2: hx(19, 8), W: hx(6, 8), E: hx(23, 8), N: hx(19, 3) };
+      const stations = { S: { x: ST.S[0], y: ST.S[1], off: [18, 2] }, W: { x: ST.W[0], y: ST.W[1], off: [-18, 2] }, E: { x: ST.E[0], y: ST.E[1], off: [18, 2] }, N: { x: ST.N[0], y: ST.N[1], off: [-18, 2] } };
+      const routes = {
+        S: () => SAVE.switchA ? (SAVE.switchB ? { pts: [ST.S, ST.J1, ST.J2, ST.N], to: 'N' } : { pts: [ST.S, ST.J1, ST.J2, ST.E], to: 'E' }) : { pts: [ST.S, ST.J1, ST.W], to: 'W' },
+        W: () => ({ pts: [ST.W, ST.J1, ST.S], to: 'S' }), E: () => ({ pts: [ST.E, ST.J2, ST.J1, ST.S], to: 'S' }), N: () => ({ pts: [ST.N, ST.J2, ST.J1, ST.S], to: 'S' }),
+      };
+      const ac = pos('arena', 240, 150), gc = pos('grappin', 200, 150), cg = pos('boss', 240, 66);
+      return [
+        ['entry', mk(Sign, 'entry', 11, 10, [{ text: '« Mines des gnomes. Prenez le wagonnet, pas le gouffre. »' }])],
+        ['arena', new Chest(ac.x, ac.y, { flag: 'minesKeyChest', reveal: 'arenaM', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ces mines.' }] })],
+        ['crate', mk(Plate, 'crate', 19, 11, 'crateM')],
+        ['crate', mk(Chest, 'crate', 24, 8, { flag: 'crateChest', reveal: 'crateM', msg: [{ text: 'Une petite clé, cachée sous la caisse !' }] })],
+        ['crate', mk(Sign, 'crate', 13, 13, [{ text: '« Caisse coincée dans la niche. Ne pas pousser : tirer. »' }])],
+        ['shaft', mk(Chest, 'shaft', 14, 8, { flag: 'minesTreasure', give: 'money:60', msg: [{ text: 'Une bourse de gnome : 60 écus !' }] })],
+        ['hub', new Cart(stations, routes, 'S')],
+        ['hub', mk(RailLever, 'hub', 9, 13, 'switchA', ['vers l\'ouest', 'vers l\'est'])],
+        ['hub', mk(RailLever, 'hub', 25, 10, 'switchB', ['vers l\'îlot de l\'est', 'vers le nord'])],
+        ['hub', mk(Sign, 'hub', 7, 14, [{ text: '« Le levier du sud choisit ouest ou est. Celui de l\'îlot de l\'est choisit l\'îlot ou le nord. »' }])],
+        ['grappin', new Chest(gc.x, gc.y, { flag: 'grappinChest', give: 'grappin', big: true, msg: [{ text: 'Tu as trouvé le grappin !' }, { text: 'Bouton B : la chaîne file droit devant. Accroche-toi aux poteaux pour survoler le vide.' }, { text: 'Il attire aussi les petits ennemis, les objets… et les caisses.' }] })],
+        ['grappin', mk(Post, 'grappin', 23, 4)],
+        ['grappin', mk(Chest, 'grappin', 25, 3, { flag: 'grappinCoins', give: 'money:30', msg: [{ text: 'Tu as trouvé 30 écus !' }] })],
+        ['spider', mk(Chest, 'spider', 14, 8, { flag: 'minesHeart', give: 'quart_coeur', big: true, msg: [{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }] })],
+        ['posts', mk(Post, 'posts', 5, 10)], ['posts', mk(Post, 'posts', 12, 8)], ['posts', mk(Post, 'posts', 15, 4)], ['posts', mk(Post, 'posts', 17, 3)], ['posts', mk(Post, 'posts', 20, 10)],
+        ['posts', mk(Chest, 'posts', 24, 11, { flag: 'minesBigKey', give: 'bigkey:mines', big: true, msg: [{ text: 'La grande clé des Mines ! Elle ouvre la porte de la Taupe de fer.' }] })],
+        ['boss', new Cage(cg.x, cg.y, { n: 3, boss: 'boss3', drawCaptive: (x, y) => drawSprite('amandine', x, y) })],
+        ...lamps('entry', [[9, 3], [20, 3]]), ...lamps('arena', [[3, 8], [26, 8]]), ...lamps('crate', [[6, 3], [12, 3]]), ...lamps('shaft', [[14, 3]]),
+        ...lamps('hub', [[4, 13], [25, 13], [24, 2]]), ...lamps('grappin', [[3, 8], [14, 3]]), ...lamps('posts', [[3, 4], [26, 13]]), ...lamps('spider', [[3, 3], [26, 3]]),
+        ...lamps('hall', [[3, 3], [26, 3], [3, 13], [26, 13]]), ...lamps('boss', [[3, 3], [26, 3], [3, 13], [26, 13]]),
+      ];
     },
   });
-}
-function buildMinesArea() {
-  const A = new Area('mines', buildMines(), 'mine'), R = MINES_ROOMS;
-  A.rooms = { cols: 3, rows: 3, list: [R.entry, R.arena, R.crate, R.hub, R.grappin, R.posts, R.boss] };
-  A.map = { title: 'Les Mines des gnomes', links: [[R.entry, R.arena], [R.entry, R.crate], [R.entry, R.hub], [R.hub, R.grappin], [R.hub, R.posts], [R.hub, R.boss]], boss: R.boss, bossFlag: 'boss3' };
-  const rxy = i => [i % 3, Math.floor(i / 3)];
-  const at = (room, tx, ty) => { const [rx, ry] = rxy(room); return T(rx, ry, tx, ty); };
-  const pos = (room, x, y) => { const [rx, ry] = rxy(room); return { x: rx * ROOM_W + x, y: ry * ROOM_H + y }; };
-  const mk = (C, room, tx, ty, ...args) => { const p = at(room, tx, ty); return new C(p.x, p.y, ...args); };
-  const pot = (room, tx, ty) => Object.assign(mk(Pot, room, tx, ty), { loot: 'potMine' });
-  A.arenas = {
-    [R.arena]: { flag: 'arenaM' },
-    [R.boss]: {
-      flag: 'boss3',
-      onStart(G) { const b = G.area.ents.find(e => e.isBoss); if (b) b.wake(G); G.banner = { text: 'La Taupe de fer', t: 2.2 }; },
-      onClear(G) { const p = pos(R.boss, 240, 170); const h = Object.assign(new HeartContainer(p.x, p.y), { flag: 'heart4' }); h.room = R.boss; G.area.ents.push(h); },
-    },
-  };
-  A.roomDark = room => room === R.boss && SAVE.boss3 ? 0.14 : null;
-  A.makeRoom = function (room) {
-    const L = [];
-    if (room === R.entry) L.push(pot(room, 4, 13), pot(room, 25, 13), pot(room, 4, 3), mk(Gnome, room, 20, 9), mk(Bat, room, 9, 6));
-    if (room === R.arena) { L.push(pot(room, 4, 3), pot(room, 25, 3), pot(room, 25, 13)); if (!SAVE.arenaM) L.push(mk(Gnome, room, 6, 6), mk(Gnome, room, 23, 6), mk(CrystalSpider, room, 10, 11), mk(CrystalSpider, room, 19, 11), mk(CrystalSpider, room, 14, 5)); }
-    if (room === R.crate) { L.push(SAVE.crateM ? mk(Block, room, 19, 11) : mk(Block, room, 19, 5), mk(CrystalSpider, room, 8, 6), mk(CrystalSpider, room, 9, 11), pot(room, 25, 13), pot(room, 4, 13)); }
-    if (room === R.hub) L.push(mk(Bat, room, 14, 6), mk(Bat, room, 18, 10), pot(room, 24, 2), pot(room, 4, 2));
-    if (room === R.grappin) L.push(mk(Gnome, room, 8, 5), mk(Gnome, room, 8, 11), mk(CrystalSpider, room, 20, 11), pot(room, 4, 13), pot(room, 4, 3));
-    if (room === R.posts) L.push(mk(Bat, room, 12, 5), mk(Bat, room, 20, 6), mk(Bat, room, 22, 12), pot(room, 4, 13));
-    if (room === R.boss) { if (!SAVE.boss3) { const p = pos(R.boss, 240, 160); L.push(new IronMole(p.x, p.y, R.boss)); } L.push(pot(room, 3, 12), pot(room, 26, 12)); }
-    return L;
-  };
-  // wagonnet du carrefour : 4 stations, 2 aiguillages
-  const hx = (tx, ty) => { const p = at(R.hub, tx, ty); return [p.x, p.y - 4]; };
-  const ST = { S: hx(11, 13), J1: hx(11, 8), J2: hx(19, 8), W: hx(6, 8), E: hx(23, 8), N: hx(19, 3) };
-  const stations = { S: { x: ST.S[0], y: ST.S[1], off: [18, 2] }, W: { x: ST.W[0], y: ST.W[1], off: [-18, 2] }, E: { x: ST.E[0], y: ST.E[1], off: [18, 2] }, N: { x: ST.N[0], y: ST.N[1], off: [-18, 2] } };
-  const routes = {
-    S: () => SAVE.switchA ? (SAVE.switchB ? { pts: [ST.S, ST.J1, ST.J2, ST.N], to: 'N' } : { pts: [ST.S, ST.J1, ST.J2, ST.E], to: 'E' }) : { pts: [ST.S, ST.J1, ST.W], to: 'W' },
-    W: () => ({ pts: [ST.W, ST.J1, ST.S], to: 'S' }),
-    E: () => ({ pts: [ST.E, ST.J2, ST.J1, ST.S], to: 'S' }),
-    N: () => ({ pts: [ST.N, ST.J2, ST.J1, ST.S], to: 'S' }),
-  };
-  A.spawn = function () {
-    this.ents = [];
-    const door = (room, side) => side === 'N' ? pos(room, 240, 32) : side === 'S' ? pos(room, 240, 272) : side === 'E' ? pos(room, 464, 144) : pos(room, 16, 144);
-    const arenaShut = room => () => G.area.arenaOn === room;
-    const dN = door(R.entry, 'N'), dA = door(R.arena, 'E'), dB = door(R.hub, 'N'), dS = door(R.boss, 'S');
-    const ac = pos(R.arena, 240, 150), gc = pos(R.grappin, 200, 150), cg = pos(R.boss, 240, 66);
-    const lamps = (room, pts) => pts.map(([x, y]) => [room, mk(MineLamp, room, x, y)]);
-    placeFixed(this, [
-      [R.entry, new KeyDoor(dN.x, dN.y, 'minesDoor1')],
-      [R.entry, mk(Sign, R.entry, 11, 10, [{ text: '« Mines des gnomes. Prenez le wagonnet, pas le gouffre. »' }])],
-      [R.arena, new Shutter(dA.x, dA.y, 'h', arenaShut(R.arena))],
-      [R.arena, new Chest(ac.x, ac.y, { flag: 'minesKeyChest', reveal: 'arenaM', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ces mines.' }] })],
-      [R.crate, mk(Plate, R.crate, 19, 11, 'crateM')],
-      [R.crate, mk(Chest, R.crate, 24, 8, { flag: 'crateChest', give: 'quart_coeur', big: true, reveal: 'crateM', msg: [{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }] })],
-      [R.crate, mk(Sign, R.crate, 14, 13, [{ text: '« Caisse coincée dans la niche. Ne pas pousser : tirer. »' }])],
-      [R.hub, new Cart(stations, routes, 'S')],
-      [R.hub, mk(RailLever, R.hub, 9, 13, 'switchA', ['vers l\'ouest', 'vers l\'est'])],
-      [R.hub, mk(RailLever, R.hub, 25, 10, 'switchB', ['vers l\'îlot de l\'est', 'vers le nord'])],
-      [R.hub, mk(Sign, R.hub, 7, 14, [{ text: '« Aiguillage du carrefour : le levier du sud choisit ouest ou est. Celui de l\'îlot de l\'est choisit l\'îlot ou le nord. »' }])],
-      [R.hub, new KeyDoor(dB.x, dB.y, 'minesDoor2')],
-      [R.grappin, new Chest(gc.x, gc.y, { flag: 'grappinChest', give: 'grappin', big: true, msg: [{ text: 'Tu as trouvé le grappin !' }, { text: 'Bouton B : la chaîne file droit devant. Accroche-toi aux poteaux pour survoler le vide.' }, { text: 'Il attire aussi les petits ennemis, les objets… et les caisses.' }] })],
-      [R.grappin, mk(Post, R.grappin, 23, 4)],
-      [R.grappin, mk(Chest, R.grappin, 25, 3, { flag: 'grappinCoins', give: 'money:30', msg: [{ text: 'Tu as trouvé 30 écus !' }] })],
-      [R.posts, mk(Post, R.posts, 5, 10)], [R.posts, mk(Post, R.posts, 12, 8)], [R.posts, mk(Post, R.posts, 15, 4)], [R.posts, mk(Post, R.posts, 17, 3)], [R.posts, mk(Post, R.posts, 20, 10)],
-      [R.posts, mk(Chest, R.posts, 24, 11, { flag: 'minesBossKey', msg: [{ text: 'Une petite clé ! Celle de la porte du nord, sans doute.' }] })],
-      [R.boss, new Shutter(dS.x, dS.y, 'v', arenaShut(R.boss))],
-      [R.boss, new Cage(cg.x, cg.y, { n: 3, boss: 'boss3', drawCaptive: (x, y) => drawSprite('amandine', x, y) })],
-      ...lamps(R.entry, [[9, 3], [20, 3]]), ...lamps(R.arena, [[3, 8], [26, 8]]), ...lamps(R.crate, [[6, 3], [12, 3]]),
-      ...lamps(R.hub, [[4, 13], [25, 13], [24, 2]]), ...lamps(R.grappin, [[3, 8], [14, 3]]), ...lamps(R.posts, [[3, 4], [26, 13]]),
-      ...lamps(R.boss, [[3, 3], [26, 3], [3, 13], [26, 13]]),
-    ]);
-    if (SAVE.boss3 && !SAVE.heart4) { const p = pos(R.boss, 240, 170); placeFixed(this, [[R.boss, Object.assign(new HeartContainer(p.x, p.y), { flag: 'heart4' })]]); }
-    for (const r of this.rooms.list) spawnRoom(this, r);
-  };
-  const st = T(1, 2, 14, 12);
-  A.start = { x: st.x + 8, y: st.y, dir: 'up' };
-  A.exits = { E: G => G.enter('royaume', G.areas.royaume.fromMines) };
-  A.name = 'Les Mines des gnomes';
-  A.dark = 0.3;
-  return A;
 }

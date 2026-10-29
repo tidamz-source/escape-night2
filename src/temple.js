@@ -147,102 +147,88 @@ class Wave { // anneau de remous : fait mal à qui nage sans plonger
   draw() { ctx.globalAlpha = clamp(1 - this.r / 110, 0, 1) * 0.7; ctx.strokeStyle = '#cfe0ff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r, this.r * 0.55, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
 }
 
-// ---------- la zone ----------
-//              [ ]        [BOSS]        [ ]
-//          [PLONGÉE]   [GRAND BASSIN]  [BASSIN EST]
-//          [ARÈNE]       [ENTRÉE]      [PALMES]
+
+// ---------- la zone : le Temple englouti (Lac) — 11 salles ----------
 // 'w' : bassin peu profond (eau haute → eau, eau basse → sol) ; 'y' : grand bassin (eau haute → eau, eau basse → gouffre)
-const TEMPLE_ROOMS = { boss: 1, dive: 3, hub: 4, east: 5, arena: 6, entry: 7, palmes: 8 };
-function buildTemple() {
-  return buildDungeon({
-    cols: 3, rows: 3, seed: 67, rough: 0.2, moss: 120,
-    rooms: [[1, 2], [0, 2], [2, 2], [1, 1], [0, 1], [2, 1], [1, 0]],
-    links: [[0, 2, 'E'], [1, 2, 'E'], [1, 2, 'N'], [0, 1, 'E'], [1, 1, 'E'], [1, 1, 'N']],
-    exit: [1, 2],
-    decorate(room) {
-      const e = room(1, 2); e.rect(9, 3, 12, 4, 'w');                                     // entrée : bassin devant la porte nord
-      const p = room(2, 2); p.rect(5, 3, 20, 11, 'w'); p.rect(13, 7, 4, 3, '_'); p.rect(3, 7, 2, 2, '_'); // salle des palmes
-      const h = room(1, 1); h.rect(3, 2, 24, 2, '_'); h.rect(3, 13, 24, 2, '_'); h.rect(3, 4, 24, 9, 'y'); // grand bassin
-      const d = room(0, 1); d.rect(3, 3, 23, 11, 'y'); d.rect(26, 6, 1, 4, '_');            // salle de plongée
-      const s = room(2, 1); s.rect(6, 3, 20, 11, 'w'); s.rect(3, 6, 3, 4, '_');           // bassin est
-      const a = room(0, 2); a.rect(3, 3, 3, 3, '~'); a.rect(24, 11, 3, 3, '~');            // arène : deux mares
-      const b = room(1, 0); b.rect(8, 5, 14, 8, '~');                                      // bassin du boss
-      for (const [x, y] of [[4, 4], [25, 4], [4, 12], [25, 12]]) b.set(x, y, 'k');
-    },
-  });
+//            .          .        [BOSS]          .
+//            .     [GALERIE]   [GRANDE CLÉ]   [CASCADE]
+//            .     [PLONGÉE]   [GRAND BASSIN] [BASSIN EST]
+//       [FONTAINE]  [ARÈNE]    [ENTRÉE]      [PALMES]
+class HealSpring { // source de soin : on boit, toute la vie revient
+  constructor(x, y) { this.x = x; this.y = y; this.w = 26; this.h = 10; this.solid = true; this.t = 0; this.light = { r: 70, c: 'rgba(160,240,255,' }; }
+  canInteract() { return true; }
+  interact(G) { G.player.hp = SAVE.maxHp; SFX.drink(); G.parts.burst(this.x, this.y - 14, 20, { c: ['#cfe0ff', '#fff', '#8ff3ea'], life: 0.8, r: 2, up: 40 }); G.say([{ text: 'Tu bois l\'eau fraîche de la source. Toute ta vie revient !' }]); }
+  update(dt, G) { this.t += dt; if (Math.random() < dt * 6) G.parts.add({ x: this.x + rand(-10, 10), y: this.y - 10, vy: -20, life: 0.8, c: '#cfe0ff', r: 1 }); }
+  draw() { ell(this.x, this.y, 16, 5, 'rgba(0,0,0,.35)'); hi(this.x, this.y, false, () => { D(-26, -16, 52, 16, '#4e8a90'); D(-26, -16, 52, 3, '#7ab8be'); D(-22, -14, 44, 10, '#2a8ad0'); for (let i = 0; i < 4; i++) D(-18 + ((i * 11 + Math.floor(this.t * 8)) % 36), -12 + (i % 2) * 3, 5, 1, '#cfe0ff'); D(-4, -40, 8, 26, '#4e8a90'); D(-8, -44, 16, 6, '#7ab8be'); }); }
 }
 function buildTempleArea() {
-  const A = new Area('temple', buildTemple(), 'temple'), R = TEMPLE_ROOMS;
-  A.rooms = { cols: 3, rows: 3, list: [R.entry, R.arena, R.palmes, R.hub, R.dive, R.east, R.boss] };
-  A.map = { title: 'Le Temple englouti', links: [[R.entry, R.arena], [R.entry, R.palmes], [R.entry, R.hub], [R.hub, R.dive], [R.hub, R.east], [R.hub, R.boss]], boss: R.boss, bossFlag: 'boss4' };
-  // bassins à niveau variable
-  A.basins = [];
-  for (let y = 0; y < A.rows; y++) for (let x = 0; x < A.cols; x++) { const c = A.g[y][x]; if (c === 'w' || c === 'y') A.basins.push([x, y, c]); }
-  A.syncTiles = function () {
-    const low = !!SAVE.waterLow; let changed = false;
-    for (const [x, y, c] of this.basins) { const want = low ? (c === 'w' ? '_' : 'v') : '~'; if (this.g[y][x] !== want) { this.g[y][x] = want; changed = true; } }
-    if (changed) this.rerender();
-  };
-  A.syncTiles();
-  const rxy = i => [i % 3, Math.floor(i / 3)];
-  const at = (room, tx, ty) => { const [rx, ry] = rxy(room); return T(rx, ry, tx, ty); };
-  const pos = (room, x, y) => { const [rx, ry] = rxy(room); return { x: rx * ROOM_W + x, y: ry * ROOM_H + y }; };
-  const mk = (C, room, tx, ty, ...args) => { const p = at(room, tx, ty); return new C(p.x, p.y, ...args); };
-  const pot = (room, tx, ty) => Object.assign(mk(Pot, room, tx, ty), { loot: 'pot' });
-  const bpool = { cx: pos(R.boss, 15 * TS, 9 * TS).x, cy: pos(R.boss, 15 * TS, 9 * TS).y, rx: 7 * TS - 8, ry: 4 * TS - 6 };
-  A.arenas = {
-    [R.arena]: { flag: 'arenaT' },
-    [R.boss]: {
-      flag: 'boss4',
-      onStart(G) { const b = G.area.ents.find(e => e.isBoss); if (b) b.wake(G); G.banner = { text: 'La Reine des remous', t: 2.2 }; },
-      onClear(G) { const p = pos(R.boss, 240, 236); const h = Object.assign(new HeartContainer(p.x, p.y), { flag: 'heart5' }); h.room = R.boss; G.area.ents.push(h); },
+  return makeDungeon({
+    id: 'temple', zone: 'lac', name: 'Le Temple englouti', theme: 'temple', seed: 67, rough: 0.2, moss: 140, dark: 0.32,
+    bossFlag: 'boss4', heartFlag: 'heart5', heartY: 236,
+    rooms: { entry: [2, 3], arena: [1, 3], fountain: [0, 3], palmes: [3, 3], hub: [2, 2], dive: [1, 2], east: [3, 2], bigkey: [2, 1], gallery: [1, 1], cascade: [3, 1], boss: [2, 0] },
+    entry: 'entry', boss: 'boss',
+    links: [['entry', 'arena', { arena: true, at: 'b' }], ['arena', 'fountain'], ['entry', 'palmes', { key: 'templeDoor1' }], ['entry', 'hub'], ['hub', 'dive'], ['hub', 'east'], ['hub', 'bigkey', { key: 'templeDoor2' }], ['bigkey', 'gallery'], ['bigkey', 'cascade'], ['bigkey', 'boss', { big: true }]],
+    tiles(room) {
+      room('entry').rect(9, 3, 12, 4, 'w');
+      const p = room('palmes'); p.rect(5, 3, 20, 11, 'w'); p.rect(13, 7, 4, 3, '_');
+      const h = room('hub'); h.rect(3, 2, 24, 2, '_'); h.rect(3, 13, 24, 2, '_'); h.rect(3, 4, 24, 9, 'y');
+      const d = room('dive'); d.rect(3, 3, 23, 11, 'y'); d.rect(26, 6, 1, 4, '_');
+      const s = room('east'); s.rect(6, 3, 20, 11, 'w'); s.rect(3, 6, 3, 4, '_');
+      const b = room('bigkey'); b.rect(5, 4, 20, 7, 'w'); b.rect(13, 6, 4, 3, '_');
+      const a = room('arena'); a.rect(3, 3, 3, 3, '~'); a.rect(24, 11, 3, 3, '~');
+      const g = room('gallery'); g.rect(3, 5, 24, 2, '~'); g.rect(3, 10, 24, 2, '~');
+      const c = room('cascade'); c.rect(20, 3, 7, 11, '~');
+      const f = room('fountain'); f.rect(3, 3, 4, 3, '~'); f.rect(23, 3, 4, 3, '~');
+      const bo = room('boss'); bo.rect(8, 5, 14, 8, '~'); for (const [x, y] of [[4, 4], [25, 4], [4, 12], [25, 12]]) bo.set(x, y, 'k');
     },
-  };
-  A.roomDark = room => room === R.boss && SAVE.boss4 ? 0.12 : null;
-  A.makeRoom = function (room) {
-    const L = [];
-    if (room === R.entry) L.push(pot(room, 4, 13), pot(room, 25, 13), mk(Crab, room, 6, 10), mk(Crab, room, 23, 10), mk(Eel, room, 12, 4), mk(Eel, room, 18, 5));
-    if (room === R.arena) { L.push(pot(room, 25, 3), pot(room, 4, 13)); if (!SAVE.arenaT) L.push(mk(Crab, room, 8, 6), mk(Crab, room, 21, 6), mk(Crab, room, 14, 11), mk(Eel, room, 4, 4), mk(Eel, room, 25, 12)); }
-    if (room === R.palmes) L.push(mk(Eel, room, 8, 5), mk(Eel, room, 21, 11), mk(Crab, room, 4, 12), pot(room, 26, 13));
-    if (room === R.hub) L.push(mk(Eel, room, 8, 7), mk(Eel, room, 21, 9), mk(Eel, room, 14, 11), pot(room, 4, 13), pot(room, 25, 13));
-    if (room === R.dive) L.push(mk(Eel, room, 8, 5), mk(Eel, room, 16, 11), mk(Eel, room, 20, 4));
-    if (room === R.east) L.push(mk(Eel, room, 12, 6), mk(Eel, room, 20, 10), mk(Crab, room, 4, 12));
-    if (room === R.boss) { if (!SAVE.boss4) L.push(new WhirlQueen(bpool.cx, bpool.cy, R.boss, bpool)); L.push(pot(room, 3, 13), pot(room, 26, 13)); }
-    return L;
-  };
-  A.spawn = function () {
-    this.syncTiles();
-    this.ents = [];
-    const door = (room, side) => side === 'N' ? pos(room, 240, 32) : side === 'S' ? pos(room, 240, 272) : side === 'E' ? pos(room, 464, 144) : pos(room, 16, 144);
-    const arenaShut = room => () => G.area.arenaOn === room;
-    const dN = door(R.entry, 'N'), dA = door(R.arena, 'E'), dB = door(R.hub, 'N'), dS = door(R.boss, 'S');
-    const ac = pos(R.arena, 240, 150), pc = pos(R.palmes, 240, 150), cg = pos(R.boss, 240, 66);
-    placeFixed(this, [
-      [R.entry, new KeyDoor(dN.x, dN.y, 'templeDoor1')],
-      [R.entry, mk(Valve, R.entry, 5, 9)],
-      [R.entry, mk(Sign, R.entry, 24, 9, [{ text: '« Temple englouti. Une vanne règle toutes les eaux du temple. »' }])],
-      [R.arena, new Shutter(dA.x, dA.y, 'h', arenaShut(R.arena))],
-      [R.arena, new Chest(ac.x, ac.y, { flag: 'templeKeyChest', reveal: 'arenaT', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ce temple.' }] })],
-      [R.palmes, new Chest(pc.x, pc.y, { flag: 'palmesChest', give: 'palmes', big: true, msg: [{ text: 'Tu as trouvé les palmes et le tuba !' }, { text: 'Tu peux nager en eau profonde. Dans l\'eau, A ou B : plonger. On esquive tout et on ramasse ce qui brille au fond.' }] })],
-      [R.hub, mk(Valve, R.hub, 5, 13)],
-      [R.hub, new KeyDoor(dB.x, dB.y, 'templeDoor2')],
-      [R.hub, mk(Sign, R.hub, 24, 13, [{ text: '« Grand bassin. Eau basse : gouffre. Eau haute : on nage. »' }])],
-      [R.dive, new DiveSpot(pos(R.dive, 120, 200).x, pos(R.dive, 120, 200).y, 'templeDiveKey', 'key', [{ text: 'Au fond de l\'eau, une petite clé !' }])],
-      [R.dive, new DiveSpot(pos(R.dive, 300, 90).x, pos(R.dive, 300, 90).y, 'templeDiveCoins', 'money:40', [{ text: 'Une bourse engloutie : 40 écus !' }])],
-      [R.east, mk(Valve, R.east, 4, 6)],
-      [R.east, mk(Chest, R.east, 16, 9, { flag: 'templeHeart', give: 'quart_coeur', big: true, reveal: 'waterLow', msg: [{ text: 'Un cœur de cristal, resté au fond du bassin ! Ta vie maximale augmente d\'un cœur.' }] })],
-      [R.boss, new Shutter(dS.x, dS.y, 'v', arenaShut(R.boss))],
-      [R.boss, new Cage(cg.x, cg.y, { n: 4, boss: 'boss4', drawCaptive: (x, y, t) => drawHero(Heroes.captive(2), x, y, 'down', false, t) })],
-      ...[[4, 3], [25, 3]].map(([x, y]) => [R.boss, mk(Brazier, R.boss, x, y)]),
-      ...[[R.entry, 3, 3], [R.entry, 26, 3], [R.hub, 3, 2], [R.hub, 26, 2], [R.palmes, 3, 3], [R.palmes, 26, 3], [R.arena, 14, 3], [R.dive, 26, 4], [R.east, 3, 4]].map(([r, x, y]) => [r, mk(Brazier, r, x, y)]),
-    ]);
-    if (SAVE.boss4 && !SAVE.heart5) { const p = pos(R.boss, 240, 236); placeFixed(this, [[R.boss, Object.assign(new HeartContainer(p.x, p.y), { flag: 'heart5' })]]); }
-    for (const r of this.rooms.list) spawnRoom(this, r);
-  };
-  const st = T(1, 2, 14, 12);
-  A.start = { x: st.x + 8, y: st.y, dir: 'up' };
-  A.exits = { E: G => G.enter('lac', G.areas.lac.fromTemple) };
-  A.name = 'Le Temple englouti';
-  A.dark = 0.32;
-  return A;
+    after(A, h) {
+      A.basins = [];
+      for (let y = 0; y < A.rows; y++) for (let x = 0; x < A.cols; x++) { const c = A.g[y][x]; if (c === 'w' || c === 'y') A.basins.push([x, y, c]); }
+      A.syncTiles = function () {
+        const low = !!SAVE.waterLow; let changed = false;
+        for (const [x, y, c] of this.basins) { const want = low ? (c === 'w' ? '_' : 'v') : '~'; if (this.g[y][x] !== want) { this.g[y][x] = want; changed = true; } }
+        if (changed) this.rerender();
+      };
+      A.syncTiles();
+    },
+    arenas: { arena: arenaStd('arenaT'), boss: bossArena('boss4', 'La Reine des remous') },
+    make(n, L, h) {
+      const { mk } = h, pot = (x, y) => h.pot(n, x, y);
+      if (n === 'entry') L.push(pot(4, 13), pot(25, 13), mk(Crab, n, 6, 10), mk(Crab, n, 23, 10), mk(Eel, n, 12, 4), mk(Eel, n, 18, 5));
+      if (n === 'arena') { L.push(pot(25, 3), pot(4, 13)); if (!SAVE.arenaT) L.push(mk(Crab, n, 8, 6), mk(Crab, n, 21, 6), mk(Crab, n, 14, 11), mk(Eel, n, 4, 4), mk(Eel, n, 25, 12)); }
+      if (n === 'fountain') L.push(mk(Eel, n, 4, 4), mk(Eel, n, 25, 4), pot(4, 13), pot(25, 13));
+      if (n === 'palmes') L.push(mk(Eel, n, 8, 5), mk(Eel, n, 21, 11), mk(Crab, n, 4, 12), pot(26, 13));
+      if (n === 'hub') L.push(mk(Eel, n, 8, 7), mk(Eel, n, 21, 9), mk(Eel, n, 14, 11), pot(4, 13), pot(25, 13));
+      if (n === 'dive') L.push(mk(Eel, n, 8, 5), mk(Eel, n, 16, 11), mk(Eel, n, 20, 4));
+      if (n === 'east') L.push(mk(Eel, n, 12, 6), mk(Eel, n, 20, 10), mk(Crab, n, 4, 12));
+      if (n === 'bigkey') L.push(mk(Eel, n, 7, 5), mk(Eel, n, 22, 9), mk(Crab, n, 4, 12), mk(Crab, n, 25, 12));
+      if (n === 'gallery') L.push(mk(Eel, n, 6, 6), mk(Eel, n, 14, 11), mk(Eel, n, 22, 6), mk(Crab, n, 14, 8), pot(3, 13), pot(26, 13));
+      if (n === 'cascade') L.push(mk(Crab, n, 8, 6), mk(Crab, n, 10, 11), mk(Eel, n, 23, 6), mk(Eel, n, 23, 11), pot(3, 3), pot(3, 13));
+      if (n === 'boss') { const bp = h.pos(n, 15 * TS, 9 * TS), pool = { cx: bp.x, cy: bp.y, rx: 7 * TS - 8, ry: 4 * TS - 6 }; if (!SAVE.boss4) L.push(new WhirlQueen(pool.cx, pool.cy, h.R.boss, pool)); L.push(pot(3, 13), pot(26, 13)); }
+    },
+    fixed(h) {
+      const { mk, pos } = h, br = (n, pts) => pts.map(([x, y]) => [n, mk(Brazier, n, x, y)]);
+      const ac = pos('arena', 240, 150), pc = pos('palmes', 240, 150), cg = pos('boss', 240, 66), bk = pos('bigkey', 240, 140);
+      return [
+        ['entry', mk(Valve, 'entry', 5, 9)],
+        ['entry', mk(Sign, 'entry', 24, 9, [{ text: '« Temple englouti. Chaque vanne règle toutes les eaux du temple. »' }])],
+        ['arena', new Chest(ac.x, ac.y, { flag: 'templeKeyChest', reveal: 'arenaT', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ce temple.' }] })],
+        ['fountain', mk(HealSpring, 'fountain', 14, 8)],
+        ['palmes', new Chest(pc.x, pc.y, { flag: 'palmesChest', give: 'palmes', big: true, msg: [{ text: 'Tu as trouvé les palmes et le tuba !' }, { text: 'Tu peux nager en eau profonde. Dans l\'eau, A ou B : plonger. On esquive tout et on ramasse ce qui brille au fond.' }] })],
+        ['hub', mk(Valve, 'hub', 5, 13)],
+        ['hub', mk(Sign, 'hub', 24, 13, [{ text: '« Grand bassin. Eau basse : gouffre. Eau haute : on nage. »' }])],
+        ['dive', new DiveSpot(pos('dive', 120, 200).x, pos('dive', 120, 200).y, 'templeDiveKey', 'key', [{ text: 'Au fond de l\'eau, une petite clé !' }])],
+        ['dive', new DiveSpot(pos('dive', 300, 90).x, pos('dive', 300, 90).y, 'templeDiveCoins', 'money:40', [{ text: 'Une bourse engloutie : 40 écus !' }])],
+        ['east', mk(Valve, 'east', 4, 6)],
+        ['east', mk(Chest, 'east', 16, 9, { flag: 'templeHeart', give: 'quart_coeur', big: true, reveal: 'waterLow', msg: [{ text: 'Un cœur de cristal, resté au fond du bassin ! Ta vie maximale augmente d\'un cœur.' }] })],
+        ['bigkey', mk(Valve, 'bigkey', 4, 13)],
+        ['bigkey', new Chest(bk.x, bk.y, { flag: 'templeBigKey', give: 'bigkey:temple', big: true, msg: [{ text: 'La grande clé du temple ! Elle ouvre le bassin de la Reine.' }] })],
+        ['bigkey', mk(Sign, 'bigkey', 24, 13, [{ text: '« Le trésor du temple dort sur l\'îlot. »' }])],
+        ['gallery', new DiveSpot(pos('gallery', 360, 104).x, pos('gallery', 360, 104).y, 'templeGallery', 'money:50', [{ text: 'Un coffret englouti : 50 écus !' }])],
+        ['boss', new Cage(cg.x, cg.y, { n: 4, boss: 'boss4', drawCaptive: (x, y, t) => drawHero(Heroes.captive(2), x, y, 'down', false, t) })],
+        ...br('boss', [[4, 3], [25, 3]]), ...br('entry', [[3, 3], [26, 3]]), ...br('hub', [[3, 2], [26, 2]]), ...br('palmes', [[3, 3], [26, 3]]), ...br('arena', [[14, 3]]), ...br('dive', [[26, 4]]),
+        ...br('east', [[3, 4]]), ...br('bigkey', [[3, 3], [26, 3]]), ...br('gallery', [[3, 3], [26, 3]]), ...br('cascade', [[3, 8]]), ...br('fountain', [[10, 3], [19, 3]]),
+      ];
+    },
+  });
 }

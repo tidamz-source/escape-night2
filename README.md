@@ -26,6 +26,15 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 5, la Tour des artificiers** (île du lac, à la nage) : **pétards**, murs fissurés, mèche, trois torches, boss le Chevalier de fer, Goyave (il suit le héros et déterre des trésors).
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
+## Version 7 : un monde plus grand et plus vivant
+- **Sept régions** de 64 × 48 tuiles, une direction artistique chacune, un donjon au maximum par région : Bourg-Luciole (centre), les Collines (nord, Grotte des lucioles), la Forêt (ouest, Bois des murmures), la Montagne (nord-est, Mines des gnomes), le Lac (sud, Temple englouti), la Côte (est du lac, Tour des artificiers), les Terres de Minuit (ouest du lac, Château de Minuit). On arrive toujours du bon côté de l'écran suivant.
+- **Des maisons où l'on entre** : les habitants vivent à l'intérieur, les boutiques posent leurs articles au sol avec leur prix (achat par Oui / Non). Tout le monde se moque gentiment des habits du héros, sauf le sage.
+- **Donjons refaits** (10 à 12 salles chacun, plans tous différents, entrées par le bas) : petites clés propres à chaque donjon et **grande clé** pour la salle du boss.
+- **Sept quêtes secondaires**, une par région ; chacune rapporte un objet de notre monde (Rubik's Cube, smartphone, console…). Les sept réunis débloquent une **fin bonus**.
+- **Le prologue** commence dans un bungalow du camping, à côté des lits vides. Les lucioles-relais (voyage rapide) arrivent dès le premier donjon.
+- **Cinématiques** : chaque fragment descend sur la tour-horloge du village (aiguilles, lanternes, lumière) ; les cinq sceaux ouvrent la grande porte du château sous les yeux du joueur.
+- Menus : grille d'objets, onglet Souvenirs, carte du monde ; le stick et les boutons restent visibles. Corrections : invincibilité, grille qui enfermait le joueur, épée de fer à la forge ; Goyave ne suit plus le héros.
+
 ## Contrôles
 | | Clavier | Manette | Tactile |
 |---|---|---|---|
@@ -47,11 +56,15 @@ Modules indépendants qui communiquent par un bus d'événements (`Bus.emit` / `
 - `src/world.js` : cartes, générateur de donjons (`buildDungeon`), thèmes de pierre et rendu des tuiles
 - `src/entities.js` : collisions, héros, ennemis
 - `src/objects.js` : ramassables, coffres, portes, volets, énigmes, boss
-- `src/actors.js` : villageois, maisons, fontaine, faille, Lumi, cage
+- `src/actors.js` : villageois, faille, Lumi, cage
+- `src/interiors.js` : maisons, meubles, articles de boutique, construction des intérieurs ; `src/houses.js` : l'intérieur de chaque maison
+- `src/overworld.js` : les sept régions, décors, entrées de donjon, tour-horloge
+- `src/dungeon.js` : construction générique d'un donjon (salles, portes, petites et grande clés) ; `src/cave.js` : donjon 1
+- `src/quests.js` : quêtes secondaires et souvenirs du monde réel
 - `src/bois.js` : donjon 2 (frisbee, ennemis du bois, Grand-Duc, interrupteurs, cible du pont-levis)
-- `src/tools.js` : grappin, pétards, nage, poteaux, murs fissurés, mèches, torches, vannes, horloges, wagonnets, relais, sceaux, Goyave
+- `src/tools.js` : grappin, pétards, nage, poteaux, murs fissurés, mèches, torches, vannes, horloges, wagonnets, relais, sceaux
 - `src/mines.js`, `src/lac.js`, `src/temple.js`, `src/tower.js`, `src/castle.js` : les zones 3 à 6 (ennemis, boss, salles)
-- `src/areas.js` : les zones (camping, royaume, grotte, bois)
+- `src/areas.js` : le camping et les aides communes
 - `src/ui.js` : HUD, dialogues, menus, boutique, écrans
 - `src/game.js` : états du jeu, transitions, scènes, rendu du monde
 - `data/heroes.json`, `items.json`, `shops.json`, `dialogues.json` : héros, objets, catalogues, répliques et objectifs
