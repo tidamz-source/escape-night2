@@ -30,14 +30,19 @@ function drawSealIcon(x, y, s = 1, c = '#c3b3ff') {
 }
 
 // nageur vu de dessus (sprites de la piscine d'Escape Night)
-function drawSwimmer(id, x, y, dir, t, diving) {
+function drawSwimmer(id, x, y, dir, t, diving, moving) {
   if (diving) { ctx.globalAlpha = 0.35; ell(x, y - 2, 8, 3, '#0a1a4a'); ctx.globalAlpha = 1; if (Math.floor(t * 8) % 2) R(half(x + 2), half(y - 6), 1.5, 1.5, '#cfe0ff'); return; }
-  const im = IMG['swim_' + id + (Math.floor(t * 4) % 2)]; if (!im) { ell(x, y - 2, 6, 3, '#eee'); return; }
-  ctx.globalAlpha = 0.4; ell(x, y, 10, 3, '#cfe0ff'); ctx.globalAlpha = 1;
-  const w = im.width * 0.7, h = im.height * 0.7;
-  ctx.save(); ctx.translate(half(x), half(y - 3));
-  if (dir === 'left') ctx.scale(-1, 1); else if (dir === 'up') ctx.rotate(-Math.PI / 2); else if (dir === 'down') ctx.rotate(Math.PI / 2);
-  ctx.drawImage(im, -w / 2, -h / 2, w, h); ctx.restore();
+  // le héros normal, enfoncé dans l'eau jusqu'à la poitrine, qui monte et descend doucement
+  const wl = y - 3, bob = Math.sin(G.t * (moving ? 7 : 3)) * (moving ? 1.2 : 0.8), sink = 15 + bob;
+  ctx.globalAlpha = 0.35; ell(x, wl + 1, 10, 3, '#0a2050'); ctx.globalAlpha = 1;          // silhouette sous l'eau
+  ctx.save(); ctx.beginPath(); ctx.rect(x - 30, wl - 70, 60, 70); ctx.clip();
+  drawHero(id, x, y + sink, dir, false, t); ctx.restore();
+  // onde : un anneau d'écume autour du corps et des cercles qui s'élargissent
+  ctx.save(); ctx.lineWidth = 0.8;
+  ctx.strokeStyle = 'rgba(225,240,255,.7)'; ctx.beginPath(); ctx.ellipse(x, wl, 8.5, 2.2, 0, 0, Math.PI * 2); ctx.stroke();
+  for (let i = 0; i < 2; i++) { const k = (G.t * (moving ? 1.4 : 0.7) + i * 0.5) % 1; ctx.strokeStyle = `rgba(210,230,255,${(0.45 * (1 - k)).toFixed(3)})`; ctx.beginPath(); ctx.ellipse(x, wl + 0.5, 9 + k * 10, 2.5 + k * 3, 0, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.restore();
+  R(half(x - 9), half(wl - 0.5), 2, 1, '#eaf4ff'); R(half(x + 7), half(wl - 0.5), 2, 1, '#eaf4ff');
 }
 
 // ---------- le grappin ----------

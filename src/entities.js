@@ -84,7 +84,7 @@ class Player {
   // déplacement à la nage : plus lent, pas d'attaque ni d'outil
   swimMove(dt, G) {
     const dx = Input.dx, dy = Input.dy, input = Math.hypot(dx, dy) > 0.2, SP = 52 * this.perk.speed;
-    if (input) { const want = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'); this.dir = want; }
+    if (input) { const want = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'); this.dir = want; this.look = Math.abs(dx) > 0.38 && Math.abs(dy) > 0.38 ? (dy > 0 ? 'down' : 'up') + '_' + (dx > 0 ? 'right' : 'left') : want; }
     if (G.area.current) { const c = G.area.current(this); if (c) { this.vx += c.x * dt * 3; this.vy += c.y * dt * 3; } }
     this.glide(dt, G, input ? dx * SP : 0, input ? dy * SP : 0, input ? 8 : 4, input ? { x: dx, y: dy } : null);
     this.moving = input; this.anim += dt * (input ? 1 : 0.4);
@@ -247,7 +247,7 @@ class Player {
   }
   draw() {
     if (this.inv > 0 && Math.floor(this.inv * 20) % 2) return;
-    if (this.swimming && !this.pull) { drawSwimmer(SAVE.hero, this.x, this.y, this.dir, this.anim, this.dive > 0); return; }
+    if (this.swimming && !this.pull) { const lk = this.look && this.look.split('_').includes(this.dir) && heroHasDir(SAVE.hero, this.look) ? this.look : this.dir; drawSwimmer(SAVE.hero, this.x, this.y, lk, this.anim, this.dive > 0, this.moving); return; }
     if (this.riding) { drawHero(SAVE.hero, this.x, this.y - 6, 'down', false, G.t); return; }
     ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)');
     const attacking = this.atk > 0;
