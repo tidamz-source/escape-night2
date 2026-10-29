@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v7.1.1';
+const VERSION = 'v7.2.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -50,6 +50,8 @@ const FACES = ['sacha', 'cam', 'rox', 'papa', 'amandine', 'claudine'].flatMap(w 
 const NPC_SPRITES = ['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'];
 const SWIMMERS = ['sacha', 'cam', 'rox', 'papa'];
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
+// tilesets Wang par coins (32 × 32, 2 matières) : thème de zone → fichier dans assets/tiles
+const WANG_FILES = { royaume: 'royaume_paves' };
 function loadImage(key, src) {
   return new Promise(r => { const i = new Image(); i.onload = () => { IMG[key] = i; r(); }; i.onerror = () => { console.warn('image manquante', src); r(); }; i.src = src; });
 }
@@ -62,6 +64,7 @@ function loadAssets() {
   for (const f of FACES) jobs.push(loadImage('face_' + f, `assets/faces/${f}.png?v=${VERSION}`));
   for (const k of NPC_SPRITES) jobs.push(loadImage('npc_' + k, `assets/npc/${k}.png?v=${VERSION}`));
   for (const k of SWIMMERS) for (const i of [0, 1]) jobs.push(loadImage('swim_' + k + i, `assets/swim/${k}${i}.png?v=${VERSION}`));
+  for (const [k, f] of Object.entries(WANG_FILES)) jobs.push(loadImage('wang_' + k, `assets/tiles/${f}.png?v=${VERSION}`));
   jobs.push(loadData());
   return Promise.all(jobs);
 }

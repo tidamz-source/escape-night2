@@ -110,6 +110,20 @@ const OVER = {
   terres:   { g: '#3a2a48', gs: ['#42304e', '#321f40', '#2a1a38', '#4a3658'], gd: ['#c3b3ff', '#8a6aaa'], blade: '#5a4470', path: '#4a3a48', ps: ['#56465a', '#3a2e3a'], pl: '#6a5a70', wall: '#0e0814', foot: '#140c1c', trunk: ['#2a1e2a', '#3a2a3a', '#1a121a'], blob: ['#1a1024', '#24163a', '#30204a', '#3e2c5c'], water: ['#2a1a4a', '#3a2a6a', '#2a2050'], sand: ['#5a4a5a', '#6a5a6a', '#4a3a4a'] },
 };
 OVER.royaume = OVER.camp;
+// repère les 16 tuiles d'un tileset Wang en lisant la matière de leurs 4 coins (G : la matière dominante du fond, S : l'autre)
+const WANG_CACHE = new Map();
+function WANG_INDEX(img) {
+  if (WANG_CACHE.has(img)) return WANG_CACHE.get(img);
+  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+  const d = x.getImageData(0, 0, img.width, img.height).data, px = (X, Y) => { const i = (Y * img.width + X) * 4; return [d[i], d[i + 1], d[i + 2], d[i + 3]]; };
+  const mat = (X, Y) => { let gr = 0, n = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const [r, g, b, a] = px(X + dx, Y + dy); if (a < 10) return null; n++; if (g > r + 30) gr++; } return gr > n / 2 ? 'G' : 'S'; };
+  const out = {};
+  for (let ty = 0; ty < Math.floor(img.height / 32); ty++) for (let tx = 0; tx < Math.floor(img.width / 32); tx++) {
+    const X = tx * 32, Y = ty * 32, cs = [mat(X + 4, Y + 4), mat(X + 27, Y + 4), mat(X + 4, Y + 27), mat(X + 27, Y + 27)];
+    if (cs.includes(null)) continue; (out[cs.join('')] = out[cs.join('')] || []).push([X, Y]);
+  }
+  WANG_CACHE.set(img, out); return out;
+}
 function renderLayer(g, theme) {
   const SP = STONE[theme] || STONE.cave, O = OVER[theme] || OVER.camp;
   const h = g.length, w = g[0].length, c = document.createElement('canvas');
@@ -152,6 +166,24 @@ function renderLayer(g, theme) {
       }
     } else floorForest(px, py, t === 'm');
   });
+  // passe 1b : tileset Wang (coins) en double grille — chaque tuile se pose sur un sommet et lit ses 4 cases voisines
+  const WG = IMG['wang_' + theme];
+  if (WG) {
+    const ground = t => t === '.' || t === ',' || t === 'c' || isWall(t) || t === 'F' || t === 'P';
+    const mat = (x, y) => { const t = at(Math.max(0, Math.min(w - 1, x)), Math.max(0, Math.min(h - 1, y))); return t === 'c' ? 'S' : 'G'; };
+    const TILES = WANG_INDEX(WG);
+    for (let vy = 0; vy <= h; vy++) for (let vx = 0; vx <= w; vx++) {
+      const key = mat(vx - 1, vy - 1) + mat(vx, vy - 1) + mat(vx - 1, vy) + mat(vx, vy), list = TILES[key]; if (!list) continue;
+      seedAt(vx, vy, 9); const [sx, sy] = list[Math.floor(r() * list.length)], hq = TP / 2;
+      // chaque quart de la tuile n'est posé que sur une case de sol (l'eau, le sable, les chemins gardent leur rendu)
+      for (const [qx, qy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+        const cx = vx - 1 + qx, cy = vy - 1 + qy; if (cx < 0 || cy < 0 || cx >= w || cy >= h || !ground(g[cy][cx])) continue;
+        x2.drawImage(WG, sx + qx * hq, sy + qy * hq, hq, hq, vx * TP - hq + qx * hq, vy * TP - hq + qy * hq, hq, hq);
+      }
+    }
+    // les fleurs repassent par-dessus
+    each(10, (t, tx, ty, px, py) => { if (t !== ',') return; for (let i = 0; i < 3; i++) { const fx = px + 4 + Math.floor(r() * 22), fy = py + 4 + Math.floor(r() * 22), col = pick2(['#ff8ab0', '#ffe27a', '#c3b3ff', '#f4f7ff']); F(fx, fy, 2, 2, col); F(fx - 1, fy + 1, 1, 1, col); F(fx + 2, fy + 1, 1, 1, col); F(fx, fy + 3, 1, 2, '#2a5a40'); } });
+  }
   function floorGrass(px, py, t) {
     F(px, py, TP, TP, O.g);
     for (let i = 0; i < 26; i++) F(px + Math.floor(r() * TP), py + Math.floor(r() * TP), 1 + (r() < 0.3), 1, pick2(O.gs));
