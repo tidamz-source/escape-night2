@@ -217,7 +217,7 @@ function buildMinesArea() {
         ['hub', mk(RailLever, 'hub', 25, 10, 'switchB', ['vers l\'îlot de l\'est', 'vers le nord'])],
         ['hub', mk(Sign, 'hub', 7, 14, [{ text: '« Le levier du sud choisit ouest ou est. Celui de l\'îlot de l\'est choisit l\'îlot ou le nord. »' }])],
         ['grappin', new Chest(gc.x, gc.y, { flag: 'grappinChest', give: 'grappin', big: true, msg: [{ text: 'Tu as trouvé le grappin !' }, { text: 'Bouton B : la chaîne file droit devant. Accroche-toi aux poteaux pour survoler le vide.' }, { text: 'Il attire aussi les petits ennemis, les objets… et les caisses.' }] })],
-        ['grappin', mk(Post, 'grappin', 23, 4)],
+        ['grappin', mk(Post, 'grappin', 23, 4)], ['grappin', mk(Post, 'grappin', 25, 10)], // le second poteau sert au retour
         ['grappin', mk(Chest, 'grappin', 25, 3, { flag: 'grappinCoins', give: 'money:30', msg: [{ text: 'Tu as trouvé 30 écus !' }] })],
         ['spider', mk(Chest, 'spider', 14, 8, { flag: 'minesHeart', give: 'quart_coeur', big: true, msg: [{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }] })],
         ['posts', mk(Post, 'posts', 5, 10)], ['posts', mk(Post, 'posts', 12, 8)], ['posts', mk(Post, 'posts', 15, 4)], ['posts', mk(Post, 'posts', 17, 3)], ['posts', mk(Post, 'posts', 20, 10)],
