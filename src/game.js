@@ -268,10 +268,6 @@ const G = {
     if (this.state !== 'play') return;
     // transitions entre zones
     const t = A.tileAt(P.x, P.y - 1);
-    if (A.id === 'royaume' && t === 'G') this.fadeTo(() => this.enter('cave', this.areas.cave.start));
-    if (A.id === 'cave' && t === 'E') this.fadeTo(() => this.enter('royaume', this.areas.royaume.fromCave));
-    if (A.id === 'royaume' && t === 'H') this.fadeTo(() => this.enter('bois', this.areas.bois.start));
-    if (A.id === 'bois' && t === 'E') this.fadeTo(() => this.enter('royaume', this.areas.royaume.fromBois));
     if (A.exits && A.exits[t] && !this.fade) { const go = A.exits[t]; this.fadeTo(() => go(this)); }
     if (this.fade) return;
     if (A.rooms) { const r = this.roomOf(P.x, P.y); if (r !== this.room) this.startSlide(r); }
