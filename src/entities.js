@@ -185,6 +185,9 @@ class Player {
       const want = Math.abs(dx) > Math.abs(dy) + 0.01 ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
       const cur = DV[this.dir], keep = (cur[0] && Math.sign(dx) === cur[0] && Math.abs(dx) > 0.3) || (cur[1] && Math.sign(dy) === cur[1] && Math.abs(dy) > 0.3);
       if (!keep) this.dir = want;
+      // vue en 8 directions (affichage seulement : l'épée et les interactions restent en 4 directions)
+      if (this.aim[0] && this.aim[1]) { this.look = (this.aim[1] > 0 ? 'down' : 'up') + '_' + (this.aim[0] > 0 ? 'right' : 'left'); this.diagT = 0.12; }
+      else if ((this.diagT -= dt) <= 0 || !(this.look || '').includes('_')) this.look = this.dir; // petit délai : relâcher deux touches n'est jamais simultané
     }
     const SPEED = 76 * this.perk.speed; // Rox : +10 %
     // accélération vive au démarrage, freinage plus doux à l'arrêt
@@ -253,7 +256,8 @@ class Player {
     if (attacking && this.dir === 'up') this.drawBranch(p);
     if ((this.shootT > 0 || this.hooking) && this.dir === 'up') this.drawSling();
     if (this.roll > 0) { const k = 1 - this.roll / 0.3; ctx.save(); ctx.translate(this.x, this.y - 8); ctx.rotate(Math.sign(this.rollV[0] || 1) * k * Math.PI * 2); ctx.translate(-this.x, -this.y + 8); }
-    drawHero(SAVE.hero, this.x + vx * lunge, this.y + vy * lunge, this.dir, (this.moving && !attacking) || this.roll > 0, this.moving ? this.anim : G.t);
+    const look = !attacking && this.look && this.look.split('_').includes(this.dir) && heroHasDir(SAVE.hero, this.look) ? this.look : this.dir;
+    drawHero(SAVE.hero, this.x + vx * lunge, this.y + vy * lunge, look, (this.moving && !attacking) || this.roll > 0, this.moving ? this.anim : G.t);
     if (this.roll > 0) ctx.restore();
     if (Inventory.has('bouclier') && !attacking && this.roll <= 0 && this.dir !== 'up') this.drawShield();
     if (attacking && this.dir !== 'up') this.drawBranch(p);

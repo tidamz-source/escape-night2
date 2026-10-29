@@ -16,6 +16,7 @@ function sheetFrame(sh, name, t, still) {
   for (const f of list) { if (ms < f.duration) return f.frame; ms -= f.duration; }
   return list[0].frame;
 }
+function heroHasDir(id, d) { const def = DATA.heroes && DATA.heroes[id], sh = def && SHEETS[def.sheet]; return sheetHas(sh, 'idle_' + d); }
 function drawHero(id, x, y, dir, moving, t, scale = 1, alpha = 1) {
   const def = DATA.heroes && DATA.heroes[id], sh = def && SHEETS[def.sheet], im = def && IMG['hero_' + def.sheet];
   if (!sh || !im) { R(x - 6, y - 24, 12, 24, '#eee'); return; }
