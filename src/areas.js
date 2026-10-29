@@ -5,6 +5,16 @@ const T = (rx, ry, tx, ty) => ({ x: rx * ROOM_W + tx * TS + 8, y: ry * ROOM_H + 
 
 // arbres, rochers, fleurs et buissons placés au hasard (graine fixe) sur l'herbe, hors zones réservées
 function scatter(A, seed, keep, n) {
+  // terrain des maisons : on dégage les rochers et la végétation autour et devant la porte
+  if (A.houses) {
+    let changed = false; keep = keep.slice();
+    for (const h of A.houses) {
+      const tx = Math.floor(h.x / TS), ty = Math.floor(h.y / TS), half = Math.ceil(h.o.w / 2) + 1;
+      for (let y = ty - h.o.d - 2; y <= ty + 4; y++) for (let x = tx - half; x <= tx + half; x++) if (A.g[y] && A.g[y][x] === '#') { A.g[y][x] = '.'; changed = true; }
+      keep.push({ x: h.x - (half + 1) * TS, y: h.y - (h.o.d + 3) * TS, w: (half * 2 + 2) * TS, h: (h.o.d + 8) * TS });
+    }
+    if (changed && A.rerender) A.rerender();
+  }
   const r = seeded(seed), pick2 = a => a[Math.floor(r() * a.length)];
   const okAt = (x, y, pad) => {
     for (let dy = -pad; dy <= pad; dy += 8) for (let dx = -pad; dx <= pad; dx += 8) { const t = A.tileAt(x + dx, y + dy); if (t !== '.' && t !== ',') return false; }
