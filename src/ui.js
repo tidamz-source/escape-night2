@@ -139,7 +139,7 @@ const UIMixin = {
       if (tap && performance.now() - tap.time < 250) { const g = this.gridGeom(C), i = Math.floor((tap.x - g.x0) / g.cw), j = Math.floor((tap.y - g.y0) / g.ch); if (i >= 0 && i < C && j >= 0) { const k = j * C + i; if (k < n) { if (k === this.psel) Input.held.a = true, Input.prev.a = false; this.psel = k; SFX.menu(); } } }
       if (this.ptab === 0 && Input.pressed('a')) {
         const e = this.pauseItems()[this.psel]; if (!e) return;
-        if (e.kind === 'tool') { Inventory.equip(e.id); SFX.menu(); }
+        if (e.kind === 'tool') { Inventory.equip(e.id); SFX.menu(); this.state = 'play'; return; }
         if (e.kind === 'bottle') { if (Inventory.drink(e.i, this.player)) SFX.drink(); else SFX.nope(); }
       }
     } else if (this.ptab === 3) {

@@ -157,7 +157,7 @@ class Wave { // anneau de remous : fait mal à qui nage sans plonger
 class HealSpring { // source de soin : on boit, toute la vie revient
   constructor(x, y) { this.x = x; this.y = y; this.w = 26; this.h = 10; this.solid = true; this.t = 0; this.light = { r: 70, c: 'rgba(160,240,255,' }; }
   canInteract() { return true; }
-  interact(G) { G.player.hp = SAVE.maxHp; SFX.drink(); G.parts.burst(this.x, this.y - 14, 20, { c: ['#cfe0ff', '#fff', '#8ff3ea'], life: 0.8, r: 2, up: 40 }); G.say([{ text: 'Tu bois l\'eau fraîche de la source. Toute ta vie revient !' }]); }
+  interact(G) { G.healFull(); SFX.drink(); G.parts.burst(this.x, this.y - 14, 20, { c: ['#cfe0ff', '#fff', '#8ff3ea'], life: 0.8, r: 2, up: 40 }); G.say([{ text: 'Tu bois l\'eau fraîche de la source. Toute ta vie revient !' }]); }
   update(dt, G) { this.t += dt; if (Math.random() < dt * 6) G.parts.add({ x: this.x + rand(-10, 10), y: this.y - 10, vy: -20, life: 0.8, c: '#cfe0ff', r: 1 }); }
   draw() { ell(this.x, this.y, 16, 5, 'rgba(0,0,0,.35)'); hi(this.x, this.y, false, () => { D(-26, -16, 52, 16, '#4e8a90'); D(-26, -16, 52, 3, '#7ab8be'); D(-22, -14, 44, 10, '#2a8ad0'); for (let i = 0; i < 4; i++) D(-18 + ((i * 11 + Math.floor(this.t * 8)) % 36), -12 + (i % 2) * 3, 5, 1, '#cfe0ff'); D(-4, -40, 8, 26, '#4e8a90'); D(-8, -44, 16, 6, '#7ab8be'); }); }
 }

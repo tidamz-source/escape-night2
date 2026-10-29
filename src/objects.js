@@ -65,7 +65,7 @@ class Scratches {
 // ---------- ramassables ----------
 // cœurs, pièces et cailloux : rebondissent puis clignotent avant de disparaître
 const PICKUPS = {
-  heart:  { draw: (x, y) => drawHeartShape(x, y - 5, 2, PAL.heart, '#c02848'), take: G => { G.player.hp = Math.min(SAVE.maxHp, G.player.hp + 2); SFX.pickup(); } },
+  heart:  { draw: (x, y) => drawHeartShape(x, y - 5, 2, PAL.heart, '#c02848'), take: G => { G.healBy(2); SFX.pickup(); } },
   coin1:  { draw: (x, y, t) => drawCoin(x, y - 4, '#c8a060', '#8a6a3a', t), take: () => { Wallet.add(1); SFX.coin(); } },
   coin5:  { draw: (x, y, t) => drawCoin(x, y - 4, '#d8dce8', '#8a90a8', t), take: () => { Wallet.add(5); SFX.coin(); } },
   coin20: { draw: (x, y, t) => drawCoin(x, y - 4, '#ffd23a', '#c08a10', t), take: () => { Wallet.add(20); SFX.coin(); } },
@@ -312,7 +312,7 @@ class FireflyHeart {
   get light() { return { r: this.taken ? 24 : 60, c: 'rgba(255,230,140,' }; }
   canInteract() { return !this.taken; }
   interact(G, P) {
-    SAVE.firefly = true; SAVE.maxHp += 2; P.hp = SAVE.maxHp; persist(); SFX.bigheart();
+    SAVE.firefly = true; SAVE.maxHp += 2; G.healFull(); persist(); SFX.bigheart();
     G.raise('heart');
     G.say([{ text: 'Un cœur de luciole ! Ta vie maximale augmente d\'un cœur.' }, { who: 'Sacha', text: 'Alors c\'était ça, la lumière qu\'on voyait depuis le camping…' }, { who: 'Sacha', text: 'Mais d\'autres lueurs brillent plus au nord. On dirait l\'entrée d\'une grotte !' }]);
   }
@@ -334,7 +334,7 @@ class HeartContainer {
     if (Math.random() < dt * 10) G.parts.add({ x: this.x + rand(-12, 12), y: this.y - rand(6, 34), vy: -14, life: 1.2, c: pick(['#ffe27a', '#fff', '#8ff3ea']), r: 1 });
     const P = G.player;
     if (rectHit({ x: this.x - 8, y: this.y - 14, w: 16, h: 16 }, P.body())) {
-      this.dead = true; SAVE[this.flag || 'heart2'] = true; SAVE.maxHp += 2; P.hp = SAVE.maxHp; persist(); SFX.bigheart(); G.raise('heart');
+      this.dead = true; SAVE[this.flag || 'heart2'] = true; SAVE.maxHp += 2; G.healFull(); persist(); SFX.bigheart(); G.raise('heart');
       G.say([{ text: 'Un grand cœur de luciole ! Ta vie maximale augmente d\'un cœur.' }]);
     }
   }

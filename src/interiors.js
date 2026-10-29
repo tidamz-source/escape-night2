@@ -123,7 +123,9 @@ class ShopItem {
   interact(G) {
     const it = Inventory.item(this.e.id), st = Shop.state(this.shop, this.e);
     const price = this.e.cost ? Object.entries(this.e.cost).map(([k, n]) => `${n} ${Inventory.item(k).name.toLowerCase()}`).join(', ') : `${this.e.price} écus`;
-    if (!st.ok) { SFX.nope(); G.say([{ text: `${it.name} (${price}). ${it.desc}` }, { text: st.why + '.' }]); return; }
+    const keeper = Shop.def(this.shop).keeper;
+    if (!st.ok) { SFX.nope(); G.say([{ text: `${it.name} (${price}). ${it.desc}` }, Object.assign({ text: st.why + '.' }, this.e.needs === 'petards' && !Inventory.has('petards') ? { who: keeper } : {})]); return; }
+    if (this.e.needs === 'petards' && !SAVE.petardsPro) { SAVE.petardsPro = true; persist(); G.say([{ who: keeper, text: 'Ok, je vois que t\'es un pro des feux d\'artifice. Je veux bien t\'en vendre.' }], () => this.interact(G)); return; }
     G.ask([{ text: `${it.name} : ${price}. ${it.desc}` }], ['L\'acheter', 'Non merci'], i => {
       if (i !== 0) return;
       const res = Shop.buy(this.shop, this.e);

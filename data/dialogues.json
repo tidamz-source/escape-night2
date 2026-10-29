@@ -555,7 +555,7 @@
   },
   {
    "who": "Mamie",
-   "text": "On nous a séparés en arrivant… Il est quelque part dans ce royaume, je le sens.",
+   "text": "On nous a séparées en arrivant… Elle est quelque part dans ce royaume, je le sens.",
    "face": "smile",
    "faceOf": "claudine"
   },
@@ -718,7 +718,7 @@
   },
   {
    "who": "{enfant2}",
-   "text": "Je rentre au village : j'ai une idée avec les lucioles. Tu verras !",
+   "text": "Je rentre au village : je vais fouiller les livres du sage. Le Roi Minuit a forcément un point faible.",
    "face": "wink",
    "faceOf": "enfant2"
   },
@@ -771,7 +771,7 @@
   },
   {
    "who": "Lumi",
-   "text": "Ramène-le à Mamie, au village. Il est épuisé, le pauvre."
+   "text": "Ramène-la à Mamie, au village. Elle est épuisée, la pauvre."
   },
   {
    "text": "Tu as obtenu un cinquième fragment d'aube ! Le ciel devient rose."
@@ -780,7 +780,7 @@
  "reunion5": [
   {
    "who": "Mamie",
-   "text": "Goyave ! Mon toutou ! Il reste avec moi dans la cuisine, il a besoin de repos.",
+   "text": "Goyave ! Ma toutoune ! Elle reste avec moi dans la cuisine, elle a besoin de repos.",
    "face": "smile",
    "faceOf": "claudine"
   },
@@ -906,7 +906,7 @@
    "lines": [
     {
      "who": "{enfant2}",
-     "text": "Les lucioles-relais t'emmènent partout. Pratique, non ?",
+     "text": "Les livres du sage disent que le Roi Minuit déteste le soleil. Bon, ça, on s'en doutait un peu…",
      "face": "wink",
      "faceOf": "enfant2"
     }
@@ -991,7 +991,7 @@
    "lines": [
     {
      "who": "Goyave",
-     "text": "Ouaf ! (Il remue la queue si fort que tout son corps remue avec.)"
+     "text": "Ouaf ! (Elle remue la queue si fort que tout son corps remue avec.)"
     }
    ]
   }

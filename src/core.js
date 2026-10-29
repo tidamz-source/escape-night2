@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v7.2.0';
+const VERSION = 'v7.2.1';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -131,6 +131,7 @@ const SFX = {
   locked() { tone(160, 0.08, { vol: 0.15 }); tone(130, 0.12, { vol: 0.15, delay: 0.09 }); },
   blip() { tone(1200, 0.025, { vol: 0.04 }); },
   menu() { tone(660, 0.05, { vol: 0.1 }); },
+  heartTick() { tone(880, 0.04, { vol: 0.07 }); },
   shoot() { tone(900, 0.15, { to: 400, type: 'sine', vol: 0.12 }); },
   sling() { tone(520, 0.06, { to: 1200, type: 'triangle', vol: 0.1 }); noise(0.05, { filter: 'highpass', freq: 3000, vol: 0.08 }); },
   tink() { tone(1800, 0.05, { vol: 0.08, type: 'triangle' }); tone(2400, 0.08, { vol: 0.06, type: 'triangle', delay: 0.03 }); },

@@ -35,6 +35,8 @@ const G = {
     const A = this.areas[key];
     this.enter(key, id === 'bungalow' && !SAVE.got_branche && !SAVE.left_bungalow ? A.wake : A.start, !this.player);
   },
+  healBy(n) { const P = this.player; if (P) { P.healQ = Math.min((P.healQ || 0) + n, SAVE.maxHp); P.healT = Math.min(P.healT || 0, 0.05); } },
+  healFull() { const P = this.player; if (P) this.healBy(SAVE.maxHp - P.hp); },
   // question à choix : la dernière réplique propose des réponses
   ask(lines, choices, cb) { this.say(lines, null); const d = this.dialog; d.choices = choices; d.pick = 0; d.onPick = cb; },
 
@@ -224,6 +226,8 @@ const G = {
   // ---------- boucle ----------
   update(dt) {
     this.t += dt;
+    // soin progressif : les cœurs se remplissent un par un
+    const PL = this.player; if (PL && PL.healQ > 0 && this.view === 'world') { PL.healT = (PL.healT || 0) - dt; if (PL.healT <= 0) { PL.healT = 0.16; const add = Math.min(2, PL.healQ, SAVE.maxHp - PL.hp); if (add <= 0) PL.healQ = 0; else { PL.hp += add; PL.healQ -= add; SFX.heartTick(); } } }
     if (this.banner) { this.banner.t -= dt; if (this.banner.t <= 0) this.banner = null; }
     if (this.moneyFlash > 0) this.moneyFlash -= dt;
     switch (this.state) {

@@ -6,7 +6,7 @@ const Inventory = {
   give(id) {
     const it = this.item(id), inv = SAVE.inv; if (!it) return;
     if (it.kind === 'ammo') { this.addAmmo(it.ammo, it.qty); return; }
-    if (it.kind === 'heartpiece') { SAVE.maxHp += 2; if (G.player) G.player.hp = SAVE.maxHp; persist(); return; }
+    if (it.kind === 'heartpiece') { SAVE.maxHp += 2; G.healFull(); persist(); return; }
     if (it.kind === 'bottle') { inv.bottles.push('vide'); }
     else if (it.kind === 'drink') { const i = inv.bottles.indexOf('vide'); if (i >= 0) inv.bottles[i] = id; }
     else inv.owned[id] = true;
@@ -33,6 +33,6 @@ const Inventory = {
   hasEmptyBottle() { return SAVE.inv.bottles.includes('vide'); },
   drink(i, P) {
     const b = SAVE.inv.bottles[i], it = b && this.item(b); if (!it || it.kind !== 'drink') return false;
-    SAVE.inv.bottles[i] = 'vide'; P.hp = Math.min(SAVE.maxHp, P.hp + it.heal); persist(); Bus.emit('item:used', { id: b }); return true;
+    SAVE.inv.bottles[i] = 'vide'; G.healBy(it.heal); persist(); Bus.emit('item:used', { id: b }); return true;
   },
 };

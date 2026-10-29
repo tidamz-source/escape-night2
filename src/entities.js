@@ -250,8 +250,9 @@ class Player {
       if (G.area.ents.filter(e => e.isPetard && !e.dead).length >= 2) return;
       if (!Inventory.useAmmo('petards')) { SFX.nope(); Input.toast = { msg: 'Plus de pétards !', t: 1.5 }; this.shootCd = 0.4; return; }
       this.shootCd = 0.35; this.shootT = 0.18; SFX.throw();
-      const moving = Math.hypot(this.vx, this.vy) > 20;
-      G.area.ents.push(new Petard(this.x, this.y, this.aim[0], this.aim[1], moving ? 1 : 0.45, G.room));
+      // le pétard se pose au sol, juste devant le héros (il ne se lance pas)
+      const [fx, fy] = DV[this.dir], pt = new Petard(this.x + fx * 8, this.y + fy * 8 + (fy < 0 ? 2 : 0), fx, fy, 0, G.room);
+      pt.x = this.x + fx * 10; pt.y = this.y + fy * 8 + (fy < 0 ? 2 : 0); pt.z = 0; pt.vz = 0; G.area.ents.push(pt);
     }
   }
   // fait tendre la vitesse vers (tx, ty) puis déplace Sacha ; renvoie true en cas de collision

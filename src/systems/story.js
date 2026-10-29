@@ -22,7 +22,7 @@ const Story = {
     const e = DATA.dialogues[id].find(x => this.cond(x.if)); if (!e) return [];
     if (e.set) this.set(e.set);
     if (e.give && e.give.money) Wallet.add(e.give.money);
-    if (e.heal && G.player) { G.player.hp = SAVE.maxHp; SFX.drink(); }
+    if (e.heal && G.player) { G.healFull(); SFX.drink(); }
     return this.lines(e.lines);
   },
   objective() { const o = DATA.dialogues.objectives.find(x => this.cond(x.if)); return o ? this.fmt(o.text) : ''; },

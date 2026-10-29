@@ -8,6 +8,7 @@ const Shop = {
     if (e.once && Inventory.has(e.id)) return { ok: false, gone: true, why: 'Déjà acheté' };
     if (e.stock && sold >= e.stock) return { ok: false, gone: true, why: 'Épuisé' };
     if (e.needs === 'emptyBottle' && !Inventory.hasEmptyBottle()) return { ok: false, why: 'Il te faut une bouteille vide' };
+    if (e.needs === 'petards' && !Inventory.has('petards')) return { ok: false, why: 'T\'es un peu jeune pour que je te vende des pétards, désolé' };
     if (e.needs && e.needs !== 'emptyBottle' && !Inventory.has(e.needs)) return { ok: false, why: 'Il te faut un ' + Inventory.item(e.needs).name.toLowerCase() };
     if (it.kind === 'ammo' && Inventory.ammo(it.ammo) >= Inventory.ammoMax(it.ammo)) return { ok: false, why: 'Sacoche pleine' };
     if (e.cost) { for (const [k, n] of Object.entries(e.cost)) if (Inventory.ingredient(k) < n) return { ok: false, why: `Il faut ${n} ${k}` }; }
