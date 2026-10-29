@@ -309,7 +309,7 @@ function buildBoisArea() {
     bossFlag: 'boss2', heartFlag: 'heart3', potLoot: 'potBois',
     rooms: { entry: [2, 3], arena: [3, 3], pond: [1, 3], wind: [2, 2], frisbee: [1, 2], switches: [3, 2], bigkey: [3, 1], upper: [2, 1], treasure: [1, 1], boss: [2, 0] },
     entry: 'entry', boss: 'boss',
-    links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'pond'], ['entry', 'wind'], ['wind', 'frisbee', { key: 'boisK1' }], ['wind', 'switches'], ['switches', 'bigkey', { shut: () => !SAVE.switchesB }], ['wind', 'upper', { key: 'boisK2' }], ['upper', 'treasure'], ['upper', 'boss', { big: true }]],
+    links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'pond'], ['entry', 'wind'], ['wind', 'frisbee'], ['wind', 'switches'], ['switches', 'bigkey', { shut: () => !SAVE.switchesB }], ['wind', 'upper', { key: 'boisK2' }], ['upper', 'treasure', { key: 'boisK1' }], ['upper', 'boss', { big: true }]],
     tiles(room) {
       const st = (n, pts) => pts.forEach(([x, y]) => room(n).set(x, y, 's'));
       st('entry', [[6, 5], [23, 5], [6, 11], [23, 11]]);
