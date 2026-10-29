@@ -16,6 +16,8 @@ walks['left']=[ImageOps.mirror(f) for f in walks['right']]
 walks['up']=cycle(frames('assets/src/sacha_walk_up.gif'),54)
 walks['up_right']=cycle(frames('assets/src/sacha_walk_up_right.gif'),54)
 walks['up_left']=[ImageOps.mirror(f) for f in walks['up_right']]
+# en attendant une marche de trois quarts face : la marche de profil
+walks['down_right']=walks['right']; walks['down_left']=walks['left']
 W,Hh=48,48; rows=[]
 for d,i in [('down',0),('up',4),('left',6),('right',2),('down_right',1),('up_right',3),('up_left',5),('down_left',7)]:
   pose=Image.new('RGBA',(W,Hh)); pose.paste(T[i],(0,2)); bob=Image.new('RGBA',(W,Hh)); bob.paste(T[i],(0,1))

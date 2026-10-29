@@ -1,5 +1,6 @@
 'use strict';
 // ---------- le jeu : états, transitions, scènes, rendu du monde ----------
+const DARK_K = 0.62; // < 1 : nuit moins sombre partout (1 = l'obscurité d'origine)
 const G = {
   state: 'boot', t: 0, areas: {}, area: null, player: null, parts: new Parts(),
   cam: { x: 0, y: 0 }, shake: 0, hitstop: 0, dialog: null, fade: null, slide: null, room: 0,
@@ -398,13 +399,14 @@ const G = {
   },
   lightsList(cx, cy) {
     const A = this.area, P = this.player, L = [];
-    L.push({ x: P.x, y: P.y - 12, r: A.rooms ? 100 : 92, c: 'rgba(200,220,255,' });
+    L.push({ x: P.x, y: P.y - 12, r: A.rooms ? 120 : 112, c: 'rgba(200,220,255,' });
     if (SAVE.met_lumi) L.push(Lumi.light);
     for (const p of A.props) if (p.light) L.push({ x: p.x, y: p.y + (p.light.oy || -8), r: p.light.r, c: p.light.c, flick: p.light.flick, warm: p.light.warm });
     for (const e of A.ents) {
       if (e.dead || (!this.slide && !this.inRoom(e))) continue;
       const li = e.light; if (li) { const lp = e.lightPos; L.push({ x: lp ? lp[0] : e.x, y: lp ? lp[1] - 6 : e.y - (e.alt || 6) - 6, r: li.r, c: li.c, flick: li.flick, warm: li.warm }); }
       if (e.lights) for (const l of e.lights) L.push({ x: e.x + l.dx, y: e.y + l.dy, r: l.r, c: l.c });
+      if (e.isEnemy && !li && !e.isBoss) L.push({ x: e.x, y: e.y - (e.alt || 0) - 8, r: 30, c: 'rgba(255,150,170,' }); // halo : on repère les ennemis dans le noir
     }
     return L.filter(l => l.x + l.r > cx && l.x - l.r < cx + W && l.y + l.r > cy && l.y - l.r < cy + H);
   },
@@ -413,7 +415,7 @@ const G = {
     l.setTransform(1, 0, 0, 1, 0, 0); l.globalCompositeOperation = 'source-over';
     l.clearRect(0, 0, W * SC, H * SC);
     const rd = this.darkFrom != null ? this.darkFrom : A.roomDark ? A.roomDark(this.room) : null;
-    l.fillStyle = `rgba(4,8,26,${rd != null ? rd : A.dark})`; l.fillRect(0, 0, W * SC, H * SC);
+    l.fillStyle = `rgba(4,8,26,${((rd != null ? rd : A.dark) * DARK_K).toFixed(3)})`; // DARK_K : luminosité globale l.fillRect(0, 0, W * SC, H * SC);
     l.globalCompositeOperation = 'destination-out';
     for (const o of L) {
       const r = (o.r + (o.flick ? Math.sin(this.t * 13) * 3 + Math.sin(this.t * 7.3) * 2 : 0)) * SC, x = (o.x - cx) * SC, y = (o.y - cy) * SC;

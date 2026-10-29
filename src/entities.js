@@ -394,7 +394,7 @@ class Bat extends Enemy {
   }
   draw() {
     ell(this.x, this.y, 5, 1.8, 'rgba(0,0,0,.3)');
-    const f = Math.floor(this.t * 14) % 2, fl = this.flash > 0, b = fl ? '#fff' : '#3a2a4a', wc = fl ? '#fff' : '#2a1d38', wl = fl ? '#fff' : '#4a3a5e';
+    const f = Math.floor(this.t * 14) % 2, fl = this.flash > 0, b = fl ? '#fff' : '#6a4a86', wc = fl ? '#fff' : '#4a3266', wl = fl ? '#fff' : '#8a6ab0';
     hi(this.x, this.y - this.alt + Math.sin(this.t * 10), false, () => {
       if (f) { D(-22, -6, 14, 4, wc); D(-24, -4, 4, 6, wc); D(8, -6, 14, 4, wc); D(20, -4, 4, 6, wc); D(-18, -2, 3, 3, wl); D(15, -2, 3, 3, wl); }
       else { D(-20, -14, 12, 4, wc); D(-24, -18, 6, 6, wc); D(8, -14, 12, 4, wc); D(18, -18, 6, 6, wc); D(-16, -10, 8, 3, wl); D(8, -10, 8, 3, wl); }
