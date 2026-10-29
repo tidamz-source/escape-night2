@@ -203,6 +203,10 @@ function renderLayer(g, theme) {
   const pit = t => t === 'v' || t === 'b' || t === 'T';
   each(3, (t, tx, ty, px, py) => {
     if (!pit(t)) return;
+    if (t === 'b' && [at(tx - 1, ty), at(tx + 1, ty), at(tx, ty - 1), at(tx, ty + 1)].some(n => n === '~')) { // pont sur l'eau
+      F(px, py, TP, TP, '#2a4aa0'); for (let yy = py; yy < py + TP; yy += 5) { F(px + 2, yy, TP - 4, 4, '#6a4224'); F(px + 2, yy, TP - 4, 1, '#8a5a34'); }
+      F(px, py, 2, TP, '#4a2a14'); F(px + TP - 2, py, 2, TP, '#4a2a14'); return;
+    }
     F(px, py, TP, TP, '#03040a');
     for (let i = 0; i < 3; i++) F(px + Math.floor(r() * 30), py + Math.floor(r() * 30), 1, 1, '#0c0d1a');
     if (!pit(at(tx, ty - 1))) { F(px, py, TP, 5, '#2b2540'); F(px, py + 5, TP, 4, '#1c1830'); F(px, py + 9, TP, 4, '#0e0c16'); F(px, py, TP, 1, '#463e64'); for (let i = 0; i < 3; i++) F(px + Math.floor(r() * 28), py + 2 + Math.floor(r() * 3), 3, 1, '#3a3354'); }

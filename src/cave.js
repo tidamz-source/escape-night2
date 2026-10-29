@@ -13,14 +13,14 @@ function buildCaveArea() {
     entry: 'entry', boss: 'boss',
     links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'hub', { key: 'caveK1' }], ['hub', 'block'], ['block', 'sling', { shut: () => !SAVE.plateE }], ['sling', 'chasm'], ['hub', 'chasm'], ['hub', 'twin'], ['twin', 'bigkey', { key: 'caveK2' }], ['twin', 'treasure'], ['chasm', 'boss', { big: true }]],
     tiles(room) {
-      const c = room('chasm'); c.rect(2, 4, 26, 2, 'v'); c.rect(2, 2, 1, 4, 'W'); c.rect(27, 2, 1, 4, 'W');
-      const t = room('twin'); t.rect(6, 4, 4, 3, 'v'); t.rect(20, 4, 4, 3, 'v');
+      const c = room('chasm'); c.rect(2, 4, 26, 2, '~'); c.rect(2, 2, 1, 4, 'W'); c.rect(27, 2, 1, 4, 'W');
+      const t = room('twin'); t.rect(6, 4, 4, 3, '~'); t.rect(20, 4, 4, 3, '~');
       for (const [x, y] of [[6, 5], [23, 5], [6, 11], [23, 11]]) room('entry').set(x, y, 'k');
       for (const [x, y] of [[9, 8], [20, 8]]) room('arena').set(x, y, 'k');
       for (const [x, y] of [[5, 4], [24, 4], [5, 12], [24, 12]]) { room('treasure').set(x, y, 'k'); room('bigkey').set(x, y, 'k'); }
       for (const [x, y] of [[8, 11], [21, 11]]) room('hub').set(x, y, 'k');
     },
-    syncTiles() { const want = SAVE.bridge ? 'b' : 'v'; let ch = false; for (let y = brA.y; y < brA.y + 2; y++) for (let x = brA.x; x < brA.x + 2; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; ch = true; } if (ch) this.rerender(); },
+    syncTiles() { const want = SAVE.bridge ? 'b' : '~'; let ch = false; for (let y = brA.y; y < brA.y + 2; y++) for (let x = brA.x; x < brA.x + 2; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; ch = true; } if (ch) this.rerender(); },
     roomDark: (room, R) => room === R.bigkey ? 0.55 : null,
     arenas: { arena: arenaStd('arenaW'), boss: bossArena('boss', 'La Grande Ombre') },
     make(n, L, h) {
@@ -50,7 +50,7 @@ function buildCaveArea() {
         ['chasm', mk(Crystal, 'chasm', 21, 3, 'bridge', G => { SAVE.bridge = true; persist(); G.area.syncTiles(); G.shake = 0.4; setTimeout(() => SFX.secret(), 300); })],
         ['chasm', mk(Sign, 'chasm', 11, 12, [{ text: '« Le pont dort tant que le cristal dort. »' }], 'stone')],
         ['twin', mk(FrisbeeSwitch, 'twin', 8, 5, 'caveTwin')], ['twin', mk(FrisbeeSwitch, 'twin', 22, 5, 'caveTwin')],
-        ['twin', mk(Sign, 'twin', 14, 8, [{ text: '« Deux yeux à réveiller ensemble. Ils dorment au-dessus du vide. »' }], 'stone')],
+        ['twin', mk(Sign, 'twin', 14, 8, [{ text: '« Deux yeux à réveiller ensemble. Ils dorment au-dessus de l\'eau. »' }], 'stone')],
         ['twin', new Chest(tc.x, tc.y, { flag: 'caveKeyChest2', reveal: 'caveTwin', msg: [{ text: 'Une petite clé !' }] })],
         ['bigkey', new Chest(bc.x, bc.y, { flag: 'caveBigKey', give: 'bigkey:cave', big: true, msg: [{ text: 'La grande clé de la grotte ! Elle ouvre la porte du gardien.' }] })],
         ['treasure', mk(Chest, 'treasure', 14, 7, { flag: 'caveTreasure', give: 'money:50', msg: [{ text: 'Un trésor oublié : 50 écus !' }] })],

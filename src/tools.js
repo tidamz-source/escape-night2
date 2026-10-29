@@ -385,7 +385,7 @@ class IronGate { // grille fermée par une clé unique ou une condition
     G.say(this.o.closedMsg || [{ text: 'Une lourde grille, fermée à clé.' }]);
   }
   draw() {
-    hi(this.x, this.y, false, () => {
+    hi(this.x, this.y - (this.lift || 0), false, () => {
       const W2 = this.w * 2;
       for (let x = -W2 / 2; x < W2 / 2; x += 12) { D(x, -60, 5, 60, '#5a5e6a'); D(x, -60, 2, 60, '#9a9eaa'); }
       D(-W2 / 2, -62, W2, 5, '#3a3d48'); D(-W2 / 2, -32, W2, 4, '#3a3d48'); D(-W2 / 2, -62, W2, 1, '#7a7e8a');

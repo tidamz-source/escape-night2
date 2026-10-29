@@ -210,7 +210,7 @@ function buildMinesArea() {
         ['arena', new Chest(ac.x, ac.y, { flag: 'minesKeyChest', reveal: 'arenaM', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ces mines.' }] })],
         ['crate', mk(Plate, 'crate', 19, 11, 'crateM')],
         ['crate', mk(Chest, 'crate', 24, 8, { flag: 'crateChest', reveal: 'crateM', msg: [{ text: 'Une petite clé, cachée sous la caisse !' }] })],
-        ['crate', mk(Sign, 'crate', 13, 13, [{ text: '« Caisse coincée dans la niche. Ne pas pousser : tirer. »' }])],
+        ['crate', mk(Sign, 'crate', 13, 13, [{ text: '« Caisse coincée dans la niche. Ne pas pousser : tirer. (Reste appuyé sur A pour agripper un objet lourd.) »' }])],
         ['shaft', mk(Chest, 'shaft', 14, 8, { flag: 'minesTreasure', give: 'money:60', msg: [{ text: 'Une bourse de gnome : 60 écus !' }] })],
         ['hub', new Cart(stations, routes, 'S')],
         ['hub', mk(RailLever, 'hub', 9, 13, 'switchA', ['vers l\'ouest', 'vers l\'est'])],

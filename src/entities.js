@@ -168,10 +168,14 @@ class Player {
       const m = Math.hypot(Input.dx, Input.dy), v = m > 0.2 ? [Input.dx / m, Input.dy / m] : DV[this.dir];
       this.roll = 0.3; this.rollCd = 0.7; this.rollV = [v[0] * 190, v[1] * 190]; SFX.roll(); return;
     }
+    // agripper un objet lourd : rester appuyé sur A, puis reculer (tirer) ou avancer (pousser)
+    if (this.grab) { this.updateGrab(dt, G); return; }
     // A : interaction ou attaque
     if (Input.pressed('a')) {
       const target = G.interactTarget(this);
       if (target) { target.interact(G, this); return; }
+      const heavy = G.frontEnt(this, e => e instanceof Block && !e.mv);
+      if (heavy) { this.grab = heavy; this.grabMv = null; this.vx = this.vy = 0; SFX.push(); return; }
       if (!SAVE.got_branche) return; // pas encore d'arme
       this.atk = ATK_TIME; this.atkHit.clear(); SFX.swing(); return;
     }
@@ -205,6 +209,25 @@ class Player {
       if (blk) { pushing = true; this.pushT += dt; if (this.pushT > 0.3) { blk.push(this.dir, G); this.pushT = 0; } }
     }
     if (!pushing) this.pushT = 0;
+  }
+  updateGrab(dt, G) {
+    const blk = this.grab, area = G.area;
+    if (this.grabMv) { // on suit l'objet, case par case
+      const m = this.grabMv, st = Math.min(64 * dt, 16 - m.d); this.x += m.vx * st; this.y += m.vy * st; m.d += st; this.moving = true; this.anim += dt;
+      if (m.d >= 16) { this.x = Math.round(this.x); this.y = Math.round(this.y); this.grabMv = null; }
+      return;
+    }
+    this.moving = false; this.vx = this.vy = 0;
+    if (!Input.held.a || blk.dead || !area.ents.includes(blk)) { this.grab = null; return; }
+    if (blk.mv) return;
+    const [vx, vy] = DV[this.dir], along = Input.dx * vx + Input.dy * vy;
+    if (along > 0.5) { blk.push(this.dir, G); if (blk.mv) this.grabMv = { vx, vy, d: 0 }; }
+    else if (along < -0.5) {
+      const b = boxOf(this), back = { x: b.x - vx * 16, y: b.y - vy * 16, w: b.w, h: b.h };
+      if (blocked(area, back, this)) return;
+      const opp = { up: 'down', down: 'up', left: 'right', right: 'left' }[this.dir];
+      blk.push(opp, G); if (blk.mv) this.grabMv = { vx: -vx, vy: -vy, d: 0 };
+    }
   }
   useTool(G) {
     const tool = Inventory.tool(); if (!tool) return;

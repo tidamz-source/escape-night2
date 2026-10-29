@@ -246,8 +246,7 @@ class Brazier {
 // ---------- énigmes ----------
 class Block {
   constructor(x, y) { this.x = x; this.y = y; this.w = 16; this.h = 16; this.solid = true; this.mv = null; }
-  // le grappin tire la stèle d'une case vers le héros
-  onHook(G) { const P = G.player, dx = P.x - this.x, dy = P.y - this.y; const dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'); this.push(dir, G); SFX.clank(); return true; }
+  // pousser en marchant dedans, ou agripper (rester appuyé sur A) pour tirer et pousser
   push(dir, G) {
     if (this.mv) return;
     const [vx, vy] = DV[dir], tb = { x: this.x - 8 + vx * 16, y: this.y - 16 + vy * 16, w: 16, h: 16 }, rr = G.roomRect();

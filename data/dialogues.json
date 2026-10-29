@@ -49,12 +49,8 @@
    "text": "Retrouver Mamie au village."
   },
   {
-   "if": "!minesKey",
-   "text": "Trouver la clé des Mines, sur une corniche de la Montagne (à l'est des Collines)."
-  },
-  {
    "if": "!minesOpen",
-   "text": "Ouvrir la grille des Mines, au nord de la Montagne."
+   "text": "Ouvrir la grille des Mines, au nord de la Montagne (à l'est des Collines). Un levier, quelque part sur l'eau…"
   },
   {
    "if": "!grappin",
@@ -74,7 +70,7 @@
   },
   {
    "if": "!lacCrossed",
-   "text": "Prendre la route du Lac, au sud du village, et franchir le ravin."
+   "text": "Prendre la route du Lac, au sud du village, et trouver un moyen de traverser la rivière."
   },
   {
    "if": "!palmes",
@@ -212,11 +208,11 @@
     },
     {
      "who": "Le sage",
-     "text": "Il a fait enfermer tes proches dans six donjons. Leur lumière l'empêche de vieillir."
+     "text": "Il a fait enfermer tes proches, un par un, dans ses repaires. Leur lumière l'empêche de vieillir."
     },
     {
      "who": "{hero}",
-     "text": "Six donjons ?! Par lequel je commence ?",
+     "text": "Mes proches ?! Où est-ce que je commence ?",
      "face": "o"
     },
     {
@@ -273,7 +269,7 @@
     },
     {
      "who": "Le sage",
-     "text": "Leur grille est fermée. La clé ? Sur la corniche du vieux gardien. Ce qui va et revient pourrait la rapporter."
+     "text": "Leur grille ne s'ouvre pas avec une clé. Les gnomes l'actionnaient avec un levier, quelque part sur l'eau."
     }
    ]
   },
@@ -282,7 +278,7 @@
    "lines": [
     {
      "who": "Le sage",
-     "text": "Trois fragments ! Le Lac est au sud du village, derrière un ravin."
+     "text": "Trois fragments ! Le Lac est au sud du village, de l'autre côté d'une rivière profonde."
     },
     {
      "who": "Le sage",
@@ -404,7 +400,7 @@
    "lines": [
     {
      "who": "Gaspard",
-     "text": "Les gnomes ? Ils ont fermé leur grille il y a cent ans. Et le gardien a laissé tomber sa clé sur une corniche, l'étourdi."
+     "text": "Les gnomes ? Ils ont baissé leur grille il y a cent ans. Le levier est resté sur un îlot, au milieu de l'eau. Personne n'a jamais su l'atteindre."
     }
    ]
   },
@@ -668,24 +664,20 @@
   },
   {
    "who": "Lumi",
-   "text": "Prochaine étape : le Lac, au sud du village. Un ravin le coupe du royaume, mais ton grappin fera l'affaire."
+   "text": "Prochaine étape : le Lac, au sud du village. Une rivière profonde le coupe du royaume… Ton grappin pourrait servir, qui sait ?"
   }
  ],
  "lacIntro": [
   {
    "who": "{hero}",
-   "text": "Le Lac… Et un ravin juste devant moi.",
+   "text": "Le Lac… Mais cette rivière est bien trop large, je ne peux pas passer.",
    "face": "o"
-  },
-  {
-   "who": "Lumi",
-   "text": "Il y a un poteau de l'autre côté. Vise-le avec le grappin !"
   }
  ],
  "lacNoHook": [
   {
    "who": "{hero}",
-   "text": "Trop large pour sauter. Il me faudrait de quoi m'accrocher au poteau d'en face.",
+   "text": "La rivière est trop large et trop profonde. Je ne peux pas passer.",
    "face": "o"
   }
  ],

@@ -165,6 +165,26 @@ const ZONE_ARRIVE = {
 };
 const goZone = (area, key) => G => G.enter(area, ZONE_ARRIVE[key]);
 
+// levier de la grille des Mines : sur un îlot, on le bascule de loin (frisbee) ; la caméra montre la grille qui se lève
+class GateLever extends RailLever {
+  constructor(x, y, gate) { super(x, y, 'minesOpen', ['', '']); this.gate = gate; }
+  interact(G) { this.pull(G); }
+  update(dt) { this.t += dt; this.k = lerp(this.k, SAVE.minesOpen || this.on ? 1 : 0, Math.min(1, dt * 10)); }
+  hit(d, fx, fy, G, src) { if (src === 'frisbee' || src === 'hook') this.pull(G); }
+  pull(G) {
+    if (SAVE.minesOpen || G.state !== 'play') return;
+    SFX.lever(); this.on = true; const gate = this.gate; let creak = 0;
+    G.camFocus = { x: gate.x, y: gate.y - 20 };
+    G.cut = { t: 0,
+      update: dt => { const c = G.cut; c.t += dt; G.parts.update(dt); G.updateCam();
+        if (c.t > 0.6 && c.t < 2.6) { gate.lift = (c.t - 0.6) / 2 * 34; G.shake = 0.12; if ((creak -= dt) <= 0) { creak = 0.35; SFX.push(); } if (Math.random() < dt * 20) G.parts.add({ x: gate.x + rand(-16, 16), y: gate.y - 2, vy: -rand(10, 30), vx: rand(-10, 10), life: 0.6, c: '#8a8070', r: 1.5 }); }
+        if (c.t > 2.6 && !c.done) { c.done = true; SFX.door(); G.shake = 0.35; }
+        if (c.t > 3.2) { SAVE.minesOpen = true; persist(); G.cut = null; G.camFocus = null; G.state = 'play'; G.say([{ text: 'Clac ! Au loin, la grille des Mines se lève dans un grondement de chaînes.' }, { who: 'Lumi', text: 'Un levier de mineur… Je parie qu\'il y en a plein d\'autres là-dedans, pour les wagons !' }]); } },
+      draw: () => {} };
+    G.state = 'cut';
+  }
+}
+
 // ----- Bourg-Luciole (le village, au centre) -----
 function buildVillageArea() {
   const Z = zoneGrid(77), { rect } = Z;
@@ -295,7 +315,7 @@ function buildMontagneArea() {
   rect(2, 2, 60, 5, '#'); rect(38, 5, 6, 2, '.'); rect(40, 5, 2, 2, 'J');
   rect(36, 7, 4, 3, '#'); rect(42, 7, 4, 3, '#');
   rect(2, 21, 40, 2, '='); rect(40, 7, 2, 16, '='); rect(14, 23, 2, 12, '=');
-  rect(48, 12, 9, 7, 'v'); rect(50, 14, 3, 2, '.');                                          // le ravin de la clé
+  rect(48, 12, 9, 7, '~'); rect(50, 14, 3, 2, '.');                                          // le bassin et l'îlot du levier
   for (let i = 0; i < 18; i++) { const x = 4 + Math.floor(r() * 54), y = 9 + Math.floor(r() * 34); if (Math.abs(x - 40.5) < 4 || Math.abs(y - 21.5) < 3 || (x > 44 && y < 22)) continue; rect(x, y, 2 + Math.floor(r() * 3), 2 + Math.floor(r() * 3), '#'); }
   Z.flowers(40);
   const A = zoneArea('montagne', Z.g, 'montagne', { name: 'La Montagne', dark: 0.45 });
@@ -307,9 +327,9 @@ function buildMontagneArea() {
     for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));
     for (const h of this.houses) this.ents.push(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)));
     this.ents.push(new Entrance(41 * TS, 7 * TS, 'mine'));
-    this.ents.push(new IronGate(41 * TS, 10 * TS, { flag: 'minesOpen', key: 'minesKey', w: 32, closedMsg: [{ text: '« Mines des gnomes. Fermé jusqu\'à nouvel ordre. »' }, { who: '{hero}', text: 'Une grille fermée à clé… La clé ne doit pas être loin.', face: 'o' }], openMsg: [{ text: 'La clé tourne dans la serrure. La grille des Mines s\'ouvre !' }] }));
-    this.ents.push(new SpecialKey(51 * TS + 8, 15 * TS + 12, 'minesKey', [{ text: 'Tu as récupéré la clé de la grille des Mines !' }, { who: 'Lumi', text: 'La grille est juste au nord. Les gnomes vont être surpris !' }]));
-    this.ents.push(new Sign(47 * TS, 21 * TS, [{ text: '« Corniche du vieux gardien. Il y a perdu sa clé il y a cent ans. Personne n\'a jamais pu la rattraper. »' }, { who: '{hero}', text: 'Une clé, sur la corniche… Il faudrait quelque chose qui aille la chercher et qui revienne.', face: 'o' }]));
+    const gate = new IronGate(41 * TS, 10 * TS, { flag: 'minesOpen', w: 32, closedMsg: [{ text: '« Mines des gnomes. Fermé jusqu\'à nouvel ordre. »' }, { who: '{hero}', text: 'Pas de serrure… Une chaîne part de la grille et file vers l\'est, sous l\'eau.', face: 'o' }] });
+    this.ents.push(gate, new GateLever(51 * TS + 8, 15 * TS + 12, gate));
+    this.ents.push(new Sign(47 * TS, 21 * TS, [{ text: '« Levier de la grille des Mines. Les gnomes y allaient en barque. La barque a coulé. »' }, { who: '{hero}', text: 'Le levier est sur l\'îlot… Je ne peux pas l\'atteindre à pied.', face: 'o' }]));
     this.ents.push(new Relay(8 * TS, 25 * TS, 'montagne'));
     for (const [x, y] of [[20, 12], [28, 30], [50, 34], [8, 40]]) this.ents.push(new Decor(x * TS, y * TS, 'rocks'));
     this.ents.push(new Raccoon(24 * TS, 14 * TS), new Raccoon(50 * TS, 28 * TS), new Bat(30 * TS, 34 * TS), new Bat(18 * TS, 12 * TS), new CrystalSpider(56 * TS, 40 * TS), new CrystalSpider(34 * TS, 42 * TS));
@@ -325,7 +345,7 @@ function buildLacArea() {
   const Z = zoneGrid(91), { rect } = Z;
   rect(30, 0, 4, 2, '1'); rect(ZW - 2, 30, 2, 4, '2'); rect(0, 37, 2, 2, '3');
   rect(2, 2, 22, 4, '#'); rect(40, 2, 22, 4, '#'); rect(24, 2, 16, 4, '.'); rect(31, 2, 2, 4, '=');
-  rect(2, 6, 60, 3, 'v');                                                                      // le ravin
+  rect(2, 6, 60, 3, '~');                                                                      // la rivière (grappin, puis palmes)
   Z.ell(31, 28, 22, 11.5, 'S', 0.1); Z.ell(31, 28, 19.5, 9.5, '~', 0.12);                       // plage et lac
   rect(28, 22, 8, 7, '='); rect(29, 20, 6, 2, '#'); rect(31, 21, 2, 1, 'M');                  // îlot du temple
   rect(9, 25, 19, 2, '=');                                                                     // la chaussée
@@ -341,7 +361,7 @@ function buildLacArea() {
     for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));
     for (const h of this.houses) this.ents.push(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)));
     this.ents.push(new Post(28 * TS + 8, 5 * TS), new Post(36 * TS + 8, 11 * TS));
-    this.ents.push(new Sign(26 * TS, 5 * TS, [{ text: '« Ravin du lac. Le pont a été emporté. Les gnomes y passaient au grappin. »' }]));
+    this.ents.push(new Sign(26 * TS, 5 * TS, [{ text: '« Route du Lac. Le pont a été emporté par la crue. »' }]));
     this.ents.push(new Facade(32 * TS, 22 * TS, 'temple'));
     this.ents.push(new Sign(15 * TS, 27 * TS, [{ text: '« Temple englouti. Entrée par la chaussée. »' }]));
     this.ents.push(new Rubble(6 * TS + 8, 37 * TS + 12, 'rubble1'), new Rubble(6 * TS + 8, 38 * TS + 12, 'rubble2'));
