@@ -42,6 +42,6 @@ def build(hero):
             sheet.paste(f, ((j + 1) * W, r * H)); fr[f'walk_{name}{j}'] = {'frame': {'x': (j + 1) * W, 'y': r * H, 'w': W, 'h': H}, 'duration': 110 if len(walk) > 2 else 140}
         tags.append({'name': f'walk_{name}', 'from': n, 'to': n + len(walk) - 1, 'direction': 'forward'}); n += len(walk)
     sheet.save(f'assets/{hero}.png')
-    json.dump({'frames': fr, 'meta': {'image': f'{hero}.png', 'size': {'w': sheet.width, 'h': sheet.height}, 'scale': '1.4', 'frameTags': tags}}, open(f'assets/{hero}.json', 'w'), indent=1)
+    json.dump({'frames': fr, 'meta': {'image': f'{hero}.png', 'size': {'w': sheet.width, 'h': sheet.height}, 'scale': '1.4', 'foot': 2, 'frameTags': tags}}, open(f'assets/{hero}.json', 'w'), indent=1)
     print(hero, 'poses', len(rot), 'marches', {DIRS[d]: len(v) for d, v in walks.items()})
 for h in sys.argv[1:] or ['sacha']: build(h)

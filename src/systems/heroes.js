@@ -27,7 +27,7 @@ function drawHero(id, x, y, dir, moving, t, scale = 1, alpha = 1) {
     else name = moving ? 'walk_down' : 'idle_down';                                             // profils absents : vue de face
   }
   const f = sheetFrame(sh, name, t, still); if (!f) return;
-  const k = scale / Number(sh.meta.scale || 1), w = f.w * k, h = f.h * k, foot = sh.meta.scale === '1' || !sh.meta.scale ? scale : 0;
+  const k = scale / Number(sh.meta.scale || 1), w = f.w * k, h = f.h * k, foot = sh.meta.foot != null ? sh.meta.foot * k : sh.meta.scale === '1' || !sh.meta.scale ? scale : 0; // foot : marge transparente sous les pieds, pour poser les pieds sur l'ombre
   ctx.globalAlpha = alpha;
   ctx.drawImage(im, f.x, f.y, f.w, f.h, half(x - w / 2), half(y - h + foot), w, h);
   ctx.globalAlpha = 1;

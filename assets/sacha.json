@@ -656,6 +656,7 @@
    "h": 384
   },
   "scale": "1.4",
+  "foot": 2,
   "frameTags": [
    {
     "name": "idle_down",

@@ -273,7 +273,7 @@ class Player {
     if (this.inv > 0 && Math.floor(this.inv * 20) % 2) return;
     if (this.swimming && !this.pull) { const lk = this.look && this.look.split('_').includes(this.dir) && heroHasDir(SAVE.hero, this.look) ? this.look : this.dir; drawSwimmer(SAVE.hero, this.x, this.y, lk, this.anim, this.dive > 0, this.moving); return; }
     if (this.riding) { drawHero(SAVE.hero, this.x, this.y - 6, 'down', false, G.t); return; }
-    ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)');
+    ell(this.x, this.y - 0.5, 7, 2.6, 'rgba(0,0,0,.42)');
     const attacking = this.atk > 0;
     const [vx, vy] = DV[this.dir], lunge = attacking ? 1.5 : 0;
     const p = attacking ? 1 - this.atk / ATK_TIME : 0;
