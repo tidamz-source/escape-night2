@@ -212,7 +212,8 @@ const G = {
       this.fadeTo(() => { this.enter('camp', this.areas.camp.dawn, false); this.pending = 'campDawn'; }, '#fff2c0');
     });
   },
-  showEnd(n) { Story.set('v' + n + 'done'); this.endN = n; this.fadeTo(() => { this.state = 'end'; this.view = 'end'; this.endT = 0; }); },
+  // fin d'un donjon : plus d'écran de bilan, on note l'étape et on reste dans le jeu (l'objectif suivant est dans la pause)
+  showEnd(n) { Story.set('v' + n + 'done'); persist(); Input.toast = { msg: 'Partie sauvegardée', t: 1.6 }; },
   playPending() {
     const p = this.pending; this.pending = null;
     if (/^ceremony\d$/.test(p || '')) return this.ceremony(Number(p.slice(8)));
