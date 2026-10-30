@@ -293,6 +293,20 @@ class ClockPost {
   }
 }
 // lame qui va et vient (piège) : invulnérable, se fige avec les horloges
+// lame qui file en diagonale et rebondit à angle droit sur les murs (et les objets solides)
+class BounceBlade {
+  constructor(x, y, sx, sy, speed = 90) { this.x = x; this.y = y; this.vx = sx * speed; this.vy = sy * speed; this.w = 14; this.h = 8; this.t = rand(0, 3); this.isTrap = true; this.p = 0; }
+  body() { return { x: this.x - 7, y: this.y - 14, w: 14, h: 14 }; }
+  box(x, y) { return { x: x - 6, y: y - 10, w: 12, h: 10 }; }
+  update(dt, G) {
+    this.t += dt; const A = G.area, rr = G.roomRect(this.room);
+    const wall = b => blocked(A, b, this) || b.x < rr.x + 16 || b.x + b.w > rr.x + rr.w - 16 || b.y < rr.y + 24 || b.y + b.h > rr.y + rr.h - 16;
+    const nx = this.x + this.vx * dt; if (wall(this.box(nx, this.y))) { this.vx = -this.vx; } else this.x = nx;
+    const ny = this.y + this.vy * dt; if (wall(this.box(this.x, ny))) { this.vy = -this.vy; } else this.y = ny;
+    const P = G.player; if (rectHit(this.body(), P.body())) P.hurt(1, this.x, this.y - 6, G);
+  }
+  draw() { Blade.prototype.draw.call(this); }
+}
 class Blade {
   constructor(x, y, dx, dy, len, speed = 70, kind = 'blade') { this.x = this.x0 = x; this.y = this.y0 = y; this.dx = dx; this.dy = dy; this.len = len; this.sp = speed; this.p = 0; this.dir = 1; this.w = 14; this.h = 8; this.t = 0; this.isTrap = true; this.kind = kind; }
   body() { return { x: this.x - 7, y: this.y - 14, w: 14, h: 14 }; }
