@@ -287,8 +287,10 @@ class ClockPost {
       D(-16, -84, 32, 34, '#4a3a7a'); D(-13, -81, 26, 28, '#e8e0f0'); D(-16, -84, 32, 2, '#7a6aaa');
       for (let i = 0; i < 12; i++) { const b = i / 12 * Math.PI * 2; D(Math.round(Math.cos(b) * 10) - 1, -67 + Math.round(Math.sin(b) * 10) - 1, 2, 2, '#4a3a7a'); }
     });
-    const frozen = G.freezeT > 0, a = frozen ? -Math.PI / 2 : this.t * 2;
-    ctx.strokeStyle = '#2a1d38'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(this.x, this.y - 33.5); ctx.lineTo(this.x + Math.cos(a) * 6, this.y - 33.5 + Math.sin(a) * 6); ctx.moveTo(this.x, this.y - 33.5); ctx.lineTo(this.x, this.y - 37.5); ctx.stroke();
+    // arrêtée sur minuit : les deux aiguilles pointent en haut ; l'aiguille des minutes tressaille, sauf quand la salle est figée
+    const frozen = G.freezeT > 0, a = -Math.PI / 2 + (frozen ? 0 : (Math.floor(this.t * 2) % 2 ? 0.12 : 0));
+    ctx.strokeStyle = '#2a1d38'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(this.x, this.y - 33.5); ctx.lineTo(this.x + Math.cos(a) * 7, this.y - 33.5 + Math.sin(a) * 7); ctx.stroke();
+    ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(this.x, this.y - 33.5); ctx.lineTo(this.x, this.y - 38); ctx.stroke();
     if (frozen) { ctx.strokeStyle = '#8ff3ea'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y - 33.5, 10, -Math.PI / 2, -Math.PI / 2 + (G.freezeT / 5) * Math.PI * 2); ctx.stroke(); }
   }
 }

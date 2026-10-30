@@ -87,8 +87,10 @@ const SIGNS = {
 class Furniture {
   constructor(x, y, kind, o = {}) { this.x = x; this.y = y; this.kind = kind; this.o = o; this.t = rand(0, 5); const S = FURN[kind]; this.w = S.w; this.h = S.h; this.solid = S.solid !== false; this.ground = !!S.ground; if (S.light) this.light = S.light; }
   update(dt) { this.t += dt; }
-  canInteract() { return !!this.o.say; }
-  interact(G) { G.say(this.o.say); }
+  // derrière un comptoir : on parle au marchand par-dessus
+  behind(G) { return this.kind === 'counter' && G.area.ents.find(e => e instanceof NPC && Math.abs(e.x - this.x) < this.w / 2 + 8 && e.y < this.y && this.y - e.y < 30); }
+  canInteract() { return !!this.o.say || !!this.behind(G); }
+  interact(G) { const n = this.behind(G); if (n) return n.interact(G); G.say(this.o.say); }
   draw() { if (!this.ground) ell(this.x, this.y, this.w / 2 + 1, 2, 'rgba(0,0,0,.3)'); hi(this.x, this.y, !!this.o.flip, () => FURN[this.kind].draw(this.o, this.t)); }
 }
 const FURN = {

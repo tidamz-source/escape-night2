@@ -4,7 +4,14 @@ const Story = {
   flag(k) { if (k === 'slingshot') return Inventory.has('lance_pierre'); if (['frisbee', 'grappin', 'palmes', 'petards'].includes(k)) return Inventory.has(k); return !!SAVE[k]; },
   set(k) { SAVE[k] = true; persist(); Bus.emit('story:advanced', { flag: k }); },
   cond(c) { if (!c) return true; return c.split('&').every(t => { t = t.trim(); const neg = t[0] === '!'; const v = this.flag(neg ? t.slice(1) : t); return neg ? !v : v; }); },
-  names() { return { hero: Heroes.name(SAVE.hero), enfant1: Heroes.name(Heroes.captive(1)), enfant2: Heroes.name(Heroes.captive(2)), e: Heroes.def().he === 'elle' ? 'e' : '' }; },
+  names() { return { hero: Heroes.name(SAVE.hero), enfant1: Heroes.name(Heroes.captive(1)), enfant2: Heroes.name(Heroes.captive(2)), e: Heroes.def().he === 'elle' ? 'e' : '', merci1: this.merci(1), merci2: this.merci(2) }; },
+  // ce que dit l'enfant libéré : entre Sacha (le grand frère) et Rox (la petite sœur), ça devient une affaire de famille
+  merci(n) {
+    const c = Heroes.captive(n), h = SAVE.hero;
+    if (h === 'sacha' && c === 'rox') return 'Tu es le meilleur des grands frères.';
+    if (h === 'rox' && c === 'sacha') return 'Tu es la meilleure des petites sœurs.';
+    return n === 1 ? 'Je te revaudrai ça.' : 'Tu es la meilleure personne du monde.';
+  },
   fmt(s) { const n = this.names(); return s.replace(/\{(\w+)\}/g, (m, k) => n[k] != null ? n[k] : m); },
   // normalise des répliques : textes formatés, portrait de qui parle
   lines(arr) {

@@ -457,7 +457,7 @@
  "freed": [
   {
    "who": "{enfant1}",
-   "text": "Tu es venu{e} jusqu'ici pour moi ? Je te revaudrai ça.",
+   "text": "Tu es venu{e} jusqu'ici pour moi ? {merci1}",
    "face": "smile",
    "faceOf": "enfant1"
   },
@@ -498,6 +498,17 @@
   }
  ],
  "enfant1": [
+  {
+   "if": "boss6",
+   "lines": [
+    {
+     "who": "{enfant1}",
+     "text": "Tu crois que les lucioles du camping viennent du royaume ? Moi, j'en mettrais ma main au feu.",
+     "face": "wink",
+     "faceOf": "enfant1"
+    }
+   ]
+  },
   {
    "lines": [
     {
@@ -707,7 +718,7 @@
  "freed4": [
   {
    "who": "{enfant2}",
-   "text": "Tu es venu{e} me chercher jusqu'au fond du lac ? Tu es la meilleure personne du monde.",
+   "text": "Tu es venu{e} me chercher jusqu'au fond du lac ? {merci2}",
    "face": "smile",
    "faceOf": "enfant2"
   },
@@ -902,6 +913,17 @@
   }
  ],
  "enfant2": [
+  {
+   "if": "boss6",
+   "lines": [
+    {
+     "who": "{enfant2}",
+     "text": "Le Roi Minuit qui nourrit les pigeons… J'aurais bien aimé voir ça.",
+     "face": "smile",
+     "faceOf": "enfant2"
+    }
+   ]
+  },
   {
    "lines": [
     {

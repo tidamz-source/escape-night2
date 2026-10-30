@@ -118,17 +118,19 @@ class DarkBomb { // tache d'ombre au sol qui explose (Roi Minuit, phase 3)
 // Phase 3 : il s'envole et sème des taches d'ombre ; un frisbee le fait tomber, Papa l'attrape et le tient.
 class MidnightKing extends Enemy {
   constructor(x, y, room) {
-    super(x, y, { hp: 18, dmg: 2, room });
+    super(x, y, { hp: 24, dmg: 2, room });
+    this.rage = 0; this.wh = 0; // rage : il accélère à chaque coup reçu ; wh : coups pendant la fenêtre en cours
     this.isBoss = true; this.name = 'Le Roi Minuit'; this.state = 'sleep'; this.st = 0; this.phase = 1; this.alt = 18; this.w = 20; this.h = 10; this.hits = 0; this.shield = true; this.loot = null; this.noFreeze = true; this.cx = x; this.cy = y;
     this.poof = ['#1a1030', '#6a5aa0', '#c3b3ff', '#ffe27a'];
   }
   body() { return { x: this.x - 14, y: this.y - this.alt - 50, w: 28, h: 50 }; }
   get light() { return { r: 60, c: 'rgba(160,120,255,' }; }
+  get k() { return Math.min(1.9, 1 + 0.12 * this.rage); }
   get vulnerable() { return this.state === 'down' || this.state === 'held' || (this.phase === 2 && !this.shield && this.state === 'float'); }
   wake(G) { if (this.state !== 'sleep') return; this.state = 'float'; this.st = 2; this.spawnCrystals(G); SFX.roar(); G.shake = 0.5; }
   spawnCrystals(G) { for (let i = 0; i < 4; i++) G.area.ents.push(new KingCrystal(this, i)); }
   onHook(G) {
-    if (this.phase === 2 && this.shield && this.state === 'float') { this.shield = false; this.st = 3.6; SFX.clank(); G.shake = 0.3; G.parts.burst(this.x, this.y - 30, 18, { c: ['#1a1030', '#c3b3ff'], life: 0.6, r: 2 }); Input.toast = { msg: 'Bouclier arraché !', t: 1.4 }; }
+    if (this.phase === 2 && this.shield && this.state === 'float') { this.shield = false; this.wh = 0; this.st = 3.4 / Math.sqrt(this.k); SFX.clank(); G.shake = 0.3; G.parts.burst(this.x, this.y - 30, 18, { c: ['#1a1030', '#c3b3ff'], life: 0.6, r: 2 }); Input.toast = { msg: 'Bouclier arraché !', t: 1.4 }; }
     else SFX.tink();
     return true;
   }
@@ -137,12 +139,21 @@ class MidnightKing extends Enemy {
     if (this.vulnerable && src !== 'stone' && src !== 'frisbee') {
       this.hp -= dmg || 1; this.flash = 0.2; SFX.bossHit(); G.hitstop = 0.08; G.shake = 0.15; this.hits++;
       G.parts.burst(this.x, this.y - this.alt - 26, 10, { c: this.poof, life: 0.4, smin: 30, smax: 90, r: 2 });
-      const want = this.hp <= 0 ? 4 : this.hp <= 6 ? 3 : this.hp <= 12 ? 2 : 1;
+      this.rage++; this.wh++;
+      const want = this.hp <= 0 ? 4 : this.hp <= 8 ? 3 : this.hp <= 16 ? 2 : 1;
       if (this.hp <= 0) { this.state = 'dying'; this.st = 2.6; SFX.bossDie(); G.shake = 0.6; for (const e of G.area.ents) { if (e !== this && e.isEnemy && !e.dead && e.room === this.room) e.die(G); if (e.isOrb) e.dead = true; } return; }
       if (want !== this.phase) {
         this.phase = want; this.state = 'float'; this.st = 1.5; this.alt = 18; this.shield = true; this.hits = 0; SFX.roar(); G.shake = 0.4;
         G.say(Story.script(want === 2 ? 'king2' : 'king3'));
         if (want === 3) this.state = 'fly';
+        return;
+      }
+      // deux coups, et la fenêtre se referme : il se relève, remet son bouclier ou reprend son vol
+      if (this.wh >= 2) {
+        this.wh = 0; SFX.roar(); G.shake = 0.25;
+        if (this.state === 'down') { this.state = 'float'; this.alt = 18; this.st = 2; this.spawnCrystals(G); }
+        else if (this.state === 'held') { this.state = 'fly'; this.st = 1; }
+        else if (this.phase === 2) this.st = 0;
       }
       return;
     }
@@ -158,27 +169,27 @@ class MidnightKing extends Enemy {
       case 'sleep': return;
       case 'float': {
         if (this.phase === 1) {
-          this.x = lerp(this.x, rr.x + 240 + Math.cos(this.t * 0.6) * 90, dt); this.y = lerp(this.y, rr.y + 120 + Math.sin(this.t * 0.9) * 20, dt);
-          this.cd = (this.cd || 2) - dt; if (this.cd <= 0) { this.cd = 2.6; SFX.shoot(); for (let i = 0; i < 8; i++) { const o = new Orb(this.x, this.y - 40, i / 8 * Math.PI * 2 + this.t); o.room = this.room; G.area.ents.push(o); } }
-          if (!G.area.ents.some(e => e instanceof KingCrystal && !e.dead)) { this.state = 'down'; this.st = 3.5; this.alt = 0; G.shake = 0.3; SFX.stun(); }
+          const k = this.k; this.x = lerp(this.x, rr.x + 240 + Math.cos(this.t * 0.6 * k) * 90, dt * k); this.y = lerp(this.y, rr.y + 120 + Math.sin(this.t * 0.9 * k) * 20, dt * k);
+          this.cd = (this.cd || 2) - dt; if (this.cd <= 0) { this.cd = 2.6 / k; SFX.shoot(); for (let i = 0; i < 8; i++) { const o = new Orb(this.x, this.y - 40, i / 8 * Math.PI * 2 + this.t); o.room = this.room; G.area.ents.push(o); } }
+          if (!G.area.ents.some(e => e instanceof KingCrystal && !e.dead)) { this.state = 'down'; this.wh = 0; this.st = 3.5 / Math.sqrt(this.k); this.alt = 0; G.shake = 0.3; SFX.stun(); }
         } else if (this.phase === 2) {
           if (this.st <= 0) { // téléportation
             if (!this.shield) this.shield = true;
-            this.x = rr.x + rand(80, 400); this.y = rr.y + rand(110, 200); this.st = 3; SFX.rift(); G.parts.burst(this.x, this.y - 30, 20, { c: this.poof, life: 0.6, r: 2 });
+            this.x = rr.x + rand(80, 400); this.y = rr.y + rand(110, 200); this.st = 3 / this.k; SFX.rift(); G.parts.burst(this.x, this.y - 30, 20, { c: this.poof, life: 0.6, r: 2 });
             if (Math.random() < 0.5) { const s = new Shadow(clamp(this.x + rand(-60, 60), rr.x + 60, rr.x + rr.w - 60), this.y, this.room); s.respawn = true; G.area.ents.push(s); }
           }
-          this.cd = (this.cd || 1.5) - dt; if (this.cd <= 0 && this.shield) { this.cd = 1.6; SFX.shoot(); for (const o of [-0.2, 0.2]) { const b = new Orb(this.x, this.y - 40, a + o); b.room = this.room; G.area.ents.push(b); } }
+          this.cd = (this.cd || 1.5) - dt; if (this.cd <= 0 && this.shield) { this.cd = 1.6 / this.k; SFX.shoot(); for (const o of [-0.2, 0.2]) { const b = new Orb(this.x, this.y - 40, a + o); b.room = this.room; G.area.ents.push(b); } }
         }
         this.touch(G); return;
       }
       case 'down': if (this.st <= 0) { this.state = 'float'; this.alt = 18; this.st = 2; if (this.phase === 1) this.spawnCrystals(G); } return;
       case 'fly': {
         this.alt = lerp(this.alt, 46, dt * 2);
-        this.x = lerp(this.x, rr.x + 240 + Math.cos(this.t * 0.9) * 150, dt * 1.5); this.y = lerp(this.y, rr.y + 140 + Math.sin(this.t * 1.3) * 50, dt * 1.5);
-        this.cd = (this.cd || 1) - dt; if (this.cd <= 0) { this.cd = 0.9; G.area.ents.push(Object.assign(new DarkBomb(P.x + rand(-20, 20), P.y + rand(-10, 10), this.room))); }
+        const k = this.k; this.x = lerp(this.x, rr.x + 240 + Math.cos(this.t * 0.9 * k) * 150, dt * 1.5 * k); this.y = lerp(this.y, rr.y + 140 + Math.sin(this.t * 1.3 * k) * 50, dt * 1.5 * k);
+        this.cd = (this.cd || 1) - dt; if (this.cd <= 0) { this.cd = 0.9 / k; G.area.ents.push(Object.assign(new DarkBomb(P.x + rand(-20, 20), P.y + rand(-10, 10), this.room))); }
         return;
       }
-      case 'fall': this.alt = lerp(this.alt, 0, Math.min(1, dt * 10)); if (this.st <= 0) { this.alt = 0; this.state = 'held'; this.st = 3.8; G.shake = 0.3; } return;
+      case 'fall': this.alt = lerp(this.alt, 0, Math.min(1, dt * 10)); if (this.st <= 0) { this.alt = 0; this.state = 'held'; this.wh = 0; this.st = 3.6 / Math.sqrt(this.k); G.shake = 0.3; } return;
       case 'held': if (this.st <= 0) { this.state = 'fly'; this.st = 1; SFX.roar(); } return;
       case 'dying':
         if (Math.random() < dt * 25) G.parts.burst(this.x + rand(-20, 20), this.y - rand(0, 50), 6, { c: ['#ffe27a', '#fff', '#c3b3ff'], life: 0.6, r: 2, g: 40 });
@@ -270,7 +281,7 @@ function buildCastleArea() {
       const blade = (n, x, y, dx, dy, len, sp) => [n, new Blade(P(n, x, y).x, P(n, x, y).y, dx, dy, len, sp)];
       const altar = (n, x, y, f) => [n, mk(SealAltar, n, x, y, f)];
       const L = [
-        ...clocks('entry', [[8, 10], [21, 10]]), blade('entry', 160, 96, 1, 0, 160, 120), blade('entry', 320, 60, -1, 0, 160, 100),
+        ...clocks('entry', [[8, 10], [21, 10]]), ...[[60, 220, 0], [92, 190, 0.33], [124, 205, 0.66]].flatMap(([y, sp, ph]) => [blade('entry', 56, y, 1, 0, 368, sp), blade('entry', 424, y, -1, 0, 368, sp)].map(([n, e], j) => { e.p = 368 * ((ph + j * 0.5) % 1); return [n, e]; })), // trois couloirs de lames sur toute la largeur : on ne passe qu'en figeant la salle
         ['entry', mk(Sign, 'entry', 11, 13, [{ text: '« Ici, le temps s\'arrête quand on frappe l\'horloge. »' }])],
         ['blast', new CrackedWall(P('blast', 15 * TS, 9 * TS).x, P('blast', 15 * TS, 9 * TS).y, 'castleWall')], altar('blast', 8, 8, 'sealP'),
         ['sling', mk(Crystal, 'sling', 22, 3, 'castleBridge', G => { G.area.syncTiles(); G.shake = 0.3; SFX.secret(); })], altar('sling', 21, 6, 'sealS'),
