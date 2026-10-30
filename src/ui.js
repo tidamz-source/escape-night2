@@ -34,7 +34,7 @@ function box(x, y, w, h, o = {}) {
   R(x - 2, y - 2, w + 4, h + 4, PAL.ink); R(x, y, w, h, o.fill || '#14244c');
   R(x + 1, y + 1, w - 2, 1, o.edge || PAL.lav); R(x + 1, y + h - 2, w - 2, 1, '#0c1530');
 }
-function heroHeight(id) { const sh = SHEETS[DATA.heroes[id].sheet]; return sh.meta.scale === '2' ? 37 : 31; }
+function heroHeight(id) { const sh = SHEETS[DATA.heroes[id].sheet]; return sh.meta.scale === '2' ? 37 : sh.meta.scale === '1.4' ? 32 : 31; }
 
 const UIMixin = {
   // ---------- HUD ----------
