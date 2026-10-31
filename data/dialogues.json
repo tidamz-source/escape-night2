@@ -463,12 +463,12 @@
   },
   {
    "who": "{hero}",
-   "text": "Les autres sont prisonniers aussi. Le Roi Minuit les garde dans d'autres donjons.",
+   "text": "Les autres ont disparu aussi. Papa, Mamie, Goyave… Je ne sais pas où ils sont.",
    "face": "angry"
   },
   {
    "who": "{enfant1}",
-   "text": "Alors on va les chercher. Je t'attends au village, sur la place.",
+   "text": "Alors on va les chercher, où qu'ils soient. Je t'attends au village, sur la place.",
    "face": "wink",
    "faceOf": "enfant1"
   },
@@ -493,7 +493,7 @@
   },
   {
    "who": "{hero}",
-   "text": "Alors on ne traîne pas. On a encore cinq personnes à ramener.",
+   "text": "Alors on ne traîne pas. Il faut retrouver les autres.",
    "face": "smile"
   }
  ],
@@ -653,7 +653,7 @@
   },
   {
    "who": "{hero}",
-   "text": "Les autres ont besoin de nous. Il en reste encore trois.",
+   "text": "Les autres ont besoin de nous. On ne lâche rien.",
    "face": "angry"
   },
   {

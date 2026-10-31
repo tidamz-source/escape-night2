@@ -128,16 +128,31 @@ class Chest {
   get open() { return !!SAVE[this.flag]; }
   get hidden() { return !!this.reveal && !SAVE[this.reveal]; }
   get solid() { return !this.hidden; }
-  get light() { return !this.hidden && !this.open ? { r: this.big ? 44 : 26, c: 'rgba(255,207,122,' } : null; }
-  canInteract() { return !this.hidden && !this.open; }
+  get light() { if (this.beam) return { r: this.big ? 80 : 64, c: 'rgba(255,230,150,', warm: true }; return !this.hidden && !this.open ? { r: this.big ? 44 : 26, c: 'rgba(255,207,122,' } : null; }
+  canInteract() { return !this.hidden && !this.open && !this.busy; }
+  // ouverture : le coffre tremble, le couvercle saute, un faisceau de lumière jaillit et l'objet s'élève au-dessus du coffre
   interact(G) {
-    SAVE[this.flag] = true;
-    if (this.give === 'key') Keys.add(1);
-    else if (this.give.startsWith('money:')) Wallet.add(Number(this.give.slice(6)));
-    else if (this.give.startsWith('bigkey:')) SAVE['bigkey_' + this.give.slice(7)] = true;
-    else Inventory.give(this.give);
-    persist(); SFX.chest(); G.raise(this.give.startsWith('money') ? 'money' : this.give.startsWith('bigkey') ? 'bigkey' : this.give);
-    G.say(this.msg || [{ text: 'Tu as trouvé une petite clé !' }]);
+    this.busy = true; let creak = 0; const P = G.player; P.vx = P.vy = 0;
+    const kind = this.give.startsWith('money') ? 'money' : this.give.startsWith('bigkey') ? 'bigkey' : this.give;
+    G.cut = { t: 0,
+      update: dt => {
+        const c = G.cut; c.t += dt; this.t += dt; G.parts.update(dt);
+        if (c.t < 0.75) { const k = Math.min(1, c.t * 2); this.jx = (Math.random() - 0.5) * 2.2 * k; this.jy = -Math.random() * k; if ((creak -= dt) <= 0) { creak = 0.18; SFX.push(); } }
+        else if (!c.opened) {
+          c.opened = true; this.jx = this.jy = 0; SAVE[this.flag] = true;
+          if (this.give === 'key') Keys.add(1);
+          else if (this.give.startsWith('money:')) Wallet.add(Number(this.give.slice(6)));
+          else if (this.give.startsWith('bigkey:')) SAVE['bigkey_' + this.give.slice(7)] = true;
+          else Inventory.give(this.give);
+          persist(); SFX.chest(); G.shake = 0.2; this.beam = 1;
+          G.parts.burst(this.x, this.y - 14, 26, { c: ['#fff', '#ffe27a', '#ffcf3a'], life: 0.9, smin: 20, smax: 90, r: 2, drag: 2, up: 30 });
+          G.raised = { kind, t: 1.6, at: { x: this.x, y: this.y - (this.big ? 20 : 14) }, rise: 0 };
+        } else if (G.raised) G.raised.rise = Math.min(1, (c.t - 0.75) / 0.7);
+        if (c.opened && Math.random() < dt * 14) G.parts.add({ x: this.x + rand(-8, 8), y: this.y - 16, vy: -rand(20, 50), vx: rand(-6, 6), life: 0.9, c: pick(['#fff6c0', '#ffe27a', '#fff']), r: 1 });
+        if (c.t > 1.6) { G.cut = null; G.state = 'play'; G.say(this.msg || [{ text: 'Tu as trouvé une petite clé !' }], () => { this.beam = 0; this.busy = false; }); }
+      },
+      draw: () => {} };
+    G.state = 'cut';
   }
   update(dt, G) {
     this.t += dt;
@@ -146,7 +161,15 @@ class Chest {
   draw() {
     if (this.hidden) return;
     ell(this.x, this.y, this.big ? 14 : 10, this.big ? 4 : 3, 'rgba(0,0,0,.4)');
-    hi(this.x, this.y, false, () => {
+    if (this.beam) { // faisceau de lumière qui sort du coffre
+      const s = this.big ? 1.4 : 1, top = this.y - 90, base = this.y - 12 * s, hw = 9 * s, a = 0.55 + Math.sin(G.t * 9) * 0.08;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createLinearGradient(0, base, 0, top); g.addColorStop(0, `rgba(255,236,160,${a})`); g.addColorStop(1, 'rgba(255,236,160,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(this.x - hw, base); ctx.lineTo(this.x + hw, base); ctx.lineTo(this.x + hw * 2.2, top); ctx.lineTo(this.x - hw * 2.2, top); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = `rgba(255,255,255,${a * 0.6})`; ctx.fillRect(this.x - hw * 0.35, top + 20, hw * 0.7, base - top - 20);
+      ctx.restore();
+    }
+    hi(this.x + (this.jx || 0), this.y + (this.jy || 0), false, () => {
       const gold = this.give.startsWith('bigkey'), g1 = gold ? '#c08a10' : this.big ? '#4a6ab0' : '#7a4a24', g2 = gold ? '#ffd23a' : this.big ? '#6a8ad0' : '#a06a34', g3 = gold ? '#8a5a10' : this.big ? '#2a3a70' : '#4a2a14', l1 = gold ? '#e0a820' : this.big ? '#5a7ac0' : '#8a5a2c', l2 = gold ? '#fff2a0' : this.big ? '#8aaae0' : '#b07a3c', l3 = gold ? '#6a4a10' : this.big ? '#1a2a5a' : '#5a3418';
       D(-15, -18, 30, 18, g1); D(-15, -18, 30, 2, g2); D(-15, -2, 30, 2, g3);
       D(-15, -18, 3, 18, '#c8a040'); D(12, -18, 3, 18, '#c8a040');
