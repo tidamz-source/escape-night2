@@ -357,8 +357,9 @@ const G = {
     const sx = this.shake > 0 ? rand(-2, 2) : 0, sy = this.shake > 0 ? rand(-2, 2) : 0;
     const cx = Math.round(this.cam.x + sx), cy = Math.round(this.cam.y + sy);
     ctx.save(); ctx.translate(-cx, -cy);
-    if (A.w <= W || A.h <= H) ctx.drawImage(A.layer, 0, 0, A.w, A.h);
-    else { const sxp = clamp(cx * 2, 0, A.layer.width - W * 2), syp = clamp(cy * 2, 0, A.layer.height - H * 2); ctx.drawImage(A.layer, sxp, syp, W * 2, H * 2, sxp / 2, syp / 2, W, H); }
+    const LY = (A.paint && IMG[A.paint]) || A.layer; // carte peinte (image) ou tuiles dessinées
+    if (A.w <= W || A.h <= H) ctx.drawImage(LY, 0, 0, A.w, A.h);
+    else { const sxp = clamp(cx * 2, 0, LY.width - W * 2), syp = clamp(cy * 2, 0, LY.height - H * 2); ctx.drawImage(LY, sxp, syp, W * 2, H * 2, sxp / 2, syp / 2, W, H); }
     if (A.theme === 'camp') for (let ty = Math.floor(cy / TS); ty <= Math.floor((cy + H) / TS); ty++) for (let tx = Math.floor(cx / TS); tx <= Math.floor((cx + W) / TS); tx++) {
       if (A.tile(tx, ty) !== '~') continue;
       const ph = Math.sin(this.t * 2 + tx * 1.7 + ty * 2.3);
@@ -376,7 +377,7 @@ const G = {
         if (p.k === 'campfire' && Math.floor(this.t * 7) % 2) im = IMG.campfire2 || im;
         if (im) ctx.drawImage(im, half(p.x - p.iw / 2), half(p.y - p.ih + 1), p.iw, p.ih);
       } else {
-        it.e.draw();
+        if (!it.e.ghost) it.e.draw(); // ghost : déjà peint sur la carte
         if (it.e.stunT > 0 && !it.e.dead) for (let i = 0; i < 3; i++) { const a = this.t * 5 + i * 2.1; R(half(it.e.x + Math.cos(a) * 7), half(it.e.y - (it.e.alt || 0) - 22 + Math.sin(a) * 2), 1.5, 1.5, i % 2 ? '#ffe27a' : '#fff'); }
       }
     }
@@ -420,7 +421,9 @@ const G = {
     l.setTransform(1, 0, 0, 1, 0, 0); l.globalCompositeOperation = 'source-over';
     l.clearRect(0, 0, W * SC, H * SC);
     const rd = this.darkFrom != null ? this.darkFrom : A.roomDark ? A.roomDark(this.room) : null;
-    l.fillStyle = `rgba(4,8,26,${((rd != null ? rd : A.dark) * DARK_K).toFixed(3)})`; // DARK_K : luminosité globale l.fillRect(0, 0, W * SC, H * SC);
+    // DARK_K : luminosité globale (le voile de nuit est atténué partout)
+    l.fillStyle = `rgba(4,8,26,${((rd != null ? rd : A.dark) * DARK_K).toFixed(3)})`;
+    l.fillRect(0, 0, W * SC, H * SC);
     l.globalCompositeOperation = 'destination-out';
     for (const o of L) {
       const r = (o.r + (o.flick ? Math.sin(this.t * 13) * 3 + Math.sin(this.t * 7.3) * 2 : 0)) * SC, x = (o.x - cx) * SC, y = (o.y - cy) * SC;

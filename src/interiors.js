@@ -5,9 +5,9 @@
 // o : { w, d, style ('house' | 'cabin' | 'hut' | 'bungalow' | 'shack'), roof, wall, sign, chimney, interior (id), locked () => message | null }
 class House {
   constructor(x, y, o) {
-    this.x = x; this.y = y; this.o = o; this.w = o.w * TS; this.h = o.d * TS; this.solid = true; this.t = rand(0, 5); this.isHouse = true;
+    this.x = x; this.y = y; this.o = o; this.w = o.w * TS; this.h = o.d * TS; this.solid = !o.painted; this.t = rand(0, 5); this.isHouse = true; this.ghost = !!o.painted;
     const hw = this.w / 2 - 14;
-    this.lights = o.style === 'bungalow' ? [{ dx: -hw + 4, dy: -14, r: 28, c: 'rgba(255,220,150,' }] : [{ dx: -hw, dy: -12, r: 34, c: 'rgba(255,200,120,' }, { dx: hw, dy: -12, r: 34, c: 'rgba(255,200,120,' }];
+    this.lights = o.painted ? [] : o.style === 'bungalow' ? [{ dx: -hw + 4, dy: -14, r: 28, c: 'rgba(255,220,150,' }] : [{ dx: -hw, dy: -12, r: 34, c: 'rgba(255,200,120,' }, { dx: hw, dy: -12, r: 34, c: 'rgba(255,200,120,' }];
   }
   // le bloc solide laisse libre le seuil de la porte
   get door() { return { x: this.x - 9, y: this.y - 4, w: 18, h: 8 }; }

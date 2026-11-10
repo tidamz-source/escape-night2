@@ -10,7 +10,7 @@
 // Chaque zone : sa palette (world.js → OVER), ses maisons, son relais luciole, sa quête, un donjon au plus (entrée par le bas).
 
 const ZW = 64, ZH = 48;
-const VIL = { bridge: { x: 8, y: 23, w: 3, h: 2 } };
+const VIL = { bridge: { x: 7, y: 23, w: 4, h: 2 } };
 function zoneGrid(seed, o = {}) {
   const g = makeGrid(ZW, ZH, '.'), T2 = gridTools(g), r = seeded(seed);
   T2.rect(0, 0, ZW, 2, '#'); T2.rect(0, ZH - 2, ZW, 2, '#'); T2.rect(0, 0, 2, ZH, '#'); T2.rect(ZW - 2, 0, 2, ZH, '#');
@@ -104,7 +104,7 @@ class Entrance {
 // ---------- la tour-horloge de Bourg-Luciole ----------
 // L'heure suit les fragments d'aube ; six lanternes s'allument autour du cadran. À chaque fragment rapporté, une cérémonie.
 class ClockTower {
-  constructor(x, y) { this.x = x; this.y = y; this.w = 64; this.h = 22; this.solid = true; this.t = 0; this.shown = SAVE.fragments || 0; this.hand = this.shown; this.glow = 0; }
+  constructor(x, y, painted) { this.x = x; this.y = y; this.painted = painted; this.w = 64; this.h = 22; this.solid = true; this.t = 0; this.shown = SAVE.fragments || 0; this.hand = this.shown; this.glow = 0; }
   get light() { return { r: 50 + this.shown * 10 + this.glow * 40, c: 'rgba(255,220,140,' }; }
   canInteract() { return true; }
   interact(G) {
@@ -116,19 +116,20 @@ class ClockTower {
     if (!G.cut) { this.shown = SAVE.fragments || 0; this.hand = this.shown; }
     if (Math.random() < dt * (2 + this.shown * 2)) G.parts.add({ x: this.x + rand(-30, 30), y: this.y - rand(40, 130), vy: -8, life: 1.4, c: pick(['#ffe27a', '#fff6c0']), r: 1 });
   }
-  draw() {
-    ell(this.x, this.y, 36, 8, 'rgba(0,0,0,.4)');
-    const n = this.shown, sun = SAVE.boss6;
-    hi(this.x, this.y, false, () => {
-      // socle et fût
+  drawBody() {
       D(-64, -26, 128, 26, '#5a5468'); D(-64, -26, 128, 5, '#7a7488'); D(-56, -8, 112, 8, '#4a4458');
       D(-36, -210, 72, 186, '#6a6478'); D(-36, -210, 10, 186, '#8a8498'); D(26, -210, 10, 186, '#4a4458');
       for (let y = -200; y < -30; y += 14) D(-36, y, 72, 2, '#5a5468');
       D(-12, -60, 24, 34, '#2a1d38'); D(-10, -58, 20, 32, '#3a2a48'); // porte
-      // toit
       D(-44, -226, 88, 18, '#3a2c66'); D(-34, -250, 68, 26, '#3a2c66'); D(-22, -270, 44, 22, '#4a3a7a'); D(-8, -292, 16, 24, '#4a3a7a'); D(-2, -306, 4, 16, '#c8a040');
-      // grand cadran
-      const cx = 0, cy = -160;
+  }
+  draw() {
+    if (!this.painted) ell(this.x, this.y, 36, 8, 'rgba(0,0,0,.4)');
+    const n = this.shown, sun = SAVE.boss6;
+    hi(this.x, this.y, false, () => {
+      if (!this.painted) this.drawBody();
+      // grand cadran (sur la tour peinte : à l'emplacement du cadran de l'image)
+      const cx = 0, cy = this.painted ? -162 : -160;
       ctx.fillStyle = '#c8a040'; ctx.beginPath(); ctx.arc(cx, cy, 34, 0, 7); ctx.fill();
       ctx.fillStyle = sun ? '#fff6d8' : '#e8e0d0'; ctx.beginPath(); ctx.arc(cx, cy, 30, 0, 7); ctx.fill();
       for (let i = 0; i < 12; i++) { const b = i / 12 * Math.PI * 2; D(Math.round(cx + Math.sin(b) * 25) - 2, Math.round(cy - Math.cos(b) * 25) - 2, 4, 4, '#5a4a6a'); }
@@ -186,63 +187,62 @@ class GateLever extends RailLever {
 }
 
 // ----- Bourg-Luciole (le village, au centre) -----
+// Bourg-Luciole : carte peinte (assets/maps/royaume.png) ; la grille PAINTED.royaume ne sert qu'aux collisions
 function buildVillageArea() {
-  const Z = zoneGrid(77), { rect } = Z;
-  rect(30, 0, 4, 2, '1'); rect(30, ZH - 2, 4, 2, '3'); rect(0, 23, 2, 2, '2');
-  rect(2, 3, 6, 42, '.'); rect(8, 2, 3, 44, '~'); rect(2, 23, 6, 2, '=');                   // la rivière de l'ouest et son pont-levis
-  rect(30, 2, 4, 44, 'c'); rect(11, 23, 48, 2, 'c'); rect(11, 39, 48, 2, 'c'); rect(24, 18, 16, 12, 'c'); // rues et place
-  rect(17, 21, 2, 2, '='); rect(45, 21, 2, 2, '='); rect(19, 12, 11, 2, '='); rect(34, 12, 13, 2, '=');
-  rect(17, 38, 2, 1, '='); rect(45, 38, 2, 1, '='); rect(53, 38, 2, 1, '='); rect(24, 38, 2, 1, '='); rect(39, 38, 2, 1, '=');
-  rect(12, 25, 2, 14, '='); rect(56, 25, 2, 14, '=');
-  Z.flowers(90);
-  const A = zoneArea('royaume', Z.g, 'royaume', { name: 'Bourg-Luciole', dark: 0.5 });
-  const H = (id, x, y, o) => ({ id, x: x * TS + 8, y: (y + 1) * TS, o });
+  const g = PAINTED.royaume.map(r => r.split(''));
+  const A = zoneArea('royaume', g, 'royaume', { name: 'Bourg-Luciole', dark: 0.5 });
+  A.paint = 'map_royaume'; A.bushSpots = [];
+  // porte (case du seuil) de chaque maison peinte : on y entre en montant
+  const H = (id, tx, ty, o = {}) => ({ id, x: tx * TS + 8, y: ty * TS, o: Object.assign({ w: 3, d: 1, painted: true }, o) });
   A.houses = [
-    H('auberge', 17, 20, { w: 6, d: 4, sign: 'inn', roof: '#8a3a3a', chimney: true }),
-    H('bibliotheque', 45, 20, { w: 6, d: 4, sign: 'library', roof: '#3a4a8a', wall: '#b8b0c8', chimney: true }),
-    H('pierrette', 17, 11, { w: 5, d: 3, roof: '#6a5a8a' }),
-    H('gaspard', 45, 11, { w: 5, d: 3, roof: '#3a6a4a' }),
-    H('forge', 17, 37, { w: 6, d: 4, sign: 'forge', roof: '#4a4450', wall: '#a8a0a8', chimney: true }),
-    H('epicerie', 45, 37, { w: 6, d: 4, sign: 'shop', roof: '#a85a2a' }),
-    H('mamie', 53, 37, { w: 5, d: 3, sign: 'kitchen', roof: '#6a5a3a', chimney: true, locked: () => !SAVE.freed2 && 'Une maison au toit de chaume, avec un vieux chaudron dans la cheminée. Personne ne répond.' }),
-    H('comptoir', 24, 37, { w: 5, d: 3, sign: 'trade', roof: '#8a6a2a', locked: () => !SAVE.freed3 && '« Maison à louer. » La porte est fermée.' }),
-    H('mahaut', 39, 37, { w: 5, d: 3, roof: '#5a3a6a' }),
+    H('pierrette', 17, 12), H('gaspard', 45, 12),
+    H('auberge', 17, 22), H('bibliotheque', 45, 22),
+    H('forge', 17, 39), H('comptoir', 25, 39, { locked: () => !SAVE.freed3 && '« Maison à louer. » La porte est fermée.' }),
+    H('epicerie', 39, 39), H('mahaut', 45, 39),
+    H('mamie', 53, 39, { locked: () => !SAVE.freed2 && 'Une maison au toit de chaume, avec un vieux chaudron dans la cheminée. Personne ne répond.' }),
   ];
-  const keep = A.houses.map(h => ({ x: h.x - 64, y: h.y - 96, w: 128, h: 120 }));
-  keep.push({ x: 0, y: 0, w: 12 * TS, h: ZH * TS }, { x: 22 * TS, y: 16 * TS, w: 20 * TS, h: 16 * TS }, { x: 50 * TS, y: 24 * TS, w: 12 * TS, h: 10 * TS });
-  scatter(A, 41, keep, { trees: 34, rocks: 10, flowers: 20, bushes: 26 });
-  const lamp = { r: 46, c: 'rgba(255,220,150,' };
-  for (const [x, y] of [[23, 17], [40, 17], [23, 30], [40, 30], [29, 8], [34, 8], [29, 42], [34, 42], [14, 22], [52, 22], [14, 41], [52, 41]]) A.addProp('lamp', x * TS, y * TS, { fw: 4, fh: 3, light: Object.assign({ oy: -26 }, lamp) });
+  // les réverbères peints éclairent la nuit
+  const lamps = [[23, 16], [40, 16], [23, 29], [40, 29], [13, 21], [52, 21], [34, 41], [28, 6], [33, 6]];
   A.spawn = function () {
     this.ents = [];
-    for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));
     for (const h of this.houses) this.ents.push(Object.assign(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)), { hid: h.id }));
-    this.ents.push(new ClockTower(32 * TS, 26 * TS));
+    for (const [x, y] of lamps) this.ents.push(new LightSpot(x * TS + 8, y * TS + 4, { r: 46, c: 'rgba(255,220,150,', oy: -22 }));
+    this.ents.push(new ClockTower(32 * TS, 26 * TS, true));
     this.ents.push(new GateBlock(32 * TS, 4 * TS, 64));
-    this.ents.push(new NPC(28 * TS, 5 * TS, { look: 'garde', talk: 'garde' }));
-    this.ents.push(new Relay(26 * TS, 29 * TS, 'village'));
-    this.ents.push(new Rift(55 * TS, 30 * TS, { active: () => !!SAVE.boss6, closed: 'La faille par laquelle tu es arrivé{e} s\'est refermée. Lumi dit qu\'elle se rouvrira quand le jour se lèvera.', enter: G => G.fadeTo(() => G.enter('camp', G.areas.camp.dawn, false), '#c8a8ff') }));
-    this.ents.push(new Decor(36 * TS, 28 * TS, 'well'), new Decor(27 * TS, 20 * TS, 'stall'));
+    this.ents.push(new NPC(27 * TS + 8, 5 * TS, { look: 'garde', talk: 'garde' }));
+    this.ents.push(Object.assign(new Relay(26 * TS, 29 * TS, 'village'), { ghost: true }));
+    this.ents.push(new Rift(55 * TS, 29 * TS + 8, { active: () => !!SAVE.boss6, closed: 'La faille par laquelle tu es arrivé{e} s\'est refermée. Lumi dit qu\'elle se rouvrira quand le jour se lèvera.', enter: G => G.fadeTo(() => G.enter('camp', G.areas.camp.dawn, false), '#c8a8ff') }));
     // la rivière de l'ouest : cible et pont-levis vers la Forêt
-    const bx = VIL.bridge.x * TS, by = VIL.bridge.y * TS;
-    this.ents.push(new Target(4 * TS + 8, by - 14, 'drawbridge', G => { G.area.syncTiles(); G.say(Story.script('bridge_down')); }));
-    this.ents.push(new DrawbridgeDeco(bx - 4, by + 18));
-    this.ents.push(new Sign(13 * TS, 22 * TS, [{ text: '« Pont-levis de la Forêt. Fermé par ordre du Roi Minuit. »' }, { who: '{hero}', text: 'Il y a une cible sur l\'autre rive… Si seulement je pouvais l\'atteindre.', face: 'o' }]));
-    this.ents.push(new Sign(35 * TS, 4 * TS, [{ text: '« Au nord : les Collines. Au sud : le Lac. À l\'ouest : la Forêt. »' }]));
-    if (SAVE.q && SAVE.q.poules === 1) for (const [i, x, y] of [[0, 8 * TS, 8 * TS], [1, 58 * TS, 15 * TS], [2, 20 * TS, 44 * TS]]) if (!SAVE['poule' + i]) this.ents.push(new Chicken(x, y, i));
+    this.ents.push(Object.assign(new Target(4 * TS + 8, 21 * TS + 4, 'drawbridge', G => { G.area.syncTiles(); G.say(Story.script('bridge_down')); }), { ghost: true }));
+    this.ents.push(new PaintedBridge(VIL.bridge));
+    this.ents.push(Object.assign(new Sign(13 * TS, 22 * TS, [{ text: '« Pont-levis de la Forêt. Fermé par ordre du Roi Minuit. »' }, { who: '{hero}', text: 'Il y a une cible sur l\'autre rive… Si seulement je pouvais l\'atteindre.', face: 'o' }]), { ghost: true }));
+    this.ents.push(Object.assign(new Sign(35 * TS, 3 * TS, [{ text: '« Au nord : les Collines. Au sud : le Lac. À l\'ouest : la Forêt. »' }]), { ghost: true }));
+    if (SAVE.q && SAVE.q.poules === 1) for (const [i, x, y] of [[0, 25 * TS, 13 * TS], [1, 56 * TS, 26 * TS], [2, 12 * TS, 40 * TS]]) if (!SAVE['poule' + i]) this.ents.push(new Chicken(x, y, i));
     questSpawns(this);
   };
   A.syncTiles = function () {
-    const want = SAVE.drawbridge ? 'b' : '~', B = VIL.bridge; let changed = false;
-    for (let y = B.y; y < B.y + B.h; y++) for (let x = B.x; x < B.x + B.w; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; changed = true; }
-    if (changed) this.rerender();
+    const want = SAVE.drawbridge ? 'b' : '~', B = VIL.bridge;
+    for (let y = B.y; y < B.y + B.h; y++) for (let x = B.x; x < B.x + B.w; x++) this.g[y][x] = want;
   };
   const sp0 = A.spawn; A.spawn = function () { this.syncTiles(); sp0.call(this); };
-  A.arrival = { x: 55 * TS, y: 32 * TS, dir: 'up' };
+  A.arrival = { x: 55 * TS, y: 31 * TS, dir: 'up' };
   A.start = { x: 32 * TS, y: 31 * TS, dir: 'down' };
   A.plaza = { x: 32 * TS, y: 31 * TS };
   A.exits = { 1: goZone('collines', 'collines_from_village'), 2: goZone('foret', 'foret_from_village'), 3: goZone('lac', 'lac_from_village') };
   return A;
+}
+// source de lumière invisible (réverbères peints)
+class LightSpot { constructor(x, y, l) { this.x = x; this.y = y; this.light = l; this.lightPos = [x, y + (l.oy || 0)]; this.ghost = true; } update() {} draw() {} }
+// le pont-levis abaissé, posé sur la rivière peinte
+class PaintedBridge {
+  constructor(b) { this.b = b; this.x = (b.x + b.w / 2) * TS; this.y = (b.y + b.h) * TS; this.ground = true; }
+  update() {}
+  draw() {
+    if (!SAVE.drawbridge) return; const b = this.b, x0 = b.x * TS - 4, y0 = b.y * TS - 2, w = b.w * TS + 8, h = b.h * TS + 4;
+    R(x0, y0 + h, w, 3, 'rgba(0,0,0,.35)');
+    for (let x = x0; x < x0 + w; x += 5) { R(x, y0, 4, h, '#7a4a24'); R(x, y0, 4, 1, '#a06a34'); R(x + 4, y0, 1, h, '#4a2a14'); }
+    R(x0, y0 + 2, w, 2, '#5a3418'); R(x0, y0 + h - 4, w, 2, '#5a3418');
+  }
 }
 
 // ----- Les Collines (nord) : prairies, moulin, moutons, la grotte des lucioles -----
