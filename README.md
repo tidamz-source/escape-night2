@@ -26,6 +26,13 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 5, la Tour des artificiers** (île du lac, à la nage) : **pétards**, murs fissurés, mèche, trois torches, boss le Chevalier de fer, Goyave (il suit le héros et déterre des trésors).
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
+## Version 7.5 : RPG et commerce
+- **Forge** : Bertrand améliore l'épée (coup chargé, onde), le lance-pierre (tir double, cailloux perçants), le frisbee (portée et trois cibles, frisbee de feu), le grappin (portée, coup) et le bouclier (parade large, renvoi), contre des écus et les matériaux rares laissés par les boss.
+- **Bestiaire** : onglet de la pause, 20 créatures, fiches complètes à 10 victoires (boss : 1), récompenses chez le sage (écus, loupe qui montre la vie des ennemis, encyclopédie).
+- **Marché vivant** : le stock des boutiques grandit avec les fragments, une promotion de 30 % change à chaque retour au village (fanion, ragots de Gaspard), un colporteur voyage de région en région.
+- **Revente et troc** : Amandine rachète matériaux et ingrédients (un article recherché par semaine) ; une chaîne d'échanges en 7 étapes mène à la boussole des secrets.
+- **Petits métiers** : cueillette (Collines, Forêt), minerai (Montagne, Terres), pêche avec la canne du pêcheur (mini-jeu de jauge, records), cuisine de Mamie (5 soupes aux effets temporaires).
+
 ## Version 7 : un monde plus grand et plus vivant
 - **Sept régions** de 64 × 48 tuiles, une direction artistique chacune, un donjon au maximum par région : Bourg-Luciole (centre), les Collines (nord, Grotte des lucioles), la Forêt (ouest, Bois des murmures), la Montagne (nord-est, Mines des gnomes), le Lac (sud, Temple englouti), la Côte (est du lac, Tour des artificiers), les Terres de Minuit (ouest du lac, Château de Minuit). On arrive toujours du bon côté de l'écran suivant.
 - **Des maisons où l'on entre** : les habitants vivent à l'intérieur, les boutiques posent leurs articles au sol avec leur prix (achat par Oui / Non). Tout le monde se moque gentiment des habits du héros, sauf le sage.
@@ -61,6 +68,8 @@ Modules indépendants qui communiquent par un bus d'événements (`Bus.emit` / `
 - `src/overworld.js` : les sept régions, décors, entrées de donjon, tour-horloge
 - `src/dungeon.js` : construction générique d'un donjon (salles, portes, petites et grande clés) ; `src/cave.js` : donjon 1
 - `src/quests.js` : quêtes secondaires et souvenirs du monde réel
+- `src/rpg.js` : matériaux, forge, bestiaire, marché, revente, troc, cueillette, minerai, pêche, cuisine
+- `src/maps.js` : cartes peintes (collisions, toits et feuillages)
 - `src/bois.js` : donjon 2 (frisbee, ennemis du bois, Grand-Duc, interrupteurs, cible du pont-levis)
 - `src/tools.js` : grappin, pétards, nage, poteaux, murs fissurés, mèches, torches, vannes, horloges, wagonnets, relais, sceaux
 - `src/mines.js`, `src/lac.js`, `src/temple.js`, `src/tower.js`, `src/castle.js` : les zones 3 à 6 (ennemis, boss, salles)

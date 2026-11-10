@@ -3,6 +3,7 @@
 
 // ---------- le frisbee : part en arc, revient, étourdit, rapporte les objets, survole souches et eau ----------
 const FRISBEE_RANGE = 124;
+const frisbeeRange = () => FRISBEE_RANGE * (Upg.lv('frisbee') >= 1 ? 1.45 : 1);
 class Frisbee {
   constructor(P, ax, ay, room) {
     const n = Math.hypot(ax, ay) || 1;
@@ -16,10 +17,10 @@ class Frisbee {
     let nx, ny;
     if (this.phase === 'out') {
       this.d += 240 * dt;
-      const k = this.d / FRISBEE_RANGE, lat = Math.sin(Math.PI * k) * 12;
+      const k = this.d / frisbeeRange(), lat = Math.sin(Math.PI * k) * 12;
       if (G.wind) { this.ox += G.wind.x * dt * 0.7; this.oy += G.wind.y * dt * 0.7; }
       nx = this.ox + this.ax * this.d - this.ay * lat; ny = this.oy + this.ay * this.d + this.ax * lat;
-      if (this.d >= FRISBEE_RANGE) this.phase = 'back';
+      if (this.d >= frisbeeRange()) this.phase = 'back';
     } else {
       const a = Math.atan2(P.y - this.y, P.x - this.x), sp = 270;
       nx = this.x + Math.cos(a) * sp * dt; ny = this.y + Math.sin(a) * sp * dt;
@@ -38,13 +39,18 @@ class Frisbee {
       if (!e.hit && !e.onFrisbee) continue;
       if (!rectHit(b, e.body ? e.body() : boxOf(e))) continue;
       this.hitSet.add(e);
+      const fire = Upg.lv('frisbee') >= 2;
       if (e.onFrisbee) e.onFrisbee(G, this);
-      else if (e.isEnemy) { e.hit(1, this.x, this.y, G, 'frisbee'); if (!e.dead) e.stunT = 2.2; }
+      else if (e.isEnemy) { e.hit(fire ? 2 : 1, this.x, this.y, G, 'frisbee'); if (!e.dead) e.stunT = 2.2; }
       else e.hit(1, this.x, this.y, G, 'frisbee');
-      this.back(G);
+      this.hits = (this.hits || 0) + 1;
+      if (!(Upg.lv('frisbee') >= 1 && e.isEnemy && this.hits < 3)) this.back(G); // amélioré : traverse jusqu'à trois ennemis
     }
     if (this.carry) { this.carry.x = this.x; this.carry.y = this.y + 4; }
+    // frisbee de feu : allume les torches et les braseros éteints qu'il frôle
+    if (Upg.lv('frisbee') >= 2) { if (Math.random() < dt * 40) G.parts.add({ x: this.x + rand(-3, 3), y: this.y - this.alt, vy: -20, life: 0.3, c: pick(['#ff7a1a', '#ffb02e']), r: 1 }); for (const e of G.area.ents) if (e instanceof Torch && !e.lit && dist(e.x, e.y - 24, this.x, this.y - this.alt) < 16) e.onBlast(G); }
   }
+  get light() { return Upg.lv('frisbee') >= 2 ? { r: 30, c: 'rgba(255,160,70,' } : null; }
   draw() {
     ell(this.x, this.y, 4, 1.5, 'rgba(0,0,0,.35)');
     const y = this.y - this.alt, w = 5 + Math.abs(Math.sin(this.t * 25)) * 1.5;

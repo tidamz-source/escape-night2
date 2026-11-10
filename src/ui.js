@@ -3,6 +3,15 @@
 
 // icônes d'objets (centrées sur x, y)
 function drawItemIcon(id, x, y, s = 1) {
+  id = id || '';
+  if (MATS[id]) return drawMatIcon(id, x, y, s);
+  if (id.startsWith('mat_')) return drawMatIcon(id.slice(4), x, y, s);
+  if (id.startsWith('troc_')) return drawTrocIcon(id.slice(5), x, y, s);
+  if (['soupe_jardin', 'soupe_pecheur', 'bouillon', 'veloute', 'soupe_doree', 'elixir'].includes(id)) { const c = { soupe_jardin: '#8ac85a', soupe_pecheur: '#7ab0d8', bouillon: '#9a9aa8', veloute: '#ffe27a', soupe_doree: '#ffb02e', elixir: '#5ac8e8' }[id]; const u = s; R(x - 3 * u, y - 7 * u, 6 * u, 2 * u, '#c8a070'); R(x - 4 * u, y - 5 * u, 8 * u, 10 * u, '#dfe8f0'); R(x - 3 * u, y - 2 * u, 6 * u, 6 * u, c); R(x - 2 * u, y - 4 * u, 1 * u, 6 * u, '#fff'); return; }
+  if (id === 'canne') { const u = s; ctx.save(); ctx.translate(x, y); ctx.rotate(-0.7); R(-1 * u, -9 * u, 2 * u, 18 * u, '#8a5a34'); R(-2 * u, 6 * u, 4 * u, 3 * u, '#5a3418'); ctx.restore(); ctx.strokeStyle = '#e8e8f0'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(x + 6 * u, y - 7 * u); ctx.lineTo(x + 7 * u, y + 5 * u); ctx.stroke(); R(x + 6 * u, y + 5 * u, 2 * u, 2 * u, '#e84a5a'); return; }
+  if (id === 'loupe') { ell(x - 1, y - 2, 5 * s, 5 * s, '#c8a040'); ell(x - 1, y - 2, 3.6 * s, 3.6 * s, '#bfe8ff'); R(x + 2 * s, y + 2 * s, 2 * s, 6 * s, '#5a3418'); return; }
+  if (id === 'encyclo') { R(x - 6 * s, y - 7 * s, 12 * s, 14 * s, '#3a6ab0'); R(x - 5 * s, y - 6 * s, 10 * s, 12 * s, '#4a8ad8'); R(x - 3 * s, y - 3 * s, 6 * s, 4 * s, '#ffe27a'); R(x - 6 * s, y + 6 * s, 12 * s, 1 * s, '#fff'); return; }
+  if (id === 'appat') { ell(x, y, 3 * s, 3 * s, '#ffd23a'); R(x - 0.5 * s, y - 7 * s, 1 * s, 5 * s, '#c8ccd8'); R(x + 1 * s, y + 2 * s, 2 * s, 1 * s, '#c8ccd8'); return; }
   if (id === 'lance_pierre') return drawSlingIcon(x, y + 1, s);
   if (id === 'frisbee') return drawFrisbeeIcon(x, y, s);
   if (id === 'champignons') return PICKUPS.mushroom.draw(x, y + 5 * s);
@@ -58,6 +67,12 @@ const UIMixin = {
     const fl = this.moneyFlash > 0;
     R(x, 24, 40, 14, 'rgba(7,13,31,.55)'); drawItemIcon('money', x + 8, 31, 0.8);
     text(String(Wallet.get()).padStart(2, '0'), x + 15, 26, { size: 8, color: fl ? '#fff6c0' : PAL.warm, bold: fl });
+    // cœur doré (soupe dorée)
+    if (P.bonusHp > 0) drawHeartShape(12 + n * 11, 11, 2, '#ffd23a', '#c89010');
+    // effets des soupes, avec leur temps restant
+    let ex = W - 40; for (const [k, ic] of [['def', 'bouillon'], ['light', 'veloute'], ['swim', 'elixir']]) if (Effects.on(k)) { R(ex - 2, 34, 28, 14, 'rgba(7,13,31,.55)'); drawItemIcon(ic, ex + 5, 41, 0.6); text(String(Math.ceil(Effects.t[k])), ex + 24, 37, { size: 6, align: 'right', color: PAL.white }); ex -= 32; }
+    // boussole des secrets
+    const sec = compassTarget(this); if (sec) { const cx = W - 52, cy = 18, a = Math.atan2(sec.y - P.y, sec.x - P.x) + Math.sin(this.t * 20) * 0.08; ell(cx, cy, 8, 8, 'rgba(7,13,31,.7)'); ell(cx, cy, 6.5, 6.5, '#e8dcc8'); ctx.strokeStyle = '#d84a5a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * 5.5, cy + Math.sin(a) * 5.5); ctx.stroke(); }
     if (this.area.rooms && this.area.dungeon && SAVE['bigkey_' + this.area.dungeon]) { R(x + 76, 24, 18, 14, 'rgba(7,13,31,.55)'); drawItemIcon('bigkey', x + 85, 31, 0.8); }
     if (Keys.get() > 0 && this.area.rooms) { R(x + 44, 24, 28, 14, 'rgba(7,13,31,.55)'); drawKey(x + 52, 31, 1); text('×' + Keys.get(), x + 58, 26, { size: 8, color: PAL.warm }); }
     // barre de vie du boss
@@ -116,20 +131,24 @@ const UIMixin = {
     if (this.area.dungeon && SAVE['bigkey_' + this.area.dungeon]) L.push({ kind: 'key', id: 'bigkey' });
     return L;
   },
-  pauseTabs: ['Objets', 'Souvenirs', 'Carte', 'Options'],
+  pauseTabs: ['Objets', 'Sac', 'Souvenirs', 'Bestiaire', 'Carte', 'Options'],
+  // le sac : matériaux, ingrédients, objet d'échange
+  sacItems() { const L = Mats.owned().map(id => ({ id, n: Mats.n(id) })); const t = Troc.held(); if (t) L.push({ id: 'troc_' + t, troc: t }); return L; },
+  tabLen(t) { return t === 0 ? this.pauseItems().length : t === 1 ? this.sacItems().length : t === 2 ? Object.keys(SOUVENIRS).length : t === 3 ? BEASTS.length : 0; },
+  tabCols(t) { return t === 2 ? 4 : 5; },
   updatePause() {
     if (Input.pressed('start') || Input.pressed('b')) { this.state = 'play'; SFX.menu(); return; }
     const tx = Input.lastTap; if (tx && tx.time > (this.pauseAt || 0) && performance.now() - tx.time < 250 && tx.x > W - 34 && tx.y < 32) { Input.lastTap = null; this.state = 'play'; SFX.menu(); return; }
-    const nT = this.pauseTabs.length, grid = this.ptab === 0 || this.ptab === 1;
+    const nT = this.pauseTabs.length, grid = this.ptab <= 3;
     if (Input.pressed('cycle')) { this.ptab = (this.ptab + 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
     const tap = Input.lastTap; Input.lastTap = null;
-    if (tap && performance.now() - tap.time < 250 && tap.y < 30) { const t = Math.floor((tap.x - (W / 2 - 180)) / 90); if (t >= 0 && t < nT) { this.ptab = t; this.psel = 0; SFX.menu(); } return; }
+    if (tap && performance.now() - tap.time < 250 && tap.y < 30) { const t = Math.floor((tap.x - (W / 2 - 216)) / 72); if (t >= 0 && t < nT) { this.ptab = t; this.psel = 0; SFX.menu(); } return; }
     if (!grid) {
       if (Input.pressed('right')) { this.ptab = (this.ptab + 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
       if (Input.pressed('left')) { this.ptab = (this.ptab + nT - 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
     }
     if (grid) {
-      const n = this.ptab === 0 ? this.pauseItems().length : Object.keys(SOUVENIRS).length, C = this.ptab === 0 ? 5 : 4;
+      const n = this.tabLen(this.ptab), C = this.tabCols(this.ptab);
       if (!n) { if (Input.pressed('right') || Input.pressed('left')) { this.ptab = (this.ptab + (Input.pressed('right') ? 1 : nT - 1)) % nT; SFX.menu(); } return; }
       const mv = d => { const v = this.psel + d; if (v >= 0 && v < n) { this.psel = v; SFX.menu(); } };
       if (Input.pressed('right')) { if (this.psel % C === C - 1 || this.psel === n - 1) { this.ptab = (this.ptab + 1) % nT; this.psel = 0; SFX.menu(); } else mv(1); }
@@ -142,7 +161,7 @@ const UIMixin = {
         if (e.kind === 'tool') { Inventory.equip(e.id); SFX.menu(); this.state = 'play'; return; }
         if (e.kind === 'bottle') { if (Inventory.drink(e.i, this.player)) SFX.drink(); else SFX.nope(); }
       }
-    } else if (this.ptab === 3) {
+    } else if (this.ptab === 5) {
       this.menuNav(2);
       if (Input.pressed('a')) {
         SFX.menu();
@@ -155,18 +174,20 @@ const UIMixin = {
   drawPause() {
     R(0, 0, W, H, 'rgba(4,8,26,.88)');
     this.pauseTabs.forEach((t, i) => {
-      const x = W / 2 - 180 + i * 90, on = i === this.ptab;
-      R(x + 3, 8, 84, 18, on ? '#2a5a66' : 'rgba(20,36,76,.8)'); if (on) R(x + 3, 25, 84, 1, PAL.glow);
-      text(t, x + 45, 11, { size: 9.5, align: 'center', color: on ? PAL.white : '#7a84a8', bold: on });
+      const x = W / 2 - 216 + i * 72, on = i === this.ptab;
+      R(x + 2, 8, 68, 18, on ? '#2a5a66' : 'rgba(20,36,76,.8)'); if (on) R(x + 2, 25, 68, 1, PAL.glow);
+      text(t, x + 36, 11, { size: 9, align: 'center', color: on ? PAL.white : '#7a84a8', bold: on });
     });
     R(W - 28, 6, 22, 22, 'rgba(20,36,76,.9)'); R(W - 28, 6, 22, 1, PAL.lav); R(W - 28, 27, 22, 1, PAL.lav); R(W - 28, 6, 1, 22, PAL.lav); R(W - 7, 6, 1, 22, PAL.lav);
     ctx.strokeStyle = PAL.white; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(W - 22, 12); ctx.lineTo(W - 12, 22); ctx.moveTo(W - 12, 12); ctx.lineTo(W - 22, 22); ctx.stroke();
     const obj = Story.objective();
     if (obj) { R(24, 32, W - 48, 18, 'rgba(255,207,122,.12)'); text('Objectif : ' + obj, W / 2, 36, { size: 7.5, align: 'center', color: PAL.warm }); }
     if (this.ptab === 0) this.drawInventory();
-    if (this.ptab === 1) this.drawSouvenirs();
-    if (this.ptab === 2) this.drawMapTab();
-    if (this.ptab === 3) { text('Options', W / 2, 82, { size: 14, align: 'center', bold: true }); this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 116); }
+    if (this.ptab === 1) this.drawSac();
+    if (this.ptab === 2) this.drawSouvenirs();
+    if (this.ptab === 3) this.drawBestiary();
+    if (this.ptab === 4) this.drawMapTab();
+    if (this.ptab === 5) { text('Options', W / 2, 82, { size: 14, align: 'center', bold: true }); this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 116); }
     if (!Input.padVisible) {
       const roll = Heroes.def().roll;
       text('Flèches : choisir · Espace : utiliser · E : onglet suivant · Échap : fermer' + (roll ? ' · L = roulade' : ''), W / 2, H - 12, { size: 6.5, align: 'center', color: '#6a74a0' });
@@ -197,6 +218,42 @@ const UIMixin = {
     const sel = L[this.psel], it = sel && (sel.id === 'bigkey' ? { name: 'Grande clé', desc: 'Ouvre la porte du boss de ce donjon.' } : Inventory.item(sel.id === 'vide' ? 'bouteille' : sel.id));
     if (it) { R(24, H - 54, W - 48, 30, 'rgba(20,36,76,.7)'); text(it.name, W / 2, H - 50, { size: 8.5, align: 'center', bold: true, color: PAL.white }); text(it.desc + (sel.kind === 'bottle' && sel.id !== 'vide' ? '  A : boire.' : sel.kind === 'tool' ? '  A : équiper sur B.' : ''), W / 2, H - 38, { size: 7, align: 'center', color: '#c8d0f0' }); }
   },
+  drawSac() {
+    const L = this.sacItems(), C = 5, g = this.gridGeom(C);
+    text('Sac : matériaux et ingrédients', g.x0, g.y0 - 14, { size: 9, color: PAL.lav, bold: true });
+    for (let k = 0; k < Math.max(15, Math.ceil(L.length / C) * C); k++) {
+      const i = k % C, j = Math.floor(k / C), x = g.x0 + i * g.cw, y = g.y0 + j * g.ch, e = L[k], on = k === this.psel;
+      this.drawCell(x, y, g.cw, g.ch, on && !!e, !!e); if (!e) continue;
+      drawItemIcon(e.id, x + g.cw / 2 - 2, y + g.ch / 2 - 4, 1.1);
+      if (e.n) text('×' + e.n, x + g.cw - 7, y + g.ch - 14, { size: 6.5, align: 'right', bold: true });
+    }
+    const e = L[this.psel], rx = 250; R(rx - 6, 64, W - rx - 18, 120, 'rgba(20,36,76,.6)');
+    if (e) {
+      const name = e.troc ? TROC_ITEMS[e.troc] : MATS[e.id].name, desc = e.troc ? 'Un objet à échanger. Quelqu\'un, quelque part, en a sûrement besoin.' : MATS[e.id].desc + (MATS[e.id].rare ? ' Matériau rare : Bertrand s\'en sert à la forge.' : ` Amandine en donne ${Sell.price(e.id)} écus.`);
+      text(name, rx, 72, { size: 10, bold: true, color: PAL.warm }); wrap(desc, W - rx - 30, 8).forEach((l, i) => text(l, rx, 92 + i * 12, { size: 8, color: '#c8d0f0' }));
+    } else wrap('Ton sac est vide. Cueille, pêche, casse des rochers : tout se revend chez Amandine ou se cuisine chez Mamie.', W - rx - 30, 8).forEach((l, i) => text(l, rx, 74 + i * 12, { size: 8, color: '#7a84a8' }));
+    const up = Object.keys(UPGRADES).filter(id => Upg.lv(id)); if (up.length) text('Forge : ' + up.map(id => UPGRADES[id].name + ' ' + '★'.repeat(Upg.lv(id))).join(' · '), W / 2, H - 40, { size: 7.5, align: 'center', color: PAL.glow });
+  },
+  drawBestiary() {
+    const C = 5, g = { x0: 30, y0: 66, cw: 40, ch: 34 }, n = Bestiary.nFull();
+    text(`Bestiaire : ${n} / ${BEASTS.length} fiches complètes` + (SAVE.encyclo ? '  ★' : ''), g.x0, g.y0 - 12, { size: 9, color: PAL.lav, bold: true });
+    BEASTS.forEach((b, k) => {
+      const i = k % C, j = Math.floor(k / C), x = g.x0 + i * g.cw, y = g.y0 + j * g.ch, kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k];
+      this.drawCell(x, y, g.cw, g.ch, k === this.psel, true);
+      text(kills ? (Bestiary.full(b) ? '★' : String(kills)) : seen ? '?' : '', x + g.cw / 2 - 2, y + g.ch / 2 - 9, { size: kills ? 9 : 12, align: 'center', color: Bestiary.full(b) ? PAL.warm : kills ? PAL.white : '#3a4a7a', bold: true });
+      if (b.boss) R(x + 2, y + 2, 4, 4, '#c8a040');
+    });
+    const b = BEASTS[this.psel], kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k], rx = 250;
+    R(rx - 6, 58, W - rx - 18, 150, 'rgba(20,36,76,.6)');
+    if (!seen) { text('???', rx, 66, { size: 10, bold: true, color: '#7a84a8' }); text('Une créature que tu n\'as pas encore croisée.', rx, 84, { size: 8, color: '#7a84a8' }); return; }
+    if (!kills) { text('???', rx, 66, { size: 10, bold: true, color: '#7a84a8' }); text('Tu l\'as croisée. Bats-la pour en savoir plus.', rx, 84, { size: 8, color: '#7a84a8' }); return; }
+    text(b.name + (b.boss ? ' (gardien)' : ''), rx, 66, { size: 10, bold: true, color: PAL.warm });
+    text(b.zone, rx, 82, { size: 7.5, color: '#9aa4c8' });
+    text(`Vaincu${b.boss ? '' : 's'} : ${kills}` + (b.boss ? '' : ` / 10`), rx, 96, { size: 8, color: PAL.white });
+    if (Bestiary.full(b)) { text('Points faibles : ' + b.weak, rx, 110, { size: 8, color: PAL.glow }); wrap('« ' + b.note + ' »', W - rx - 30, 8).forEach((l, i) => text(l, rx, 128 + i * 12, { size: 8, color: '#c8d0f0' })); }
+    else text('Fiche complète à 10 victoires.', rx, 110, { size: 8, color: '#7a84a8' });
+    text('Récompenses chez le sage : 5, 12 et ' + BEASTS.length + ' fiches complètes.', W / 2, H - 40, { size: 7.5, align: 'center', color: '#9aa4c8' });
+  },
   drawSouvenirs() {
     const ids = Object.keys(SOUVENIRS), C = 4, g = this.gridGeom(C), n = ids.filter(k => SAVE.souv && SAVE.souv[k]).length;
     text(`Souvenirs du monde réel : ${n} / 7`, g.x0, g.y0 - 14, { size: 9, color: PAL.lav, bold: true });
@@ -215,8 +272,8 @@ const UIMixin = {
     const A = this.area;
     if (A.map) { this.drawMap(W / 2 - 72, 64); return; }
     const bw = A.zone ? 260 : 360, bh = 160, s = Math.min(bw / A.w, bh / A.h), w = A.w * s, h = A.h * s, x0 = A.zone ? 40 : (W - w) / 2, y0 = 60;
-    R(x0 - 3, y0 - 3, w + 6, h + 6, PAL.ink); ctx.drawImage(A.layer, x0, y0, w, h); R(x0, y0, w, h, 'rgba(4,8,26,.35)');
-    for (const e of A.ents) if (e.isHouse) R(x0 + (e.x - e.w / 2) * s, y0 + (e.y - e.h) * s, e.w * s, e.h * s, '#a85a3a');
+    R(x0 - 3, y0 - 3, w + 6, h + 6, PAL.ink); ctx.drawImage((A.paint && IMG[A.paint]) || A.layer, x0, y0, w, h); R(x0, y0, w, h, 'rgba(4,8,26,.35)');
+    for (const e of A.ents) if (e.isHouse && !e.ghost) R(x0 + (e.x - e.w / 2) * s, y0 + (e.y - e.h) * s, e.w * s, e.h * s, '#a85a3a');
     if (Math.floor(this.t * 3) % 2) { R(x0 + this.player.x * s - 2, y0 + this.player.y * s - 2, 4, 4, PAL.glow); }
     text(A.name, x0 + w / 2, y0 + 4, { size: 7, align: 'center', color: PAL.warm });
     if (A.zone) this.drawWorldMini(x0 + w + 8, y0);
@@ -484,3 +541,15 @@ const UIMixin = {
   },
   drawFade() { if (!this.fade) return; const a = clamp(this.fade.dir === 1 ? this.fade.t : 1 - this.fade.t, 0, 1); ctx.globalAlpha = a; R(0, 0, W, H, this.fade.color || '#000'); ctx.globalAlpha = 1; },
 };
+
+// objets de la chaîne d'échanges
+function drawTrocIcon(id, x, y, s = 1) {
+  const u = s, B = (dx, dy, w, h, c) => R(x + dx * u, y + dy * u, w * u, h * u, c);
+  if (id === 'oeuf') { ell(x, y, 5 * s, 6.5 * s, '#f4ead8'); ell(x - 1.5 * s, y - 2 * s, 1.5 * s, 2 * s, '#fff'); B(2, 1, 2, 2, '#c8a070'); }
+  else if (id === 'laine') { ell(x, y, 6 * s, 5 * s, '#e8e0f0'); ctx.strokeStyle = '#b8a8d8'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(x, y, 3.5 * s, 0, 5); ctx.stroke(); }
+  else if (id === 'manche') { ctx.save(); ctx.translate(x, y); ctx.rotate(-0.8); R(-1.5 * u, -8 * u, 3 * u, 16 * u, '#a06a34'); R(-1.5 * u, -4 * u, 3 * u, 1 * u, '#5a3418'); R(-1.5 * u, 1 * u, 3 * u, 1 * u, '#5a3418'); ctx.restore(); }
+  else if (id === 'pioche') { B(-1, -4, 2, 11, '#8a5a34'); B(-6, -6, 12, 3, '#9aa0b0'); B(-7, -5, 2, 3, '#9aa0b0'); B(5, -5, 2, 3, '#9aa0b0'); }
+  else if (id === 'carte_marine') { B(-7, -5, 14, 10, '#e8d8b0'); B(-5, -3, 4, 3, '#7ab0d8'); B(1, -1, 5, 4, '#7ab0d8'); B(-1, 1, 2, 2, '#d84a5a'); }
+  else if (id === 'longue_vue') { ctx.save(); ctx.translate(x, y); ctx.rotate(-0.5); R(-8 * u, -2 * u, 6 * u, 4 * u, '#c8a040'); R(-2 * u, -2.5 * u, 6 * u, 5 * u, '#8a5a34'); R(4 * u, -3 * u, 4 * u, 6 * u, '#c8a040'); ctx.restore(); }
+  else if (id === 'boussole') { ell(x, y, 6 * s, 6 * s, '#c8a040'); ell(x, y, 4.5 * s, 4.5 * s, '#e8dcc8'); B(-0.5, -4, 1, 4, '#d84a5a'); B(-0.5, 0, 1, 4, '#3a3448'); }
+}

@@ -47,6 +47,7 @@ function drawSwimmer(id, x, y, dir, t, diving, moving) {
 
 // ---------- le grappin ----------
 const HOOK_RANGE = 136;
+const hookRange = () => HOOK_RANGE * (Upg.lv('grappin') >= 1 ? 1.5 : 1);
 class Hook {
   constructor(P, ax, ay, room) {
     const n = Math.hypot(ax, ay) || 1; this.dx = ax / n; this.dy = ay / n; this.P = P; this.d = 0; this.phase = 'out';
@@ -61,7 +62,7 @@ class Hook {
     if (this.phase === 'out') {
       for (let i = 0; i < 3; i++) {
         this.d += 360 * dt / 3; this.x = this.ox + this.dx * this.d; this.y = this.oy + this.dy * this.d;
-        if (this.d >= HOOK_RANGE) { this.back(); break; }
+        if (this.d >= hookRange()) { this.back(); break; }
         if (WALLS.has(G.area.tileAt(this.x, this.y - 2))) { SFX.tink(); G.parts.burst(this.x, this.y - this.alt, 5, { c: ['#fff', '#c8ccd8'], life: 0.25, r: 1 }); this.back(); break; }
         if (this.check(G)) break;
       }
@@ -88,7 +89,7 @@ class Hook {
       const box = e.body ? e.body() : boxOf(e);
       if (e.onHook && rectHit(b, box)) { if (e.onHook(G, this) !== false) { this.back(); return true; } continue; }
       if (e.fetchable && !this.carry && !e.carried && rectHit(b, { x: e.x - 9, y: e.y - 14, w: 18, h: 18 })) { this.carry = e; e.carried = true; this.back(); SFX.catch(); return true; }
-      if (e.isEnemy && !e.isBoss && rectHit(b, box)) { e.hookT = 0.35; e.stunT = 1.8; e.flash = 0.15; SFX.stun(); this.back(); return true; }
+      if (e.isEnemy && !e.isBoss && rectHit(b, box)) { e.hookT = 0.35; e.stunT = 1.8; e.flash = 0.15; SFX.stun(); if (Upg.lv('grappin') >= 2) e.hit(1, this.x, this.y, G, 'hook'); this.back(); return true; }
       if (e.solid && !e.hit && rectHit({ x: this.x - 2, y: this.y - 3, w: 4, h: 3 }, boxOf(e))) { SFX.tink(); this.back(); return true; }
     }
     return false;

@@ -50,6 +50,7 @@ class NPC {
   get dead() { return this.o.when ? !Story.cond(this.o.when) : false; }
   canInteract() { return true; }
   interact(G) {
+    if (Troc.talk(this, G)) return; // chaîne d'échanges
     if (this.o.quest) return Quests.talk(this.o.quest, G);
     if (this.o.fn) return this.o.fn(G);
     if (this.o.shop) { const sh = Shop.def(this.o.shop); G.say([{ who: sh.keeper, text: sh.hello }], () => G.openShop(this.o.shop)); }

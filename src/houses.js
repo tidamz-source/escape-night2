@@ -25,12 +25,12 @@ Object.assign(INTERIORS, {
   bibliotheque: { name: 'La bibliothèque', w: 20, h: 11, build(put, at, A) {
     for (const x of [3, 7, 13, 17]) put('shelf', x, 3.2);
     put('rug', 10, 8.6, { color: '#3a4a8a' }); put('table', 10, 6.2, { candle: true }); put('books', 6, 7.4); put('lamp', 2, 8.6); put('plant', 18, 9.4);
-    npc(A, 10, 5.2, { look: 'sage', talk: 'sage' });
+    npc(A, 10, 5.2, { look: 'sage', fn: sageTalk });
     npc(A, 15, 8, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4' });
   } },
   forge: { name: 'La forge', w: 18, h: 11, dark: 0.18, build(put, at, A) {
     put('forge', 4, 3.6); put('anvil', 8, 5.6); put('barrel', 15, 4); put('crate', 16.2, 4.4); put('window', 12, 2);
-    npc(A, 11, 4.6, { look: 'forgeron', fn: shopNPC('forge') });
+    npc(A, 11, 4.6, { look: 'forgeron', fn: forgeTalk });
     shopRow(A, 'forge', 5, 8, 4);
   } },
   epicerie: { name: 'Chez Mère Grenadine', w: 18, h: 11, build(put, at, A) {
@@ -40,17 +40,17 @@ Object.assign(INTERIORS, {
   } },
   mamie: { name: 'La cuisine de Mamie', w: 16, h: 10, build(put, at, A) {
     put('fireplace', 4, 3.2); put('cauldron', 8, 4.8); put('table', 12, 6.6, { food: true }); put('stool', 10.2, 7.4); put('window', 12, 2); put('rug', 6, 8.2, { color: '#a85a3a' });
-    npc(A, 10, 4.6, { sprite: 'claudine', fn: shopNPC('cuisine'), when: 'freed2' });
+    npc(A, 10, 4.6, { sprite: 'claudine', fn: mamieTalk, when: 'freed2' });
     npc(A, 3.5, 7.6, { sprite: 'dog', talk: 'goyave', when: 'freed5' });
     shopRow(A, 'cuisine', 6, 8.4, 4);
   } },
   comptoir: { name: 'Le comptoir d\'Amandine', w: 18, h: 11, build(put, at, A) {
     put('counter', 9, 5.4); put('shelf', 3, 3.2); put('shelf', 15, 3.2); put('plant', 2, 9.4); put('crate', 16, 9.4);
-    npc(A, 9, 4.4, { sprite: 'amandine', fn: shopNPC('comptoir') });
+    npc(A, 9, 4.4, { sprite: 'amandine', fn: amandineTalk });
     shopRow(A, 'comptoir', 4.5, 8, 3);
   } },
   pierrette: { name: 'Chez Pierrette', w: 14, h: 9, build(put, at, A) { put('bed', 3, 4.6, { blanket: '#c86aa0' }); put('table', 9, 5.6); put('window', 10, 2); put('crate', 12, 7.4, { say: [{ text: 'Un panier plein de plumes. Pas une seule poule dedans.' }] }); npc(A, 7, 6.6, { look: 'pierrette', quest: 'poules' }); } },
-  gaspard: { name: 'Chez Gaspard', w: 14, h: 9, build(put, at, A) { put('bed', 11, 4.6, { blanket: '#3a8a5a' }); put('table', 5, 5.6, { candle: true }); put('barrel', 2, 7.4); npc(A, 7.5, 6.8, { look: 'gaspard', talk: 'villageois2' }); } },
+  gaspard: { name: 'Chez Gaspard', w: 14, h: 9, build(put, at, A) { put('bed', 11, 4.6, { blanket: '#3a8a5a' }); put('table', 5, 5.6, { candle: true }); put('barrel', 2, 7.4); npc(A, 7.5, 6.8, { look: 'gaspard', fn: G => { const g = Market.gossip(); G.say(g ? [{ who: 'Gaspard', text: g }, ...Story.talk('villageois2')] : Story.talk('villageois2')); } }); } },
   mahaut: { name: 'Chez Mahaut', w: 14, h: 9, build(put, at, A) { put('shelf', 4, 3.2); put('wheel', 10, 5); put('plant', 12, 7.4); npc(A, 7, 6.6, { look: 'mahaut', talk: 'villageois3' }); } },
   // ----- les autres zones -----
   berger: { name: 'La bergerie', w: 14, h: 9, build(put, at, A) { put('fireplace', 4, 3.2); put('bed', 11, 4.6, { blanket: '#c8b898' }); put('bench', 7, 7.2); npc(A, 8, 5.6, { look: 'berger', quest: 'cloche' }); } },
@@ -65,5 +65,8 @@ Object.assign(INTERIORS, {
 // le pêcheur reçoit aussi la lettre du gnome
 function pecheurTalk(G) {
   if (Quests.st('lettre') === 1) { SAVE.qc.lettre = 1; Quests.reward('lettre', G, [L2('Le pêcheur', 'Une lettre de mon cousin le gnome ? « Donne une récompense à ce grand échalas habillé en clown. »'), L2('Le pêcheur', 'Bon, d\'accord. Prends cette tablette qui ne sert à rien : elle affiche « pas de réseau » toute la journée.')]); return; }
+  // la canne à pêche, une fois le filet rapporté ; puis le tableau des records
+  if (Quests.st('filet') === 2 && !Inventory.has('canne')) { Inventory.give('canne'); SFX.chest(); G.raise('canne'); G.say([L2('Le pêcheur', 'Tiens, prends ma vieille canne. Face à l\'eau, tu lances avec B, et tu ferres avec A quand le curseur est dans le vert.'), L2('Le pêcheur', 'Les poissons dorés ? Une légende. Enfin… j\'en ai vu un, une fois.')]); return; }
+  if (Inventory.has('canne') && Quests.st('filet') === 2) { G.say([L2('Le pêcheur', SAVE.fishRec ? `Ton record : ${SAVE.fishRec} cm. ` + (SAVE.fishRec >= 60 ? 'Chapeau, c\'est mieux que le mien !' : 'Le mien, c\'est 60 cm. Courage !') : 'Alors, ça mord ? Mon record, c\'est 60 cm. Bats-le si tu peux !')]); return; }
   Quests.talk('filet', G);
 }

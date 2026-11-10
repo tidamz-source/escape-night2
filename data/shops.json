@@ -1,137 +1,149 @@
 {
-  "epicerie": {
-    "name": "Chez Mère Grenadine",
-    "keeper": "Mère Grenadine",
-    "hello": "Bienvenue, petit ! Tout est frais, même la nuit. Et ce tissu que tu portes, c'est quoi ? On dirait de la toile à voile !",
-    "items": [
-      {
-        "id": "sirop",
-        "price": 20,
-        "needs": "emptyBottle"
-      },
-      {
-        "id": "bouteille",
-        "price": 50,
-        "stock": 2
-      },
-      {
-        "id": "cailloux10",
-        "price": 10,
-        "needs": "lance_pierre"
-      },
-      {
-        "id": "bourse",
-        "price": 40,
-        "once": true
-      },
-      {
-        "id": "petards5",
-        "price": 20,
-        "needs": "petards"
-      }
-    ]
-  },
-  "forge": {
-    "name": "La Forge",
-    "keeper": "Bertrand",
-    "hello": "Une arme digne de ce nom ? Tu es au bon endroit. Mais d'abord, ces vêtements… c'est une armure de ton pays ?",
-    "items": [
-      {
-        "id": "epee_bois",
-        "price": 80,
-        "once": true
-      },
-      {
-        "id": "bouclier",
-        "price": 60,
-        "once": true
-      },
-      {
-        "id": "epee_fer",
-        "price": 180,
-        "once": true,
-        "when": "freed2"
-      }
-    ]
-  },
-  "cuisine": {
-    "name": "La cuisine de Mamie",
-    "keeper": "Mamie",
-    "hello": "Mon petit ! Rapporte-moi des champignons du bois, je te fais une soupe qui requinque.",
-    "items": [
-      {
-        "id": "soupe",
-        "cost": {
-          "champignons": 3
-        },
-        "needs": "emptyBottle"
-      },
-      {
-        "id": "bouteille",
-        "price": 50,
-        "stock": 1
-      }
-    ]
-  },
-  "comptoir": {
-    "name": "Le comptoir d'Amandine",
-    "keeper": "Amandine",
-    "hello": "Bienvenue au comptoir ! Ici, on échange des choses rares contre de bons écus.",
-    "items": [
-      {
-        "id": "grande_bourse",
-        "price": 120,
-        "once": true
-      },
-      {
-        "id": "carquois",
-        "price": 80,
-        "once": true
-      },
-      {
-        "id": "quart_coeur",
-        "price": 150,
-        "stock": 1
-      },
-      {
-        "id": "petards5",
-        "price": 15,
-        "needs": "petards"
-      }
-    ]
-  },
-  "herboriste": {
-    "name": "L'herboristerie",
-    "keeper": "L'herboriste",
-    "hello": "Des herbes, des potions… et pas de questions sur tes chaussures lumineuses, promis.",
-    "items": [
-      {
-        "id": "sirop",
-        "price": 25,
-        "needs": "emptyBottle"
-      },
-      {
-        "id": "bouteille",
-        "price": 60,
-        "stock": 1
-      },
-      {
-        "id": "cailloux10",
-        "price": 10,
-        "needs": "lance_pierre"
-      }
-    ]
-  },
-  "artifices": {
-    "name": "L'atelier",
-    "keeper": "L'artificière",
-    "hello": "Des pétards ? J'en ai des caisses !",
-    "items": [
-      {
-        "id": "petards5",
-        "price": 15,
-        "needs": "petards"
-      }
-    ]
-  }
+ "epicerie": {
+  "name": "Chez Mère Grenadine",
+  "keeper": "Mère Grenadine",
+  "hello": "Bienvenue, petit ! Tout est frais, même la nuit. Et ce tissu que tu portes, c'est quoi ? On dirait de la toile à voile !",
+  "items": [
+   {
+    "id": "sirop",
+    "price": 20,
+    "needs": "emptyBottle"
+   },
+   {
+    "id": "bouteille",
+    "price": 50,
+    "stock": 2
+   },
+   {
+    "id": "cailloux10",
+    "price": 10,
+    "needs": "lance_pierre"
+   },
+   {
+    "id": "bourse",
+    "price": 40,
+    "once": true,
+    "minFrag": 1
+   },
+   {
+    "id": "petards5",
+    "price": 20,
+    "needs": "petards",
+    "minFrag": 3
+   },
+   {
+    "id": "elixir",
+    "price": 60,
+    "needs": "emptyBottle",
+    "minFrag": 4
+   }
+  ]
+ },
+ "forge": {
+  "name": "La Forge",
+  "keeper": "Bertrand",
+  "hello": "Une arme digne de ce nom ? Tu es au bon endroit. Mais d'abord, ces vêtements… c'est une armure de ton pays ?",
+  "items": [
+   {
+    "id": "epee_bois",
+    "price": 80,
+    "once": true
+   },
+   {
+    "id": "bouclier",
+    "price": 60,
+    "once": true
+   },
+   {
+    "id": "epee_fer",
+    "price": 180,
+    "once": true,
+    "when": "freed2",
+    "minFrag": 2
+   }
+  ]
+ },
+ "cuisine": {
+  "name": "La cuisine de Mamie",
+  "keeper": "Mamie",
+  "hello": "Mon petit ! Rapporte-moi des champignons du bois, je te fais une soupe qui requinque.",
+  "items": [
+   {
+    "id": "soupe",
+    "cost": {
+     "champignons": 3
+    },
+    "needs": "emptyBottle"
+   },
+   {
+    "id": "bouteille",
+    "price": 50,
+    "stock": 1
+   }
+  ]
+ },
+ "comptoir": {
+  "name": "Le comptoir d'Amandine",
+  "keeper": "Amandine",
+  "hello": "Bienvenue au comptoir ! Ici, on échange des choses rares contre de bons écus.",
+  "items": [
+   {
+    "id": "grande_bourse",
+    "price": 120,
+    "once": true,
+    "minFrag": 3
+   },
+   {
+    "id": "carquois",
+    "price": 80,
+    "once": true,
+    "minFrag": 3
+   },
+   {
+    "id": "quart_coeur",
+    "price": 150,
+    "stock": 1,
+    "minFrag": 4
+   },
+   {
+    "id": "petards5",
+    "price": 15,
+    "needs": "petards"
+   }
+  ]
+ },
+ "herboriste": {
+  "name": "L'herboristerie",
+  "keeper": "L'herboriste",
+  "hello": "Des herbes, des potions… et pas de questions sur tes chaussures lumineuses, promis.",
+  "items": [
+   {
+    "id": "sirop",
+    "price": 25,
+    "needs": "emptyBottle"
+   },
+   {
+    "id": "bouteille",
+    "price": 60,
+    "stock": 1
+   },
+   {
+    "id": "cailloux10",
+    "price": 10,
+    "needs": "lance_pierre"
+   }
+  ]
+ },
+ "artifices": {
+  "name": "L'atelier",
+  "keeper": "L'artificière",
+  "hello": "Des pétards ? J'en ai des caisses !",
+  "items": [
+   {
+    "id": "petards5",
+    "price": 15,
+    "needs": "petards"
+   }
+  ]
+ }
 }

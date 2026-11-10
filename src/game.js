@@ -23,10 +23,10 @@ const G = {
   // ---------- parties ----------
   newGame(slot, hero) {
     newSlot(slot, hero);
-    const camp = this.areas.camp; delete this.areas.in_bungalow; this.player = null;
+    const camp = this.areas.camp; delete this.areas.in_bungalow; this.player = null; Effects.reset();
     this.fadeTo(() => { this.enterHouseNow(camp.home, camp); this.player.dir = 'down'; this.pending = 'prologue'; });
   },
-  continueGame() { let id = SAVE.lastArea; if (!this.areas[id] || (id || '').startsWith('in_')) id = SAVE.crossed_rift ? 'royaume' : 'camp'; this.enter(id, id === 'royaume' ? Object.assign({ dir: 'down' }, this.areas.royaume.plaza) : this.areas[id].start, true); },
+  continueGame() { Effects.reset(); Market.roll(); let id = SAVE.lastArea; if (!this.areas[id] || (id || '').startsWith('in_')) id = SAVE.crossed_rift ? 'royaume' : 'camp'; this.enter(id, id === 'royaume' ? Object.assign({ dir: 'down' }, this.areas.royaume.plaza) : this.areas[id].start, true); },
   // entrer dans une maison : son intérieur est construit à la première visite
   enterHouse(h) { if (!INTERIORS[h.o.interior]) return; const from = this.area; this.fadeTo(() => this.enterHouseNow(h, from)); },
   enterHouseNow(h, from) {
@@ -41,9 +41,11 @@ const G = {
   ask(lines, choices, cb) { this.say(lines, null); const d = this.dialog; d.choices = choices; d.pick = 0; d.onPick = cb; },
 
   enter(id, pos, fresh) {
+    if (id === 'royaume' && this.area && this.area.id !== 'royaume' && !(this.area.id || '').startsWith('in_')) Market.roll();
     this.area = this.areas[id]; this.area.arenaOn = null;
     this.room = this.area.rooms ? this.roomOf(pos.x, pos.y) : 0;
     this.area.spawn();
+    if (this.area.zone) { spawnResources(this.area); peddlerSpawn(this.area); } // cueillette, minerai, colporteur
     const hp = this.player && !fresh ? this.player.hp : SAVE.maxHp;
     this.player = new Player(pos.x, pos.y, pos.dir); this.player.hp = Math.max(1, hp);
     Lumi.reset(this.player);
@@ -227,6 +229,12 @@ const G = {
   // ---------- boucle ----------
   update(dt) {
     this.t += dt;
+    if (this.state === 'play' || this.state === 'fish') Effects.update(dt);
+    // boss vaincus : bestiaire + matériau rare pour la forge (deux)
+    if (this.area && this.state === 'play') for (const e of this.area.ents) {
+      if (e.isBoss && e.state === 'dying' && !e.rewarded) { e.rewarded = true; Bestiary.kill(e); const m = { GreatShadow: 'pierre_lune', GreatOwl: 'plume_duc', IronMole: 'acier_gnome', WhirlQueen: 'ecaille_reine', IronKnight: 'poudre', MidnightKnight: 'eclat_ombre' }[e.constructor.name]; if (m) { const k = 'bossMat_' + e.constructor.name; if (!SAVE[k]) { SAVE[k] = true; Mats.add(m, 2); persist(); setTimeout(() => { Input.toast = { msg: `+2 ${MATS[m].name.toLowerCase()} (forge)`, t: 2.5 }; }, 2500); } } }
+      if (e.isEnemy && !e.dead && (this.seenT = (this.seenT || 0) + 0) >= 0 && this.inRoom(e) && dist(e.x, e.y, this.player.x, this.player.y) < 160) Bestiary.seen(e);
+    }
     // soin progressif : les cœurs se remplissent un par un
     const PL = this.player; if (PL && PL.healQ > 0 && this.view === 'world') { PL.healT = (PL.healT || 0) - dt; if (PL.healT <= 0) { PL.healT = 0.16; const add = Math.min(2, PL.healQ, SAVE.maxHp - PL.hp); if (add <= 0) PL.healQ = 0; else { PL.hp += add; PL.healQ -= add; SFX.heartTick(); } } }
     if (this.banner) { this.banner.t -= dt; if (this.banner.t <= 0) this.banner = null; }
@@ -241,6 +249,7 @@ const G = {
       case 'shop': return this.updateShop(dt);
       case 'travel': return this.updateTravel();
       case 'cut': if (this.cut) this.cut.update(dt); this.updateCam(); if (this.shake > 0) this.shake -= dt; return;
+      case 'fish': if (this.fish) Fishing.update(dt, this); else this.state = 'play'; this.player.anim = 0; return;
       case 'credits': this.endT += dt; return this.updateCredits(dt);
       case 'over': this.overT += dt; return this.updateOver();
       case 'end': this.endT += dt; if (this.endT > 1 && Input.anyPressed()) { SFX.menu(); this.state = 'play'; this.view = 'world'; } return;
@@ -342,6 +351,7 @@ const G = {
     if (this.view === 'credits') { this.drawCredits(); this.drawFade(); return; }
     this.drawWorld();
     this.drawHUD();
+    if (this.state === 'fish') Fishing.draw(this);
     if (this.state === 'dialog') this.drawDialog();
     if (this.state === 'pause') this.drawPause();
     if (this.state === 'shop') this.drawShop();
@@ -378,6 +388,7 @@ const G = {
         if (im) ctx.drawImage(im, half(p.x - p.iw / 2), half(p.y - p.ih + 1), p.iw, p.ih);
       } else {
         if (!it.e.ghost) it.e.draw(); // ghost : déjà peint sur la carte
+        if (SAVE.loupe && it.e.isEnemy && !it.e.isBoss && !it.e.dead && it.e.hp < it.e.maxHp) { const e = it.e, w = 14; R(half(e.x - w / 2), half(e.y - (e.alt || 0) - 26), w, 2, 'rgba(7,13,31,.8)'); R(half(e.x - w / 2), half(e.y - (e.alt || 0) - 26), w * Math.max(0, e.hp) / e.maxHp, 2, '#ff6a7a'); } // loupe du sage
         if (it.e.stunT > 0 && !it.e.dead) for (let i = 0; i < 3; i++) { const a = this.t * 5 + i * 2.1; R(half(it.e.x + Math.cos(a) * 7), half(it.e.y - (it.e.alt || 0) - 22 + Math.sin(a) * 2), 1.5, 1.5, i % 2 ? '#ffe27a' : '#fff'); }
       }
     }
@@ -405,7 +416,7 @@ const G = {
   },
   lightsList(cx, cy) {
     const A = this.area, P = this.player, L = [];
-    L.push({ x: P.x, y: P.y - 12, r: A.rooms ? 120 : 112, c: 'rgba(200,220,255,' });
+    L.push({ x: P.x, y: P.y - 12, r: (A.rooms ? 120 : 112) * (Effects.on('light') ? 1.7 : 1), c: 'rgba(200,220,255,' });
     if (SAVE.met_lumi) L.push(Lumi.light);
     for (const p of A.props) if (p.light) L.push({ x: p.x, y: p.y + (p.light.oy || -8), r: p.light.r, c: p.light.c, flick: p.light.flick, warm: p.light.warm });
     for (const e of A.ents) {

@@ -33,6 +33,6 @@ const Inventory = {
   hasEmptyBottle() { return SAVE.inv.bottles.includes('vide'); },
   drink(i, P) {
     const b = SAVE.inv.bottles[i], it = b && this.item(b); if (!it || it.kind !== 'drink') return false;
-    SAVE.inv.bottles[i] = 'vide'; G.healBy(it.heal); persist(); Bus.emit('item:used', { id: b }); return true;
+    SAVE.inv.bottles[i] = 'vide'; G.healBy(it.heal); applyDrinkFx(it, P || G.player); persist(); Bus.emit('item:used', { id: b }); return true;
   },
 };

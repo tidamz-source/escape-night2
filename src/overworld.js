@@ -219,6 +219,7 @@ function buildVillageArea() {
     this.ents.push(Object.assign(new Sign(13 * TS, 22 * TS, [{ text: '« Pont-levis de la Forêt. Fermé par ordre du Roi Minuit. »' }, { who: '{hero}', text: 'Il y a une cible sur l\'autre rive… Si seulement je pouvais l\'atteindre.', face: 'o' }]), { ghost: true }));
     this.ents.push(Object.assign(new Sign(35 * TS, 3 * TS, [{ text: '« Au nord : les Collines. Au sud : le Lac. À l\'ouest : la Forêt. »' }]), { ghost: true }));
     if (SAVE.q && SAVE.q.poules === 1) for (const [i, x, y] of [[0, 25 * TS, 13 * TS], [1, 56 * TS, 26 * TS], [2, 12 * TS, 40 * TS]]) if (!SAVE['poule' + i]) this.ents.push(new Chicken(x, y, i));
+    for (const [sid, x, y] of [['forge', 17, 39], ['comptoir', 25, 39], ['epicerie', 39, 39], ['cuisine', 53, 39]]) this.ents.push(new PromoFlag(sid, x * TS + 24, y * TS + 6));
     questSpawns(this);
   };
   A.syncTiles = function () {

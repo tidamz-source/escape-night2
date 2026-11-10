@@ -1,119 +1,175 @@
 {
-  "branche": {
-    "name": "Branche",
-    "kind": "weapon",
-    "dmg": 1,
-    "desc": "Une branche solide ramassée au camping."
+ "branche": {
+  "name": "Branche",
+  "kind": "weapon",
+  "dmg": 1,
+  "desc": "Une branche solide ramassée au camping."
+ },
+ "epee_bois": {
+  "name": "Épée de bois",
+  "kind": "weapon",
+  "dmg": 2,
+  "desc": "Taillée par le forgeron. Frappe deux fois plus fort."
+ },
+ "lance_pierre": {
+  "name": "Lance-pierre",
+  "kind": "tool",
+  "ammo": "cailloux",
+  "desc": "Tire des cailloux dans 8 directions."
+ },
+ "bouclier": {
+  "name": "Bouclier en bois",
+  "kind": "gear",
+  "desc": "Bloque les projectiles qui arrivent de face."
+ },
+ "bouteille": {
+  "name": "Bouteille vide",
+  "kind": "bottle",
+  "desc": "On peut la remplir de sirop chez l'épicière."
+ },
+ "sirop": {
+  "name": "Sirop de grenadine",
+  "kind": "drink",
+  "heal": 99,
+  "desc": "Rend toute la vie. Se boit depuis l'inventaire."
+ },
+ "cailloux10": {
+  "name": "10 cailloux",
+  "kind": "ammo",
+  "ammo": "cailloux",
+  "qty": 10,
+  "desc": "Munitions pour le lance-pierre."
+ },
+ "frisbee": {
+  "name": "Frisbee",
+  "kind": "tool",
+  "desc": "Part en arc et revient. Étourdit, rapporte les objets, passe au-dessus des souches et de l'eau."
+ },
+ "soupe": {
+  "name": "Soupe de Mamie",
+  "kind": "drink",
+  "heal": 99,
+  "desc": "Soupe aux champignons de Mamie. Rend toute la vie."
+ },
+ "champignons": {
+  "name": "Champignons",
+  "kind": "ingredient",
+  "desc": "On en trouve dans le Bois des murmures. Mamie sait les cuisiner."
+ },
+ "grappin": {
+  "name": "Grappin",
+  "kind": "tool",
+  "desc": "Se plante dans les poteaux et te tire au-dessus du vide. Attire les petits ennemis et les objets."
+ },
+ "palmes": {
+  "name": "Palmes et tuba",
+  "kind": "gear",
+  "desc": "Pour nager en eau profonde. A ou B dans l'eau : plonger."
+ },
+ "petards": {
+  "name": "Pétards",
+  "kind": "tool",
+  "ammo": "petards",
+  "desc": "Explosent après un instant. Font sauter les murs fissurés et les rochers."
+ },
+ "petards5": {
+  "name": "5 pétards",
+  "kind": "ammo",
+  "ammo": "petards",
+  "qty": 5,
+  "desc": "Munitions explosives."
+ },
+ "grande_bourse": {
+  "name": "Grande bourse",
+  "kind": "upgrade",
+  "wallet": 600,
+  "desc": "Une bourse en cuir de gnome. Contient jusqu'à 600 écus."
+ },
+ "carquois": {
+  "name": "Grande sacoche",
+  "kind": "upgrade",
+  "ammoMax": {
+   "cailloux": 50,
+   "petards": 20
   },
-  "epee_bois": {
-    "name": "Épée de bois",
-    "kind": "weapon",
-    "dmg": 2,
-    "desc": "Taillée par le forgeron. Frappe deux fois plus fort."
+  "desc": "Plus de place : 50 cailloux et 20 pétards."
+ },
+ "quart_coeur": {
+  "name": "Cœur de cristal",
+  "kind": "heartpiece",
+  "desc": "Un cœur taillé dans un cristal des mines. Un cœur de vie en plus."
+ },
+ "seal": {
+  "name": "Sceau de l'aube",
+  "kind": "key",
+  "desc": "Un sceau en forme de soleil."
+ },
+ "epee_fer": {
+  "name": "Épée de fer",
+  "kind": "weapon",
+  "dmg": 3,
+  "desc": "Forgée par Bertrand avec le fer des Mines. Trois fois plus fort qu'une branche."
+ },
+ "bourse": {
+  "name": "Bourse",
+  "kind": "upgrade",
+  "wallet": 300,
+  "desc": "Une bourse de cuir. Contient jusqu'à 300 écus."
+ },
+ "canne": {
+  "name": "Canne à pêche",
+  "kind": "tool",
+  "desc": "Prêtée par le pêcheur. Face à l'eau : B pour lancer, A pour ferrer."
+ },
+ "soupe_jardin": {
+  "name": "Soupe du jardin",
+  "kind": "drink",
+  "heal": 8,
+  "desc": "Rend 4 cœurs."
+ },
+ "soupe_pecheur": {
+  "name": "Soupe du pêcheur",
+  "kind": "drink",
+  "heal": 8,
+  "fx": {
+   "inv": 10
   },
-  "lance_pierre": {
-    "name": "Lance-pierre",
-    "kind": "tool",
-    "ammo": "cailloux",
-    "desc": "Tire des cailloux dans 8 directions."
+  "desc": "Rend 4 cœurs et rend invincible 10 secondes."
+ },
+ "bouillon": {
+  "name": "Bouillon de pierre",
+  "kind": "drink",
+  "heal": 2,
+  "fx": {
+   "def": 120
   },
-  "bouclier": {
-    "name": "Bouclier en bois",
-    "kind": "gear",
-    "desc": "Bloque les projectiles qui arrivent de face."
+  "desc": "Les coups font moitié moins mal pendant 2 minutes."
+ },
+ "veloute": {
+  "name": "Velouté des lucioles",
+  "kind": "drink",
+  "heal": 2,
+  "fx": {
+   "light": 180
   },
-  "bouteille": {
-    "name": "Bouteille vide",
-    "kind": "bottle",
-    "desc": "On peut la remplir de sirop chez l'épicière."
+  "desc": "Lumi éclaire deux fois plus large pendant 3 minutes."
+ },
+ "soupe_doree": {
+  "name": "Soupe dorée",
+  "kind": "drink",
+  "heal": 99,
+  "fx": {
+   "bonus": 1
   },
-  "sirop": {
-    "name": "Sirop de grenadine",
-    "kind": "drink",
-    "heal": 99,
-    "desc": "Rend toute la vie. Se boit depuis l'inventaire."
+  "desc": "Rend toute la vie et ajoute un cœur doré, qui encaisse le prochain coup."
+ },
+ "elixir": {
+  "name": "Élixir de nage",
+  "kind": "drink",
+  "heal": 2,
+  "fx": {
+   "swim": 180
   },
-  "cailloux10": {
-    "name": "10 cailloux",
-    "kind": "ammo",
-    "ammo": "cailloux",
-    "qty": 10,
-    "desc": "Munitions pour le lance-pierre."
-  },
-  "frisbee": {
-    "name": "Frisbee",
-    "kind": "tool",
-    "desc": "Part en arc et revient. Étourdit, rapporte les objets, passe au-dessus des souches et de l'eau."
-  },
-  "soupe": {
-    "name": "Soupe de Mamie",
-    "kind": "drink",
-    "heal": 99,
-    "desc": "Soupe aux champignons de Mamie. Rend toute la vie."
-  },
-  "champignons": {
-    "name": "Champignons",
-    "kind": "ingredient",
-    "desc": "On en trouve dans le Bois des murmures. Mamie sait les cuisiner."
-  },
-  "grappin": {
-    "name": "Grappin",
-    "kind": "tool",
-    "desc": "Se plante dans les poteaux et te tire au-dessus du vide. Attire les petits ennemis et les objets."
-  },
-  "palmes": {
-    "name": "Palmes et tuba",
-    "kind": "gear",
-    "desc": "Pour nager en eau profonde. A ou B dans l'eau : plonger."
-  },
-  "petards": {
-    "name": "Pétards",
-    "kind": "tool",
-    "ammo": "petards",
-    "desc": "Explosent après un instant. Font sauter les murs fissurés et les rochers."
-  },
-  "petards5": {
-    "name": "5 pétards",
-    "kind": "ammo",
-    "ammo": "petards",
-    "qty": 5,
-    "desc": "Munitions explosives."
-  },
-  "grande_bourse": {
-    "name": "Grande bourse",
-    "kind": "upgrade",
-    "wallet": 600,
-    "desc": "Une bourse en cuir de gnome. Contient jusqu'à 600 écus."
-  },
-  "carquois": {
-    "name": "Grande sacoche",
-    "kind": "upgrade",
-    "ammoMax": {
-      "cailloux": 50,
-      "petards": 20
-    },
-    "desc": "Plus de place : 50 cailloux et 20 pétards."
-  },
-  "quart_coeur": {
-    "name": "Cœur de cristal",
-    "kind": "heartpiece",
-    "desc": "Un cœur taillé dans un cristal des mines. Un cœur de vie en plus."
-  },
-  "seal": {
-    "name": "Sceau de l'aube",
-    "kind": "key",
-    "desc": "Un sceau en forme de soleil."
-  },
-  "epee_fer": {
-    "name": "Épée de fer",
-    "kind": "weapon",
-    "dmg": 3,
-    "desc": "Forgée par Bertrand avec le fer des Mines. Trois fois plus fort qu'une branche."
-  },
-  "bourse": {
-    "name": "Bourse",
-    "kind": "upgrade",
-    "wallet": 300,
-    "desc": "Une bourse de cuir. Contient jusqu'à 300 écus."
-  }
+  "desc": "Nage deux fois plus vite pendant 3 minutes."
+ }
 }

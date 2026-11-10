@@ -83,7 +83,7 @@ class Player {
   }
   // déplacement à la nage : plus lent, pas d'attaque ni d'outil
   swimMove(dt, G) {
-    const dx = Input.dx, dy = Input.dy, input = Math.hypot(dx, dy) > 0.2, SP = 52 * this.perk.speed;
+    const dx = Input.dx, dy = Input.dy, input = Math.hypot(dx, dy) > 0.2, SP = 52 * this.perk.speed * (Effects.on('swim') ? 2 : 1);
     if (input) { const want = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'); this.dir = want; this.look = Math.abs(dx) > 0.38 && Math.abs(dy) > 0.38 ? (dy > 0 ? 'down' : 'up') + '_' + (dx > 0 ? 'right' : 'left') : want; }
     if (G.area.current) { const c = G.area.current(this); if (c) { this.vx += c.x * dt * 3; this.vy += c.y * dt * 3; } }
     this.glide(dt, G, input ? dx * SP : 0, input ? dy * SP : 0, input ? 8 : 4, input ? { x: dx, y: dy } : null);
@@ -116,6 +116,8 @@ class Player {
   frontBox() { const [vx, vy] = DV[this.dir]; return { x: this.x - 5 + vx * 10, y: this.y - 8 + vy * 10, w: 10, h: 10 }; }
   hurt(dmg, fx, fy, G) {
     if (this.inv > 0 || this.roll > 0 || this.dive > 0 || this.riding || G.state !== 'play') return;
+    if (Effects.on('def')) dmg = dmg > 1 ? Math.ceil(dmg / 2) : (Math.random() < 0.5 ? 0 : 1); // bouillon de pierre
+    if (this.bonusHp > 0) { const a = Math.min(this.bonusHp, dmg); this.bonusHp -= a; dmg -= a; } // cœur doré
     this.hp -= dmg; this.inv = 1.1; SFX.hurt(); G.shake = 0.25; G.hitstop = 0.06;
     const a = Math.atan2(this.y - 8 - fy, this.x - fx); this.kb = { x: Math.cos(a) * 170, y: Math.sin(a) * 170, t: 0.16 };
     this.atk = 0;
@@ -148,6 +150,12 @@ class Player {
       return;
     }
     if (this.kb.t > 0) { this.kb.t -= dt; this.vx = this.vy = 0; moveEnt(area, this, this.kb.x * dt, 0, { noExit: true, swim: this.canSwim }); moveEnt(area, this, 0, this.kb.y * dt, { noExit: true, swim: this.canSwim }); return; }
+    if (this.spinT > 0) this.spinT -= dt;
+    // coup chargé (épée améliorée) : A maintenu après le coup, puis relâché
+    if (Upg.lv('epee') >= 1 && SAVE.got_branche) {
+      if (Input.held.a && this.atkFrom) { this.charge = (this.charge || 0) + dt; if (this.charge > 0.7 && !this.charged) { this.charged = true; SFX.chime && SFX.chime(); } if (this.charged && Math.random() < dt * 20) G.parts.add({ x: this.x + DV[this.dir][0] * 12 + rand(-3, 3), y: this.y - 12 + rand(-3, 3), life: 0.3, c: pick(['#fff', '#bff0ff']), r: 1 }); }
+      else { if (this.charged) spinAttack(this, G); this.charge = 0; this.charged = false; this.atkFrom = false; }
+    }
     if (this.atk > 0) {
       this.atk -= dt; this.glide(dt, G, 0, 0, 14);
       if (this.atk < ATK_TIME - 0.04) G.attackHits(this);
@@ -177,7 +185,7 @@ class Player {
       const heavy = G.frontEnt(this, e => e instanceof Block && !e.mv);
       if (heavy) { this.grab = heavy; this.grabMv = null; this.vx = this.vy = 0; SFX.push(); return; }
       if (!SAVE.got_branche) return; // pas encore d'arme
-      this.atk = ATK_TIME; this.atkHit.clear(); SFX.swing(); return;
+      this.atk = ATK_TIME; this.atkHit.clear(); SFX.swing(); this.atkFrom = true; this.charge = 0; return;
     }
     let dx = Input.dx, dy = Input.dy;
     const input = Math.hypot(dx, dy) > 0.2;
@@ -233,8 +241,9 @@ class Player {
     const tool = Inventory.tool(); if (!tool) return;
     if (tool === 'lance_pierre') {
       if (!Inventory.useAmmo('cailloux')) { SFX.nope(); Input.toast = { msg: 'Plus de cailloux !', t: 1.5 }; this.shootCd = 0.4; return; }
-      this.shootCd = 0.3; this.shootT = 0.18; SFX.sling();
-      G.area.ents.push(new Pebble(this.x, this.y, this.aim[0], this.aim[1], G.room));
+      const lv = Upg.lv('lance_pierre'); this.shootCd = lv >= 1 ? 0.18 : 0.3; this.shootT = 0.18; SFX.sling();
+      const mk = (ox, oy) => { const p = new Pebble(this.x + ox, this.y + oy, this.aim[0], this.aim[1], G.room); p.pierce = lv >= 2 ? 2 : 0; G.area.ents.push(p); };
+      if (lv >= 1) { const [ax, ay] = this.aim; mk(-ay * 4, ax * 3); mk(ay * 4, -ax * 3); } else mk(0, 0);
     }
     if (tool === 'frisbee') {
       if (G.area.ents.some(e => e.isFrisbee && !e.dead)) return; // un seul frisbee à la fois
@@ -246,6 +255,7 @@ class Player {
       this.shootCd = 0.3; this.vx = this.vy = 0; SFX.hook();
       this.hooking = new Hook(this, this.aim[0], this.aim[1], G.room); G.area.ents.push(this.hooking);
     }
+    if (tool === 'canne') { this.shootCd = 0.4; Fishing.start(G); return; }
     if (tool === 'petards') {
       if (G.area.ents.filter(e => e.isPetard && !e.dead).length >= 2) return;
       if (!Inventory.useAmmo('petards')) { SFX.nope(); Input.toast = { msg: 'Plus de pétards !', t: 1.5 }; this.shootCd = 0.4; return; }
@@ -284,6 +294,7 @@ class Player {
     drawHero(SAVE.hero, this.x + vx * lunge, this.y + vy * lunge, look, (this.moving && !attacking) || this.roll > 0, this.moving ? this.anim : G.t);
     if (this.roll > 0) ctx.restore();
     if (Inventory.has('bouclier') && !attacking && this.roll <= 0 && this.dir !== 'up') this.drawShield();
+    if (this.spinT > 0) { ctx.save(); ctx.strokeStyle = 'rgba(220,250,255,.85)'; ctx.lineWidth = 2; ctx.beginPath(); const a0 = (0.3 - this.spinT) / 0.3 * Math.PI * 2; ctx.arc(this.x, this.y - 8, 24, a0, a0 + Math.PI * 1.3); ctx.stroke(); ctx.restore(); }
     if (attacking && this.dir !== 'up') this.drawBranch(p);
     if ((this.shootT > 0 || this.hooking) && this.dir !== 'up') this.drawSling();
   }
@@ -341,6 +352,9 @@ class Enemy {
     G.parts.burst(this.x, this.y - 6, 16, { c: this.poof || ['#c3b3ff', '#8ff3ea', '#fff'], life: 0.5, smin: 15, smax: 60, r: 2, shrink: true, drag: 3 });
     dropLoot(G, this.loot, this.x, this.y);
     Quests.onKill(G, this);
+    Bestiary.kill(this);
+    const mat = { Crow: 'plume', Crab: 'ecaille', Eel: 'ecaille', CrystalSpider: 'cristal' }[this.constructor.name]; // butin à revendre
+    if (mat && Math.random() < 0.3) G.area.ents.push(new Pickup(this.x + 4, this.y, 'mat_' + mat));
   }
   physics(dt, G, fly) {
     if (this.flash > 0) this.flash -= dt;
@@ -485,9 +499,14 @@ class Orb {
     this.t += dt; this.x += this.vx * dt; this.y += this.vy * dt;
     if (WALLS.has(G.area.tileAt(this.x, this.y - 2)) || this.t > 3) { this.dead = true; G.parts.burst(this.x, this.y - this.alt, 5, { c: ['#9fe8ff', '#fff'], life: 0.25, r: 1 }); return; }
     const P = G.player;
-    if (rectHit(this.body(), P.body())) {
+    if (this.mine) { for (const e of G.area.ents) if (e.isEnemy && !e.dead && rectHit(this.body(), e.body())) { e.hit(2, this.x, this.y, G, 'orb'); this.dead = true; return; } }
+    else if (rectHit(this.body(), P.body())) {
       const [fx, fy] = DV[P.dir], n = Math.hypot(this.vx, this.vy) || 1;
-      if (Inventory.has('bouclier') && P.atk <= 0 && (fx * this.vx + fy * this.vy) / n < -0.5) { SFX.tink(); G.parts.burst(this.x, this.y - this.alt, 6, { c: ['#fff', '#c8a040'], life: 0.25, r: 1 }); }
+      const sl = Upg.lv('bouclier'), facing = (fx * this.vx + fy * this.vy) / n;
+      if (Inventory.has('bouclier') && P.atk <= 0 && facing < (sl >= 1 ? 0.2 : -0.5)) {
+        SFX.tink(); G.parts.burst(this.x, this.y - this.alt, 6, { c: ['#fff', '#c8a040'], life: 0.25, r: 1 });
+        if (sl >= 2 && !this.mine) { this.vx = -this.vx * 1.4; this.vy = -this.vy * 1.4; this.mine = true; this.t = 0; return; } // renvoyé à l'envoyeur
+      }
       else P.hurt(1, this.x, this.y, G);
       this.dead = true;
     }

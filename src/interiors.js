@@ -124,7 +124,7 @@ class ShopItem {
   canInteract() { return true; }
   interact(G) {
     const it = Inventory.item(this.e.id), st = Shop.state(this.shop, this.e);
-    const price = this.e.cost ? Object.entries(this.e.cost).map(([k, n]) => `${n} ${Inventory.item(k).name.toLowerCase()}`).join(', ') : `${this.e.price} écus`;
+    const price = this.e.cost ? Object.entries(this.e.cost).map(([k, n]) => `${n} ${Inventory.item(k).name.toLowerCase()}`).join(', ') : `${Market.price(this.shop, this.e)} écus` + (Market.isPromo(this.shop, this.e) ? ' (promo !)' : '');
     const keeper = Shop.def(this.shop).keeper;
     if (!st.ok) { SFX.nope(); G.say([{ text: `${it.name} (${price}). ${it.desc}` }, Object.assign({ text: st.why + '.' }, this.e.needs === 'petards' && !Inventory.has('petards') ? { who: keeper } : {})]); return; }
     if (this.e.needs === 'petards' && !SAVE.petardsPro) { SAVE.petardsPro = true; persist(); G.say([{ who: keeper, text: 'Ok, je vois que t\'es un pro des feux d\'artifice. Je veux bien t\'en vendre.' }], () => this.interact(G)); return; }
@@ -141,7 +141,8 @@ class ShopItem {
     ell(this.x, this.y, 10, 3, 'rgba(0,0,0,.3)');
     hi(this.x, this.y, false, () => { D(-20, -10, 40, 10, '#5a3418'); D(-20, -10, 40, 2, '#8a5a34'); D(-18, -8, 36, 6, '#a83a4a'); });
     drawItemIcon(this.e.id === 'cailloux10' ? 'cailloux' : this.e.id, this.x, this.y - 12 + Math.sin(this.t * 2), 1);
-    const label = this.e.cost ? Object.entries(this.e.cost).map(([, n]) => n).join('') : String(this.e.price);
+    const promo = Market.isPromo(this.shop, this.e), label = this.e.cost ? Object.entries(this.e.cost).map(([, n]) => n).join('') : String(Market.price(this.shop, this.e));
+    if (promo) { R(this.x - 10, this.y - 30, 20, 8, '#e84a5a'); text('-30%', this.x, this.y - 29.5, { size: 6, align: 'center', color: '#fff', bold: true }); }
     const w = textW(label, 7) + (this.e.cost ? 12 : 10);
     R(this.x - w / 2, this.y + 2, w, 9, 'rgba(7,13,31,.8)');
     if (this.e.cost) drawItemIcon(Object.keys(this.e.cost)[0], this.x - w / 2 + 5, this.y + 7, 0.6); else drawItemIcon('money', this.x - w / 2 + 4, this.y + 6.5, 0.55);

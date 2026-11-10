@@ -33,7 +33,7 @@ class Pebble {
       for (const e of G.area.ents) {
         if (e === this || e.dead || e.isShot || e instanceof HeartPickup) continue;
         if (e.room != null && e.room !== G.room) continue;
-        if (e.hit) { if (rectHit(b, e.body ? e.body() : boxOf(e))) { e.hit(1, this.x - this.vx * 0.05, this.y - this.vy * 0.05, G, 'stone'); return this.poof(G); } }
+        if (e.hit) { if (rectHit(b, e.body ? e.body() : boxOf(e)) && !(this.hitSet && this.hitSet.has(e))) { e.hit(1, this.x - this.vx * 0.05, this.y - this.vy * 0.05, G, 'stone'); if (e.isEnemy && this.pierce > 0) { this.pierce--; (this.hitSet = this.hitSet || new Set()).add(e); continue; } return this.poof(G); } }
         else if (e.solid && rectHit(foot, boxOf(e))) { SFX.tink(); return this.poof(G); }
       }
     }
