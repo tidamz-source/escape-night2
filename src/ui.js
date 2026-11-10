@@ -92,7 +92,8 @@ const UIMixin = {
 
   // ---------- dialogues (avec portrait) ----------
   drawDialog() {
-    const d = this.dialog, line = d.lines[d.i], bw = 360, bx = (W - bw) / 2, by = Input.padVisible ? 28 : 192, bh = 64;
+    const d = this.dialog, line = d.lines[d.i], pad = Input.padVisible; // toujours en bas ; sur écran tactile, entre le stick et les boutons
+    const bw = pad ? 262 : 360, bx = pad ? 110 : (W - bw) / 2, bh = pad ? 72 : 64, by = pad ? H - bh - 4 : 192;
     box(bx, by, bw, bh);
     const lumi = line.who === 'Lumi', face = line.face && IMG[`face_${line.face}_${line.mood}`] ? line.face : null;
     let tx = bx + 12;
@@ -103,11 +104,13 @@ const UIMixin = {
       tx = bx + 64;
     }
     if (line.who) { R(bx + 8, by - 8, textW(line.who, 8) + 10, 12, lumi ? '#ffe27a' : PAL.warm); text(line.who, bx + 13, by - 7, { color: PAL.ink, shadow: false, bold: true }); }
-    const maxW = bx + bw - 14 - tx, shown = line.text.slice(0, Math.floor(d.c)), lines = wrap(line.text, maxW, 8);
-    let count = 0, ty = by + 12;
-    for (const ln of lines) { text(shown.slice(count, count + ln.length), tx, ty, { size: 8 }); count += ln.length + 1; ty += 12; }
+    const maxW = bx + bw - 14 - tx, shown = line.text.slice(0, Math.floor(d.c));
+    let fs = 8, lh = 12, lines = wrap(line.text, maxW, fs);
+    if (lines.length * lh > bh - 8) { fs = 7; lh = 10; lines = wrap(line.text, maxW, fs); } // texte long dans la boîte étroite : un cran plus petit
+    let count = 0, ty = by + (lines.length * lh > bh - 16 ? 6 : 12);
+    for (const ln of lines) { text(shown.slice(count, count + ln.length), tx, ty, { size: fs }); count += ln.length + 1; ty += lh; }
     if (d.choices && d.i === d.lines.length - 1 && d.c >= line.text.length) {
-      const cw = Math.max(...d.choices.map(c => textW(c, 8))) + 30, cx = bx + bw - cw - 6, cy = by - d.choices.length * 14 - 10;
+      const cw = Math.max(...d.choices.map(c => textW(c, 8))) + 30, cx = clamp(bx + bw - cw - 6, 4, W - cw - 4), cy = by - d.choices.length * 14 - 10;
       box(cx, cy, cw, d.choices.length * 14 + 6); d.cx = cx; d.cy = cy + 4;
       d.choices.forEach((c, k) => { const on = k === d.pick; text((on ? '▸ ' : '  ') + c, cx + 8, cy + 4 + k * 14, { size: 8, color: on ? PAL.glow : '#c8d0f0', bold: on }); });
     } else if (d.c >= line.text.length && Math.floor(this.t * 3) % 2) { ctx.fillStyle = PAL.glow; ctx.beginPath(); ctx.moveTo(bx + bw - 16, by + bh - 12); ctx.lineTo(bx + bw - 10, by + bh - 12); ctx.lineTo(bx + bw - 13, by + bh - 8); ctx.fill(); }
