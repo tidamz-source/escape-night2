@@ -206,6 +206,7 @@ function buildVillageArea() {
   A.spawn = function () {
     this.ents = [];
     for (const h of this.houses) this.ents.push(Object.assign(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)), { hid: h.id }));
+    for (const o of OVERHEAD.royaume) this.ents.push(new Overhead('map_royaume_dessus', o));
     for (const [x, y] of lamps) this.ents.push(new LightSpot(x * TS + 8, y * TS + 4, { r: 46, c: 'rgba(255,220,150,', oy: -22 }));
     this.ents.push(new ClockTower(32 * TS, 26 * TS, true));
     this.ents.push(new GateBlock(32 * TS, 4 * TS, 64));
