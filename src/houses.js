@@ -19,14 +19,13 @@ Object.assign(INTERIORS, {
     put('counter', 5, 5.4); npc(A, 5, 4.4, { look: 'aubergiste', talk: 'aubergiste' });
     put('table', 14, 6.6, { candle: true }); put('stool', 12.2, 7.4); put('stool', 15.8, 7.4);
     put('table', 14, 9.2, { food: true }); put('barrel', 2, 9.4); put('barrel', 3.2, 9.6); put('rug', 9.5, 9.4, { color: '#8a3a2a' });
-    npc(A, 12, 8.6, { hero: () => Heroes.captive(1), talk: 'enfant1', when: 'freed1' });
-    npc(A, 16.4, 8.6, { sprite: 'papa_down', talk: 'papa', when: 'boss6' });
+    npc(A, 12, 8.6, { hero: () => Heroes.captive(1), talk: 'enfant1', when: 'freed1&!boss6' }); // après la fin, la famille est au camping
   } },
   bibliotheque: { name: 'La bibliothèque', w: 20, h: 11, build(put, at, A) {
     for (const x of [3, 7, 13, 17]) put('shelf', x, 3.2);
     put('rug', 10, 8.6, { color: '#3a4a8a' }); put('table', 10, 6.2, { candle: true }); put('books', 6, 7.4); put('lamp', 2, 8.6); put('plant', 18, 9.4);
     npc(A, 10, 5.2, { look: 'sage', fn: sageTalk });
-    npc(A, 15, 8, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4' });
+    npc(A, 15, 8, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4&!boss6' });
   } },
   forge: { name: 'La forge', w: 18, h: 11, dark: 0.18, build(put, at, A) {
     put('forge', 4, 3.6); put('anvil', 8, 5.6); put('barrel', 15, 4); put('crate', 16.2, 4.4); put('window', 12, 2);
@@ -40,12 +39,12 @@ Object.assign(INTERIORS, {
   } },
   mamie: { name: 'La cuisine de Mamie', w: 16, h: 10, build(put, at, A) {
     put('fireplace', 4, 3.2); put('cauldron', 8, 4.8); put('table', 12, 6.6, { food: true }); put('stool', 10.2, 7.4); put('window', 12, 2); put('rug', 6, 8.2, { color: '#a85a3a' });
-    npc(A, 10, 4.6, { sprite: 'claudine', fn: mamieTalk, when: 'freed2' });
-    npc(A, 3.5, 7.6, { sprite: 'dog', talk: 'goyave', when: 'freed5' });
+    npc(A, 10, 4.6, { sprite: 'claudine', fn: mamieTalk, when: 'freed2&!boss6' });
+    npc(A, 3.5, 7.6, { sprite: 'dog', talk: 'goyave', when: 'freed5&!boss6' });
   } },
   comptoir: { name: 'Le comptoir d\'Amandine', w: 18, h: 11, build(put, at, A) {
     put('counter', 9, 5.4); put('shelf', 3, 3.2); put('shelf', 15, 3.2); put('plant', 2, 9.4); put('crate', 16, 9.4);
-    npc(A, 9, 4.4, { sprite: 'amandine', fn: amandineTalk });
+    npc(A, 9, 4.4, { sprite: 'amandine', fn: amandineTalk, when: '!boss6' });
     shopRow(A, 'comptoir', 4.5, 8, 3);
   } },
   pierrette: { name: 'Chez Pierrette', w: 14, h: 9, build(put, at, A) { put('bed', 3, 4.6, { blanket: '#c86aa0' }); put('table', 9, 5.6); put('window', 10, 2); put('crate', 12, 7.4, { say: [{ text: 'Un panier plein de plumes. Pas une seule poule dedans.' }] }); npc(A, 7, 6.6, { look: 'pierrette', quest: 'poules' }); } },

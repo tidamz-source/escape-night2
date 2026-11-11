@@ -289,6 +289,14 @@ function amandineTalk(G) {
       thanks: (id, n, gain) => pick([`${gain} écus, marché conclu !`, `Du ${MATS[id].name.toLowerCase()} ? Je connais quelqu'un qui va pleurer de joie. ${gain} écus.`, `Parfait. ${gain} écus, et pas un de plus. Enfin… si, un. Non. ${gain}.`]) });
   });
 }
+// au camping, après la fin : Amandine continue de racheter ce qu'on rapporte du royaume
+function amandineCampTalk(G) {
+  G.ask(Story.talk('amandineCamp'), ['Vendre', 'Rien'], i => {
+    if (i !== 0) return;
+    const w = MATS[Sell.wanted()].name.toLowerCase();
+    sellMenu(G, { who: 'Amandine', ids: Object.keys(MATS), price: id => Sell.price(id), intro: `Mon comptoir a déménagé au camping ! Cette semaine, je paie plus cher : ${w}.`, none: 'Tu n\'as rien à vendre. Le royaume est toujours là, de l\'autre côté de la faille !', thanks: (id, n, gain) => `${gain} écus. Même en vacances, les affaires sont les affaires !` });
+  });
+}
 // l'herboriste vend ses sirops et rachète les herbes et les champignons
 function herboristeTalk(G) {
   const sh = Shop.def('herboriste');

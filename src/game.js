@@ -214,8 +214,59 @@ const G = {
   finale() {
     this.say(Story.script('kingDown'), () => {
       Story.set('boss6'); SAVE.fragments = 6; persist(); SFX.bigheart();
-      this.fadeTo(() => { this.enter('camp', this.areas.camp.dawn, false); this.pending = 'campDawn'; }, '#fff2c0');
+      this.fadeTo(() => { this.enter('royaume', Object.assign({ dir: 'up' }, this.areas.royaume.plaza), false); this.darkFrom = 0.2; this.pending = 'sunrise'; }, '#fff2c0');
     });
+  },
+  // la pierre du soleil rejoint le cadran de la tour-horloge : les aiguilles filent jusqu'à midi
+  sunrise() {
+    const tower = this.area.ents.find(e => e instanceof ClockTower); if (!tower) return this.montage();
+    tower.shown = 6; tower.hand = 6; this.camFocus = { x: tower.x, y: tower.y - 60 }; this.updateCam(); this.darkFrom = 0.2;
+    const face = { x: tower.x, y: tower.y - 81 }; let hit = false, chimes = 0;
+    this.cut = {
+      t: 0,
+      update: dt => {
+        const c = this.cut; c.t += dt; this.parts.update(dt); tower.t += dt; if (this.flashT > 0) this.flashT -= dt; if (this.shake > 0) this.shake -= dt; if (tower.glow > 0) tower.glow -= dt * 0.5;
+        if (c.t < 2.2) { const k = c.t / 2.2; c.sx = face.x + Math.sin(k * 7) * 40 * (1 - k); c.sy = lerp(face.y - 260, face.y, k * k); if (Math.random() < dt * 50) this.parts.add({ x: c.sx, y: c.sy, vy: -12, vx: rand(-25, 25), life: 0.8, c: pick(['#ffe27a', '#fff', '#ffcf3a']), r: 1.5 }); }
+        else if (!hit) { hit = true; SFX.crystal(); SFX.bigheart(); this.flashT = 0.35; this.shake = 0.5; tower.glow = 1.2; this.parts.burst(face.x, face.y, 60, { c: ['#ffe27a', '#fff', '#ffcf3a'], life: 1.4, smin: 30, smax: 180, r: 2, drag: 1.3 }); }
+        if (c.t > 2.4 && c.t < 5.6) { const k = clamp((c.t - 2.4) / 3, 0, 1); tower.hand = lerp(6, 12, k * k * (3 - 2 * k)); this.darkFrom = lerp(0.2, 0, k); if (Math.floor(k * 6) > chimes) { chimes++; SFX.chime(); tower.glow = 1.2; } }
+        if (c.t > 5.6 && !c.noon) { c.noon = true; tower.hand = 12; SFX.bigheart(); this.flashT = 0.3; }
+        if (c.t > 8) { this.cut = null; this.state = 'play'; this.say(Story.script('sunrise'), () => this.fadeTo(() => this.montage(), '#fff6e0')); }
+      },
+      draw: () => {
+        const c = this.cut; if (!c) return;
+        if (c.t < 2.2) { const x = c.sx - this.cam.x, y = c.sy - this.cam.y; ctx.globalAlpha = 0.35; ell(x, y, 16, 16, '#ffe27a'); ctx.globalAlpha = 1; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + c.t * 3; R(x + Math.cos(a) * 9 - 1, y + Math.sin(a) * 9 - 1, 2, 2, '#fff6c0'); } ell(x, y, 6, 6, '#ffcf3a'); ell(x - 1, y - 1, 3, 3, '#fff6c0'); }
+        else { const x = face.x - this.cam.x, y = face.y - this.cam.y; ctx.globalAlpha = 0.25 + 0.1 * Math.sin(c.t * 4); ell(x, y, 22, 22, '#fff2c0'); ctx.globalAlpha = 1; ell(x, y, 4, 4, '#ffcf3a'); }
+        if (c.t > 5.8) { ctx.globalAlpha = Math.min(1, (c.t - 5.8) * 2); text('Midi', W / 2, 26, { size: 18, align: 'center', bold: true, color: PAL.warm }); text('Le temps reprend son cours', W / 2, 50, { size: 9, align: 'center', color: '#fff6c0' }); ctx.globalAlpha = 1; }
+      },
+    };
+    this.state = 'cut';
+  },
+  // le soleil se lève sur chaque région, l'une après l'autre
+  montage() {
+    const zones = ['collines', 'foret', 'montagne', 'lac', 'cote', 'terres', 'royaume'].filter(id => this.areas[id]), D = 3.4;
+    const go = i => { const A = this.areas[zones[i]]; this.area = A; this.room = 0; A.arenaOn = null; A.spawn(); this.parts = new Parts(); };
+    this.isMontage = true; go(0); let cur = 0;
+    const pan = A => { const r = (cur * 0.37) % 1; return { x0: A.w * (0.25 + r * 0.2), y0: A.h * 0.35, x1: A.w * (0.6 + r * 0.15), y1: A.h * 0.55 }; };
+    let p = pan(this.area);
+    this.cut = {
+      t: 0,
+      update: dt => {
+        const c = this.cut; c.t += dt; const lt = c.t - cur * D, k = clamp(lt / D, 0, 1); if (this.flashT > 0) this.flashT -= dt;
+        this.camFocus = { x: lerp(p.x0, p.x1, k), y: lerp(p.y0, p.y1, k) }; this.darkFrom = lerp(0.6, 0.02, clamp(lt / 2, 0, 1));
+        if (Math.random() < dt * 20) this.parts.add({ x: this.cam.x + rand(0, W), y: this.cam.y + rand(0, H), vy: -8, vx: rand(-4, 4), life: 1.6, c: pick(['#fff6c0', '#ffe27a']), r: 1 });
+        this.parts.update(dt);
+        if (lt >= D) { cur++; if (cur >= zones.length) { this.cut = null; this.isMontage = false; this.camFocus = null; this.darkFrom = null; this.fadeTo(() => { this.enter('camp', this.areas.camp.dawn, false); this.pending = 'campDawn'; }, '#fff2c0'); return; } go(cur); p = pan(this.area); SFX.chime(); }
+      },
+      draw: () => {
+        const c = this.cut; if (!c) return; const lt = c.t - cur * D;
+        ctx.globalAlpha = clamp(lt / 1.2, 0, 1) * 0.18; R(0, 0, W, H, '#ffc070'); ctx.globalAlpha = 1; // lumière dorée du matin
+        const a = clamp(Math.min(lt - 0.4, D - 0.3 - lt) * 2, 0, 1); ctx.globalAlpha = a;
+        text(this.area.name, W / 2, H - 46, { size: 14, align: 'center', bold: true, color: PAL.warm }); text('baigné' + (this.area.name.startsWith('Les ') ? 'es' : this.area.name.startsWith('La ') ? 'e' : '') + ' de lumière', W / 2, H - 26, { size: 9, align: 'center', color: '#fff6c0' });
+        ctx.globalAlpha = 1;
+        const f = Math.max(clamp(1 - lt / 0.35, 0, 1), clamp((lt - (D - 0.35)) / 0.35, 0, 1)); if (f > 0) { ctx.globalAlpha = f; R(0, 0, W, H, '#fff6e0'); ctx.globalAlpha = 1; } // fondu entre les régions
+      },
+    };
+    this.state = 'cut';
   },
   // fin d'un donjon : plus d'écran de bilan, on note l'étape et on reste dans le jeu (l'objectif suivant est dans la pause)
   showEnd(n) { Story.set('v' + n + 'done'); persist(); Input.toast = { msg: 'Partie sauvegardée', t: 1.6 }; },
@@ -223,6 +274,7 @@ const G = {
     const p = this.pending; this.pending = null;
     if (/^ceremony\d$/.test(p || '')) return this.ceremony(Number(p.slice(8)));
     if (p === 'reunion') return this.say(Story.script('reunion'), () => this.showEnd(1));
+    if (p === 'sunrise') return this.sunrise();
     if (p === 'campDawn') return this.say(Story.script('campDawn'), () => this.fadeTo(() => { this.creditsPage = 0; this.endT = 0; this.state = 'credits'; this.view = 'credits'; }, '#fff2c0'));
     const m = /^reunion(\d)$/.exec(p || ''); if (m) return this.say(Story.script(p), () => this.showEnd(Number(m[1])));
     if (p === 'caveIntro') return this.say([{ who: '{hero}', text: 'Une grotte… et des braseros allumés. Qui a bien pu les allumer ?', face: 'o' }, { who: 'Lumi', text: 'Les lucioles d\'ici sont prisonnières, elles aussi. Et je sens la présence de {enfant1}… tout au fond.' }]);
@@ -353,7 +405,7 @@ const G = {
     if (this.view === 'end') { this.drawEnd(); this.drawFade(); return; }
     if (this.view === 'credits') { this.drawCredits(); this.drawFade(); return; }
     this.drawWorld();
-    this.drawHUD();
+    if (!this.isMontage && !(this.state === 'cut' && this.cut && this.cut.noHud)) this.drawHUD();
     if (this.state === 'fish') Fishing.draw(this);
     if (this.state === 'dialog') this.drawDialog();
     if (this.state === 'pause') this.drawPause();
@@ -381,8 +433,8 @@ const G = {
     if (A.id === 'royaume' && Math.sin(this.t * 0.7) > 0.6) { const ex = 22 * TS + 22 + Math.sin(this.t * 0.3) * 14; R(ex, 12, 1.5, 1, '#ffe27a'); R(ex + 5, 12, 1.5, 1, '#ffe27a'); }
     const list = [];
     for (const p of A.props) list.push({ y: p.y, p });
-    for (const e of A.ents) if (!e.dead) { if (!this.slide && !this.inRoom(e)) continue; list.push({ y: e.ground ? -1e9 : e.y, e }); }
-    list.push({ y: P.y, e: P });
+    for (const e of A.ents) if (!e.dead) { if (!this.slide && !this.inRoom(e)) continue; if (this.isMontage && (e.isEnemy || e.isOrb)) continue; list.push({ y: e.ground ? -1e9 : e.y, e }); }
+    if (!this.isMontage) list.push({ y: P.y, e: P });
     list.sort((a, b) => a.y - b.y);
     for (const it of list) {
       if (it.p) {
@@ -400,7 +452,7 @@ const G = {
       ctx.globalAlpha = 0.35; ell(x, y, 12, 12, '#ffe27a'); ctx.globalAlpha = 1;
       if (k === 'key') drawKey(x, y, 2); else if (k === 'heart') drawHeartShape(x, y, 2, '#ffcf3a', '#e09a20'); else drawItemIcon(k, x, y, 1.5);
     }
-    if (SAVE.met_lumi) Lumi.draw();
+    if (SAVE.met_lumi && !this.isMontage) Lumi.draw();
     this.parts.draw();
     ctx.restore();
     this.drawLight(cx, cy);

@@ -55,7 +55,7 @@ function buildCamp() {
     this.ents.push(new Sign(346, 74, [{ text: '« Camping des Lucioles — Baignade interdite la nuit. »' }, { who: '{hero}', text: 'Personne ne se baigne, de toute façon. Il n\'y a plus personne.', face: 'o' }]));
     if (SAVE.boss6) { // au lever du soleil : toute la famille autour du feu
       this.ents.push(new NPC(176, 186, { hero: () => Heroes.captive(1), talk: 'enfant1' }), new NPC(244, 186, { hero: () => Heroes.captive(2), talk: 'enfant2' }));
-      this.ents.push(new NPC(150, 166, { sprite: 'claudine', talk: 'mamie' }), new NPC(270, 168, { sprite: 'amandine', talk: 'amandineCamp' }), Object.assign(new PapaNPC(208, 120), { talkId: 'papa' }));
+      this.ents.push(new NPC(150, 166, { sprite: 'claudine', fn: mamieTalk }), new NPC(270, 168, { sprite: 'amandine', fn: amandineCampTalk }), Object.assign(new PapaNPC(208, 120), { talkId: 'papa' }));
     } else this.ents.push(new Raccoon(640, 380), new Raccoon(300, 430), new Bat(180, 380));
     this.ents.push(new Rift(CAMP_RIFT.x, CAMP_RIFT.y, {
       lumi: true,

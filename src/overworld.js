@@ -221,9 +221,9 @@ function buildVillageArea() {
   A.houses = [
     H('pierrette', 17, 12), H('gaspard', 45, 12),
     H('auberge', 17, 22), H('bibliotheque', 45, 22),
-    H('forge', 17, 39), H('comptoir', 25, 39, { locked: () => !SAVE.freed3 && '« Maison à louer. » La porte est fermée.' }),
+    H('forge', 17, 39), H('comptoir', 25, 39, { locked: () => !SAVE.freed3 ? '« Maison à louer. » La porte est fermée.' : SAVE.boss6 && '« Fermé. Amandine est au camping, de l\'autre côté de la faille. »' }),
     H('epicerie', 39, 39), H('mahaut', 45, 39),
-    H('mamie', 53, 39, { locked: () => !SAVE.freed2 && 'Une maison au toit de chaume, avec un vieux chaudron dans la cheminée. Personne ne répond.' }),
+    H('mamie', 53, 39, { locked: () => !SAVE.freed2 ? 'Une maison au toit de chaume, avec un vieux chaudron dans la cheminée. Personne ne répond.' : SAVE.boss6 && 'Un mot sur la porte : « Partie faire des crêpes au camping. Mamie. »' }),
   ];
   // les réverbères peints éclairent la nuit
   const lamps = [[23, 16], [40, 16], [23, 29], [40, 29], [13, 21], [52, 21], [34, 41], [28, 6], [33, 6]];

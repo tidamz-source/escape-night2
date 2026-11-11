@@ -141,7 +141,7 @@ class MidnightKing extends Enemy {
       G.parts.burst(this.x, this.y - this.alt - 26, 10, { c: this.poof, life: 0.4, smin: 30, smax: 90, r: 2 });
       this.rage++; this.wh++;
       const want = this.hp <= 0 ? 4 : this.hp <= 8 ? 3 : this.hp <= 16 ? 2 : 1;
-      if (this.hp <= 0) { this.state = 'dying'; this.st = 2.6; SFX.bossDie(); G.shake = 0.6; for (const e of G.area.ents) { if (e !== this && e.isEnemy && !e.dead && e.room === this.room) e.die(G); if (e.isOrb) e.dead = true; } return; }
+      if (this.hp <= 0) { this.state = 'dying'; this.st = 5.2; this.dieT = 0; G.banner = null; SFX.bossDie(); G.shake = 0.6; G.flashT = 0.25; for (const e of G.area.ents) { if (e !== this && e.isEnemy && !e.dead && e.room === this.room) e.die(G); if (e.isOrb) e.dead = true; } return; }
       if (want !== this.phase) {
         this.phase = want; this.state = 'float'; this.st = 1.5; this.alt = 18; this.shield = true; this.hits = 0; SFX.roar(); G.shake = 0.4;
         G.say(Story.script(want === 2 ? 'king2' : 'king3'));
@@ -191,14 +191,25 @@ class MidnightKing extends Enemy {
       }
       case 'fall': this.alt = lerp(this.alt, 0, Math.min(1, dt * 10)); if (this.st <= 0) { this.alt = 0; this.state = 'held'; this.wh = 0; this.st = 3.6 / Math.sqrt(this.k); G.shake = 0.3; } return;
       case 'held': if (this.st <= 0) { this.state = 'fly'; this.st = 1; SFX.roar(); } return;
-      case 'dying':
-        if (Math.random() < dt * 25) G.parts.burst(this.x + rand(-20, 20), this.y - rand(0, 50), 6, { c: ['#ffe27a', '#fff', '#c3b3ff'], life: 0.6, r: 2, g: 40 });
-        if (this.st <= 0) { this.dead = true; G.flashT = 0.4; }
+      case 'dying': { // il s'élève, se fissure de lumière, puis éclate en mille éclats d'aube
+        this.dieT += dt; const k = clamp(this.dieT / 4.4, 0, 1);
+        this.alt = lerp(this.alt, 18 + k * 46, Math.min(1, dt * 2)); G.shake = Math.max(G.shake, 0.05 + k * 0.35);
+        if (Math.random() < dt * (15 + k * 50)) G.parts.burst(this.x + rand(-26, 26), this.y - this.alt - rand(0, 70), 4, { c: ['#ffe27a', '#fff', '#c3b3ff'], life: 0.7, smin: 20, smax: 80 + k * 80, r: 2, g: 20 });
+        if ((this.rumble = (this.rumble || 0) - dt) <= 0) { this.rumble = 0.55 - k * 0.35; SFX.push(); if (k > 0.5) SFX.crystal(); }
+        if (!this.cry && this.dieT > 0.6) { this.cry = true; SFX.roar(); }
+        if (this.st <= 0) { this.dead = true; G.flashT = 0.7; G.shake = 0.8; SFX.boom(); SFX.bigheart(); G.parts.burst(this.x, this.y - this.alt - 30, 90, { c: ['#ffe27a', '#fff', '#fff6c0', '#c3b3ff'], life: 2, smin: 40, smax: 260, r: 2.5, drag: 1.2 }); }
         return;
+      }
     }
   }
   draw() {
-    if (this.state === 'dying' && Math.floor(this.t * 20) % 2) return;
+    if (this.state === 'dying') { // rayons de lumière qui percent sa robe
+      const k = clamp((this.dieT || 0) / 4.4, 0, 1), cx = this.x, cy = this.y - this.alt - 44;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2 + this.t * (0.4 + k), len = 40 + k * 260, w = 0.06 + k * 0.05; ctx.globalAlpha = 0.18 + k * 0.4; ctx.fillStyle = i % 2 ? '#fff2c0' : '#ffe27a'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a - w) * len, cy + Math.sin(a - w) * len); ctx.lineTo(cx + Math.cos(a + w) * len, cy + Math.sin(a + w) * len); ctx.fill(); }
+      ctx.globalAlpha = 0.3 + k * 0.5; ell(cx, cy, 10 + k * 30, 10 + k * 30, '#fff6c0'); ctx.restore();
+      if (k > 0.75 && Math.floor(this.t * 24) % 2) return;
+    }
     ell(this.x, this.y, 16, 5, 'rgba(0,0,0,.45)');
     const fl = this.flash > 0, held = this.state === 'held' || this.state === 'down', bob = held ? 0 : Math.sin(this.t * 2) * 2;
     hi(this.x, this.y - this.alt + bob, false, () => {

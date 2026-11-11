@@ -900,14 +900,22 @@
  "kingDown": [
   {
    "who": "Le Roi Minuit",
-   "text": "Non… la lumière… je sens… cent ans qui me tombent dessus…"
+   "text": "Non… la lumière… elle me brûle… Cent ans… cent ans qui me tombent dessus d'un coup…"
   },
   {
-   "text": "Les six fragments d'aube s'illuminent ensemble. Le soleil se lève sur le royaume !"
+   "who": "Le Roi Minuit",
+   "text": "Je voulais seulement… ne jamais vieillir…"
+  },
+  {
+   "text": "Le Roi Minuit s'efface dans un dernier éclat. À sa place, une pierre dorée flotte au-dessus des dalles : le cœur de l'horloge."
+  },
+  {
+   "who": "Lumi",
+   "text": "La pierre du soleil ! C'est elle qui manquait à la tour-horloge. Vite, {hero}, rentrons au village !"
   },
   {
    "who": "Papa",
-   "text": "Bravo, {hero}. On rentre à la maison ?",
+   "text": "Bravo, {hero}. Allons remettre le temps en marche.",
    "face": "smile",
    "faceOf": "papa"
   }
@@ -1041,6 +1049,12 @@
   {
    "who": "Lumi",
    "text": "Les portes à cadenas demandent des petites clés. La porte du gardien, elle, a besoin de la grande clé dorée."
+  }
+ ],
+ "sunrise": [
+  {
+   "who": "Lumi",
+   "text": "Midi ! Le temps reprend son cours. Regarde, {hero} : le soleil se lève sur tout le royaume !"
   }
  ]
 }
