@@ -5,7 +5,6 @@
 //        [STÈLE]     [CARREFOUR]  [YEUX]     [TRÉSOR]
 //            .       [ENTRÉE]    [ARÈNE]       .
 function buildCaveArea() {
-  const brA = { x: 1 * RW + 14, y: 1 * RH + 4 };
   return makeDungeon({
     id: 'cave', zone: 'collines', name: 'La Grotte des lucioles', theme: 'cave', seed: 21, rough: 0.2, moss: 360, dark: 0.26,
     bossFlag: 'boss', heartFlag: 'heart2', potLoot: 'pot',
@@ -20,7 +19,7 @@ function buildCaveArea() {
       for (const [x, y] of [[5, 4], [24, 4], [5, 12], [24, 12]]) { room('treasure').set(x, y, 'k'); room('bigkey').set(x, y, 'k'); }
       for (const [x, y] of [[8, 11], [21, 11]]) room('hub').set(x, y, 'k');
     },
-    syncTiles() { const want = SAVE.bridge ? 'b' : '~'; let ch = false; for (let y = brA.y; y < brA.y + 2; y++) for (let x = brA.x; x < brA.x + 2; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; ch = true; } if (ch) this.rerender(); },
+    syncTiles() { const p = this.h.pos('chasm', 14 * TS, 4 * TS), brA = { x: Math.round(p.x / TS), y: Math.round(p.y / TS) }; const want = SAVE.bridge ? 'b' : '~'; let ch = false; for (let y = brA.y; y < brA.y + 2; y++) for (let x = brA.x; x < brA.x + 2; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; ch = true; } if (ch) this.rerender(); },
     roomDark: (room, R) => room === R.bigkey ? 0.55 : null,
     arenas: { arena: arenaStd('arenaW'), bigkey: { flag: 'caveBigArena', onStart(G) { G.banner = { text: 'Le Grand feu follet', t: 2 }; } }, boss: bossArena('boss', 'La Grande Ombre') },
     migrate() { if (SAVE.caveBigKey) SAVE.caveBigArena = true; },
@@ -48,8 +47,8 @@ function buildCaveArea() {
         ['block', mk(Scratches, 'block', 8, 9, 3)], ['block', mk(Plate, 'block', 19, 6, 'plateE', { hold: true })],
         ['block', mk(Sign, 'block', 22, 12, [{ text: '« La porte du nord ne reste ouverte que tant que la dalle est pressée. »' }], 'stone')],
         ['sling', new Chest(sc.x, sc.y, { flag: 'slingChest', give: 'lance_pierre', big: true, msg: [{ text: 'Tu as trouvé le lance-pierre ! Et 15 cailloux pour aller avec.' }, { text: 'Bouton B : tirer, dans 8 directions. Les jarres et les buissons cachent d\'autres cailloux.' }] })],
-        ['chasm', mk(Crystal, 'chasm', 21, 3, 'bridge', G => { SAVE.bridge = true; persist(); G.area.syncTiles(); G.shake = 0.4; setTimeout(() => SFX.secret(), 300); })],
-        ['chasm', mk(Sign, 'chasm', 11, 12, [{ text: '« Le pont dort tant que le cristal dort. »' }], 'stone')],
+        ['chasm', mk(Target, 'chasm', 21, 3, 'bridge', G => { SAVE.bridge = true; persist(); G.area.syncTiles(); G.shake = 0.4; setTimeout(() => SFX.secret(), 300); })],
+        ['chasm', mk(Sign, 'chasm', 11, 12, [{ text: '« Le pont dort tant que la cible n\'est pas touchée. »' }], 'stone')],
         ['twin', mk(FrisbeeSwitch, 'twin', 8, 5, 'caveTwin')], ['twin', mk(FrisbeeSwitch, 'twin', 22, 5, 'caveTwin')],
         ['twin', mk(Sign, 'twin', 14, 8, [{ text: '« Deux yeux à réveiller ensemble. Ils dorment au-dessus de l\'eau. »' }], 'stone')],
         ['twin', new Chest(tc.x, tc.y, { flag: 'caveKeyChest2', reveal: 'caveTwin', msg: [{ text: 'Une petite clé !' }] })],

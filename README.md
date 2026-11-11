@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.5.1** : le pont de la Grotte se déclenche à nouveau (décalage dû à la nouvelle cellule), et c'est désormais une cible, comme au village.
 - **8.5** : Amandine est la captive de la Grotte (le comptoir et la revente s'ouvrent dès le 1er donjon) et {enfant1} celle des Mines ; chaque salle de boss ne contient que le boss, avec une grille au nord : à sa défaite, il lâche son matériau, les portes s'ouvrent et la cellule du dessus révèle le captif et le cœur de cristal (le Château garde sa fin) ; Corbeau géant et ses écureuils dans la salle de la grande clé du Bois (coffre invisible au centre) ; l'épée reste tendue pendant la charge ; la cible du pont-levis est atteignable par-dessus le pont relevé ; Jules et Lila sur la place.
 - **8.4.3** : écran de choix du héros sans pad virtuel (bouton Retour), travelling de la tour-horloge plus lent et sans aller-retour, faisceau des coffres qui s'efface vers le haut, feux follets désynchronisés, mini-boss de la Grotte avec 2 petits feux follets.
 - **8.4.2** : sur les îlots au grappin (Prés du Lac, Dunes), un coffre contient le quart de cœur.
