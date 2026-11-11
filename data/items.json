@@ -220,5 +220,20 @@
    "def": 60
   },
   "desc": "La recette de la grand-mère du berger. Rend toute la vie et protège un moment."
+ },
+ "bourse_geante": {
+  "name": "Bourse géante",
+  "kind": "upgrade",
+  "wallet": 999,
+  "desc": "Une bourse cousue par Amandine. Contient jusqu'à 999 écus."
+ },
+ "sacoche_voyage": {
+  "name": "Sacoche de voyageur",
+  "kind": "upgrade",
+  "ammoMax": {
+   "cailloux": 80,
+   "petards": 30
+  },
+  "desc": "Encore plus de place : 80 cailloux et 30 pétards."
  }
 }

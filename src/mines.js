@@ -220,7 +220,7 @@ function buildMinesArea() {
         ['grappin', new Chest(gc.x, gc.y, { flag: 'grappinChest', give: 'grappin', big: true, msg: [{ text: 'Tu as trouvé le grappin !' }, { text: 'Bouton B : la chaîne file droit devant. Accroche-toi aux poteaux pour survoler le vide.' }, { text: 'Il attire aussi les petits ennemis, les objets… et les caisses.' }] })],
         ['grappin', mk(Post, 'grappin', 23, 4)], ['grappin', mk(Post, 'grappin', 25, 10)], // le second poteau sert au retour
         ['grappin', mk(Chest, 'grappin', 25, 3, { flag: 'grappinCoins', give: 'money:30', msg: [{ text: 'Tu as trouvé 30 écus !' }] })],
-        ['spider', mk(Chest, 'spider', 14, 8, { flag: 'minesHeart', give: 'quart_coeur', big: true, msg: [{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }] })],
+        ['spider', mk(Chest, 'spider', 14, 8, { flag: 'minesHeart', give: 'piece_coeur', big: true, msg: null })],
         ['posts', mk(Post, 'posts', 5, 10)], ['posts', mk(Post, 'posts', 12, 8)], ['posts', mk(Post, 'posts', 15, 4)], ['posts', mk(Post, 'posts', 17, 3)], ['posts', mk(Post, 'posts', 20, 10)],
         ['posts', mk(Chest, 'posts', 24, 11, { flag: 'minesBigKey', give: 'bigkey:mines', big: true, msg: [{ text: 'La grande clé des Mines ! Elle ouvre la porte de la Taupe de fer.' }] })],
         ['boss', new Cage(cg.x, cg.y, { n: 3, boss: 'boss3', drawCaptive: (x, y) => drawSprite('amandine', x, y) })],

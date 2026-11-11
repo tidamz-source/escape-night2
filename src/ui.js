@@ -26,6 +26,8 @@ function drawItemIcon(id, x, y, s = 1) {
   if (String(id).startsWith('souv_')) return drawSouvenir(id.slice(5), x, y, s);
   if (id === 'quart_coeur') return drawHeartShape(x, y, 2 * s, '#ff8ab0', '#c84a7a');
   if (id === 'grande_bourse') return drawItemIcon('money', x, y, s * 1.3);
+  if (id === 'bourse_geante') return drawItemIcon('money', x, y, s * 1.6);
+  if (id === 'sacoche_voyage') return drawItemIcon('carquois', x, y, s * 1.15);
   if (id === 'carquois') { drawItemIcon('cailloux', x - 3, y, s * 0.8); return drawPetardIcon(x + 4, y, s * 0.7); }
   hi(x, y, false, () => {
     const u = 2;

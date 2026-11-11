@@ -216,7 +216,7 @@ class PromoFlag {
 const PEDDLER_SPOTS = { 1: ['collines', 34, 30], 2: ['foret', 34, 26], 3: ['montagne', 20, 36], 4: ['lac', 30, 20], 5: ['cote', 20, 24], 6: ['terres', 30, 30] };
 const PEDDLER_WARES = [
   { id: 'bouteille', price: 120, key: 'peddler_bottle', label: 'Bouteille vide' },
-  { id: 'quart_coeur', price: 220, key: 'peddler_heart', label: 'Cœur de cristal' },
+  { id: 'sacoche_voyage', price: 220, key: 'peddler_bag', label: 'Sacoche de voyageur' },
   { id: 'appat', price: 80, key: 'peddler_bait', label: 'Appât doré' },
 ];
 class Peddler {
@@ -478,7 +478,7 @@ const PROGRESS = [
   [40, () => (SAVE.fragments || 0) / 6],                                                                 // l'histoire
   [5, () => SAVE.boss6 ? 1 : 0],                                                                        // la fin
   [15, () => { const ks = Object.keys(QUESTS); return ks.filter(k => Quests.st(k) === 2).length / ks.length; }], // quêtes
-  [8, () => Math.min(1, ((SAVE.maxHp || 6) - 6) / 24)],                                                 // cœurs
+  [8, () => ['heart2', 'heart3', 'heart4', 'heart5', 'heart6'].filter(k => SAVE[k]).length / 5],          // cœurs des boss
   [8, () => Bestiary.nFull() / BEASTS.length],                                                          // bestiaire
   [6, () => (SAVE.troc || 0) / TROC.length],                                                            // troc
   [8, () => Object.keys(SOUVENIRS).filter(k => (SAVE.souv && SAVE.souv[k]) || (SAVE.pawn && SAVE.pawn[k])).length / Object.keys(SOUVENIRS).length],
@@ -486,7 +486,7 @@ const PROGRESS = [
   [5, () => RECIPES.filter(r => (SAVE.recipes || {})[r.id]).length / RECIPES.length],                   // recettes
   [10, () => Flies.n() / 30],                                                                          // lucioles perdues
   [5, () => Flies.pow() / 6],                                                                          // pouvoirs de Lumi
-  [5, () => (SAVE.hpieces || 0) / 7],                                                                  // quarts de cœur
+  [5, () => (SAVE.hpieces || 0) / 16],                                                                 // quarts de cœur
   [3, () => ['grotte_collines', 'grotte_montagne', 'grotte_col', 'grotte_lande'].filter(k => SAVE['open_' + k]).length / 4], // grottes secrètes
   [14, () => Object.keys(SIDE).filter(k => SQ.done(k)).length / Object.keys(SIDE).length],                      // les dix quêtes secondaires
 ];

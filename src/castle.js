@@ -308,7 +308,7 @@ function buildCastleArea() {
         ['frisbee', new Shutter(P('frisbee', 240, 96).x, P('frisbee', 240, 96).y, 'v', () => !SAVE.castleSw)], altar('frisbee', 14, 3, 'sealF'),
         ['frisbee', mk(Sign, 'frisbee', 14, 12, [{ text: '« Deux lanternes en même temps, et la grille se lève. »' }])],
         ['papa', new Shutter(door('papa', 'S').x, door('papa', 'S').y, 'v', () => G.area.arenaOn === R.papa)],
-        ['armory', mk(Chest, 'armory', 14, 7, { flag: 'castleHeart', give: 'quart_coeur', big: true, msg: [{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }] })],
+        ['armory', mk(Chest, 'armory', 14, 7, { flag: 'castleHeart', give: 'piece_coeur', big: true, msg: null })],
         ...clocks('bigkey', [[4, 8]]), ...[[120, 90, 1, 1], [360, 90, -1, 1], [150, 200, 1, -1], [330, 200, -1, -1]].map(([x, y, sx, sy]) => ['bigkey', new BounceBlade(P('bigkey', x, y).x, P('bigkey', x, y).y, sx, sy, 95)]),
         ['bigkey', mk(Chest, 'bigkey', 24, 8, { flag: 'castleBigKey', give: 'bigkey:castle', big: true, msg: [{ text: 'La grande clé du château ! Elle ouvre la salle du trône.' }] })],
         ['king', new Shutter(door('king', 'S').x, door('king', 'S').y, 'v', () => G.area.arenaOn === R.king)],

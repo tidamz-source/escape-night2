@@ -255,7 +255,7 @@ function buildTempleArea() {
         ['dive', new DiveSpot(pos('dive', 120, 200).x, pos('dive', 120, 200).y, 'templeDiveKey', 'key', [{ text: 'Au fond de l\'eau, une petite clé !' }])],
         ['dive', new DiveSpot(pos('dive', 300, 90).x, pos('dive', 300, 90).y, 'templeDiveCoins', 'money:40', [{ text: 'Une bourse engloutie : 40 écus !' }])],
         ['east', mk(Valve, 'east', 4, 6)],
-        ['east', mk(Chest, 'east', 16, 9, { flag: 'templeHeart', give: 'quart_coeur', big: true, reveal: 'waterLow', msg: [{ text: 'Un cœur de cristal, resté au fond du bassin ! Ta vie maximale augmente d\'un cœur.' }] })],
+        ['east', mk(Chest, 'east', 16, 9, { flag: 'templeHeart', give: 'piece_coeur', big: true, reveal: 'waterLow', msg: null })],
         ['bigkey', mk(Valve, 'bigkey', 4, 13)],
         ['bigkey', mk(Sign, 'bigkey', 24, 13, [{ text: '« La clé du bassin de la Reine dort à l\'est, au fond du bassin de la cascade. »' }])],
         ['cascade', mk(Valve, 'cascade', 14, 5)],

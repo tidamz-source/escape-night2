@@ -4,12 +4,12 @@
 // les souvenirs : objets du monde normal, perdus dans le royaume (et une petite récompense en plus)
 const SOUVENIRS = {
   rubik:      { name: 'Rubik\'s Cube', desc: 'Les poules couvaient ce drôle de dé à six couleurs.', bonus: 'money:40' },
-  casque:     { name: 'Casque audio', desc: 'Le berger l\'appelait « le serre-tête qui chante ». La batterie est morte.', bonus: 'quart_coeur' },
+  casque:     { name: 'Casque audio', desc: 'Le berger l\'appelait « le serre-tête qui chante ». La batterie est morte.', bonus: 'piece_coeur' },
   lampe:      { name: 'Lampe de poche', desc: 'Le bûcheron la prenait pour une luciole en bouteille.', bonus: 'money:50' },
-  smartphone: { name: 'Smartphone', desc: '« Pas de réseau. » Évidemment : on est au Moyen Âge.', bonus: 'quart_coeur' },
+  smartphone: { name: 'Smartphone', desc: '« Pas de réseau. » Évidemment : on est au Moyen Âge.', bonus: 'piece_coeur' },
   photo:      { name: 'Appareil photo instantané', desc: 'Pris dans le filet du pêcheur. Il reste une photo… floue.', bonus: 'money:50' },
-  switch:     { name: 'Console de jeu portable', desc: 'L\'artificière croyait que c\'était une fusée en panne.', bonus: 'quart_coeur' },
-  ballon:     { name: 'Ballon de foot', desc: 'L\'ermite l\'appelait « la lune qui rebondit ».', bonus: 'quart_coeur' },
+  switch:     { name: 'Console de jeu portable', desc: 'L\'artificière croyait que c\'était une fusée en panne.', bonus: 'piece_coeur' },
+  ballon:     { name: 'Ballon de foot', desc: 'L\'ermite l\'appelait « la lune qui rebondit ».', bonus: 'piece_coeur' },
 };
 function drawSouvenir(id, x, y, s = 1) {
   hi(x, y, false, () => {
@@ -75,10 +75,10 @@ const Quests = {
   reward(id, G, lines) {
     const q = QUESTS[id], S = SOUVENIRS[q.souv];
     SAVE.q[id] = 2; SAVE.souv[q.souv] = true;
-    if (S.bonus.startsWith('money:')) Wallet.add(Number(S.bonus.slice(6))); else Inventory.give(S.bonus);
+    let hpMsg = ''; if (S.bonus.startsWith('money:')) Wallet.add(Number(S.bonus.slice(6))); else if (S.bonus === 'piece_coeur') hpMsg = giveHeartPiece(G); else Inventory.give(S.bonus);
     persist(); SFX.chest(); G.raise('souv_' + q.souv);
     const n = Object.keys(SAVE.souv).length;
-    G.say(Story.lines(lines).concat(Story.lines([{ text: `Tu as obtenu : ${S.name} ! ${S.desc}` }, { text: S.bonus.startsWith('money:') ? `Et ${S.bonus.slice(6)} écus en plus.` : 'Et un cœur de cristal : ta vie maximale augmente !' }, { text: `Souvenirs du monde réel : ${n} sur 7.` + (n === 7 ? ' La collection est complète !' : '') }])));
+    G.say(Story.lines(lines).concat(Story.lines([{ text: `Tu as obtenu : ${S.name} ! ${S.desc}` }, { text: S.bonus.startsWith('money:') ? `Et ${S.bonus.slice(6)} écus en plus.` : 'Et en prime : ' + hpMsg.charAt(0).toLowerCase() + hpMsg.slice(1) }, { text: `Souvenirs du monde réel : ${n} sur 7.` + (n === 7 ? ' La collection est complète !' : '') }])));
   },
   onKill(G, e) {
     const z = G.area.id;

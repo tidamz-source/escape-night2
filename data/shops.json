@@ -100,9 +100,9 @@
     "minFrag": 3
    },
    {
-    "id": "quart_coeur",
-    "price": 150,
-    "stock": 1,
+    "id": "bourse_geante",
+    "price": 250,
+    "once": true,
     "minFrag": 4
    },
    {
