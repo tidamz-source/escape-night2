@@ -480,7 +480,7 @@ class Shadow extends Enemy {
 }
 
 class Wisp extends Enemy {
-  constructor(x, y, room) { super(x, y, { hp: 2, dmg: 1, room }); this.w = 10; this.h = 6; this.cd = rand(1.5, 2.5); this.alt = 12; this.light = { r: 46, c: 'rgba(120,220,255,' }; this.poof = ['#dff8ff', '#6fd3ff', '#2a8aff']; this.loot = 'wisp'; }
+  constructor(x, y, room) { super(x, y, { hp: 2, dmg: 1, room }); this.w = 10; this.h = 6; this.cd = rand(1.2, 3.4); this.t = rand(0, 10); this.alt = 12; this.light = { r: 46, c: 'rgba(120,220,255,' }; this.poof = ['#dff8ff', '#6fd3ff', '#2a8aff']; this.loot = 'wisp'; }
   body() { return { x: this.x - 6, y: this.y - this.alt - 8, w: 12, h: 12 }; }
   update(dt, G) {
     if (this.physics(dt, G, true)) return;
@@ -489,7 +489,8 @@ class Wisp extends Enemy {
     let want = 0; if (d < 70) want = -40; else if (d > 110) want = 30;
     this.x += (Math.cos(a) * want + Math.cos(this.t * 1.7) * 22) * dt; this.y += (Math.sin(a) * want + Math.sin(this.t * 2.3) * 16) * dt;
     this.clampArea(G);
-    if (this.cd <= 0 && d < 180) { this.cd = 2.3; SFX.shoot(); G.area.ents.push(new Orb(this.x, this.y - this.alt, a)); }
+    if (this.cd <= 0 && d >= 180) this.cd = rand(0.2, 1.4); // hors de portée : on décale, pour ne pas tirer tous ensemble en arrivant
+    if (this.cd <= 0 && d < 180) { this.cd = rand(1.9, 3.1); SFX.shoot(); G.area.ents.push(new Orb(this.x, this.y - this.alt, a)); }
     this.touch(G);
   }
   draw() {

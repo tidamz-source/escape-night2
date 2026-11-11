@@ -200,7 +200,8 @@ class Chest {
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       const g = ctx.createLinearGradient(0, base, 0, top); g.addColorStop(0, `rgba(255,236,160,${a})`); g.addColorStop(1, 'rgba(255,236,160,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(this.x - hw, base); ctx.lineTo(this.x + hw, base); ctx.lineTo(this.x + hw * 2.2, top); ctx.lineTo(this.x - hw * 2.2, top); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = `rgba(255,255,255,${a * 0.6})`; ctx.fillRect(this.x - hw * 0.35, top + 20, hw * 0.7, base - top - 20);
+      const g2 = ctx.createLinearGradient(0, base, 0, top + 10); g2.addColorStop(0, `rgba(255,255,255,${a * 0.6})`); g2.addColorStop(0.5, `rgba(255,255,255,${a * 0.3})`); g2.addColorStop(1, 'rgba(255,255,255,0)'); // le bandeau central s'efface vers le haut
+      ctx.fillStyle = g2; ctx.fillRect(this.x - hw * 0.35, top + 10, hw * 0.7, base - top - 10);
       ctx.restore();
     }
     hi(this.x + (this.jx || 0), by + (this.jy || 0), false, () => {

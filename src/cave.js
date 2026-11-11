@@ -34,7 +34,7 @@ function buildCaveArea() {
       if (n === 'sling') L.push(mk(Shadow, n, 8, 5), mk(Bat, n, 22, 11), pot(n, 3, 13), pot(n, 26, 13));
       if (n === 'chasm') L.push(mk(Wisp, n, 10, 2), mk(Shadow, n, 9, 11), mk(Bat, n, 20, 12), pot(n, 25, 13), pot(n, 3, 13));
       if (n === 'twin') L.push(mk(Wisp, n, 14, 10), mk(Bat, n, 6, 12), mk(Bat, n, 23, 12), pot(n, 3, 13), pot(n, 26, 13));
-      if (n === 'bigkey') { L.push(pot(n, 3, 13), pot(n, 26, 13)); if (!SAVE.caveBigArena) L.push(mk(Wisp, n, 7, 5), mk(Wisp, n, 22, 5), mk(Wisp, n, 7, 11), mk(Wisp, n, 22, 11), mk(BigWisp, n, 14, 6)); }
+      if (n === 'bigkey') { L.push(pot(n, 3, 13), pot(n, 26, 13)); if (!SAVE.caveBigArena) L.push(mk(Wisp, n, 7, 8), mk(Wisp, n, 22, 8), mk(BigWisp, n, 14, 6)); }
       if (n === 'treasure') L.push(mk(Bat, n, 9, 6), mk(Bat, n, 20, 6), mk(Bat, n, 14, 10), pot(n, 3, 3), pot(n, 26, 3), pot(n, 3, 13), pot(n, 26, 13));
       if (n === 'boss') { if (!SAVE.boss) { const p = h.pos(n, 240, 120); L.push(new GreatShadow(p.x, p.y, h.R.boss)); } L.push(pot(n, 3, 12), pot(n, 26, 12)); }
     },

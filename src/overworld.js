@@ -114,7 +114,8 @@ class ClockTower {
   look(G) {
     const n = SAVE.fragments || 0; persist(); SFX.pickup();
     // la caméra monte le long de la tour pour la montrer en entier, avec son nom, puis redescend
-    const P = G.player, top = this.y - (this.painted ? 150 : 250), mid = this.y - (this.painted ? 70 : 120), start = { x: P.x, y: P.y - 12 }, me = this;
+    // la caméra monte lentement jusqu'à cadrer la tour en entier, s'y arrête, puis on revient au héros
+    const P = G.player, frame = this.y - (this.painted ? 108 : 150), start = { x: P.x, y: P.y - 12 }, me = this;
     const title = n >= 6 ? 'Midi' : n ? `${n} h du matin` : 'Minuit';
     G.camFocus = { x: start.x, y: start.y }; G.state = 'cut';
     G.cut = {
@@ -122,16 +123,16 @@ class ClockTower {
       update(dt) {
         const c = G.cut; c.t += dt; G.parts.update(dt); me.update(dt, G);
         const e = k => k * k * (3 - 2 * k);
-        if (c.t < 1.2) { const k = e(c.t / 1.2); G.camFocus = { x: lerp(start.x, me.x, k), y: lerp(start.y, top, k) }; }
-        else if (c.t < 3.4) { const k = e((c.t - 1.2) / 2.2); G.camFocus = { x: me.x, y: lerp(top, mid, k) }; if (!c.chime && c.t > 1.4) { c.chime = true; SFX.chime(); me.glow = 0.8; } }
-        else if (c.t < 4.2) { const k = e((c.t - 3.4) / 0.8); G.camFocus = { x: lerp(me.x, P.x, k), y: lerp(mid, P.y - 12, k) }; }
-        else { G.cut = null; G.camFocus = null; G.state = 'play'; me.saySaved(G, n); }
+        if (c.t < 3) { const k = e(c.t / 3); G.camFocus = { x: lerp(start.x, me.x, k), y: lerp(start.y, frame, k) }; }
+        else G.camFocus = { x: me.x, y: frame };
+        if (!c.chime && c.t > 2.6) { c.chime = true; SFX.chime(); me.glow = 0.8; }
+        if (c.t > 5.6) { G.cut = null; G.camFocus = null; G.state = 'play'; me.saySaved(G, n); }
       },
       draw() {
-        const c = G.cut; if (!c || c.t < 0.9 || c.t > 3.8) return;
-        ctx.globalAlpha = Math.min(1, (c.t - 0.9) * 2, (3.8 - c.t) * 2);
-        text('La tour-horloge', W / 2, 22, { size: 14, align: 'center', bold: true, color: PAL.warm });
-        text(title + (n && n < 6 ? `  ·  ${n} lanterne${n > 1 ? 's' : ''} sur 6` : ''), W / 2, 40, { size: 9, align: 'center', color: '#fff6c0' });
+        const c = G.cut; if (!c || c.t < 2.2) return;
+        ctx.globalAlpha = Math.min(1, (c.t - 2.2) * 1.5, (5.6 - c.t) * 3);
+        text('La tour-horloge', W / 2, H - 44, { size: 14, align: 'center', bold: true, color: PAL.warm });
+        text(title + (n && n < 6 ? `  ·  ${n} lanterne${n > 1 ? 's' : ''} sur 6` : ''), W / 2, H - 24, { size: 9, align: 'center', color: '#fff6c0' });
         ctx.globalAlpha = 1;
       },
     };

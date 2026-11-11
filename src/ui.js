@@ -449,6 +449,7 @@ const UIMixin = {
     if (Input.pressed('right')) { this.heroSel = (this.heroSel + 1) % 3; SFX.menu(); }
     if (Input.pressed('left')) { this.heroSel = (this.heroSel + 2) % 3; SFX.menu(); }
     const tap = Input.lastTap; Input.lastTap = null; let go = Input.pressed('a');
+    if (tap && performance.now() - tap.time < 250 && tap.x < 70 && tap.y < 32) { this.state = 'slots'; SFX.menu(); return; } // bouton « Retour »
     if (tap && performance.now() - tap.time < 250 && tap.y > 40 && tap.y < 230) { const i = clamp(Math.floor((tap.x - 30) / 140), 0, 2); if (i === this.heroSel) go = true; else { this.heroSel = i; SFX.menu(); } }
     if (go) { SFX.chest(); this.newGame(this.newSlotIndex, Heroes.order()[this.heroSel]); }
   },
@@ -464,7 +465,8 @@ const UIMixin = {
       wrap(d.desc, 112, 7.5).forEach((l, k) => text(l, x, 172 + k * 10, { size: 7.5, align: 'center', color: '#c8d0f0' }));
       wrap(d.perk, 112, 7.5).forEach((l, k) => text(l, x, 198 + k * 10, { size: 7.5, align: 'center', color: PAL.warm }));
     });
-    text('◂ ▸ : choisir   ·   A : partir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#6a74a0' });
+    if (Input.padVisible) { box(8, 6, 58, 20, { fill: '#14244c', edge: '#3a4a7a' }); text('◂ Retour', 37, 11, { size: 8, align: 'center', color: '#c8d0f0' }); }
+    text(Input.padVisible ? 'Touche un personnage pour le choisir, puis touche-le encore pour partir' : '◂ ▸ : choisir   ·   A : partir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#6a74a0' });
   },
   drawTitleBackdrop() {
     const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#070d1f'); g.addColorStop(1, '#14244c'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);

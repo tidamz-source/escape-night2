@@ -403,7 +403,7 @@ const G = {
     resetT(); R(0, 0, W, H, '#000');
     if (this.view === 'title') {
       if (this.state === 'slots') this.drawSlots(); else if (this.state === 'heroes') this.drawHeroes(); else this.drawTitle();
-      this.drawFade(); drawVirtualPad(); return;
+      this.drawFade(); return; // menus du titre : on touche directement l'écran, pas de pad virtuel
     }
     if (this.view === 'end') { this.drawEnd(); this.drawFade(); return; }
     if (this.view === 'credits') { this.drawCredits(); this.drawFade(); return; }
