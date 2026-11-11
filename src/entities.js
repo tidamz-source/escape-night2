@@ -166,6 +166,7 @@ class Player {
       if (Input.held.a && this.atkFrom) { this.charge = (this.charge || 0) + dt; if (this.charge > 0.7 && !this.charged) { this.charged = true; SFX.chime && SFX.chime(); } if (this.charged && Math.random() < dt * 20) G.parts.add({ x: this.x + DV[this.dir][0] * 12 + rand(-3, 3), y: this.y - 12 + rand(-3, 3), life: 0.3, c: pick(['#fff', '#bff0ff']), r: 1 }); }
       else { if (this.charged) spinAttack(this, G); this.charge = 0; this.charged = false; this.atkFrom = false; }
     }
+    this.holding = Upg.lv('epee') >= 1 && this.atkFrom && Input.held.a && this.atk <= 0; // l'épée reste tendue tant qu'on tient A
     if (this.atk > 0) {
       this.atk -= dt; this.glide(dt, G, 0, 0, 14);
       if (this.atk < ATK_TIME - 0.04) G.attackHits(this);
@@ -206,12 +207,12 @@ class Player {
       // direction : on garde l'orientation courante en diagonale (comme ALttP)
       const want = Math.abs(dx) > Math.abs(dy) + 0.01 ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
       const cur = DV[this.dir], keep = (cur[0] && Math.sign(dx) === cur[0] && Math.abs(dx) > 0.3) || (cur[1] && Math.sign(dy) === cur[1] && Math.abs(dy) > 0.3);
-      if (!keep) this.dir = want;
+      if (!keep && !this.holding) this.dir = want; // épée tenue (coup chargé) : on garde l'orientation
       // vue en 8 directions (affichage seulement : l'épée et les interactions restent en 4 directions)
       if (this.aim[0] && this.aim[1]) { this.look = (this.aim[1] > 0 ? 'down' : 'up') + '_' + (this.aim[0] > 0 ? 'right' : 'left'); this.diagT = 0.12; }
       else if ((this.diagT -= dt) <= 0 || !(this.look || '').includes('_')) this.look = this.dir; // petit délai : relâcher deux touches n'est jamais simultané
     }
-    const SPEED = 76 * this.perk.speed * (Inventory.has('bottes') ? 1.15 : 1); // Rox : +10 % ; bottes de l'ermite : +15 %
+    const SPEED = 76 * this.perk.speed * (Inventory.has('bottes') ? 1.15 : 1) * (this.holding ? 0.55 : 1); // Rox : +10 % ; bottes de l'ermite : +15 %
     // accélération vive au démarrage, freinage plus doux à l'arrêt
     const hit = this.glide(dt, G, input ? dx * SPEED : 0, input ? dy * SPEED : 0, input ? 20 : 9, input ? { x: dx, y: dy } : null);
     const speed = Math.hypot(this.vx, this.vy);
@@ -302,12 +303,15 @@ class Player {
     if (attacking && this.dir === 'up') this.drawBranch(p);
     if ((this.shootT > 0 || this.hooking) && this.dir === 'up') this.drawSling();
     if (this.roll > 0) { const k = 1 - this.roll / 0.3; ctx.save(); ctx.translate(this.x, this.y - 8); ctx.rotate(Math.sign(this.rollV[0] || 1) * k * Math.PI * 2); ctx.translate(-this.x, -this.y + 8); }
-    const look = !attacking && this.look && this.look.split('_').includes(this.dir) && heroHasDir(SAVE.hero, this.look) ? this.look : this.dir;
+    const holding = this.holding && !attacking;
+    if (holding && this.dir === 'up') this.drawBranch(0.3125);
+    const look = !attacking && !holding && this.look && this.look.split('_').includes(this.dir) && heroHasDir(SAVE.hero, this.look) ? this.look : this.dir;
     drawHero(SAVE.hero, this.x + vx * lunge, this.y + vy * lunge, look, (this.moving && !attacking) || this.roll > 0, this.moving ? this.anim : G.t);
     if (this.roll > 0) ctx.restore();
     if (Inventory.has('bouclier') && !attacking && this.roll <= 0 && this.dir !== 'up') this.drawShield();
     if (this.spinT > 0) { ctx.save(); ctx.strokeStyle = 'rgba(220,250,255,.85)'; ctx.lineWidth = 2; ctx.beginPath(); const a0 = (0.3 - this.spinT) / 0.3 * Math.PI * 2; ctx.arc(this.x, this.y - 8, 24, a0, a0 + Math.PI * 1.3); ctx.stroke(); ctx.restore(); }
     if (attacking && this.dir !== 'up') this.drawBranch(p);
+    if (holding && this.dir !== 'up') this.drawBranch(0.3125); // épée tendue devant, prête à tournoyer
     if ((this.shootT > 0 || this.hooking) && this.dir !== 'up') this.drawSling();
   }
   drawShield() {

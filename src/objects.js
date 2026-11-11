@@ -397,7 +397,7 @@ class HeartContainer {
     const P = G.player;
     if (rectHit({ x: this.x - 8, y: this.y - 14, w: 16, h: 16 }, P.body())) {
       this.dead = true; SAVE[this.flag || 'heart2'] = true; SAVE.maxHp += 2; G.healFull(); persist(); SFX.bigheart(); G.raise('heart');
-      G.say([{ text: 'Un grand cœur de luciole ! Ta vie maximale augmente d\'un cœur.' }]);
+      G.say([{ text: 'Un cœur de cristal ! Ta vie maximale augmente d\'un cœur.' }]);
     }
   }
   draw() {

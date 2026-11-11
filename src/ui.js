@@ -506,10 +506,10 @@ const UIMixin = {
     text(`${SAVE.maxHp / 2} cœurs  ·  ${Wallet.get()} écus  ·  ${Math.max(1, Math.floor((SAVE.playTime || 0) / 60))} min de jeu  ·  ${SAVE.fragments || 0} fragment${(SAVE.fragments || 0) > 1 ? 's' : ''} d'aube sur 6`, W / 2, 82, { size: 8, align: 'center', color: '#9aa4c8' });
     text(E.next, W / 2, 100, { size: 8, align: 'center', color: PAL.lav });
     const crew = [x => drawHero(SAVE.hero, x, 214, 'down', false, this.t, 60 / heroHeight(SAVE.hero))];
-    if (SAVE.freed1) crew.push(x => drawHero(Heroes.captive(1), x, 214, 'down', false, this.t + 1, 60 / heroHeight(Heroes.captive(1))));
+    if (SAVE.freed3) crew.push(x => drawHero(Heroes.captive(1), x, 214, 'down', false, this.t + 1, 60 / heroHeight(Heroes.captive(1))));
     const spr = (k, h) => x => { const im = IMG['npc_' + k]; if (!im) return; const w = im.width * h / im.height; ctx.drawImage(im, x - w / 2, 214 - h, w, h); };
     if (SAVE.freed2) crew.push(spr('claudine', 62));
-    if (SAVE.freed3) crew.push(spr('amandine', 62));
+    if (SAVE.freed1) crew.push(spr('amandine', 62));
     if (SAVE.freed4) crew.push(x => drawHero(Heroes.captive(2), x, 214, 'down', false, this.t + 2, 60 / heroHeight(Heroes.captive(2))));
     if (SAVE.freed5) crew.push(spr('dog_down', 28));
     crew.forEach((f, i) => f(W / 2 + (i - (crew.length - 1) / 2) * 50));

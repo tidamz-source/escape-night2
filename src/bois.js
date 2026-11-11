@@ -344,27 +344,27 @@ function buildBoisArea() {
       for (let i = 0; i < 9; i++) room('upper').set(4 + i * 3, 5 + (i % 2) * 5, 's');
       st('upper', [[8, 8], [21, 8], [11, 12], [18, 12]]);
       st('treasure', [[8, 5], [21, 5], [8, 11], [21, 11]]);
-      st('bigkey', [[7, 4], [22, 4], [7, 12], [22, 12], [14, 8]]);
+      st('bigkey', [[7, 4], [22, 4], [7, 12], [22, 12]]);
     },
-    arenas: { arena: { flag: 'arenaB', onStart(G) { G.banner = { text: 'Le Corbeau géant', t: 2 }; } }, frisbee: arenaStd('arenaFris'), boss: bossArena('boss2', 'Le Grand-Duc') },
-    migrate() { if (SAVE.frisbeeChest) SAVE.arenaFris = true; },
+    arenas: { arena: arenaStd('arenaB'), frisbee: arenaStd('arenaFris'), bigkey: { flag: 'arenaBK', onStart(G) { G.banner = { text: 'Le Corbeau géant', t: 2 }; } }, boss: bossArena('boss2', 'Le Grand-Duc') },
+    migrate() { if (SAVE.frisbeeChest) SAVE.arenaFris = true; if (SAVE.boisBigKey) SAVE.arenaBK = true; },
     after(A, h) { A.windRoom = h.R.wind; A.roomDark = room => room === h.R.boss && SAVE.boss2 ? 0.12 : null; },
     make(n, L, h) {
       const { mk } = h, bush = (tx, ty) => Object.assign(mk(Bush, n, tx, ty), { loot: 'bushBois' }), pot = (tx, ty) => h.pot(n, tx, ty);
       if (n === 'entry') L.push(bush(4, 4), bush(25, 4), bush(4, 12), bush(25, 12), mk(Boar, n, 20, 8), mk(Crow, n, 9, 6));
-      if (n === 'arena') { L.push(pot(4, 3), pot(25, 3), pot(4, 13)); if (!SAVE.arenaB) L.push(mk(Squirrel, n, 5, 4), mk(Squirrel, n, 24, 4), mk(Squirrel, n, 5, 12), mk(Squirrel, n, 24, 12), mk(BigCrow, n, 14, 5)); }
+      if (n === 'arena') { L.push(pot(4, 3), pot(25, 3), pot(4, 13)); if (!SAVE.arenaB) L.push(mk(Boar, n, 6, 8), mk(Boar, n, 23, 8), mk(Squirrel, n, 14, 4), mk(Squirrel, n, 10, 12)); }
       if (n === 'pond') L.push(mk(Crow, n, 6, 3), mk(Crow, n, 24, 3), mk(Squirrel, n, 25, 12), bush(4, 13), bush(25, 13));
       if (n === 'wind') L.push(mk(Boar, n, 15, 6), mk(Squirrel, n, 4, 3), bush(3, 13), bush(26, 3), pot(26, 13));
       if (n === 'frisbee') { L.push(pot(3, 3), pot(26, 3)); if (!SAVE.arenaFris) L.push(mk(Crow, n, 8, 6), mk(Crow, n, 21, 6), mk(Boar, n, 8, 12), mk(Boar, n, 21, 12)); }
       if (n === 'switches') L.push(mk(Squirrel, n, 14, 4), mk(Squirrel, n, 14, 11), mk(Boar, n, 6, 11), bush(3, 13), bush(26, 13));
-      if (n === 'bigkey') L.push(mk(Boar, n, 8, 8), mk(Boar, n, 21, 8), mk(Crow, n, 14, 4), pot(3, 13), pot(26, 13));
+      if (n === 'bigkey') { L.push(pot(3, 13), pot(26, 13)); if (!SAVE.arenaBK) L.push(mk(Squirrel, n, 5, 4), mk(Squirrel, n, 24, 4), mk(Squirrel, n, 5, 12), mk(Squirrel, n, 24, 12), mk(BigCrow, n, 14, 5)); } // le Corbeau géant et ses sbires
       if (n === 'upper') L.push(mk(Squirrel, n, 6, 3), mk(Squirrel, n, 23, 3), mk(Crow, n, 14, 9), pot(3, 13), pot(26, 13));
       if (n === 'treasure') L.push(mk(Crow, n, 10, 8), mk(Crow, n, 19, 8), pot(3, 3), pot(26, 3), bush(3, 13), bush(26, 13));
       if (n === 'boss') { if (!SAVE.boss2) { const p = h.pos(n, 240, 130); L.push(new GreatOwl(p.x, p.y, h.R.boss)); } L.push(pot(3, 12), pot(26, 12)); }
     },
     fixed(h) {
       const { mk, pos } = h, sh = (n, pts) => pts.map(([x, y]) => [n, mk(Glowshroom, n, x, y)]);
-      const ac = pos('arena', 240, 144), fc = pos('frisbee', 240, 140), cg = pos('boss', 240, 66), isl = pos('pond', 240, 144), bc = pos('bigkey', 240, 210);
+      const ac = pos('arena', 240, 144), fc = pos('frisbee', 240, 140), cg = pos('prison', 240, 110), isl = pos('pond', 240, 144), bc = pos('bigkey', 240, 150);
       return [
         ['entry', mk(Sign, 'entry', 14, 10, [{ text: '« Bois des murmures. Le vent du vieux moulin ne souffle jamais longtemps. »' }])],
         ['arena', new Chest(ac.x, ac.y, { flag: 'boisKeyChest', reveal: 'arenaB', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ce bois.' }] })],
@@ -374,9 +374,10 @@ function buildBoisArea() {
         ['frisbee', new Chest(fc.x, fc.y, { flag: 'frisbeeChest', give: 'frisbee', big: true, reveal: 'arenaFris', msg: [{ text: 'Tu as trouvé le frisbee !' }, { text: 'Bouton B : il part en arc et revient. Il étourdit les ennemis, rapporte les objets et passe au-dessus des souches et de l\'eau.' }, { text: 'Change d\'outil avec E, les gâchettes LB/RB, ou en touchant la case B.' }] })],
         ['switches', mk(FrisbeeSwitch, 'switches', 8, 4, 'switchesB')], ['switches', mk(FrisbeeSwitch, 'switches', 21, 4, 'switchesB')],
         ['switches', mk(Sign, 'switches', 14, 9, [{ text: '« Deux lanternes, un seul souffle. Elles ne brillent ensemble que quelques secondes. »' }])],
-        ['bigkey', new Chest(bc.x, bc.y, { flag: 'boisBigKey', give: 'bigkey:bois', big: true, msg: [{ text: 'La grande clé du bois ! Elle ouvre le nid du Grand-Duc.' }] })],
+        ['bigkey', new Shutter(h.door('bigkey', 'S').x, h.door('bigkey', 'S').y, 'v', () => G.area.arenaOn === h.R.bigkey)],
+        ['bigkey', new Chest(bc.x, bc.y, { flag: 'boisBigKey', give: 'bigkey:bois', big: true, reveal: 'arenaBK', msg: [{ text: 'La grande clé du bois ! Elle ouvre le nid du Grand-Duc.' }] })],
         ['treasure', mk(Chest, 'treasure', 14, 8, { flag: 'boisTreasure', give: 'money:50', msg: [{ text: 'Un trésor d\'écureuil : 50 écus !' }] })],
-        ['boss', new Cage(cg.x, cg.y, { n: 2, boss: 'boss2', drawCaptive: (x, y) => drawSprite('claudine', x, y) })],
+        ['prison', new Cage(cg.x, cg.y, { n: 2, boss: 'boss2', drawCaptive: (x, y) => drawSprite('claudine', x, y) })],
         ...sh('entry', [[3, 7], [26, 9]]), ...sh('arena', [[3, 8], [26, 6]]), ...sh('pond', [[3, 6], [26, 8]]), ...sh('wind', [[3, 8], [26, 6]]), ...sh('frisbee', [[9, 9], [20, 9]]),
         ...sh('switches', [[3, 8], [26, 8]]), ...sh('upper', [[3, 8], [26, 8]]), ...sh('treasure', [[14, 4]]), ...sh('bigkey', [[3, 8], [26, 8]]), ...sh('boss', [[3, 3], [26, 3], [3, 13], [26, 13]]),
       ];

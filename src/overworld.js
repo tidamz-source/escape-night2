@@ -226,7 +226,7 @@ function buildVillageArea() {
   A.houses = [
     H('pierrette', 17, 12), H('gaspard', 45, 12),
     H('auberge', 17, 22), H('bibliotheque', 45, 22),
-    H('forge', 17, 39), H('comptoir', 25, 39, { locked: () => !SAVE.freed3 ? '« Maison à louer. » La porte est fermée.' : SAVE.boss6 && '« Fermé. Amandine est au camping, de l\'autre côté de la faille. »' }),
+    H('forge', 17, 39), H('comptoir', 25, 39, { locked: () => !SAVE.freed1 ? '« Maison à louer. » La porte est fermée.' : SAVE.boss6 && '« Fermé. Amandine est au camping, de l\'autre côté de la faille. »' }),
     H('epicerie', 39, 39), H('mahaut', 45, 39),
     H('mamie', 53, 39, { locked: () => !SAVE.freed2 ? 'Une maison au toit de chaume, avec un vieux chaudron dans la cheminée. Personne ne répond.' : SAVE.boss6 && 'Un mot sur la porte : « Partie faire des crêpes au camping. Mamie. »' }),
   ];
@@ -244,7 +244,7 @@ function buildVillageArea() {
     this.ents.push(Object.assign(new Relay(26 * TS, 29 * TS, 'village'), { ghost: true }));
     this.ents.push(new Rift(55 * TS, 29 * TS + 8, { active: () => !!SAVE.boss6, closed: 'La faille par laquelle tu es arrivé{e} s\'est refermée. Lumi dit qu\'elle se rouvrira quand le jour se lèvera.', enter: G => G.fadeTo(() => G.enter('camp', G.areas.camp.dawn, false), '#c8a8ff') }));
     // la rivière de l'ouest : cible et pont-levis vers la Forêt
-    this.ents.push(Object.assign(new Target(4 * TS + 8, 21 * TS + 4, 'drawbridge', G => { G.area.syncTiles(); G.say(Story.script('bridge_down')); }), { ghost: true }));
+    this.ents.push(Object.assign(new Target(4 * TS + 8, 21 * TS + 4, 'drawbridge', G => { G.area.syncTiles(); G.say(Story.script('bridge_down')); }), { ghost: true })); // la cible peinte : les tirs passent par-dessus le pont-levis relevé
     this.ents.push(new PaintedBridge(VIL.bridge));
     this.ents.push(Object.assign(new Sign(13 * TS, 22 * TS, [{ text: '« Pont-levis de la Forêt. Fermé par ordre du Roi Minuit. »' }, { who: '{hero}', text: 'Il y a une cible sur l\'autre rive… Si seulement je pouvais l\'atteindre.', face: 'o' }]), { ghost: true }));
     this.ents.push(Object.assign(new Sign(35 * TS, 3 * TS, [{ text: '« Au nord : les Collines. Au sud : le Lac. À l\'ouest : la Forêt. »' }]), { ghost: true }));

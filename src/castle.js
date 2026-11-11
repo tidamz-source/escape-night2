@@ -251,7 +251,7 @@ function buildCastleArea() {
     id: 'castle', zone: 'terres', name: 'Le Château de Minuit', theme: 'castle', seed: 97, rough: 0.15, moss: 40, dark: 0.36,
     bossFlag: 'boss6', heartFlag: 'heart7', potLoot: 'potCastle',
     rooms: { blast: [0, 3], entry: [1, 3], sling: [2, 3], gallery: [3, 3], hook: [0, 2], hall: [1, 2], swim: [2, 2], frisbee: [3, 2], armory: [0, 1], papa: [1, 1], bigkey: [2, 1], king: [1, 0] },
-    entry: 'entry', boss: 'king', bossShutter: false,
+    entry: 'entry', boss: 'king', bossShutter: false, prison: false,
     links: [['entry', 'blast'], ['entry', 'sling'], ['sling', 'gallery'], ['entry', 'hall'], ['hall', 'hook'], ['hall', 'swim'], ['swim', 'frisbee'],
       ['hall', 'papa', { seal: true }], ['papa', 'armory', { key: 'castleDoor1' }], ['papa', 'bigkey', { shut: () => !SAVE.papaFreed || G.area.arenaOn === G.area.h.R.papa }], ['papa', 'king', { big: true }]],
     tiles(room) {

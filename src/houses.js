@@ -19,7 +19,7 @@ Object.assign(INTERIORS, {
     put('counter', 5, 5.4); npc(A, 5, 4.4, { look: 'aubergiste', talk: 'aubergiste' });
     put('table', 14, 6.6, { candle: true }); put('stool', 12.2, 7.4); put('stool', 15.8, 7.4);
     put('table', 14, 9.2, { food: true }); put('barrel', 2, 9.4); put('barrel', 3.2, 9.6); put('rug', 9.5, 9.4, { color: '#8a3a2a' });
-    npc(A, 12, 8.6, { hero: () => Heroes.captive(1), talk: 'enfant1', when: 'freed1&!boss6' }); // après la fin, la famille est au camping
+    npc(A, 12, 8.6, { hero: () => Heroes.captive(1), talk: 'enfant1', when: 'freed3&!boss6' }); // après la fin, la famille est au camping
   } },
   bibliotheque: { name: 'La bibliothèque', w: 20, h: 11, build(put, at, A) {
     for (const x of [3, 7, 13, 17]) put('shelf', x, 3.2);

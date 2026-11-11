@@ -205,7 +205,7 @@ function buildMinesArea() {
         S: () => SAVE.switchA ? (SAVE.switchB ? { pts: [ST.S, ST.J1, ST.J2, ST.N], to: 'N' } : { pts: [ST.S, ST.J1, ST.J2, ST.E], to: 'E' }) : { pts: [ST.S, ST.J1, ST.W], to: 'W' },
         W: () => ({ pts: [ST.W, ST.J1, ST.S], to: 'S' }), E: () => ({ pts: [ST.E, ST.J2, ST.J1, ST.S], to: 'S' }), N: () => ({ pts: [ST.N, ST.J2, ST.J1, ST.S], to: 'S' }),
       };
-      const ac = pos('arena', 240, 150), gc = pos('grappin', 200, 150), cg = pos('boss', 240, 66);
+      const ac = pos('arena', 240, 150), gc = pos('grappin', 200, 150), cg = pos('prison', 240, 110);
       return [
         ['entry', mk(Sign, 'entry', 11, 10, [{ text: '« Mines des gnomes. Prenez le wagonnet, pas le gouffre. »' }])],
         ['arena', new Chest(ac.x, ac.y, { flag: 'minesKeyChest', reveal: 'arenaM', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ces mines.' }] })],
@@ -223,7 +223,7 @@ function buildMinesArea() {
         ['spider', mk(Chest, 'spider', 14, 8, { flag: 'minesHeart', give: 'piece_coeur', big: true, msg: null })],
         ['posts', mk(Post, 'posts', 5, 10)], ['posts', mk(Post, 'posts', 12, 8)], ['posts', mk(Post, 'posts', 15, 4)], ['posts', mk(Post, 'posts', 17, 3)], ['posts', mk(Post, 'posts', 20, 10)],
         ['posts', mk(Chest, 'posts', 24, 11, { flag: 'minesBigKey', give: 'bigkey:mines', big: true, msg: [{ text: 'La grande clé des Mines ! Elle ouvre la porte de la Taupe de fer.' }] })],
-        ['boss', new Cage(cg.x, cg.y, { n: 3, boss: 'boss3', drawCaptive: (x, y) => drawSprite('amandine', x, y) })],
+        ['prison', new Cage(cg.x, cg.y, { n: 3, boss: 'boss3', drawCaptive: (x, y, t) => drawHero(Heroes.captive(1), x, y, 'down', false, t) })],
         ...lamps('entry', [[9, 3], [20, 3]]), ...lamps('arena', [[3, 8], [26, 8]]), ...lamps('crate', [[6, 3], [12, 3]]), ...lamps('shaft', [[14, 3]]),
         ...lamps('hub', [[4, 13], [25, 13], [24, 2]]), ...lamps('grappin', [[3, 8], [14, 3]]), ...lamps('posts', [[3, 4], [26, 13]]), ...lamps('spider', [[3, 3], [26, 3]]),
         ...lamps('hall', [[3, 3], [26, 3], [3, 13], [26, 13]]), ...lamps('boss', [[3, 3], [26, 3], [3, 13], [26, 13]]),

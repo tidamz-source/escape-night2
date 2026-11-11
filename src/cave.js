@@ -40,7 +40,7 @@ function buildCaveArea() {
     },
     fixed(h) {
       const { mk, pos } = h, br = (n, pts) => pts.map(([x, y]) => [n, mk(Brazier, n, x, y)]);
-      const cg = pos('boss', 240, 66), ac = pos('arena', 240, 150), sc = pos('sling', 240, 140), tc = pos('twin', 240, 170), bc = pos('bigkey', 240, 150);
+      const cg = pos('prison', 240, 110), ac = pos('arena', 240, 150), sc = pos('sling', 240, 140), tc = pos('twin', 240, 170), bc = pos('bigkey', 240, 150);
       return [
         ['entry', mk(Sign, 'entry', 11, 10, [{ text: '« Grotte des lucioles. Ce qui dort au fond craint la lumière… et les cailloux bien lancés. »' }, { who: '{hero}', text: 'Des cailloux ? Il me faudrait de quoi les lancer.', face: 'o' }], 'stone')],
         ['entry', mk(Chest, 'entry', 4, 3, { flag: 'caveCoins', give: 'money:20', msg: [{ text: 'Tu as trouvé 20 écus !' }] })],
@@ -56,7 +56,7 @@ function buildCaveArea() {
         ['bigkey', new Shutter(h.door('bigkey', 'S').x, h.door('bigkey', 'S').y, 'v', () => G.area.arenaOn === h.R.bigkey)],
         ['bigkey', new Chest(bc.x, bc.y, { flag: 'caveBigKey', give: 'bigkey:cave', big: true, reveal: 'caveBigArena', msg: [{ text: 'La grande clé de la grotte ! Elle ouvre la porte du gardien.' }] })],
         ['treasure', mk(Chest, 'treasure', 14, 7, { flag: 'caveTreasure', give: 'money:50', msg: [{ text: 'Un trésor oublié : 50 écus !' }] })],
-        ['boss', new Cage(cg.x, cg.y, { n: 1, boss: 'boss', drawCaptive: (x, y, t) => drawHero(Heroes.captive(1), x, y, 'down', false, t) })],
+        ['prison', new Cage(cg.x, cg.y, { n: 1, boss: 'boss', drawCaptive: (x, y) => drawSprite('amandine', x, y) })],
         ...br('entry', [[11, 3], [18, 3]]), ...br('arena', [[4, 7], [25, 9]]), ...br('hub', [[4, 3], [25, 3]]), ...br('block', [[11, 3], [18, 3]]), ...br('sling', [[10, 7], [19, 7]]),
         ...br('chasm', [[4, 11], [25, 11], [5, 2]]), ...br('twin', [[3, 3], [26, 3]]), ...br('treasure', [[14, 3]]), ...br('boss', [[4, 3], [25, 3], [4, 13], [25, 13]]),
       ];

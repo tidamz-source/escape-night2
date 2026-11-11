@@ -329,7 +329,7 @@ function worldSpawn(A) {
     if (A.rooms) { const p = A.h.pos(f[2], f[3], f[4]); const e = new LostFirefly(p.x, p.y, f[0]); e.room = A.h.R[f[2]]; A.ents.push(e); }
     else A.ents.push(new LostFirefly(f[2] * TS + 8, f[3] * TS + 8, f[0], f[4] === 'exact'));
   }
-  if (A.id === 'royaume') A.ents.push(villager('crieur', 30 * TS + 8, 33 * TS), villager('lavandiere', 50 * TS + 8, 27 * TS), villager('jules', 22 * TS + 8, 34 * TS), villager('lila', 24 * TS + 8, 35 * TS), villager('lampions', 12 * TS + 8, 14 * TS));
+  if (A.id === 'royaume') A.ents.push(villager('crieur', 30 * TS + 8, 33 * TS), villager('lavandiere', 50 * TS + 8, 27 * TS), villager('jules', 36 * TS + 8, 31 * TS), villager('lila', 38 * TS + 8, 32 * TS), villager('lampions', 12 * TS + 8, 14 * TS));
   if (A.id === 'collines') A.ents.push(new SecretRock(12 * TS + 8, 9 * TS, 'grotte_collines'));
   if (A.id === 'montagne') A.ents.push(new SecretRock(22 * TS + 8, 8 * TS, 'grotte_montagne'));
   sqSpawn(A); // les quêtes secondaires

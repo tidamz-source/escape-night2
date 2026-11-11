@@ -22,11 +22,11 @@
   },
   {
    "if": "!freed1",
-   "text": "Libérer {enfant1} de sa cage."
+   "text": "Libérer Amandine de sa cage."
   },
   {
    "if": "!v1done",
-   "text": "Retrouver {enfant1} au village."
+   "text": "Retrouver Amandine au village."
   },
   {
    "if": "!drawbridge",
@@ -62,11 +62,11 @@
   },
   {
    "if": "!freed3",
-   "text": "Libérer Amandine de sa cage."
+   "text": "Libérer {enfant1} de sa cage."
   },
   {
    "if": "!v3done",
-   "text": "Retrouver Amandine au village."
+   "text": "Retrouver {enfant1} au village."
   },
   {
    "if": "!lacCrossed",
@@ -217,7 +217,7 @@
     },
     {
      "who": "Le sage",
-     "text": "Cette nuit, on a vu un enfant emmené vers la Grotte des lucioles, tout au nord des Collines. Le garde te laissera passer."
+     "text": "Cette nuit, on a vu une jeune femme emmenée vers la Grotte des lucioles, tout au nord des Collines. Le garde te laissera passer."
     },
     {
      "who": "Le sage",
@@ -448,29 +448,29 @@
  ],
  "captive_cage": [
   {
-   "who": "{enfant1}",
-   "text": "{hero} ! C'est toi ! Sors-moi de là !",
+   "who": "Amandine",
+   "text": "{hero} ?! C'est toi ? Fais attention, cette grande ombre se cache dans le noir et frappe quand on ne s'y attend pas !",
    "face": "o",
-   "faceOf": "enfant1"
+   "faceOf": "amandine"
   }
  ],
  "freed": [
   {
-   "who": "{enfant1}",
-   "text": "Tu es venu{e} jusqu'ici pour moi ? {merci1}",
+   "who": "Amandine",
+   "text": "Merci, {hero} ! J'ai cru que j'allais rester dans le noir pour toujours.",
    "face": "smile",
-   "faceOf": "enfant1"
+   "faceOf": "amandine"
   },
   {
    "who": "{hero}",
-   "text": "Les autres ont disparu aussi. Papa, Mamie, Goyave… Je ne sais pas où ils sont.",
+   "text": "Les autres ont disparu aussi. {enfant1}, {enfant2}, Papa, Mamie, Goyave… Je ne sais pas où ils sont.",
    "face": "angry"
   },
   {
-   "who": "{enfant1}",
-   "text": "Alors on va les chercher, où qu'ils soient. Je t'attends au village, sur la place.",
-   "face": "wink",
-   "faceOf": "enfant1"
+   "who": "Amandine",
+   "text": "Alors je vais t'aider à ma façon. Je file au village ouvrir un comptoir : je dénicherai des objets à échanger, tout ce qui pourra t'aider à les retrouver.",
+   "face": "smile",
+   "faceOf": "amandine"
   },
   {
    "text": "Tu as obtenu un fragment d'aube ! Le ciel du royaume s'éclaircit un peu."
@@ -478,10 +478,10 @@
  ],
  "reunion": [
   {
-   "who": "{enfant1}",
-   "text": "Te voilà ! Regarde la tour-horloge : une lanterne d'aube s'est allumée.",
+   "who": "Amandine",
+   "text": "Te voilà ! Regarde la tour-horloge : une lanterne d'aube s'est allumée. Et j'ai pris la maison à louer, à côté de la forge : ce sera mon comptoir ! Passe me voir, je rachète ce que tu trouves.",
    "face": "smile",
-   "faceOf": "enfant1"
+   "faceOf": "amandine"
   },
   {
    "who": "Lumi",
@@ -629,7 +629,7 @@
   },
   {
    "who": "Lumi",
-   "text": "Les gnomes ont creusé ces galeries pour le Roi Minuit. Amandine est au fond, je sens son courage d'ici."
+   "text": "Les gnomes ont creusé ces galeries pour le Roi Minuit. {enfant1} est au fond, je sens son courage d'ici."
   },
   {
    "who": "Lumi",
@@ -638,18 +638,18 @@
  ],
  "captive_cage3": [
   {
-   "who": "Amandine",
-   "text": "{hero} ?! Fais attention, cette machine creuse le sol comme du beurre ! Elle a des plaques partout…",
-   "face": "smile",
-   "faceOf": "amandine"
+   "who": "{enfant1}",
+   "text": "{hero} ! C'est toi ! Fais attention, cette machine creuse le sol comme du beurre ! Sors-moi de là !",
+   "face": "o",
+   "faceOf": "enfant1"
   }
  ],
  "freed3": [
   {
-   "who": "Amandine",
-   "text": "Merci, {hero} ! J'ai cru que j'allais finir en pépite.",
+   "who": "{enfant1}",
+   "text": "Tu es venu{e} jusqu'ici pour moi ? {merci1}",
    "face": "smile",
-   "faceOf": "amandine"
+   "faceOf": "enfant1"
   },
   {
    "who": "{hero}",
@@ -657,10 +657,10 @@
    "face": "angry"
   },
   {
-   "who": "Amandine",
-   "text": "Je file au village. Je vais ouvrir un comptoir et dénicher des objets à échanger : tout ce qui pourra t'aider à retrouver les autres.",
-   "face": "smile",
-   "faceOf": "amandine"
+   "who": "{enfant1}",
+   "text": "Alors on va les chercher, où qu'ils soient. Je t'attends au village, sur la place.",
+   "face": "wink",
+   "faceOf": "enfant1"
   },
   {
    "text": "Tu as obtenu un troisième fragment d'aube ! Le ciel prend une teinte violette."
@@ -668,10 +668,10 @@
  ],
  "reunion3": [
   {
-   "who": "Amandine",
-   "text": "Je prends la maison à louer, à côté de la forge : ce sera mon comptoir ! Je vais chercher partout des objets rares à échanger, de quoi t'aider dans ta quête. Passe me voir souvent.",
+   "who": "{enfant1}",
+   "text": "Te voilà ! Trois lanternes allumées sur la tour-horloge… On les ramènera tous, promis.",
    "face": "smile",
-   "faceOf": "amandine"
+   "faceOf": "enfant1"
   },
   {
    "who": "Lumi",

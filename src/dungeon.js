@@ -28,6 +28,12 @@ class BigKeyDoor { // porte de la salle du boss : grande clé
   }
 }
 function makeDungeon(spec) {
+  // au-dessus de la salle du boss : la cellule du captif, derrière une grille qui s'ouvre à la défaite du boss (on y trouve aussi le cœur de cristal)
+  if (spec.prison !== false && !spec.rooms.prison) {
+    for (const k of Object.keys(spec.rooms)) spec.rooms[k] = [spec.rooms[k][0], spec.rooms[k][1] + 1];
+    spec.rooms.prison = [spec.rooms[spec.boss][0], 0]; spec.rows = (spec.rows || 4) + 1;
+    spec.links = spec.links.concat([['prison', spec.boss, { shut: () => !SAVE[spec.bossFlag], at: 'b' }]]);
+  }
   const C = spec.cols || 4, Rw = spec.rows || 4, names = Object.keys(spec.rooms);
   const idx = n => { const [rx, ry] = spec.rooms[n]; return ry * C + rx; };
   const R = {}; for (const n of names) R[n] = idx(n);
@@ -95,7 +101,9 @@ function makeDungeon(spec) {
     }
     if (spec.fixed) for (const [n, e] of spec.fixed(h)) list.push([idx(n), e]);
     placeFixed(this, list);
-    if (SAVE[spec.bossFlag] && !SAVE[spec.heartFlag]) { const p = h.pos(spec.boss, 240, spec.heartY || 170); placeFixed(this, [[idx(spec.boss), Object.assign(new HeartContainer(p.x, p.y), { flag: spec.heartFlag })]]); }
+    const heartRoom = spec.rooms.prison ? 'prison' : spec.boss, heartY = spec.rooms.prison ? 190 : spec.heartY || 170;
+    if (SAVE[spec.bossFlag] && !SAVE[spec.heartFlag]) { const p = h.pos(heartRoom, 240, heartY); placeFixed(this, [[idx(heartRoom), Object.assign(new HeartContainer(p.x, p.y), { flag: spec.heartFlag })]]); }
+    if (spec.rooms.prison) placeFixed(this, [[idx('prison'), h.mk(Brazier, 'prison', 8, 5)], [idx('prison'), h.mk(Brazier, 'prison', 21, 5)]]);
     for (const r of this.rooms.list) spawnRoom(this, r);
     // matériau du boss pas encore ramassé : il attend toujours là où le boss est tombé
     for (const [cls, b] of Object.entries(SAVE.bossLoot || {})) if (b.area === spec.id && !SAVE['bossMat_' + cls]) this.ents.push(new BossLoot(b.x, b.y, b.mat, cls, b.room));
@@ -106,7 +114,7 @@ function makeDungeon(spec) {
   };
   // le cœur de fin de boss
   const bossAr = A.arenas[idx(spec.boss)];
-  if (bossAr && !bossAr.onClear) bossAr.onClear = G => { const p = h.pos(spec.boss, 240, spec.heartY || 170); const hc = Object.assign(new HeartContainer(p.x, p.y), { flag: spec.heartFlag }); hc.room = idx(spec.boss); G.area.ents.push(hc); };
+  if (bossAr && !bossAr.onClear) bossAr.onClear = G => { const pr = !!spec.rooms.prison, p = h.pos(pr ? 'prison' : spec.boss, 240, pr ? 190 : spec.heartY || 170); const hc = Object.assign(new HeartContainer(p.x, p.y), { flag: spec.heartFlag }); hc.room = idx(pr ? 'prison' : spec.boss); G.area.ents.push(hc); if (pr) { SFX.gate && SFX.gate(); G.say([{ who: 'Lumi', text: 'La grille du fond s\'est levée ! Vite, là-haut !' }]); } };
   const st = h.at(spec.entry, 14, 12);
   A.start = { x: st.x + 8, y: st.y, dir: 'up' };
   A.exits = { E: G => { const z = G.areas[spec.zone]; G.enter(spec.zone, z.fromDungeon); } };

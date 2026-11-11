@@ -183,7 +183,7 @@ function buildTowerArea() {
     },
     fixed(h) {
       const { mk, pos, at } = h, br = (n, pts) => pts.map(([x, y]) => [n, mk(Brazier, n, x, y)]);
-      const ac = pos('arena', 240, 150), pc = pos('petards', 240, 150), cg = pos('boss', 240, 66), tc = pos('torches', 240, 100);
+      const ac = pos('arena', 240, 150), pc = pos('petards', 240, 150), cg = pos('prison', 240, 110), tc = pos('torches', 240, 100);
       const hp = (tx, ty) => { const p = at('hub', tx, ty); return [p.x, p.y - 4]; };
       return [
         ['entry', mk(Sign, 'entry', 11, 10, [{ text: '« Tour des artificiers. Nos murs sont solides… sauf ceux qui sont fendus. »' }])],
@@ -200,7 +200,7 @@ function buildTowerArea() {
         ['bigkey', mk(Chest, 'bigkey', 14, 8, { flag: 'towerBigKey', give: 'bigkey:tower', big: true, msg: [{ text: 'La grande clé de la tour ! Elle ouvre la salle du Chevalier de fer.' }] })],
         ['secret', mk(Chest, 'secret', 14, 8, { flag: 'towerHeart', give: 'piece_coeur', big: true, msg: null })],
         ['gargoyle', mk(Sign, 'gargoyle', 4, 8, [{ text: '« Ici dort la réserve secrète. »' }])],
-        ['boss', new Cage(cg.x, cg.y, { n: 5, boss: 'boss5', drawCaptive: (x, y) => { const im = IMG.npc_dog_down; if (im) ctx.drawImage(im, half(x - im.width / 5.2), half(y - im.height / 2.6), im.width / 2.6, im.height / 2.6); } })],
+        ['prison', new Cage(cg.x, cg.y, { n: 5, boss: 'boss5', drawCaptive: (x, y) => { const im = IMG.npc_dog_down; if (im) ctx.drawImage(im, half(x - im.width / 5.2), half(y - im.height / 2.6), im.width / 2.6, im.height / 2.6); } })],
         ...[['entry', 3, 3], ['entry', 26, 3], ['arena', 14, 3], ['petards', 3, 3], ['petards', 26, 8], ['hub', 26, 3], ['torches', 3, 3], ['balls', 3, 3], ['boss', 4, 3], ['boss', 25, 3], ['bigkey', 3, 8], ['gargoyle', 3, 3], ['gargoyle', 26, 3], ['secret', 14, 3]].map(([r, x, y]) => [r, mk(Brazier, r, x, y)]),
       ];
     },

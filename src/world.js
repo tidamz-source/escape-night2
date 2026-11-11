@@ -5,7 +5,7 @@
 //          'v' gouffre  'b' pont  'E' sortie  'G' entrée de la grotte
 //          'c' pavés  'P' palissade  'g' porte de la palissade (les ennemis ne la franchissent pas)
 //          'r' rails (au sol)  'T' tréteau de rails au-dessus du gouffre  'J' 'K' 'M' 'N' 'O' sorties (mines, lac, temple, tour, château)
-const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P', 'T']); // bloque la marche
+const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P', 'T', 'h']); // bloque la marche ('h' : obstacle bas, les tirs passent au-dessus)
 const WALLS = new Set(['#', 'W', 's', 'k', 'P']);           // bloque les projectiles (ils passent au-dessus de l'eau et du gouffre)
 const EXITS = new Set(['F', 'E', 'G', 'H', 'J', 'K', 'M', 'N', 'O', 'D', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
 const DOORWAYS = new Set(['F', 'E', 'G', 'H', 'J', 'K', 'M', 'N', 'O', 'D']); // sorties dessinées comme des passages sombres

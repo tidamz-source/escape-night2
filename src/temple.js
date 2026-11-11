@@ -243,7 +243,7 @@ function buildTempleArea() {
     },
     fixed(h) {
       const { mk, pos } = h, br = (n, pts) => pts.map(([x, y]) => [n, mk(Brazier, n, x, y)]);
-      const ac = pos('arena', 240, 150), pc = pos('palmes', 240, 150), cg = pos('boss', 240, 66), bk = pos('bigkey', 240, 140);
+      const ac = pos('arena', 240, 150), pc = pos('palmes', 240, 150), cg = pos('prison', 240, 110), bk = pos('bigkey', 240, 140);
       return [
         ['entry', mk(Valve, 'entry', 5, 9)],
         ['entry', mk(Sign, 'entry', 24, 9, [{ text: '« Temple englouti. Chaque vanne règle toutes les eaux du temple. »' }])],
@@ -262,7 +262,7 @@ function buildTempleArea() {
         ['cascade', mk(Sign, 'cascade', 4, 7, [{ text: '« Eau haute : on traverse à la nage. Eau basse : le fond du bassin se découvre. Chaque manivelle règle toutes les eaux du temple. »' }])],
         ['cascade', new Chest(pos('cascade', 22 * TS + 8, 9 * TS).x, pos('cascade', 22 * TS + 8, 9 * TS).y, { flag: 'templeBigKey', give: 'bigkey:temple', big: true, reveal: 'waterLow', msg: [{ text: 'La grande clé du temple ! Elle ouvre le bassin de la Reine.' }] })],
         ['gallery', new DiveSpot(pos('gallery', 360, 104).x, pos('gallery', 360, 104).y, 'templeGallery', 'money:50', [{ text: 'Un coffret englouti : 50 écus !' }])],
-        ['boss', new Cage(cg.x, cg.y, { n: 4, boss: 'boss4', drawCaptive: (x, y, t) => drawHero(Heroes.captive(2), x, y, 'down', false, t) })],
+        ['prison', new Cage(cg.x, cg.y, { n: 4, boss: 'boss4', drawCaptive: (x, y, t) => drawHero(Heroes.captive(2), x, y, 'down', false, t) })],
         ...br('boss', [[4, 3], [25, 3]]), ...br('entry', [[3, 3], [26, 3]]), ...br('hub', [[3, 2], [26, 2]]), ...br('palmes', [[3, 3], [26, 3]]), ...br('arena', [[14, 3]]), ...br('dive', [[26, 4]]),
         ...br('east', [[3, 4]]), ...br('bigkey', [[3, 3], [26, 3]]), ...br('gallery', [[3, 3], [26, 3]]), ...br('cascade', [[12, 3], [17, 3]]), ...br('fountain', [[10, 3], [19, 3]]),
       ];
