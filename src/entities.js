@@ -25,7 +25,7 @@ function blocked(area, b, self, opts = {}) {
   const x0 = Math.floor(b.x / TS), x1 = Math.floor((b.x + b.w - 0.01) / TS), y0 = Math.floor(b.y / TS), y1 = Math.floor((b.y + b.h - 0.01) / TS);
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
     const t = area.tile(tx, ty);
-    if (SOLID.has(t) && !(opts.swim && t === '~')) return true;
+    if (SOLID.has(t) && !(opts.swim && t === '~') && !(t === 'v' && area.fallVoid && self instanceof Player)) return true;
     if (opts.noExit && (EXITS.has(t) || t === 'g')) return true;
   }
   for (const p of area.props) if (p.solid && rectHit(b, { x: p.x - p.fw / 2, y: p.y - p.fh, w: p.fw, h: p.fh })) return true;
@@ -123,6 +123,13 @@ class Player {
     this.atk = 0;
     if (this.hp <= 0) { this.hp = 0; G.gameOver(); }
   }
+  afterFall(G) {
+    const A = G.area, ok = (x, y) => { for (const [dx, dy] of [[0, 0], [-8, 0], [8, 0], [0, -10], [0, 6], [-8, -10], [8, -10], [-8, 6], [8, 6]]) { const t = A.tileAt(x + dx, y - 3 + dy); if (t === 'v' || SOLID.has(t) && t !== 'v') return false; } return !blocked(A, { x: x - this.w / 2, y: y - this.h, w: this.w, h: this.h }, this); };
+    let x = this.safe.x, y = this.safe.y;
+    if (!ok(x, y)) { let best = null, bd = 1e9; for (let r = 4; r <= 64; r += 4) { for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; if (ok(px, py)) { const d = r; if (d < bd) { bd = d; best = [px, py]; } } } if (best) break; } if (best) [x, y] = best; }
+    this.x = x; this.y = y; this.vx = this.vy = 0; this.hp -= 1; this.inv = 1.2; SFX.hurt(); G.shake = 0.2;
+    if (this.hp <= 0) { this.hp = 0; G.gameOver(); }
+  }
   get canSwim() { return Inventory.has('palmes'); }
   get swimming() { return this.canSwim && G.area.tileAt(this.x, this.y - 2) === '~'; }
   update(dt, G) {
@@ -139,6 +146,9 @@ class Player {
       this.x = nx; this.y = ny; this.anim += dt; return;
     }
     if (this.hooking) { this.glide(dt, G, 0, 0, 14); return; }
+    // chute dans le vide (Mines) : un demi-cœur, et retour au dernier bord
+    if (this.fallT > 0) { this.fallT -= dt; if (this.fallT <= 0) this.afterFall(G); return; }
+    if (area.fallVoid && this.roll <= 0 && area.tileAt(this.x, this.y - 3) === 'v') { this.fallT = 0.55; this.vx = this.vy = 0; this.kb.t = 0; this.atk = 0; this.grab = null; SFX.fall(); return; }
     if (this.bump > 0) this.bump -= dt;
     if (this.shootCd > 0) this.shootCd -= dt;
     if (this.shootT > 0) this.shootT -= dt;
@@ -280,6 +290,7 @@ class Player {
     return hx || hy;
   }
   draw() {
+    if (this.fallT > 0) { const k = this.fallT / 0.55; ctx.save(); ctx.translate(this.x, this.y); ctx.rotate((1 - k) * 3); ctx.scale(k, k); ctx.translate(-this.x, -this.y); drawHero(SAVE.hero, this.x, this.y, this.dir, false, G.t); ctx.restore(); return; }
     if (this.inv > 0 && Math.floor(this.inv * 20) % 2) return;
     if (this.swimming && !this.pull) { const lk = this.look && this.look.split('_').includes(this.dir) && heroHasDir(SAVE.hero, this.look) ? this.look : this.dir; drawSwimmer(SAVE.hero, this.x, this.y, lk, this.anim, this.dive > 0, this.moving); return; }
     if (this.riding) { drawHero(SAVE.hero, this.x, this.y - 6, 'down', false, G.t); return; }
@@ -492,6 +503,25 @@ class Wisp extends Enemy {
   }
 }
 
+// mini-boss de la grotte : un grand feu follet qui crache des gerbes d'orbes
+class BigWisp extends Wisp {
+  constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 8; this.dmg = 1; this.w = 20; this.h = 10; this.alt = 18; this.cd = 2; this.light = { r: 80, c: 'rgba(120,220,255,' }; this.loot = 'pot'; this.isMini = true; }
+  body() { return { x: this.x - 12, y: this.y - this.alt - 18, w: 24, h: 22 }; }
+  update(dt, G) {
+    if (this.physics(dt, G, true)) return;
+    this.t += dt; this.cd -= dt; const P = G.player, d = dist(this.x, this.y, P.x, P.y), a = Math.atan2(P.y - this.y, P.x - this.x), fury = this.hp <= 4;
+    let want = 0; if (d < 80) want = -30; else if (d > 120) want = 40;
+    this.x += (Math.cos(a) * want + Math.cos(this.t * 1.2) * 34) * dt; this.y += (Math.sin(a) * want + Math.sin(this.t * 1.7) * 24) * dt;
+    this.clampArea(G);
+    if (this.cd <= 0) { this.cd = fury ? 1.6 : 2.4; SFX.shoot(); for (const o of fury ? [-0.5, -0.25, 0, 0.25, 0.5] : [-0.3, 0, 0.3]) { const orb = new Orb(this.x, this.y - this.alt, a + o); orb.room = this.room; G.area.ents.push(orb); } }
+    this.touch(G);
+  }
+  draw() {
+    ctx.save(); ctx.translate(this.x, this.y); ctx.scale(1.9, 1.9); ctx.translate(-this.x, -this.y);
+    const al = this.alt; this.alt = al / 1.9; super.draw(); this.alt = al; ctx.restore();
+    if (this.hp < this.maxHp) { R(half(this.x - 12), half(this.y - this.alt - 40), 24, 2, 'rgba(7,13,31,.8)'); R(half(this.x - 12), half(this.y - this.alt - 40), 24 * Math.max(0, this.hp) / this.maxHp, 2, '#8ff3ea'); }
+  }
+}
 class Orb {
   constructor(x, y, a) { this.x = x; this.y = y + 12; this.alt = 12; this.vx = Math.cos(a) * 88; this.vy = Math.sin(a) * 88; this.w = 6; this.h = 4; this.t = 0; this.light = { r: 22, c: 'rgba(120,220,255,' }; this.isOrb = true; }
   body() { return { x: this.x - 3, y: this.y - this.alt - 3, w: 6, h: 6 }; }

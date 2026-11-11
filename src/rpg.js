@@ -146,7 +146,7 @@ const BEASTS = [
   { k: 'GreatShadow', name: 'La Grande Ombre', zone: 'Grotte des lucioles', weak: 'cailloux, puis épée', boss: true, note: 'Gardienne de la grotte. Elle a peur de la lumière, comme toutes les grandes ombres.' },
   { k: 'GreatOwl', name: 'Le Grand-Duc', zone: 'Bois des murmures', weak: 'frisbee, cailloux, épée au sol', boss: true, note: 'Ancien gardien du bois, ensorcelé. Il hulule en mineur.' },
   { k: 'IronMole', name: 'La Taupe de fer', zone: 'Mines des gnomes', weak: 'grappin, puis épée', boss: true, note: 'Les gnomes l\'avaient construite pour creuser. Elle a creusé un peu trop.' },
-  { k: 'WhirlQueen', name: 'La Reine des remous', zone: 'Temple englouti', weak: 'épée quand elle émerge', boss: true, note: 'Elle tourne en rond depuis cent ans. Ça finit par donner le tournis.' },
+  { k: 'WhirlQueen', name: 'La Reine des remous', zone: 'Temple englouti', weak: 'grappin ou frisbee sur la terre ferme, puis épée', boss: true, note: 'Elle tourne en rond depuis cent ans. Ça finit par donner le tournis.' },
   { k: 'IronKnight', name: 'Le Chevalier de fer', zone: 'Tour des artificiers', weak: 'pétards, épée', boss: true, note: 'Une armure vide qui marche toute seule. Bruyante.' },
   { k: 'MidnightKnight', name: 'Le Chevalier Minuit', zone: 'Château de Minuit', weak: 'épée', boss: true, note: 'Sous ce casque se cache quelqu\'un qui fait très bien les crêpes.' },
   { k: 'MidnightKing', name: 'Le Roi Minuit', zone: 'Château de Minuit', weak: 'cristaux, grappin, épée', boss: true, note: 'Il a arrêté le temps pour ne pas vieillir. Il nourrit aujourd\'hui les pigeons.' },

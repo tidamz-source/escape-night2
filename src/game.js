@@ -88,7 +88,7 @@ const G = {
   frontEnt(P, pred) { const fb = P.frontBox(); return this.area.ents.find(e => !e.dead && pred(e) && rectHit(fb, boxOf(e))) || null; },
   bumped(P) {
     const door = this.frontEnt(P, e => e instanceof KeyDoor);
-    if (door) { P.bump = 1.5; if (Keys.get() > 0) door.unlock(this); else { SFX.locked(); this.say([{ text: 'C\'est fermé à clé.' }]); } return; }
+    if (door) { P.bump = 1.5; if (Keys.get() > 0) Input.toast = { msg: 'Fermé à clé. Appuie sur A pour utiliser une petite clé.', t: 2.2 }; else { SFX.locked(); this.say([{ text: 'C\'est fermé à clé.' }]); } return; }
     const ig = this.frontEnt(P, e => e instanceof IronGate && e.solid);
     if (ig) { P.bump = 1.5; ig.interact(this); return; }
     const gate = this.frontEnt(P, e => e instanceof GateBlock && e.solid);
@@ -103,8 +103,11 @@ const G = {
   },
   blockMoved(b) {
     for (const p of this.area.ents) {
-      if (!(p instanceof Plate) || SAVE[p.flag]) continue;
-      if (Math.abs(b.x - p.x) < 1 && Math.abs(b.y - p.y) < 1) { SAVE[p.flag] = true; persist(); SFX.secret(); this.shake = 0.2; }
+      if (!(p instanceof Plate)) continue;
+      const onIt = this.area.ents.some(k => k instanceof Block && !k.mv && Math.abs(k.x - p.x) < 1 && Math.abs(k.y - p.y) < 1);
+      if (p.hold) { if (!!SAVE[p.flag] !== onIt) { SAVE[p.flag] = onIt; persist(); if (onIt) this.shake = 0.2; } continue; }
+      if (SAVE[p.flag]) continue;
+      if (onIt) { SAVE[p.flag] = true; persist(); SFX.secret(); this.shake = 0.2; }
     }
   },
   buildBridge() {
@@ -144,7 +147,7 @@ const G = {
     this.wind = gust ? { x: 0, y: 70 } : null;
     if (!gust || P.roll > 0) return;
     const sheltered = ['s', 'W'].includes(A.tileAt(P.x, P.y - 14)) || ['s', 'W'].includes(A.tileAt(P.x, P.y - 28));
-    if (!sheltered) moveEnt(A, P, 0, 70 * dt, { noExit: true });
+    if (!sheltered && P.y + 70 * dt < rr.y + rr.h - 40) moveEnt(A, P, 0, 70 * dt, { noExit: true }); // le vent ne pousse jamais hors de la salle
   },
   // répliques : brutes ou déjà mises en forme par Story
   say(lines, done) { this.dialog = { lines: lines.map(l => l.who !== undefined && 'mood' in l ? l : Story.lines([l])[0]), i: 0, c: 0, done }; this.state = 'dialog'; },
@@ -232,7 +235,7 @@ const G = {
     if (this.state === 'play' || this.state === 'fish') Effects.update(dt);
     // boss vaincus : bestiaire + matériau rare pour la forge (deux)
     if (this.area && this.state === 'play') for (const e of this.area.ents) {
-      if (e.isBoss && e.state === 'dying' && !e.rewarded) { e.rewarded = true; Bestiary.kill(e); const m = { GreatShadow: 'pierre_lune', GreatOwl: 'plume_duc', IronMole: 'acier_gnome', WhirlQueen: 'ecaille_reine', IronKnight: 'poudre', MidnightKnight: 'eclat_ombre' }[e.constructor.name]; if (m) { const k = 'bossMat_' + e.constructor.name; if (!SAVE[k]) { SAVE[k] = true; Mats.add(m, 2); persist(); setTimeout(() => { Input.toast = { msg: `+2 ${MATS[m].name.toLowerCase()} (forge)`, t: 2.5 }; }, 2500); } } }
+      if (e.isBoss && e.state === 'dying' && !e.rewarded) { e.rewarded = true; Bestiary.kill(e); const m = { GreatShadow: 'pierre_lune', GreatOwl: 'plume_duc', IronMole: 'acier_gnome', WhirlQueen: 'ecaille_reine', IronKnight: 'poudre', MidnightKnight: 'eclat_ombre' }[e.constructor.name]; if (m) { const cls = e.constructor.name; if (!SAVE['bossMat_' + cls]) { SAVE.bossLoot = SAVE.bossLoot || {}; SAVE.bossLoot[cls] = { area: this.area.id, room: e.room, x: Math.round(e.x), y: Math.round(e.y), mat: m }; persist(); this.area.ents.push(new BossLoot(e.x, e.y, m, cls, e.room)); } } }
       if (e.isEnemy && !e.dead && (this.seenT = (this.seenT || 0) + 0) >= 0 && this.inRoom(e) && dist(e.x, e.y, this.player.x, this.player.y) < 160) Bestiary.seen(e);
     }
     // soin progressif : les cœurs se remplissent un par un

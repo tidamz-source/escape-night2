@@ -27,13 +27,18 @@ class Eel extends Enemy { // anguille : sort de l'eau, crache une bulle, replong
   get wet() { return G.area.tileAt(this.x, this.y - 2) === '~'; }
   body() { return { x: this.x - 7, y: this.y - 28 * this.up, w: 14, h: 28 * this.up + 2 }; }
   hit(d, fx, fy, G, src) { if (this.up < 0.5) return; super.hit(d, fx, fy, G, src); this.kb.t = 0; }
+  // après la plongée, elle refait surface ailleurs dans l'eau de la salle
+  resurface(G) {
+    this.moveAway = false; const rr = G.roomRect(), P = G.player, A = G.area, wet = (x, y) => A.tileAt(x, y - 2) === '~' && A.tileAt(x - 8, y - 2) === '~' && A.tileAt(x + 8, y - 2) === '~';
+    for (let i = 0; i < 40; i++) { const x = rr.x + rand(24, rr.w - 24), y = rr.y + rand(30, rr.h - 20), d = dist(x, y, P.x, P.y); if (wet(x, y) && d > 40 && d < 220 && dist(x, y, this.x, this.y) > 30) { this.x = this.sx = x; this.y = this.sy = y; return; } }
+  }
   update(dt, G) {
     if (this.flash > 0) this.flash -= dt; if (this.stunT > 0) { this.stunT -= dt; return; }
     this.t += dt; this.st -= dt; const P = G.player;
     if (!this.wet) { this.up = Math.max(0, this.up - dt * 3); return; }
-    if (this.state === 'under') { this.up = Math.max(0, this.up - dt * 3); if (this.st <= 0 && dist(P.x, P.y, this.x, this.y) < 170) { this.state = 'rise'; this.st = 0.5; } }
+    if (this.state === 'under') { this.up = Math.max(0, this.up - dt * 3); if (this.up <= 0 && this.moveAway) this.resurface(G); if (this.st <= 0 && dist(P.x, P.y, this.x, this.y) < 170) { this.state = 'rise'; this.st = 0.5; } }
     else if (this.state === 'rise') { this.up = Math.min(1, this.up + dt * 3); if (this.st <= 0) { this.state = 'spit'; this.st = 1.4; SFX.shoot(); const o = new Bubble(this.x, this.y - 22, Math.atan2(P.y - this.y, P.x - this.x)); o.room = this.room; G.area.ents.push(o); } }
-    else if (this.st <= 0) { this.state = 'under'; this.st = rand(1.5, 3); }
+    else if (this.st <= 0) { this.state = 'under'; this.st = rand(1.5, 3); this.moveAway = true; }
     if (this.up > 0.5) this.touch(G);
   }
   draw() {
@@ -56,29 +61,45 @@ class Bubble extends Orb {
 }
 
 // ---------- boss : la Reine des remous ----------
-// Elle tourne dans le bassin et crache des bulles. Quand elle a faim, elle bondit vers le héros et retombe sur la margelle :
-// elle se débat quelques secondes, c'est le moment de frapper. Si l'on nage près d'elle, ses remous font mal (plonger pour les esquiver).
+// Elle tourne dans le bassin et crache des bulles, puis bondit très haut pour écraser le héros : son ombre montre où elle va retomber.
+// Sur la terre ferme, l'épée rebondit sur ses écailles : un coup de grappin ou de frisbee l'assomme, et alors un coup d'épée la renvoie à l'eau.
+// À mi-vie, des anguilles surgissent dans le bassin.
 class WhirlQueen extends Enemy {
   constructor(x, y, room, pool) {
-    super(x, y, { hp: 9, dmg: 2, room });
-    this.isBoss = true; this.name = 'La Reine des remous'; this.state = 'sleep'; this.st = 0; this.pool = pool; this.ang = 0; this.alt = 0; this.hits = 0; this.phase = 1; this.loot = null; this.w = 30; this.h = 10; this.noFreeze = true;
+    super(x, y, { hp: 8, dmg: 2, room });
+    this.isBoss = true; this.name = 'La Reine des remous'; this.state = 'sleep'; this.st = 0; this.pool = pool; this.ang = 0; this.alt = 0; this.phase = 1; this.loot = null; this.w = 30; this.h = 10; this.noFreeze = true; this.leaps = 0;
     this.poof = ['#2a8ad0', '#6ac0ff', '#ffcf3a', '#fff'];
   }
-  body() { const out = this.state === 'flop' || this.state === 'leap' || this.state === 'back'; return out ? { x: this.x - 20, y: this.y - this.alt - 26, w: 40, h: 26 } : { x: this.x - 16, y: this.y - 10, w: 32, h: 12 }; }
+  get out() { return ['flop', 'leap', 'back', 'land'].includes(this.state); }
+  body() { return this.out ? { x: this.x - 20, y: this.y - this.alt - 26, w: 40, h: 26 } : { x: this.x - 16, y: this.y - 10, w: 32, h: 12 }; }
   get light() { return { r: 50, c: 'rgba(120,200,255,' }; }
   wake(G) { if (this.state !== 'sleep') return; this.state = 'swim'; this.st = 3; SFX.roar(); G.shake = 0.4; }
+  stun(G) { this.state = 'flop'; this.st = this.phase === 1 ? 3.2 : 2.6; SFX.stun(); G.shake = 0.15; G.parts.burst(this.x, this.y - 30, 12, { c: ['#ffe27a', '#fff'], life: 0.5, r: 1.5 }); }
+  onHook(G) { if (this.state === 'land') this.stun(G); else SFX.tink(); return true; }
   hit(dmg, fx, fy, G, src) {
-    if (this.state === 'flop' && src !== 'stone' && src !== 'frisbee') {
-      this.hp -= dmg || 1; this.hits++; this.flash = 0.2; SFX.bossHit(); G.hitstop = 0.08; G.shake = 0.15;
+    if (this.state === 'land' && src === 'frisbee') return this.stun(G);
+    if (this.state === 'flop' && src !== 'stone' && src !== 'frisbee' && src !== 'hook') {
+      this.hp -= dmg || 1; this.flash = 0.2; SFX.bossHit(); G.hitstop = 0.08; G.shake = 0.15;
       G.parts.burst(this.x, this.y - 16, 10, { c: this.poof, life: 0.4, smin: 30, smax: 90, r: 2 });
-      if (this.hp <= 4 && this.phase === 1) this.phase = 2;
+      if (this.hp <= this.maxHp / 2 && this.phase === 1) { this.phase = 2; this.snakes(G); }
       if (this.hp <= 0) { this.state = 'dying'; this.st = 2.2; SFX.bossDie(); G.shake = 0.5; for (const e of G.area.ents) { if (e !== this && e.isEnemy && !e.dead && e.room === this.room) e.die(G); if (e.isOrb) e.dead = true; } }
-      else if (this.hits >= 3) this.startBack();
+      else this.startBack(); // au premier coup d'épée, elle replonge
       return;
     }
     if (this.state !== 'sleep' && this.state !== 'dying') SFX.tink();
   }
-  startBack() { this.state = 'back'; this.st = 0.8; this.fx = this.x; this.fy = this.y; const a = rand(0, 6.28); this.tx = this.pool.cx + Math.cos(a) * this.pool.rx * 0.5; this.ty = this.pool.cy + Math.sin(a) * this.pool.ry * 0.5; this.hits = 0; }
+  // mi-vie : des anguilles surgissent dans le bassin
+  snakes(G) {
+    const pl = this.pool; SFX.roar(); G.shake = 0.4; G.banner = { text: 'Les anguilles de la Reine !', t: 1.8 };
+    for (const [dx, dy] of [[-0.6, -0.4], [0.6, -0.4], [0, 0.5]]) { const e = new Eel(pl.cx + dx * pl.rx, pl.cy + dy * pl.ry, this.room); e.st = rand(0.5, 1.5); G.area.ents.push(e); G.parts.burst(e.x, e.y, 12, { c: ['#cfe0ff', '#fff', '#7fffd0'], life: 0.5, r: 2, up: 50, g: 200 }); }
+  }
+  startBack() { this.state = 'back'; this.st = 0.8; this.fx = this.x; this.fy = this.y; const a = rand(0, 6.28); this.tx = this.pool.cx + Math.cos(a) * this.pool.rx * 0.5; this.ty = this.pool.cy + Math.sin(a) * this.pool.ry * 0.5; this.leaps = 0; }
+  // grand bond vers le héros : la cible le suit au début du saut
+  leap(G) {
+    const P = G.player; this.state = 'leap'; this.st = 1.15; this.fx = this.x; this.fy = this.y; this.aimAt(G, P.x, P.y); this.leaps++;
+    SFX.splash(); G.parts.burst(this.x, this.y, 16, { c: ['#cfe0ff', '#fff', '#6ac0ff'], life: 0.6, r: 2, up: 60, g: 200 });
+  }
+  aimAt(G, x, y) { const rr = G.roomRect(); this.tx = clamp(x, rr.x + 44, rr.x + rr.w - 44); this.ty = clamp(y, rr.y + 56, rr.y + rr.h - 40); }
   update(dt, G) {
     this.t += dt; this.st -= dt; if (this.flash > 0) this.flash -= dt;
     const P = G.player, pl = this.pool;
@@ -90,25 +111,36 @@ class WhirlQueen extends Enemy {
         if (P.swimming && P.dive <= 0 && dist(P.x, P.y, this.x, this.y) < 22) P.hurt(2, this.x, this.y, G);
         this.cd = (this.cd || 1.5) - dt;
         if (this.cd <= 0) { this.cd = this.phase === 1 ? 2 : 1.3; SFX.shoot(); const a = Math.atan2(P.y - this.y, P.x - this.x); for (const o of this.phase === 1 ? [0] : [-0.25, 0.25]) { const b = new Bubble(this.x, this.y - 6, a + o); b.room = this.room; G.area.ents.push(b); } }
-        if (this.st <= 0) { // bondit vers le héros (ou vers la margelle la plus proche)
-          let tx = P.x, ty = P.y;
-          if (P.swimming || G.area.tileAt(tx, ty - 2) === '~') { const a = Math.atan2(ty - pl.cy, tx - pl.cx); tx = pl.cx + Math.cos(a) * (pl.rx + 22); ty = pl.cy + Math.sin(a) * (pl.ry + 22); }
-          const rr = G.roomRect(); tx = clamp(tx, rr.x + 44, rr.x + rr.w - 44); ty = clamp(ty, rr.y + 56, rr.y + rr.h - 40);
-          this.state = 'leap'; this.st = 0.9; this.fx = this.x; this.fy = this.y; this.tx = tx; this.ty = ty; SFX.splash(); G.parts.burst(this.x, this.y, 16, { c: ['#cfe0ff', '#fff', '#6ac0ff'], life: 0.6, r: 2, up: 60, g: 200 });
-        }
+        if (this.st <= 0) this.leap(G);
         return;
       }
-      case 'leap': case 'back': {
-        const k = clamp(1 - this.st / (this.state === 'leap' ? 0.9 : 0.8), 0, 1);
-        this.x = lerp(this.fx, this.tx, k); this.y = lerp(this.fy, this.ty, k); this.alt = Math.sin(k * Math.PI) * 50;
+      case 'leap': {
+        const T = 1.15, k = clamp(1 - this.st / T, 0, 1);
+        if (k < 0.6) this.aimAt(G, lerp(this.tx, P.x, Math.min(1, dt * 4)), lerp(this.ty, P.y, Math.min(1, dt * 4))); // elle suit sa proie
+        this.x = lerp(this.fx, this.tx, k); this.y = lerp(this.fy, this.ty, k); this.alt = Math.sin(k * Math.PI) * 90;
         if (k >= 1) {
-          this.alt = 0;
-          if (this.state === 'leap') { this.state = 'flop'; this.st = this.phase === 1 ? 3 : 2.4; G.shake = 0.35; SFX.push(); if (dist(P.x, P.y, this.x, this.y) < 26) P.hurt(2, this.x, this.y, G); }
-          else { this.state = 'swim'; this.st = rand(2.5, 4); SFX.splash(); G.parts.burst(this.x, this.y, 20, { c: ['#cfe0ff', '#fff'], life: 0.6, r: 2, up: 60, g: 200 }); const w = new Wave(this.x, this.y, this.room); G.area.ents.push(w); }
+          this.alt = 0; G.shake = 0.45; SFX.push(); SFX.boom && SFX.boom();
+          G.parts.burst(this.x, this.y, 18, { c: ['#8a8478', '#cfe0ff', '#fff'], life: 0.5, smin: 30, smax: 110, r: 2, up: 20, g: 200 });
+          if (dist(P.x, P.y, this.x, this.y) < 30) P.hurt(2, this.x, this.y, G);
+          if (G.area.tileAt(this.x, this.y - 2) === '~') { this.state = 'swim'; this.st = rand(2, 3); G.area.ents.push(new Wave(this.x, this.y, this.room)); }
+          else { this.state = 'land'; this.st = this.phase === 1 ? 2.4 : 1.8; } // sur la terre ferme : pas assommée
         }
         return;
       }
-      case 'flop': if (this.st <= 0) this.startBack(); return;
+      case 'land': {
+        // elle rampe vers le héros, puis rebondit sur lui… ou retourne à l'eau
+        const a = Math.atan2(P.y - this.y, P.x - this.x); moveEnt(G.area, this, Math.cos(a) * 18 * dt, 0, { noExit: true }); moveEnt(G.area, this, 0, Math.sin(a) * 18 * dt, { noExit: true });
+        if (rectHit(this.body(), P.body())) P.hurt(1, this.x, this.y, G);
+        if (this.st <= 0) { if (this.leaps < (this.phase === 1 ? 2 : 3)) this.leap(G); else this.startBack(); }
+        return;
+      }
+      case 'back': {
+        const k = clamp(1 - this.st / 0.8, 0, 1);
+        this.x = lerp(this.fx, this.tx, k); this.y = lerp(this.fy, this.ty, k); this.alt = Math.sin(k * Math.PI) * 50;
+        if (k >= 1) { this.alt = 0; this.state = 'swim'; this.st = rand(2.5, 4); SFX.splash(); G.parts.burst(this.x, this.y, 20, { c: ['#cfe0ff', '#fff'], life: 0.6, r: 2, up: 60, g: 200 }); G.area.ents.push(new Wave(this.x, this.y, this.room)); }
+        return;
+      }
+      case 'flop': if (this.st <= 0) { this.state = 'land'; this.st = 0.6; this.leaps = 99; } return; // reprend ses esprits et replonge
       case 'dying':
         if (Math.random() < dt * 20) G.parts.burst(this.x + rand(-20, 20), this.y - rand(0, 30), 5, { c: this.poof, life: 0.5, r: 2, g: 60 });
         if (this.st <= 0) { this.dead = true; G.shake = 0.5; G.parts.burst(this.x, this.y - 16, 46, { c: ['#ffe27a', '#fff', '#6ac0ff'], life: 1.4, smin: 20, smax: 150, r: 2, drag: 1.5 }); }
@@ -117,14 +149,17 @@ class WhirlQueen extends Enemy {
   }
   draw() {
     if (this.state === 'dying' && Math.floor(this.t * 20) % 2) return;
-    const out = this.state !== 'swim' && this.state !== 'sleep', fl = this.flash > 0;
-    if (!out) { // sous l'eau : une ombre et une nageoire
+    const fl = this.flash > 0;
+    if (!this.out && this.state !== 'dying') { // sous l'eau : une ombre et une nageoire
       ctx.globalAlpha = 0.45; ell(this.x, this.y, 22, 8, '#0a1a4a'); ctx.globalAlpha = 1;
       if (this.state !== 'sleep') hi(this.x, this.y, Math.cos(this.ang) > 0, () => { D(-4, -18, 8, 14, '#2a6ab0'); D(-2, -22, 4, 6, '#6ac0ff'); D(-4, -4, 8, 2, '#cfe0ff'); });
       return;
     }
-    ell(this.x, this.y, 20, 5, 'rgba(0,0,0,.4)');
-    const flop = this.state === 'flop', wig = flop ? Math.sin(this.t * 18) * 3 : 0;
+    if (this.state === 'leap') { // l'ombre de la chute : elle grossit à mesure que la Reine retombe
+      const k = clamp(1 - this.st / 1.15, 0, 1), r = 8 + k * 16; ctx.globalAlpha = 0.25 + k * 0.35; ell(this.tx, this.ty, r, r * 0.38, '#000'); ctx.globalAlpha = 1;
+      if (k > 0.5 && Math.floor(this.t * 10) % 2) { ctx.strokeStyle = 'rgba(255,90,90,.7)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(this.tx, this.ty, r + 3, (r + 3) * 0.38, 0, 0, 7); ctx.stroke(); }
+    } else ell(this.x, this.y, 20, 5, 'rgba(0,0,0,.4)');
+    const flop = this.state === 'flop', wig = flop ? Math.sin(this.t * 18) * 3 : this.state === 'land' ? Math.sin(this.t * 6) * 1.5 : 0;
     hi(this.x, this.y - this.alt, this.tx < this.fx, () => {
       const c1 = fl ? '#fff' : '#2a6ab0', c2 = fl ? '#fff' : '#4a9ae0', c3 = fl ? '#fff' : '#ffcf3a';
       D(-34, -40 + wig, 60, 34, c1); D(-30, -46 + wig, 50, 8, c2); D(-34, -14 + wig, 60, 6, '#cfe0ff');
@@ -132,7 +167,7 @@ class WhirlQueen extends Enemy {
       D(-44, -34 + wig, 12, 22, c1); D(-48, -28 + wig, 6, 10, '#1a3a6a'); // tête
       D(-36, -34 + wig, 6, 6, '#fff'); D(-34, -32 + wig, 3, 3, flop ? '#c83a3a' : '#000');
       D(-22, -56 + wig, 6, 10, c3); D(-12, -60 + wig, 6, 14, c3); D(-2, -56 + wig, 6, 10, c3); // couronne
-      for (let i = 0; i < 4; i++) D(-26 + i * 12, -32 + wig, 6, 4, '#1a4a8a');
+      for (let i = 0; i < 4; i++) D(-26 + i * 12, -32 + wig, 6, 4, this.state === 'land' ? '#6a8ab0' : '#1a4a8a'); // écailles : brillantes sur la terre ferme
     });
     if (flop) for (let i = 0; i < 3; i++) { const a = this.t * 5 + i * 2.1; R(half(this.x + Math.cos(a) * 12), half(this.y - 40 + Math.sin(a) * 3), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
   }
@@ -177,7 +212,7 @@ function buildTempleArea() {
       const b = room('bigkey'); b.rect(5, 4, 20, 7, 'w'); b.rect(13, 6, 4, 3, '_');
       const a = room('arena'); a.rect(3, 3, 3, 3, '~'); a.rect(24, 11, 3, 3, '~');
       const g = room('gallery'); g.rect(3, 5, 24, 2, '~'); g.rect(3, 10, 24, 2, '~');
-      const c = room('cascade'); c.rect(20, 3, 7, 11, '~');
+      const c = room('cascade'); c.rect(8, 2, 3, 13, 'y'); c.rect(18, 3, 9, 11, 'w'); // un chenal profond à traverser à la nage, puis le bassin de la grande clé
       const f = room('fountain'); f.rect(3, 3, 4, 3, '~'); f.rect(23, 3, 4, 3, '~');
       const bo = room('boss'); bo.rect(8, 5, 14, 8, '~'); for (const [x, y] of [[4, 4], [25, 4], [4, 12], [25, 12]]) bo.set(x, y, 'k');
     },
@@ -203,7 +238,7 @@ function buildTempleArea() {
       if (n === 'east') L.push(mk(Eel, n, 12, 6), mk(Eel, n, 20, 10), mk(Crab, n, 4, 12));
       if (n === 'bigkey') L.push(mk(Eel, n, 7, 5), mk(Eel, n, 22, 9), mk(Crab, n, 4, 12), mk(Crab, n, 25, 12));
       if (n === 'gallery') L.push(mk(Eel, n, 6, 6), mk(Eel, n, 14, 11), mk(Eel, n, 22, 6), mk(Crab, n, 14, 8), pot(3, 13), pot(26, 13));
-      if (n === 'cascade') L.push(mk(Crab, n, 8, 6), mk(Crab, n, 10, 11), mk(Eel, n, 23, 6), mk(Eel, n, 23, 11), pot(3, 3), pot(3, 13));
+      if (n === 'cascade') L.push(mk(Crab, n, 14, 9), mk(Crab, n, 15, 13), mk(Eel, n, 9, 5), mk(Eel, n, 20, 5), mk(Eel, n, 25, 12), pot(3, 3), pot(3, 13));
       if (n === 'boss') { const bp = h.pos(n, 15 * TS, 9 * TS), pool = { cx: bp.x, cy: bp.y, rx: 7 * TS - 8, ry: 4 * TS - 6 }; if (!SAVE.boss4) L.push(new WhirlQueen(pool.cx, pool.cy, h.R.boss, pool)); L.push(pot(3, 13), pot(26, 13)); }
     },
     fixed(h) {
@@ -222,12 +257,14 @@ function buildTempleArea() {
         ['east', mk(Valve, 'east', 4, 6)],
         ['east', mk(Chest, 'east', 16, 9, { flag: 'templeHeart', give: 'quart_coeur', big: true, reveal: 'waterLow', msg: [{ text: 'Un cœur de cristal, resté au fond du bassin ! Ta vie maximale augmente d\'un cœur.' }] })],
         ['bigkey', mk(Valve, 'bigkey', 4, 13)],
-        ['bigkey', new Chest(bk.x, bk.y, { flag: 'templeBigKey', give: 'bigkey:temple', big: true, msg: [{ text: 'La grande clé du temple ! Elle ouvre le bassin de la Reine.' }] })],
-        ['bigkey', mk(Sign, 'bigkey', 24, 13, [{ text: '« Le trésor du temple dort sur l\'îlot. »' }])],
+        ['bigkey', mk(Sign, 'bigkey', 24, 13, [{ text: '« La clé du bassin de la Reine dort à l\'est, au fond du bassin de la cascade. »' }])],
+        ['cascade', mk(Valve, 'cascade', 14, 5)],
+        ['cascade', mk(Sign, 'cascade', 4, 7, [{ text: '« Eau haute : on traverse à la nage. Eau basse : le fond du bassin se découvre. Chaque manivelle règle toutes les eaux du temple. »' }])],
+        ['cascade', new Chest(pos('cascade', 22 * TS + 8, 9 * TS).x, pos('cascade', 22 * TS + 8, 9 * TS).y, { flag: 'templeBigKey', give: 'bigkey:temple', big: true, reveal: 'waterLow', msg: [{ text: 'La grande clé du temple ! Elle ouvre le bassin de la Reine.' }] })],
         ['gallery', new DiveSpot(pos('gallery', 360, 104).x, pos('gallery', 360, 104).y, 'templeGallery', 'money:50', [{ text: 'Un coffret englouti : 50 écus !' }])],
         ['boss', new Cage(cg.x, cg.y, { n: 4, boss: 'boss4', drawCaptive: (x, y, t) => drawHero(Heroes.captive(2), x, y, 'down', false, t) })],
         ...br('boss', [[4, 3], [25, 3]]), ...br('entry', [[3, 3], [26, 3]]), ...br('hub', [[3, 2], [26, 2]]), ...br('palmes', [[3, 3], [26, 3]]), ...br('arena', [[14, 3]]), ...br('dive', [[26, 4]]),
-        ...br('east', [[3, 4]]), ...br('bigkey', [[3, 3], [26, 3]]), ...br('gallery', [[3, 3], [26, 3]]), ...br('cascade', [[3, 8]]), ...br('fountain', [[10, 3], [19, 3]]),
+        ...br('east', [[3, 4]]), ...br('bigkey', [[3, 3], [26, 3]]), ...br('gallery', [[3, 3], [26, 3]]), ...br('cascade', [[12, 3], [17, 3]]), ...br('fountain', [[10, 3], [19, 3]]),
       ];
     },
   });

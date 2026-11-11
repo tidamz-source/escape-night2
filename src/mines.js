@@ -164,6 +164,7 @@ function buildMinesArea() {
     bossFlag: 'boss3', heartFlag: 'heart4', potLoot: 'potMine',
     rooms: { entry: [1, 3], arena: [0, 3], crate: [2, 3], shaft: [3, 3], hub: [1, 2], grappin: [0, 2], spider: [0, 1], posts: [2, 2], hall: [1, 1], boss: [1, 0] },
     entry: 'entry', boss: 'boss',
+    after(A) { A.fallVoid = true; }, // on peut tomber dans le vide : un demi-cœur, retour au bord
     links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'crate'], ['crate', 'shaft'], ['entry', 'hub', { key: 'minesDoor1' }], ['hub', 'grappin'], ['grappin', 'spider'], ['hub', 'posts'], ['hub', 'hall', { key: 'minesDoor2' }], ['hall', 'boss', { big: true }]],
     tiles(room) {
       const h = room('hub');

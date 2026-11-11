@@ -127,6 +127,23 @@ class Crow extends Bat { // corbeau
   }
 }
 
+// mini-boss du bois : un corbeau géant qui pique et lâche des plumes
+class BigCrow extends Crow {
+  constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 7; this.dmg = 1; this.w = 18; this.h = 10; this.alt = 20; this.fcd = 2.2; this.loot = 'pot'; this.isMini = true; this.light = null; }
+  body() { return { x: this.x - 12, y: this.y - this.alt - 12, w: 24, h: 18 }; }
+  update(dt, G) {
+    super.update(dt, G); if (this.dead || this.stunT > 0 || this.kb.t > 0 || this.hookT > 0) return;
+    this.fcd -= dt; const P = G.player;
+    if (this.fcd <= 0 && this.state !== 'swoop') { this.fcd = this.hp <= 3 ? 1.6 : 2.4; SFX.shoot(); const a = Math.atan2(P.y - this.y, P.x - this.x); for (const o of [-0.35, 0, 0.35]) { const f = new Feather(this.x, this.y, this.alt, a + o); f.room = this.room; G.area.ents.push(f); } }
+    if (this.state === 'swoop') { this.x += this.vx * dt * 0.5; this.y += this.vy * dt * 0.5; this.clampArea(G); }
+  }
+  draw() {
+    ctx.save(); ctx.translate(this.x, this.y); ctx.scale(1.8, 1.8); ctx.translate(-this.x, -this.y);
+    const al = this.alt; this.alt = al / 1.8; super.draw(); this.alt = al; ctx.restore();
+    if (this.hp < this.maxHp) { R(half(this.x - 12), half(this.y - this.alt - 30), 24, 2, 'rgba(7,13,31,.8)'); R(half(this.x - 12), half(this.y - this.alt - 30), 24 * Math.max(0, this.hp) / this.maxHp, 2, '#ff6a7a'); }
+  }
+}
+
 // ---------- boss : le Grand-Duc ----------
 // Il tourne en l'air, pique ou lance des plumes. Un coup de frisbee le fait tomber : il est alors à terre, à la merci de la branche.
 class Feather extends Orb {
@@ -315,7 +332,7 @@ function buildBoisArea() {
     bossFlag: 'boss2', heartFlag: 'heart3', potLoot: 'potBois',
     rooms: { entry: [2, 3], arena: [3, 3], pond: [1, 3], wind: [2, 2], frisbee: [1, 2], switches: [3, 2], bigkey: [3, 1], upper: [2, 1], treasure: [1, 1], boss: [2, 0] },
     entry: 'entry', boss: 'boss',
-    links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'pond'], ['entry', 'wind'], ['wind', 'frisbee'], ['wind', 'switches'], ['switches', 'bigkey', { shut: () => !SAVE.switchesB }], ['wind', 'upper', { key: 'boisK2' }], ['upper', 'treasure', { key: 'boisK1' }], ['upper', 'boss', { big: true }]],
+    links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'pond'], ['entry', 'wind'], ['wind', 'frisbee', { arena: true, at: 'b' }], ['wind', 'switches'], ['switches', 'bigkey', { shut: () => !SAVE.switchesB }], ['wind', 'upper', { key: 'boisK2' }], ['upper', 'treasure', { key: 'boisK1' }], ['upper', 'boss', { big: true }]],
     tiles(room) {
       const st = (n, pts) => pts.forEach(([x, y]) => room(n).set(x, y, 's'));
       st('entry', [[6, 5], [23, 5], [6, 11], [23, 11]]);
@@ -329,15 +346,16 @@ function buildBoisArea() {
       st('treasure', [[8, 5], [21, 5], [8, 11], [21, 11]]);
       st('bigkey', [[7, 4], [22, 4], [7, 12], [22, 12], [14, 8]]);
     },
-    arenas: { arena: arenaStd('arenaB'), boss: bossArena('boss2', 'Le Grand-Duc') },
+    arenas: { arena: { flag: 'arenaB', onStart(G) { G.banner = { text: 'Le Corbeau géant', t: 2 }; } }, frisbee: arenaStd('arenaFris'), boss: bossArena('boss2', 'Le Grand-Duc') },
+    migrate() { if (SAVE.frisbeeChest) SAVE.arenaFris = true; },
     after(A, h) { A.windRoom = h.R.wind; A.roomDark = room => room === h.R.boss && SAVE.boss2 ? 0.12 : null; },
     make(n, L, h) {
       const { mk } = h, bush = (tx, ty) => Object.assign(mk(Bush, n, tx, ty), { loot: 'bushBois' }), pot = (tx, ty) => h.pot(n, tx, ty);
       if (n === 'entry') L.push(bush(4, 4), bush(25, 4), bush(4, 12), bush(25, 12), mk(Boar, n, 20, 8), mk(Crow, n, 9, 6));
-      if (n === 'arena') { L.push(pot(4, 3), pot(25, 3), pot(4, 13)); if (!SAVE.arenaB) L.push(mk(Boar, n, 6, 8), mk(Boar, n, 23, 8), mk(Squirrel, n, 14, 4), mk(Squirrel, n, 10, 12)); }
+      if (n === 'arena') { L.push(pot(4, 3), pot(25, 3), pot(4, 13)); if (!SAVE.arenaB) L.push(mk(Squirrel, n, 5, 4), mk(Squirrel, n, 24, 4), mk(Squirrel, n, 5, 12), mk(Squirrel, n, 24, 12), mk(BigCrow, n, 14, 5)); }
       if (n === 'pond') L.push(mk(Crow, n, 6, 3), mk(Crow, n, 24, 3), mk(Squirrel, n, 25, 12), bush(4, 13), bush(25, 13));
       if (n === 'wind') L.push(mk(Boar, n, 15, 6), mk(Squirrel, n, 4, 3), bush(3, 13), bush(26, 3), pot(26, 13));
-      if (n === 'frisbee') L.push(mk(Crow, n, 8, 7), mk(Crow, n, 21, 7), mk(Boar, n, 14, 12), pot(3, 3), pot(26, 3));
+      if (n === 'frisbee') { L.push(pot(3, 3), pot(26, 3)); if (!SAVE.arenaFris) L.push(mk(Crow, n, 8, 6), mk(Crow, n, 21, 6), mk(Boar, n, 8, 12), mk(Boar, n, 21, 12)); }
       if (n === 'switches') L.push(mk(Squirrel, n, 14, 4), mk(Squirrel, n, 14, 11), mk(Boar, n, 6, 11), bush(3, 13), bush(26, 13));
       if (n === 'bigkey') L.push(mk(Boar, n, 8, 8), mk(Boar, n, 21, 8), mk(Crow, n, 14, 4), pot(3, 13), pot(26, 13));
       if (n === 'upper') L.push(mk(Squirrel, n, 6, 3), mk(Squirrel, n, 23, 3), mk(Crow, n, 14, 9), pot(3, 13), pot(26, 13));
@@ -346,14 +364,14 @@ function buildBoisArea() {
     },
     fixed(h) {
       const { mk, pos } = h, sh = (n, pts) => pts.map(([x, y]) => [n, mk(Glowshroom, n, x, y)]);
-      const ac = pos('arena', 240, 150), fc = pos('frisbee', 240, 140), cg = pos('boss', 240, 66), isl = pos('pond', 240, 144), bc = pos('bigkey', 240, 210);
+      const ac = pos('arena', 240, 144), fc = pos('frisbee', 240, 140), cg = pos('boss', 240, 66), isl = pos('pond', 240, 144), bc = pos('bigkey', 240, 210);
       return [
         ['entry', mk(Sign, 'entry', 14, 10, [{ text: '« Bois des murmures. Le vent du vieux moulin ne souffle jamais longtemps. »' }])],
         ['arena', new Chest(ac.x, ac.y, { flag: 'boisKeyChest', reveal: 'arenaB', msg: [{ text: 'Une petite clé ! Elle ouvre une porte de ce bois.' }] })],
         ['pond', new KeyPickup(isl.x, isl.y, 'boisKey2')],
         ['pond', mk(Sign, 'pond', 14, 13, [{ text: '« Ce qui brille sur l\'îlot ne se rapporte qu\'en volant. »' }])],
         ['wind', mk(Sign, 'wind', 14, 13, [{ text: '« Au nord, le nid du Grand-Duc. Abritez-vous derrière les souches quand le vent souffle. »' }])],
-        ['frisbee', new Chest(fc.x, fc.y, { flag: 'frisbeeChest', give: 'frisbee', big: true, msg: [{ text: 'Tu as trouvé le frisbee !' }, { text: 'Bouton B : il part en arc et revient. Il étourdit les ennemis, rapporte les objets et passe au-dessus des souches et de l\'eau.' }, { text: 'Change d\'outil avec E, les gâchettes LB/RB, ou en touchant la case B.' }] })],
+        ['frisbee', new Chest(fc.x, fc.y, { flag: 'frisbeeChest', give: 'frisbee', big: true, reveal: 'arenaFris', msg: [{ text: 'Tu as trouvé le frisbee !' }, { text: 'Bouton B : il part en arc et revient. Il étourdit les ennemis, rapporte les objets et passe au-dessus des souches et de l\'eau.' }, { text: 'Change d\'outil avec E, les gâchettes LB/RB, ou en touchant la case B.' }] })],
         ['switches', mk(FrisbeeSwitch, 'switches', 8, 4, 'switchesB')], ['switches', mk(FrisbeeSwitch, 'switches', 21, 4, 'switchesB')],
         ['switches', mk(Sign, 'switches', 14, 9, [{ text: '« Deux lanternes, un seul souffle. Elles ne brillent ensemble que quelques secondes. »' }])],
         ['bigkey', new Chest(bc.x, bc.y, { flag: 'boisBigKey', give: 'bigkey:bois', big: true, msg: [{ text: 'La grande clé du bois ! Elle ouvre le nid du Grand-Duc.' }] })],

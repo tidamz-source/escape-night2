@@ -98,6 +98,19 @@ class Pickup {
   draw() { if (this.t > 7 && Math.floor(this.t * 10) % 2) return; ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.3)'); PICKUPS[this.kind].draw(this.x, this.y + this.z + Math.sin(this.t * 4) * 0.6, this.t); }
 }
 const HeartPickup = Pickup; // ancien nom
+// matériau magique laissé par un boss, là où il est tombé ; ne disparaît pas
+class BossLoot {
+  constructor(x, y, mat, cls, room) { this.x = x; this.y = y; this.mat = mat; this.cls = cls; this.room = room; this.t = 0; this.w = 10; this.h = 6; this.light = { r: 44, c: 'rgba(255,230,160,' }; }
+  update(dt, G) {
+    if (!this.settled) Pickup.prototype.settle.call(this, G.area);
+    this.t += dt; if (Math.random() < dt * 6) G.parts.add({ x: this.x + rand(-6, 6), y: this.y - rand(4, 14), vy: -14, life: 0.7, c: pick(['#fff6c0', '#ffe27a', '#fff']), r: 1 });
+    if (G.state !== 'play' || !rectHit({ x: this.x - 7, y: this.y - 10, w: 14, h: 12 }, G.player.body())) return;
+    this.dead = true; SAVE['bossMat_' + this.cls] = true; if (SAVE.bossLoot) delete SAVE.bossLoot[this.cls]; Mats.add(this.mat, 2); persist(); SFX.secret(); G.raise('mat_' + this.mat);
+    const m = MATS[this.mat];
+    G.say([{ text: `Tu as trouvé 2 × ${m.name.toLowerCase()} ! ${m.desc}` }, { who: 'Lumi', text: 'C\'est un matériau magique ! Bertrand, le forgeron du village, peut s\'en servir pour améliorer tes objets.' }]);
+  }
+  draw() { const b = Math.sin(this.t * 3) * 1.5; ell(this.x, this.y, 6, 2, 'rgba(0,0,0,.35)'); ctx.globalAlpha = 0.35 + 0.15 * Math.sin(this.t * 5); ell(this.x, this.y - 8 + b, 10, 10, '#ffe27a'); ctx.globalAlpha = 1; drawMatIcon(this.mat, this.x, this.y - 8 + b, 1.1); }
+}
 
 class Bush {
   constructor(x, y) { this.x = x; this.y = y; this.w = 16; this.h = 8; this.solid = true; }
@@ -130,11 +143,12 @@ class Pot extends Bush {
 class Chest {
   constructor(x, y, o = {}) {
     this.x = x; this.y = y; this.flag = o.flag || 'chest'; this.give = o.give || 'key'; this.big = !!o.big;
-    this.reveal = o.reveal || null; this.msg = o.msg; this.w = this.big ? 22 : 16; this.h = 8; this.t = 0; this.shown = !this.hidden;
+    this.reveal = o.reveal || null; this.msg = o.msg; this.w = this.big ? 36 : 16; this.h = this.big ? 14 : 8; this.t = 0; this.shown = !this.hidden;
+    this.lift = this.big ? 9 : 0; // les gros coffres trônent sur un piédestal à marches, visible même avant que le coffre apparaisse
   }
   get open() { return !!SAVE[this.flag]; }
   get hidden() { return !!this.reveal && !SAVE[this.reveal]; }
-  get solid() { return !this.hidden; }
+  get solid() { return this.big || !this.hidden; }
   get light() { if (this.beam) return { r: this.big ? 80 : 64, c: 'rgba(255,230,150,', warm: true }; return !this.hidden && !this.open ? { r: this.big ? 44 : 26, c: 'rgba(255,207,122,' } : null; }
   canInteract() { return !this.hidden && !this.open && !this.busy; }
   // ouverture : le coffre tremble, le couvercle saute, un faisceau de lumière jaillit et l'objet s'élève au-dessus du coffre
@@ -153,9 +167,9 @@ class Chest {
           else Inventory.give(this.give);
           persist(); SFX.chest(); G.shake = 0.2; this.beam = 1;
           G.parts.burst(this.x, this.y - 14, 26, { c: ['#fff', '#ffe27a', '#ffcf3a'], life: 0.9, smin: 20, smax: 90, r: 2, drag: 2, up: 30 });
-          G.raised = { kind, t: 1.6, at: { x: this.x, y: this.y - (this.big ? 20 : 14) }, rise: 0 };
+          G.raised = { kind, t: 1.6, at: { x: this.x, y: this.y - this.lift - (this.big ? 20 : 14) }, rise: 0 };
         } else if (G.raised) G.raised.rise = Math.min(1, (c.t - 0.75) / 0.7);
-        if (c.opened && Math.random() < dt * 14) G.parts.add({ x: this.x + rand(-8, 8), y: this.y - 16, vy: -rand(20, 50), vx: rand(-6, 6), life: 0.9, c: pick(['#fff6c0', '#ffe27a', '#fff']), r: 1 });
+        if (c.opened && Math.random() < dt * 14) G.parts.add({ x: this.x + rand(-8, 8), y: this.y - 16 - this.lift, vy: -rand(20, 50), vx: rand(-6, 6), life: 0.9, c: pick(['#fff6c0', '#ffe27a', '#fff']), r: 1 });
         if (c.t > 1.6) { G.cut = null; G.state = 'play'; G.say(this.msg || [{ text: 'Tu as trouvé une petite clé !' }], () => { this.beam = 0; this.busy = false; }); }
       },
       draw: () => {} };
@@ -165,18 +179,30 @@ class Chest {
     this.t += dt;
     if (!this.shown && !this.hidden) { this.shown = true; G.parts.burst(this.x, this.y - 8, 24, { c: ['#fff', '#ffe27a', '#8ff3ea'], life: 0.7, smin: 20, smax: 90, r: 2, drag: 2 }); }
   }
+  drawPedestal() {
+    ell(this.x, this.y + 2, 22, 5, 'rgba(0,0,0,.4)');
+    hi(this.x, this.y, false, () => {
+      D(-38, -34, 76, 28, '#5a5468'); D(-38, -34, 76, 3, '#8a8498'); D(-38, -34, 3, 28, '#7a7488'); D(35, -34, 3, 28, '#3a3448');
+      D(-34, -30, 68, 20, '#6a6478'); for (const x of [-26, -6, 14]) D(x, -26, 12, 2, '#7a7488');
+      D(-38, -8, 76, 4, '#3a3448');
+      D(-18, -6, 36, 4, '#7a7488'); D(-18, -6, 36, 1, '#9a94a8'); D(-14, -2, 28, 4, '#6a6478'); D(-14, -2, 28, 1, '#8a8498'); D(-10, 2, 20, 3, '#5a5468'); // les marches
+      if (this.hidden) { const g = 0.5 + 0.5 * Math.sin(this.t * 2); D(-6, -24, 12, 2, `rgba(255,226,122,${0.25 + g * 0.3})`); D(-2, -28, 4, 10, `rgba(255,226,122,${0.15 + g * 0.2})`); }
+    });
+  }
   draw() {
+    if (this.big) this.drawPedestal();
     if (this.hidden) return;
-    ell(this.x, this.y, this.big ? 14 : 10, this.big ? 4 : 3, 'rgba(0,0,0,.4)');
+    const by = this.y - this.lift;
+    ell(this.x, by, this.big ? 14 : 10, this.big ? 4 : 3, 'rgba(0,0,0,.4)');
     if (this.beam) { // faisceau de lumière qui sort du coffre
-      const s = this.big ? 1.4 : 1, top = this.y - 90, base = this.y - 12 * s, hw = 9 * s, a = 0.55 + Math.sin(G.t * 9) * 0.08;
+      const s = this.big ? 1.4 : 1, top = by - 90, base = by - 12 * s, hw = 9 * s, a = 0.55 + Math.sin(G.t * 9) * 0.08;
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       const g = ctx.createLinearGradient(0, base, 0, top); g.addColorStop(0, `rgba(255,236,160,${a})`); g.addColorStop(1, 'rgba(255,236,160,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(this.x - hw, base); ctx.lineTo(this.x + hw, base); ctx.lineTo(this.x + hw * 2.2, top); ctx.lineTo(this.x - hw * 2.2, top); ctx.closePath(); ctx.fill();
       ctx.fillStyle = `rgba(255,255,255,${a * 0.6})`; ctx.fillRect(this.x - hw * 0.35, top + 20, hw * 0.7, base - top - 20);
       ctx.restore();
     }
-    hi(this.x + (this.jx || 0), this.y + (this.jy || 0), false, () => {
+    hi(this.x + (this.jx || 0), by + (this.jy || 0), false, () => {
       const gold = this.give.startsWith('bigkey'), g1 = gold ? '#c08a10' : this.big ? '#4a6ab0' : '#7a4a24', g2 = gold ? '#ffd23a' : this.big ? '#6a8ad0' : '#a06a34', g3 = gold ? '#8a5a10' : this.big ? '#2a3a70' : '#4a2a14', l1 = gold ? '#e0a820' : this.big ? '#5a7ac0' : '#8a5a2c', l2 = gold ? '#fff2a0' : this.big ? '#8aaae0' : '#b07a3c', l3 = gold ? '#6a4a10' : this.big ? '#1a2a5a' : '#5a3418';
       D(-15, -18, 30, 18, g1); D(-15, -18, 30, 2, g2); D(-15, -2, 30, 2, g3);
       D(-15, -18, 3, 18, '#c8a040'); D(12, -18, 3, 18, '#c8a040');
@@ -299,8 +325,12 @@ class Block {
   }
 }
 class Plate {
-  constructor(x, y, flag) { this.x = x; this.y = y; this.flag = flag; this.w = 16; this.h = 16; this.ground = true; }
-  get on() { return !!SAVE[this.flag]; }
+  // o.hold : la dalle n'est enfoncée que tant qu'un poids (le héros ou un bloc) reste dessus
+  constructor(x, y, flag, o = {}) { this.x = x; this.y = y; this.flag = flag; this.w = 16; this.h = 16; this.ground = true; this.hold = !!o.hold; this.was = null; }
+  playerOn() { const P = G.player; return !!P && G.inRoom(this) && Math.abs(P.x - this.x) < 8 && P.y > this.y - 16 && P.y < this.y + 1; }
+  get on() { return this.hold ? !!SAVE[this.flag] || this.playerOn() : !!SAVE[this.flag]; }
+  static held(flag) { const p = G.area && G.area.ents.find(e => e instanceof Plate && e.flag === flag); return p ? p.on : !!SAVE[flag]; }
+  update() { if (!this.hold) return; const on = this.on; if (this.was !== null && on !== this.was) { SFX.push(); if (on) SFX.secret(); } this.was = on; }
   draw() {
     hi(this.x, this.y, false, () => {
       D(-15, -31, 30, 30, '#111019');

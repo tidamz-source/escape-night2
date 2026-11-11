@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.0.0';
+const VERSION = 'v8.1.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -171,5 +171,6 @@ const SFX = {
   cluck() { tone(900, 0.05, { to: 600, vol: 0.08 }); tone(800, 0.06, { to: 500, vol: 0.08, delay: 0.08 }); },
   chime() { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, 0.5, { vol: 0.09, delay: i * 0.18, type: 'triangle' })); tone(130, 1.6, { type: 'sine', vol: 0.12 }); },
   gate() { noise(1.6, { freq: 300, vol: 0.3 }); tone(80, 1.6, { to: 50, type: 'sawtooth', vol: 0.15 }); },
+  fall() { tone(700, 0.6, { to: 70, vol: 0.16 }); },
   bigheart() { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, { vol: 0.1, delay: i * 0.09, type: 'triangle' })); },
 };

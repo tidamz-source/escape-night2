@@ -66,6 +66,7 @@ function makeDungeon(spec) {
   A.makeRoom = function (room) { const n = names.find(k => idx(k) === room), L = []; if (spec.make) spec.make(n, L, h); for (const e of L) if (!e.loot && e instanceof Pot) e.loot = spec.potLoot || 'pot'; return L; };
   if (spec.syncTiles) A.syncTiles = spec.syncTiles;
   A.spawn = function () {
+    if (spec.migrate) spec.migrate();
     if (this.syncTiles) this.syncTiles();
     this.ents = [];
     const list = [];
@@ -84,11 +85,20 @@ function makeDungeon(spec) {
       else if (d.door.shut) e = new Shutter(p.x, p.y, vert ? 'v' : 'h', d.door.shut);
       else if (d.door.arena) { const room = idx(host); e = new Shutter(p.x, p.y, vert ? 'v' : 'h', () => G.area.arenaOn === room); }
       if (e) list.push([idx(host), e]);
+      // la salle du boss se verrouille une fois qu'on y est entré (jusqu'à sa défaite)
+      if (d.door.big && spec.bossShutter !== false) {
+        const bossSide = [d.a, d.b].find(n => n === spec.boss); if (bossSide) {
+          const bs = d.dir === 'N' ? (bossSide === d.a ? 'N' : 'S') : (bossSide === d.a ? 'E' : 'W'), q = h.door(bossSide, bs), room = idx(spec.boss);
+          list.push([room, new Shutter(q.x, q.y, vert ? 'v' : 'h', () => G.area.arenaOn === room)]);
+        }
+      }
     }
     if (spec.fixed) for (const [n, e] of spec.fixed(h)) list.push([idx(n), e]);
     placeFixed(this, list);
     if (SAVE[spec.bossFlag] && !SAVE[spec.heartFlag]) { const p = h.pos(spec.boss, 240, spec.heartY || 170); placeFixed(this, [[idx(spec.boss), Object.assign(new HeartContainer(p.x, p.y), { flag: spec.heartFlag })]]); }
     for (const r of this.rooms.list) spawnRoom(this, r);
+    // matériau du boss pas encore ramassé : il attend toujours là où le boss est tombé
+    for (const [cls, b] of Object.entries(SAVE.bossLoot || {})) if (b.area === spec.id && !SAVE['bossMat_' + cls]) this.ents.push(new BossLoot(b.x, b.y, b.mat, cls, b.room));
     // petites clés : clés ramassées − portes ouvertes = clés en poche (répare les sauvegardes d'avant la v7, dont les coffres étaient déjà ouverts)
     const got = this.ents.filter(e => ((e instanceof Chest || e instanceof DiveSpot) && e.give === 'key' || e instanceof KeyPickup) && SAVE[e.flag]).length;
     const used = this.ents.filter(e => e instanceof KeyDoor && SAVE[e.flag]).length;
