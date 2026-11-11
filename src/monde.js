@@ -50,7 +50,7 @@ const VILLAGERS = {
   pauline: { name: 'Pauline', lines: () => ['Je cherche le vent pour faire voler mon cerf-volant. Le vent du moulin souffle dans la Forêt, mais ici, rien !'] },
   odette: { name: 'Odette', lines: () => ['Je grimpe ce col depuis quarante ans. Plus haut, c\'est la Montagne et ses gnomes. Gentils, mais bavards.', 'La paroi, là-haut, sonne creux. Les gnomes y cachaient leurs économies, paraît-il. Il faudrait la faire sauter.'] },
   margot: { name: 'Margot', lines: () => ['Je cueille des herbes à l\'orée du bois. L\'herboriste me les rachète un bon prix, tu devrais essayer !', 'Fais attention dans la Forêt : les sangliers foncent d\'abord, et réfléchissent jamais.'] },
-  hugo: { name: 'Hugo, le passeur', lines: () => ['Il y avait un bac sur ce bassin, avant. Maintenant, il y a moi, et pas de bac.', 'Sur l\'îlot, il y a un vieux poteau d\'amarrage. Avec un grappin, ça doit se faire en un saut.'] },
+  hugo: { name: 'Hugo, le passeur', lines: () => ['Il y avait un bac sur ce bassin, avant. Maintenant, il y a moi, et pas de bac.', 'Sur l\'îlot, il y a un vieux coffre et un poteau d\'amarrage. Avec un grappin, ça doit se faire en un saut.'] },
   coquillages: { name: 'Le ramasseur de coquillages', lines: () => ['Les dunes avancent un peu chaque nuit. Un jour, elles mangeront la Côte.', 'Le phare est éteint depuis que le temps s\'est arrêté. Le gardien n\'a plus de mèche, le pauvre.'] },
   fossoyeur: { name: 'Le fossoyeur', lines: () => ['Ici reposent ceux qui ont essayé de réveiller le Roi Minuit. Enfin… ils dorment, surtout. Profondément.', 'Le rocher fendu, au nord de la lande ? N\'y touche pas. Ou alors avec un gros pétard.'] },
 };
@@ -89,7 +89,7 @@ const FIREFLIES = [
   ['f_rn1', 'route_nord', 6, 6], ['f_rn2', 'route_nord', 34, 24], ['f_col1', 'col', 6, 24], ['f_col2', 'col', 34, 6], ['f_or1', 'oree', 6, 6], ['f_or2', 'oree', 34, 26],
   ['f_pr1', 'pres', 6, 24], ['f_du1', 'dunes', 20, 6], ['f_la1', 'lande', 34, 24], ['f_la2', 'lande', 6, 24],
   ['f_g1', 'grotte_collines', 6, 8], ['f_g2', 'grotte_montagne', 6, 8], ['f_g3', 'grotte_col', 6, 8], ['f_g4', 'grotte_lande', 6, 8],
-  ['f_i1', 'pres', 30, 11, 'exact'], ['f_i2', 'dunes', 30, 20, 'exact'], ['f_i3', 'lac', 50, 40],
+  ['f_i1', 'pres', 31, 11, 'exact'], ['f_i2', 'dunes', 31, 21, 'exact'], ['f_i3', 'lac', 50, 40],
 ];
 const Flies = {
   n: () => Object.keys(SAVE.flies || {}).length,
@@ -292,15 +292,15 @@ const PASSAGES = [
     spawn(A) { for (const [x, y] of [[8, 8], [30, 22], [12, 24]]) A.ents.push(new Forage(x * TS + 8, y * TS + 12, 'champignons')); } },
   { id: 'pres', name: 'Les Prés du Lac', seed: 171, themes: ['camp', 'lac'], axis: 'y',
     sides: { N: ['1', 'royaume', 'village_from_lac'], S: ['2', 'lac', 'lac_from_village'] },
-    build(T, r, ell) { ell(30, 11, 7, 5, '~'); ell(30, 11, 1.6, 1.4, '.'); },                                // le bassin et son îlot
+    build(T, r, ell) { ell(30, 11, 7, 5, '~'); ell(30, 11, 2.4, 1.9, '.'); },                                // le bassin et son îlot
     npcs: [['hugo', 24, 17]],
-    spawn(A) { A.ents.push(new Post(30 * TS + 8, 12 * TS), new Post(22 * TS + 8, 12 * TS)); A.ents.push(new HeartPiece(29 * TS + 8, 11 * TS + 4, 'hp_ilot_pres')); } },
+    spawn(A) { A.ents.push(new Post(30 * TS + 8, 12 * TS + 12), new Post(22 * TS + 8, 12 * TS)); A.ents.push(new Chest(30 * TS, 11 * TS, { flag: 'hp_ilot_pres', give: 'piece_coeur', msg: null })); } }, // le coffre de l'îlot
   { id: 'dunes', name: 'Les Dunes', seed: 191, themes: ['lac', 'cote'], axis: 'x', dark: 0.42,
     sides: { W: ['1', 'lac', 'lac_from_cote'], E: ['2', 'cote', 'cote_from_lac'] },
-    build(T, r, ell) { ell(30, 21, 6, 4, '~'); ell(30, 21, 1.6, 1.4, '.'); },
+    build(T, r, ell) { ell(30, 21, 6, 4, '~'); ell(30, 21, 2.4, 1.9, '.'); },
     decor: { kinds: ['oak1', 'oak2'], trees: 10 },
     npcs: [['coquillages', 14, 10]],
-    spawn(A) { A.ents.push(new Post(30 * TS + 8, 22 * TS), new Post(22 * TS + 8, 22 * TS)); A.ents.push(new HeartPiece(29 * TS + 8, 21 * TS + 4, 'hp_ilot_dunes')); for (const [x, y] of [[8, 8], [33, 8]]) A.ents.push(new Decor(x * TS, y * TS, 'palm')); } },
+    spawn(A) { A.ents.push(new Post(30 * TS + 8, 22 * TS + 12), new Post(22 * TS + 8, 22 * TS)); A.ents.push(new Chest(30 * TS, 21 * TS, { flag: 'hp_ilot_dunes', give: 'piece_coeur', msg: null })); for (const [x, y] of [[8, 8], [33, 8]]) A.ents.push(new Decor(x * TS, y * TS, 'palm')); } },
   { id: 'lande', name: 'La Lande grise', seed: 211, themes: ['terres', 'lac'], axis: 'x', dark: 0.52,
     sides: { E: ['1', 'lac', 'lac_from_terres'], W: ['2', 'terres', 'terres_from_lac'] },
     build(T) { T.rect(2, 2, 36, 5, '#'); },
