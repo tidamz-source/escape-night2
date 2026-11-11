@@ -109,6 +109,30 @@ class ClockTower {
   canInteract() { return true; }
   interact(G) {
     const n = SAVE.fragments || 0; persist(); SFX.pickup();
+    // la caméra monte le long de la tour pour la montrer en entier, avec son nom, puis redescend
+    const P = G.player, top = this.y - (this.painted ? 150 : 250), mid = this.y - (this.painted ? 70 : 120), start = { x: P.x, y: P.y - 12 }, me = this;
+    const title = n >= 6 ? 'Midi' : n ? `${n} h du matin` : 'Minuit';
+    G.camFocus = { x: start.x, y: start.y }; G.state = 'cut';
+    G.cut = {
+      t: 0,
+      update(dt) {
+        const c = G.cut; c.t += dt; G.parts.update(dt); me.update(dt, G);
+        const e = k => k * k * (3 - 2 * k);
+        if (c.t < 1.2) { const k = e(c.t / 1.2); G.camFocus = { x: lerp(start.x, me.x, k), y: lerp(start.y, top, k) }; }
+        else if (c.t < 3.4) { const k = e((c.t - 1.2) / 2.2); G.camFocus = { x: me.x, y: lerp(top, mid, k) }; if (!c.chime && c.t > 1.4) { c.chime = true; SFX.chime(); me.glow = 0.8; } }
+        else if (c.t < 4.2) { const k = e((c.t - 3.4) / 0.8); G.camFocus = { x: lerp(me.x, P.x, k), y: lerp(mid, P.y - 12, k) }; }
+        else { G.cut = null; G.camFocus = null; G.state = 'play'; me.saySaved(G, n); }
+      },
+      draw() {
+        const c = G.cut; if (!c || c.t < 0.9 || c.t > 3.8) return;
+        ctx.globalAlpha = Math.min(1, (c.t - 0.9) * 2, (3.8 - c.t) * 2);
+        text('La tour-horloge', W / 2, 22, { size: 14, align: 'center', bold: true, color: PAL.warm });
+        text(title + (n && n < 6 ? `  ·  ${n} lanterne${n > 1 ? 's' : ''} sur 6` : ''), W / 2, 40, { size: 9, align: 'center', color: '#fff6c0' });
+        ctx.globalAlpha = 1;
+      },
+    };
+  }
+  saySaved(G, n) {
     G.say([{ text: n >= 6 ? 'La tour-horloge sonne midi : le soleil brille sur Aube-Figée. Partie sauvegardée.' : n ? `La tour-horloge indique ${n} h du matin. ${n} lanterne${n > 1 ? 's' : ''} d'aube sur 6 brille${n > 1 ? 'nt' : ''}. Partie sauvegardée.` : 'La tour-horloge est arrêtée sur minuit. Six lanternes éteintes entourent le cadran. Partie sauvegardée.' }]);
   }
   update(dt, G) {
@@ -180,7 +204,7 @@ class GateLever extends RailLever {
       update: dt => { const c = G.cut; c.t += dt; G.parts.update(dt); G.updateCam();
         if (c.t > 0.6 && c.t < 2.6) { gate.lift = (c.t - 0.6) / 2 * 34; G.shake = 0.12; if ((creak -= dt) <= 0) { creak = 0.35; SFX.push(); } if (Math.random() < dt * 20) G.parts.add({ x: gate.x + rand(-16, 16), y: gate.y - 2, vy: -rand(10, 30), vx: rand(-10, 10), life: 0.6, c: '#8a8070', r: 1.5 }); }
         if (c.t > 2.6 && !c.done) { c.done = true; SFX.door(); G.shake = 0.35; }
-        if (c.t > 3.2) { SAVE.minesOpen = true; persist(); G.cut = null; G.camFocus = null; G.state = 'play'; G.say([{ text: 'Clac ! Au loin, la grille des Mines se lève dans un grondement de chaînes.' }, { who: 'Lumi', text: 'Un levier de mineur… Je parie qu\'il y en a plein d\'autres là-dedans, pour les wagons !' }]); } },
+        if (c.t > 3.2) { SAVE.minesOpen = true; persist(); G.cut = null; G.camFocus = null; G.state = 'play'; G.say([{ text: 'Clac ! Au loin, la grille des Mines se lève dans un grondement de chaînes.' }, { who: 'Lumi', text: 'La grille est ouverte ! Les Mines des gnomes nous attendent, droit devant.' }]); } },
       draw: () => {} };
     G.state = 'cut';
   }
@@ -211,6 +235,7 @@ function buildVillageArea() {
     this.ents.push(new ClockTower(32 * TS, 26 * TS, true));
     this.ents.push(new GateBlock(32 * TS, 4 * TS, 64));
     this.ents.push(new NPC(27 * TS + 8, 5 * TS, { look: 'garde', talk: 'garde' }));
+    this.ents.push(new NPC(42 * TS + 8, 25 * TS, { look: 'arthur', fn: arthurTalk })); // Arthur, le collectionneur du bestiaire
     this.ents.push(Object.assign(new Relay(26 * TS, 29 * TS, 'village'), { ghost: true }));
     this.ents.push(new Rift(55 * TS, 29 * TS + 8, { active: () => !!SAVE.boss6, closed: 'La faille par laquelle tu es arrivé{e} s\'est refermée. Lumi dit qu\'elle se rouvrira quand le jour se lèvera.', enter: G => G.fadeTo(() => G.enter('camp', G.areas.camp.dawn, false), '#c8a8ff') }));
     // la rivière de l'ouest : cible et pont-levis vers la Forêt
@@ -219,7 +244,7 @@ function buildVillageArea() {
     this.ents.push(Object.assign(new Sign(13 * TS, 22 * TS, [{ text: '« Pont-levis de la Forêt. Fermé par ordre du Roi Minuit. »' }, { who: '{hero}', text: 'Il y a une cible sur l\'autre rive… Si seulement je pouvais l\'atteindre.', face: 'o' }]), { ghost: true }));
     this.ents.push(Object.assign(new Sign(35 * TS, 3 * TS, [{ text: '« Au nord : les Collines. Au sud : le Lac. À l\'ouest : la Forêt. »' }]), { ghost: true }));
     if (SAVE.q && SAVE.q.poules === 1) for (const [i, x, y] of [[0, 25 * TS, 13 * TS], [1, 56 * TS, 26 * TS], [2, 12 * TS, 40 * TS]]) if (!SAVE['poule' + i]) this.ents.push(new Chicken(x, y, i));
-    for (const [sid, x, y] of [['forge', 17, 39], ['comptoir', 25, 39], ['epicerie', 39, 39], ['cuisine', 53, 39]]) this.ents.push(new PromoFlag(sid, x * TS + 24, y * TS + 6));
+    for (const [sid, x, y] of [['forge', 17, 39], ['comptoir', 25, 39], ['epicerie', 39, 39]]) this.ents.push(new PromoFlag(sid, x * TS + 24, y * TS + 6));
     questSpawns(this);
   };
   A.syncTiles = function () {
@@ -247,7 +272,7 @@ class PaintedBridge {
   }
 }
 
-// ----- Les Collines (nord) : prairies, moulin, moutons, la grotte des lucioles -----
+// ----- Les Collines (nord) : prairies, moutons, la grotte des lucioles -----
 function buildCollinesArea() {
   const Z = zoneGrid(13), { rect, set } = Z;
   rect(30, ZH - 2, 4, 2, '1'); rect(ZW - 2, 20, 2, 4, '2');
@@ -264,7 +289,6 @@ function buildCollinesArea() {
     for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));
     for (const h of this.houses) this.ents.push(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)));
     this.ents.push(new Entrance(32 * TS, 8 * TS, 'cave'));
-    this.ents.push(new Decor(48 * TS, 36 * TS, 'windmill', { say: [{ text: 'Un vieux moulin. Ses ailes tournent toutes seules, même sans vent.' }] }));
     for (const [x, y] of [[10, 30], [20, 26], [24, 32], [44, 16], [52, 18]]) this.ents.push(new Sheep(x * TS, y * TS));
     this.ents.push(new Decor(12 * TS, 38 * TS, 'fence'), new Decor(18 * TS, 38 * TS, 'fence'));
     this.ents.push(new Relay(36 * TS, 40 * TS, 'collines'));
@@ -287,21 +311,23 @@ function buildForetArea() {
   rect(20, 23, 42, 2, '='); rect(31, 8, 2, 16, '='); rect(12, 25, 2, 12, '='); rect(46, 14, 2, 9, '=');
   for (let i = 0; i < 26; i++) { const x = 4 + Math.floor(r() * 54), y = 9 + Math.floor(r() * 34); if (Math.abs(x - 32) < 4 || Math.abs(y - 23.5) < 3) continue; rect(x, y, 2 + Math.floor(r() * 3), 2 + Math.floor(r() * 2), '#'); }
   Z.ell(50, 38, 6, 4, '~', 0.2);
+  rect(20, 29, 9, 6, '.');                                                                       // la clairière du vieux moulin
   const A = zoneArea('foret', Z.g, 'foret', { name: 'La Forêt', dark: 0.55 });
   A.houses = [
     { id: 'bucheron', x: 12 * TS + 8, y: 37 * TS, o: { w: 5, d: 3, style: 'cabin', roof: '#3a3a2a', chimney: true } },
     { id: 'herboriste', x: 46 * TS + 8, y: 14 * TS, o: { w: 5, d: 3, style: 'shack', roof: '#4a6a3a', sign: 'herbs' } },
   ];
-  scatter(A, 31, [{ x: 26 * TS, y: 0, w: 12 * TS, h: 26 * TS }, { x: 8 * TS, y: 30 * TS, w: 10 * TS, h: 10 * TS }, { x: 42 * TS, y: 8 * TS, w: 10 * TS, h: 8 * TS }], { trees: 46, rocks: 8, flowers: 6, bushes: 30, kinds: ['pine1', 'pine2', 'pine2'] });
+  scatter(A, 31, [{ x: 26 * TS, y: 0, w: 12 * TS, h: 26 * TS }, { x: 8 * TS, y: 30 * TS, w: 10 * TS, h: 10 * TS }, { x: 42 * TS, y: 8 * TS, w: 10 * TS, h: 8 * TS }, { x: 19 * TS, y: 27 * TS, w: 11 * TS, h: 9 * TS }], { trees: 46, rocks: 8, flowers: 6, bushes: 30, kinds: ['pine1', 'pine2', 'pine2'] });
   A.spawn = function () {
     this.ents = [];
     for (const [x, y] of this.bushSpots) this.ents.push(Object.assign(new Bush(x, y), { loot: 'bushBois' }));
     for (const h of this.houses) this.ents.push(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)));
     this.ents.push(new Entrance(32 * TS, 8 * TS, 'tree'));
+    this.ents.push(new Decor(24 * TS + 8, 33 * TS, 'windmill', { say: [{ text: 'Le vieux moulin de la Forêt. Ses ailes tournent toutes seules, même sans vent… C\'est lui qui souffle dans le Bois des murmures.' }] }));
     this.ents.push(new Relay(54 * TS, 27 * TS, 'foret'));
     this.ents.push(new Sign(35 * TS, 10 * TS, [{ text: '« Bois des murmures. N\'écoutez pas ce que disent les arbres. »' }]));
-    for (const [x, y] of [[8, 12], [22, 30], [40, 34], [56, 12], [18, 18], [28, 40], [44, 30], [6, 40]]) this.ents.push(new Glowshroom(x * TS, y * TS));
-    this.ents.push(new Boar(24 * TS, 16 * TS), new Boar(40 * TS, 40 * TS), new Squirrel(16 * TS, 28 * TS), new Squirrel(52 * TS, 32 * TS), new Crow(36 * TS, 30 * TS), new Crow(20 * TS, 42 * TS));
+    for (const [x, y] of [[8, 12], [18, 30], [40, 34], [56, 12], [18, 18], [28, 40], [44, 30], [6, 40]]) this.ents.push(new Glowshroom(x * TS, y * TS));
+    this.ents.push(new Boar(24 * TS, 16 * TS), new Boar(40 * TS, 40 * TS), new Squirrel(16 * TS, 26 * TS), new Squirrel(52 * TS, 32 * TS), new Crow(36 * TS, 30 * TS), new Crow(20 * TS, 42 * TS));
     questSpawns(this);
   };
   A.start = ZONE_ARRIVE.foret_from_village;

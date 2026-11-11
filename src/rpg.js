@@ -141,6 +141,8 @@ const BEASTS = [
   { k: 'Eel', name: 'Anguille', zone: 'Temple, Côte', weak: 'épée quand elle sort', note: 'Électrique de caractère.' },
   { k: 'SkeletonKnight', name: 'Chevalier squelette', zone: 'Tour, Château', weak: 'dans le dos', note: 'Son bouclier pare tout ce qui vient de face. Sa patience, beaucoup moins.' },
   { k: 'Gargoyle', name: 'Gargouille', zone: 'Tour', weak: 'cailloux, épée', note: 'Fait la statue. Très mal.' },
+  { k: 'BigWisp', name: 'Grand feu follet', zone: 'Grotte des lucioles', weak: 'épée', mini: true, note: 'Le chef des feux follets. Il brûle plus fort quand il est en colère, c\'est-à-dire tout le temps.' },
+  { k: 'BigCrow', name: 'Corbeau géant', zone: 'Bois des murmures', weak: 'cailloux, frisbee', mini: true, note: 'Il vole les glands des écureuils, qui le lui rendent bien.' },
   { k: 'GreatShadow', name: 'La Grande Ombre', zone: 'Grotte des lucioles', weak: 'cailloux, puis épée', boss: true, note: 'Gardienne de la grotte. Elle a peur de la lumière, comme toutes les grandes ombres.' },
   { k: 'GreatOwl', name: 'Le Grand-Duc', zone: 'Bois des murmures', weak: 'frisbee, cailloux, épée au sol', boss: true, note: 'Ancien gardien du bois, ensorcelé. Il hulule en mineur.' },
   { k: 'IronMole', name: 'La Taupe de fer', zone: 'Mines des gnomes', weak: 'grappin, puis épée', boss: true, note: 'Les gnomes l\'avaient construite pour creuser. Elle a creusé un peu trop.' },
@@ -151,7 +153,7 @@ const BEASTS = [
 ];
 const Bestiary = {
   kills: k => (SAVE.kills || {})[k] || 0,
-  full(b) { return this.kills(b.k) >= (b.boss ? 1 : 10); },
+  full(b) { return this.kills(b.k) >= (b.boss || b.mini ? 1 : 10); },
   nFull() { return BEASTS.filter(b => this.full(b)).length; },
   kill(e) {
     const k = e.constructor.name, b = BEASTS.find(x => x.k === k); if (!b) return;
@@ -160,18 +162,33 @@ const Bestiary = {
     else if (!was && this.full(b)) Input.toast = { msg: `Fiche complète : ${b.name}`, t: 2 };
   },
   seen(e) { const k = e.constructor.name; if (!BEASTS.some(b => b.k === k)) return; SAVE.seen = SAVE.seen || {}; SAVE.seen[k] = 1; },
-  // récompenses du sage
+  // récompenses d'Arthur, le collectionneur de cartes du village
   claim(G) {
     const n = this.nFull(), got = SAVE.bestRew || 0, steps = [[5, 'money'], [12, 'loupe'], [BEASTS.length, 'encyclo']];
     const next = steps.find(([need], i) => i >= got && n >= need); if (!next) return false;
     SAVE.bestRew = steps.indexOf(next) + 1;
-    if (next[1] === 'money') { Wallet.add(50); G.say([{ who: 'Le sage', text: `Cinq fiches complètes dans ton bestiaire ! Tu observes bien. Prends ces 50 écus.` }]); }
-    if (next[1] === 'loupe') { SAVE.loupe = true; G.raise('loupe'); G.say([{ who: 'Le sage', text: 'Douze fiches ! Tiens, ma vieille loupe : tu verras combien de forces il reste à tes adversaires.' }]); }
-    if (next[1] === 'encyclo') { SAVE.encyclo = true; G.raise('encyclo'); G.say([{ who: 'Le sage', text: 'Le bestiaire complet ! Tiens, ce livre est tombé de la faille il y a longtemps. Une « encyclopédie illustrée pour enfants »… Il est à toi.' }]); }
+    if (next[1] === 'money') { Wallet.add(50); G.say([{ who: 'Arthur', text: 'Cinq fiches complètes ! T\'es doué{e}, dis donc. Tiens, 50 écus : c\'est ma tirelire, mais une promesse, c\'est une promesse.' }]); }
+    if (next[1] === 'loupe') { SAVE.loupe = true; G.raise('loupe'); G.say([{ who: 'Arthur', text: 'Douze fiches ! Prends ma loupe de collectionneur : avec, tu verras combien de forces il reste aux monstres.' }]); }
+    if (next[1] === 'encyclo') { SAVE.encyclo = true; G.raise('encyclo'); G.say([{ who: 'Arthur', text: 'Le bestiaire COMPLET ?! Tu es le plus grand collectionneur du royaume. Tiens, mon trésor : un livre tombé de la faille, une « encyclopédie illustrée pour enfants ». Il est à toi.' }]); }
     persist(); return true;
   },
 };
-function sageTalk(G) { if (Bestiary.claim(G)) return; G.say(Story.talk('sage')); }
+function sageTalk(G) { G.say(Story.talk('sage')); }
+// Arthur, l'enfant du village qui collectionne les cartes de monstres
+function arthurTalk(G) {
+  if (!SAVE.arthurMet) {
+    SAVE.arthurMet = true; persist();
+    return G.say([
+      { who: 'Arthur', text: 'Salut ! Moi c\'est Arthur. Je collectionne les cartes de monstres. T\'as un bestiaire, toi ? Non ? Attends, je t\'explique.' },
+      { who: 'Arthur', text: 'Chaque monstre que tu croises a sa fiche, dans l\'onglet Bestiaire du menu pause. Pour la compléter, il faut en battre dix. Les gros, un seul suffit.' },
+      { who: 'Arthur', text: 'Une fiche complète te dit où il vit et ce qui le fait fuir. Et si tu en complètes 5, 12, puis toutes, viens me voir : j\'ai des récompenses !' },
+    ]);
+  }
+  if (Bestiary.claim(G)) return;
+  const n = Bestiary.nFull(), steps = [5, 12, BEASTS.length], next = steps.find(k => k > n) || BEASTS.length;
+  G.say([{ who: 'Arthur', text: n >= BEASTS.length ? 'Toutes les fiches ! Je relis ton bestiaire tous les soirs, tu sais.' : `${n} fiche${n > 1 ? 's' : ''} complète${n > 1 ? 's' : ''}. Encore ${next - n} et je te donne ma prochaine récompense !` },
+    { who: 'Arthur', text: pick(['Les gros animaux qui gardent les salles comptent aussi. Un seul suffit pour leur fiche !', 'Un monstre que tu n\'as pas encore vu reste une silhouette dans le bestiaire.', 'Ma carte préférée ? Le raton laveur. Il a l\'air gentil, mais il vole tout.', 'Paraît qu\'il existe des monstres très rares… Je donnerais toutes mes cartes pour en voir un.']) }]);
+}
 
 // ===== 5. le marché qui vit =====
 const Market = {
@@ -179,7 +196,7 @@ const Market = {
   // tirée à chaque retour au village depuis une autre région
   roll() {
     const cands = [];
-    for (const sid of ['forge', 'epicerie', 'comptoir', 'cuisine', 'herboriste']) { const sh = Shop.def(sid); if (!sh) continue; for (const e of sh.items) { const st = Shop.state(sid, e); if (!st.gone && !e.cost) cands.push({ shop: sid, id: e.id }); } }
+    for (const sid of ['forge', 'epicerie', 'comptoir', 'herboriste']) { const sh = Shop.def(sid); if (!sh) continue; for (const e of sh.items) { const st = Shop.state(sid, e); if (!st.gone && !e.cost) cands.push({ shop: sid, id: e.id }); } }
     this.promo = cands.length ? cands.at(Math.floor(Math.random() * cands.length)) : null;
   },
   price(sid, e) { return this.promo && this.promo.shop === sid && this.promo.id === e.id ? Math.round(e.price * 0.7) : e.price; },
@@ -208,10 +225,11 @@ class Peddler {
     const opts = [...wares.map(w => `${w.label} : ${w.price} écus`), 'Vendre un souvenir', ...(pawn.length ? ['Racheter un souvenir'] : []), 'Rien'];
     G.ask([{ who: 'Le colporteur', text: 'Approche, approche ! Des merveilles de tout le royaume. Et dis donc, tes habits… tu les vends ?' }], opts, i => {
       const o = opts.at(i);
-      if (i < wares.length) { const w = wares.at(i); if (Wallet.get() < w.price) { SFX.nope(); return G.say([{ who: 'Le colporteur', text: 'Pas assez d\'écus ! Reviens plus riche.' }]); } Wallet.spend(w.price); SAVE[w.key] = true; if (w.id === 'appat') SAVE.appat = true; else Inventory.give(w.id); persist(); SFX.buy(); G.raise(w.id); G.say([{ who: 'Le colporteur', text: w.id === 'appat' ? 'Un appât doré : les poissons dorés ne lui résistent pas. Enfin, un peu moins.' : 'Affaire conclue ! Une pièce unique.' }]); }
+      if (i < wares.length) { const w = wares.at(i); if (Wallet.get() < w.price) { SFX.nope(); return G.say([{ who: 'Le colporteur', text: 'Pas assez d\'écus ! Reviens plus riche.' }]); } return G.ask([{ who: 'Le colporteur', text: `${w.label} pour ${w.price} écus. ${Inventory.item(w.id) ? Inventory.item(w.id).desc : 'Les poissons dorés en raffolent.'}` }], ['L\'acheter', 'Non merci'], c => { if (c !== 0) return; Wallet.spend(w.price); SAVE[w.key] = true; if (w.id === 'appat') SAVE.appat = true; else Inventory.give(w.id); persist(); SFX.buy(); G.raise(w.id); G.say([{ who: 'Le colporteur', text: w.id === 'appat' ? 'Un appât doré : les poissons dorés ne lui résistent pas. Enfin, un peu moins.' : 'Affaire conclue ! Une pièce unique.' }]); }); }
       else if (o === 'Vendre un souvenir') {
         const own = Object.keys(SOUVENIRS).filter(k => SAVE.souv && SAVE.souv[k]).slice(0, 4);
         if (!own.length) return G.say([{ who: 'Le colporteur', text: 'Tu n\'as rien de ton monde à me vendre ? Dommage.' }]);
+        if (Wallet.cap() - Wallet.get() < 250) return G.say([{ who: 'Le colporteur', text: 'Ta bourse est trop pleine pour que je te paie 250 écus ! Dépense-en un peu, et reviens me voir.' }]);
         G.ask([{ who: 'Le colporteur', text: 'Ces objets étranges de ton monde… je t\'en donne 250 écus pièce ! (Sans eux, pas de collection complète.)' }], [...own.map(k => SOUVENIRS[k].name), 'Non, je les garde'], j => { if (j < own.length) { const k = own.at(j); SAVE.souv[k] = false; SAVE.pawn = SAVE.pawn || {}; SAVE.pawn[k] = true; Wallet.add(250); persist(); SFX.coin(); G.say([{ who: 'Le colporteur', text: 'Marché conclu ! Je te le garde un moment, au cas où tu le regretterais. Pour 300 écus.' }]); } });
       } else if (o === 'Racheter un souvenir') {
         const list = pawn.slice(0, 4);
@@ -244,21 +262,41 @@ const Sell = {
   wanted: () => WANTED.at((SAVE.fragments || 0) % WANTED.length),
   price(id) { return Math.round(MATS[id].price * (id === this.wanted() ? 1.5 : 1)); },
 };
+// menu de revente commun : bourse pleine, « tu veux vendre autre chose ? »
+// o : { who, ids (ce que le marchand rachète), price(id), intro, none, thanks(id, n, gain) }
+function sellMenu(G, o) {
+  const own = o.ids.filter(id => Mats.n(id) > 0).sort((a, b) => (MATS[a].rare ? 1 : 0) - (MATS[b].rare ? 1 : 0) || o.price(b) * Mats.n(b) - o.price(a) * Mats.n(a)).slice(0, 4); // les matériaux de forge en dernier
+  if (!own.length) return G.say([{ who: o.who, text: o.none }]);
+  if (Wallet.get() >= Wallet.cap()) { SFX.nope(); return G.say([{ who: o.who, text: 'Ta bourse est pleine à craquer ! Je ne peux pas te payer : dépense un peu tes écus, ou trouve-toi une plus grande bourse.' }]); }
+  G.ask([{ who: o.who, text: o.intro }], [...own.map(id => `${MATS[id].name} ×${Mats.n(id)} : ${o.price(id) * Mats.n(id)} écus`), 'Rien'], k => {
+    if (k >= own.length) return;
+    const id = own.at(k), unit = o.price(id), have = Mats.n(id), room = Wallet.cap() - Wallet.get(), n = Math.min(have, Math.floor(room / unit));
+    const again = () => G.ask([{ who: o.who, text: 'Tu veux vendre autre chose ?' }], ['Oui', 'Non merci'], c => { if (c === 0) sellMenu(G, o); else G.say([{ who: o.who, text: pick(['À la prochaine !', 'Reviens quand tu veux.', 'Merci, et bonne route !']) }]); });
+    const doSell = n => { const gain = unit * n; Inventory.useIngredient(id, n); Wallet.add(gain); persist(); SFX.coin(); G.say([{ who: o.who, text: o.thanks(id, n, gain) }], again); };
+    if (n <= 0) { SFX.nope(); return G.say([{ who: o.who, text: `Ta bourse est presque pleine : je ne pourrais même pas t'en payer un seul (${MATS[id].name.toLowerCase()}). Dépense un peu tes écus d'abord !` }]); }
+    const go = () => n < have ? G.ask([{ who: o.who, text: `Attention, ta bourse est presque pleine : je ne peux t'en prendre que ${n} (${unit * n} écus). D'accord ?` }], ['D\'accord', 'Non'], c => { if (c === 0) doSell(n); }) : doSell(n);
+    if (MATS[id].rare) return G.ask([{ who: o.who, text: `${MATS[id].name} ? Bertrand en a besoin pour la forge, tu es sûr${Heroes.def().he === 'elle' ? 'e' : ''} ?` }], ['Vendre', 'Je le garde'], c => { if (c === 0) go(); });
+    go();
+  });
+}
 function amandineTalk(G) {
   const sh = Shop.def('comptoir');
   G.ask([{ who: sh.keeper, text: sh.hello }], ['Acheter', 'Vendre', 'Rien'], i => {
     if (i === 0) return G.say([{ who: sh.keeper, text: 'Approche-toi d\'un article et appuie sur A pour l\'acheter.' }]);
     if (i !== 1) return;
-    const own = Mats.owned().filter(id => !MATS[id].rare || Mats.n(id) > 0).sort((a, b) => (MATS[a].rare ? 1 : 0) - (MATS[b].rare ? 1 : 0) || Sell.price(b) * Mats.n(b) - Sell.price(a) * Mats.n(a)).slice(0, 4); // les matériaux de forge en dernier
     const w = MATS[Sell.wanted()].name.toLowerCase();
-    if (!own.length) return G.say([{ who: sh.keeper, text: `Tu n'as rien à vendre. Cette semaine, je cherche surtout : ${w}. Je paie bien !` }]);
-    G.ask([{ who: sh.keeper, text: `Montre-moi ça. Cette semaine, je paie plus cher : ${w}.` }], [...own.map(id => `${MATS[id].name} ×${Mats.n(id)} : ${Sell.price(id) * Mats.n(id)} écus`), 'Rien'], k => {
-      if (k >= own.length) return;
-      const id = own.at(k), n = Mats.n(id), gain = Sell.price(id) * n;
-      if (MATS[id].rare) return G.ask([{ who: sh.keeper, text: `${MATS[id].name} ? Bertrand en a besoin pour la forge, tu es sûr${Heroes.def().he === 'elle' ? 'e' : ''} ?` }], ['Vendre', 'Je le garde'], c => { if (c === 0) doSell(id, n, gain); });
-      doSell(id, n, gain);
-    });
-    function doSell(id, n, gain) { Inventory.useIngredient(id, n); Wallet.add(gain); persist(); SFX.coin(); G.say([{ who: sh.keeper, text: pick([`${gain} écus, marché conclu !`, `Une ${MATS[id].name.toLowerCase()} ? Je connais quelqu'un qui va pleurer de joie. ${gain} écus.`, `Parfait. ${gain} écus, et pas un de plus. Enfin… si, un. Non. ${gain}.`]) }]); }
+    sellMenu(G, { who: sh.keeper, ids: Object.keys(MATS), price: id => Sell.price(id), intro: `Montre-moi ça. Cette semaine, je paie plus cher : ${w}.`, none: `Tu n'as rien à vendre. Cette semaine, je cherche surtout : ${w}. Je paie bien !`,
+      thanks: (id, n, gain) => pick([`${gain} écus, marché conclu !`, `Du ${MATS[id].name.toLowerCase()} ? Je connais quelqu'un qui va pleurer de joie. ${gain} écus.`, `Parfait. ${gain} écus, et pas un de plus. Enfin… si, un. Non. ${gain}.`]) });
+  });
+}
+// l'herboriste vend ses sirops et rachète les herbes et les champignons
+function herboristeTalk(G) {
+  const sh = Shop.def('herboriste');
+  G.ask([{ who: sh.keeper, text: sh.hello }], ['Acheter', 'Vendre des herbes', 'Rien'], i => {
+    if (i === 0) return G.say([{ who: sh.keeper, text: 'Approche-toi d\'un article et appuie sur A pour l\'acheter.' }]);
+    if (i !== 1) return;
+    sellMenu(G, { who: sh.keeper, ids: ['herbe', 'herbe_rare', 'champignons'], price: id => MATS[id].price + 1, intro: 'Fais voir tes herbes… Je paie un peu mieux qu\'Amandine, mais je ne prends que ce qui pousse.', none: 'Tu n\'as pas d\'herbes ni de champignons. Cueille-en dans les Collines et la Forêt, je te les rachète.',
+      thanks: (id, n, gain) => id === 'herbe_rare' ? `De l'herbe d'aube ! Elle sent le matin. ${gain} écus, avec plaisir.` : `Bien fraîches. ${gain} écus pour toi.` });
   });
 }
 // la chaîne d'échanges
@@ -369,6 +407,7 @@ const Fishing = {
 };
 // cuisine de Mamie
 const RECIPES = [
+  { id: 'soupe', need: { champignons: 3 } },
   { id: 'soupe_jardin', need: { champignons: 2 } },
   { id: 'soupe_pecheur', need: { poisson_petit: 1, herbe: 1 } },
   { id: 'bouillon', need: { cristal: 1, champignons: 1 } },
@@ -378,18 +417,23 @@ const RECIPES = [
 const recipeOk = r => Object.entries(r.need).every(([k, n]) => Mats.n(k) >= n);
 const recipeTxt = r => Object.entries(r.need).map(([k, n]) => `${n} ${MATS[k].name.toLowerCase()}`).join(' + ');
 function mamieTalk(G) {
-  const sh = Shop.def('cuisine');
-  G.ask([{ who: 'Mamie', text: 'Mon petit ! Tu as faim ? Tu m\'apportes des ingrédients et une bouteille vide, et je te fais une soupe.' }], ['Acheter', 'Cuisiner', 'Rien'], i => {
-    if (i === 0) return G.say([{ who: sh.keeper, text: 'Approche-toi d\'un article et appuie sur A pour l\'acheter.' }]);
-    if (i !== 1) return;
-    if (!Inventory.hasEmptyBottle()) return G.say([{ who: 'Mamie', text: 'Il me faut une bouteille vide pour y verser la soupe. Je ne vais pas te la donner dans les mains !' }]);
+  const nm = Heroes.name(SAVE.hero), bottles = SAVE.inv.bottles || [];
+  // une seule bouteille offerte par partie, à qui n'en a pas
+  if (!bottles.length && !SAVE.mamieBottle) {
+    SAVE.mamieBottle = true; Inventory.give('bouteille'); persist(); SFX.chest(); G.raise('bouteille');
+    return G.say([{ who: 'Mamie', text: `${nm}, tu n'as même pas une bouteille ? Tiens, prends celle-ci. C'est la seule que j'ai, alors ne la perds pas !` }, { who: 'Mamie', text: 'Rapporte-la-moi vide avec de bons ingrédients, et je te la remplis de soupe.' }]);
+  }
+  G.ask([{ who: 'Mamie', text: `${nm} ! Tu as faim ? Apporte-moi des ingrédients et une bouteille vide, je te la remplis de soupe.` }], ['Cuisiner', 'Tes recettes', 'Rien'], i => {
+    if (i === 1) return G.say(RECIPES.map(r => ({ who: 'Mamie', text: `${Inventory.item(r.id).name} : ${recipeTxt(r)}. ${Inventory.item(r.id).desc}` })));
+    if (i !== 0) return;
+    if (!Inventory.hasEmptyBottle()) return G.say([{ who: 'Mamie', text: bottles.length ? `Tes bouteilles sont pleines, ${nm}. Bois-en une d'abord, et reviens me voir.` : `Il me faut une bouteille vide pour y verser la soupe, ${nm}. L'épicière en vend.` }]);
     const list = RECIPES.filter(recipeOk).slice(0, 4);
-    if (!list.length) return G.say([{ who: 'Mamie', text: 'Tu n\'as pas de quoi faire une soupe. Voilà mes recettes :' }, ...RECIPES.map(r => ({ who: 'Mamie', text: `${Inventory.item(r.id).name} : ${recipeTxt(r)}. ${Inventory.item(r.id).desc}` }))]);
+    if (!list.length) return G.say([{ who: 'Mamie', text: `Tu n'as pas de quoi faire une soupe, ${nm}. Voilà mes recettes :` }, ...RECIPES.map(r => ({ who: 'Mamie', text: `${Inventory.item(r.id).name} : ${recipeTxt(r)}. ${Inventory.item(r.id).desc}` }))]);
     G.ask([{ who: 'Mamie', text: 'Qu\'est-ce que je te prépare ?' }], [...list.map(r => Inventory.item(r.id).name), 'Rien'], k => {
       if (k >= list.length) return; const r = list.at(k);
       for (const [m, n] of Object.entries(r.need)) Inventory.useIngredient(m, n);
       Inventory.give(r.id); SAVE.recipes = SAVE.recipes || {}; SAVE.recipes[r.id] = true; persist(); SFX.drink(); G.raise(r.id);
-      G.say([{ who: 'Mamie', text: pick(['Et voilà, bien chaude ! Ne te brûle pas la langue.', 'Une recette de ta grand-mère, c\'est-à-dire de moi.', 'Bois-la quand tu en auras besoin, mon cœur.']) }, { text: `${Inventory.item(r.id).name} : ${Inventory.item(r.id).desc}` }]);
+      G.say([{ who: 'Mamie', text: pick([`Et voilà, bien chaude ! Ne te brûle pas la langue, ${nm}.`, 'Une recette de ta grand-mère, c\'est-à-dire de moi.', `Bois-la quand tu en auras besoin, ${nm}.`]) }, { text: `${Inventory.item(r.id).name} : ${Inventory.item(r.id).desc}` }]);
     });
   });
 }
@@ -413,3 +457,20 @@ function compassTarget(G) {
   }
   return best;
 }
+
+// ===== progression globale (en %), affichée dans les sauvegardes et le menu pause =====
+// chaque part : [poids, () => 0..1] ; les mises à jour suivantes en ajoutent (lucioles, nouvelles quêtes…)
+const PROGRESS = [
+  [40, () => (SAVE.fragments || 0) / 6],                                                                 // l'histoire
+  [5, () => SAVE.boss6 ? 1 : 0],                                                                        // la fin
+  [15, () => { const ks = Object.keys(QUESTS); return ks.filter(k => Quests.st(k) === 2).length / ks.length; }], // quêtes
+  [8, () => Math.min(1, ((SAVE.maxHp || 6) - 6) / 24)],                                                 // cœurs
+  [8, () => Bestiary.nFull() / BEASTS.length],                                                          // bestiaire
+  [6, () => (SAVE.troc || 0) / TROC.length],                                                            // troc
+  [8, () => Object.keys(SOUVENIRS).filter(k => (SAVE.souv && SAVE.souv[k]) || (SAVE.pawn && SAVE.pawn[k])).length / Object.keys(SOUVENIRS).length],
+  [5, () => Object.keys(UPGRADES).reduce((a, id) => a + Upg.lv(id), 0) / (Object.keys(UPGRADES).length * 2)], // forge
+  [5, () => RECIPES.filter(r => (SAVE.recipes || {})[r.id]).length / RECIPES.length],                   // recettes
+];
+const Progress = {
+  pct() { let w = 0, got = 0; for (const [k, f] of PROGRESS) { w += k; try { got += k * clamp(f() || 0, 0, 1); } catch (_) {} } return Math.floor(got / w * 100); },
+};

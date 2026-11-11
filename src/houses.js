@@ -42,7 +42,6 @@ Object.assign(INTERIORS, {
     put('fireplace', 4, 3.2); put('cauldron', 8, 4.8); put('table', 12, 6.6, { food: true }); put('stool', 10.2, 7.4); put('window', 12, 2); put('rug', 6, 8.2, { color: '#a85a3a' });
     npc(A, 10, 4.6, { sprite: 'claudine', fn: mamieTalk, when: 'freed2' });
     npc(A, 3.5, 7.6, { sprite: 'dog', talk: 'goyave', when: 'freed5' });
-    shopRow(A, 'cuisine', 6, 8.4, 4);
   } },
   comptoir: { name: 'Le comptoir d\'Amandine', w: 18, h: 11, build(put, at, A) {
     put('counter', 9, 5.4); put('shelf', 3, 3.2); put('shelf', 15, 3.2); put('plant', 2, 9.4); put('crate', 16, 9.4);
@@ -55,7 +54,7 @@ Object.assign(INTERIORS, {
   // ----- les autres zones -----
   berger: { name: 'La bergerie', w: 14, h: 9, build(put, at, A) { put('fireplace', 4, 3.2); put('bed', 11, 4.6, { blanket: '#c8b898' }); put('bench', 7, 7.2); npc(A, 8, 5.6, { look: 'berger', quest: 'cloche' }); } },
   bucheron: { name: 'La cabane du bûcheron', w: 14, h: 9, build(put, at, A) { put('fireplace', 10, 3.2); put('crate', 3, 5, { say: [{ text: 'Une pile de bûches bien rangées.' }] }); put('table', 5, 7.2); npc(A, 9, 6.4, { look: 'bucheron', quest: 'hache' }); } },
-  herboriste: { name: 'L\'herboristerie', w: 16, h: 10, build(put, at, A) { put('cauldron', 4, 4.6); put('shelf', 12, 3.2); put('plant', 2, 8.4); put('plant', 14, 8.4); npc(A, 8, 4.6, { look: 'herboriste', fn: shopNPC('herboriste') }); shopRow(A, 'herboriste', 5, 7.6, 3); } },
+  herboriste: { name: 'L\'herboristerie', w: 16, h: 10, build(put, at, A) { put('cauldron', 4, 4.6); put('shelf', 12, 3.2); put('plant', 2, 8.4); put('plant', 14, 8.4); npc(A, 8, 4.6, { look: 'herboriste', fn: herboristeTalk }); shopRow(A, 'herboriste', 5, 7.6, 3); } },
   gnome: { name: 'La hutte du gnome', w: 12, h: 9, build(put, at, A) { put('table', 6, 5, { candle: true }); put('crate', 2, 7.4); put('barrel', 10, 7.4); npc(A, 6, 6.8, { gnome: true, quest: 'lettre' }); } },
   pecheur: { name: 'La cabane du pêcheur', w: 14, h: 9, build(put, at, A) { put('nets', 4, 4); put('barrel', 11, 4.4); put('table', 9, 6.4, { food: true }); npc(A, 6, 6.6, { look: 'pecheur', fn: pecheurTalk }); } },
   artificiere: { name: 'L\'atelier de l\'artificière', w: 18, h: 11, build(put, at, A) { put('rockets', 4, 4); put('rockets', 14, 4); put('barrel', 2, 8); put('table', 9, 5.6); npc(A, 9, 7, { look: 'artificiere', quest: 'feux' }); shopRow(A, 'artifices', 13, 8.4, 3); } },

@@ -18,12 +18,14 @@ const LOOKS = {
   artificiere:{ skin: '#e8b890', hair: '#2a2a2a', top: '#c83a3a', legs: '#3a2a2a', long: true, apron: '#3a3a42' },
   gardien:    { skin: '#d8a880', hair: '#5a5a5a', top: '#2a3a6a', legs: '#2a2a3a', beard: true, hat: '#2a2a3a' },
   ermite:     { skin: '#c8a8a0', hair: '#c8c8d0', top: '#4a3a5a', legs: '#2a2030', robe: true, beard: true },
+  arthur:     { skin: '#f0c8a0', hair: '#c8742a', top: '#3a8ac8', legs: '#3a3a5a', child: true },
   forain:     { skin: '#e0b48e', hair: '#2a2a2a', top: '#d84a4a', legs: '#2a2a3a', hat: '#2a2a3a' },
 };
 function shade(c, k) { const n = parseInt(c.slice(1), 16), f = v => clamp(Math.round(v * k), 0, 255); return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => f(v).toString(16).padStart(2, '0')).join(''); }
 function drawPerson(x, y, L, t) {
-  const bob = Math.round(Math.sin(t * 2.2) * 0.6 * 2) / 2;
-  ell(x, y, 6, 2.5, 'rgba(0,0,0,.35)');
+  const bob = Math.round(Math.sin(t * (L.child ? 3 : 2.2)) * 0.6 * 2) / 2;
+  if (!L.shadowless) ell(x, y, 6, 2.5, 'rgba(0,0,0,.35)');
+  if (L.child) { ctx.save(); ctx.translate(x, y); ctx.scale(0.74, 0.74); ctx.translate(-x, -y); drawPerson(x, y, Object.assign({}, L, { child: false, shadowless: true }), t * 1.3); ctx.restore(); return; }
   hi(x, y + bob, false, () => {
     if (L.robe) { D(-11, -30, 22, 30, L.top); D(-11, -30, 22, 3, shade(L.top, 1.25)); D(-11, -3, 22, 3, shade(L.top, 0.7)); }
     else { D(-7, -12, 5, 12, L.legs); D(2, -12, 5, 12, L.legs); D(-8, -2, 6, 2, '#2a1d18'); D(2, -2, 6, 2, '#2a1d18'); D(-10, -32, 20, 21, L.top); D(-10, -32, 20, 3, shade(L.top, 1.25)); D(-10, -14, 20, 2, '#3a2414'); }

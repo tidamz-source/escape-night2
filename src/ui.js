@@ -190,7 +190,7 @@ const UIMixin = {
     if (this.ptab === 2) this.drawSouvenirs();
     if (this.ptab === 3) this.drawBestiary();
     if (this.ptab === 4) this.drawMapTab();
-    if (this.ptab === 5) { text('Options', W / 2, 82, { size: 14, align: 'center', bold: true }); this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 116); }
+    if (this.ptab === 5) { text('Options', W / 2, 82, { size: 14, align: 'center', bold: true }); text(`Progression du jeu : ${Progress.pct()} %`, W / 2, 100, { size: 9, align: 'center', color: PAL.glow }); this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 116); }
     if (!Input.padVisible) {
       const roll = Heroes.def().roll;
       text('Flèches : choisir · Espace : utiliser · E : onglet suivant · Échap : fermer' + (roll ? ' · L = roulade' : ''), W / 2, H - 12, { size: 6.5, align: 'center', color: '#6a74a0' });
@@ -211,13 +211,13 @@ const UIMixin = {
     }
     // la sacoche
     const rx = 250, y0 = 60; text('Sacoche', rx, y0, { size: 9, color: PAL.lav, bold: true });
-    const rows = [['money', `${Wallet.get()} / ${Wallet.cap()} écus`], ['fragment', `${SAVE.fragments || 0} / 6 fragments d'aube`]];
+    const rows = [['star', `Progression : ${Progress.pct()} %`], ['money', `${Wallet.get()} / ${Wallet.cap()} écus`], ['fragment', `${SAVE.fragments || 0} / 6 fragments d'aube`]];
     if (Inventory.has('lance_pierre')) rows.push(['cailloux', `${Inventory.ammo('cailloux')} / ${Inventory.ammoMax('cailloux')} cailloux`]);
     if (Inventory.has('petards')) rows.push(['petards', `${Inventory.ammo('petards')} / ${Inventory.ammoMax('petards')} pétards`]);
     if (Inventory.ingredient('champignons') || SAVE.freed2) rows.push(['champignons', `${Inventory.ingredient('champignons')} champignon${Inventory.ingredient('champignons') > 1 ? 's' : ''}`]);
     if (this.area.rooms) rows.push(['cle', `${Keys.get()} petite${Keys.get() > 1 ? 's' : ''} clé${Keys.get() > 1 ? 's' : ''}` + (this.area.dungeon && SAVE['bigkey_' + this.area.dungeon] ? ' · grande clé' : '')]);
     if (this.area.id === 'castle') rows.push(['seal', `${SEALS.filter(q => SAVE[q[0]]).length} / 5 sceaux de l'aube`]);
-    rows.forEach(([ic, t], i) => { drawItemIcon(ic, rx + 10, y0 + 22 + i * 20, 0.9); text(t, rx + 24, y0 + 17 + i * 20, { size: 8 }); });
+    const sp = rows.length > 6 ? 17 : 20; rows.forEach(([ic, t], i) => { if (ic === 'star') text('★', rx + 10, y0 + 15 + i * sp, { size: 9, align: 'center', color: PAL.glow }); else drawItemIcon(ic, rx + 10, y0 + 22 + i * sp, 0.9); text(t, rx + 24, y0 + 17 + i * sp, { size: 8, color: ic === 'star' ? PAL.glow : undefined }); });
     const sel = L[this.psel], it = sel && (sel.id === 'bigkey' ? { name: 'Grande clé', desc: 'Ouvre la porte du boss de ce donjon.' } : Inventory.item(sel.id === 'vide' ? 'bouteille' : sel.id));
     if (it) { R(24, H - 54, W - 48, 30, 'rgba(20,36,76,.7)'); text(it.name, W / 2, H - 50, { size: 8.5, align: 'center', bold: true, color: PAL.white }); text(it.desc + (sel.kind === 'bottle' && sel.id !== 'vide' ? '  A : boire.' : sel.kind === 'tool' ? '  A : équiper sur B.' : ''), W / 2, H - 38, { size: 7, align: 'center', color: '#c8d0f0' }); }
   },
@@ -232,30 +232,30 @@ const UIMixin = {
     }
     const e = L[this.psel], rx = 250; R(rx - 6, 64, W - rx - 18, 120, 'rgba(20,36,76,.6)');
     if (e) {
-      const name = e.troc ? TROC_ITEMS[e.troc] : MATS[e.id].name, desc = e.troc ? 'Un objet à échanger. Quelqu\'un, quelque part, en a sûrement besoin.' : MATS[e.id].desc + (MATS[e.id].rare ? ' Matériau rare : Bertrand s\'en sert à la forge.' : ` Amandine en donne ${Sell.price(e.id)} écus.`);
+      const name = e.troc ? TROC_ITEMS[e.troc] : MATS[e.id].name, desc = e.troc ? 'Un objet à échanger. Quelqu\'un, quelque part, en a sûrement besoin.' : MATS[e.id].desc + (MATS[e.id].rare ? ' Matériau rare : Bertrand s\'en sert à la forge.' : ' Ça pourrait intéresser un marchand.');
       text(name, rx, 72, { size: 10, bold: true, color: PAL.warm }); wrap(desc, W - rx - 30, 8).forEach((l, i) => text(l, rx, 92 + i * 12, { size: 8, color: '#c8d0f0' }));
     } else wrap('Ton sac est vide. Cueille, pêche, casse des rochers : tout se revend chez Amandine ou se cuisine chez Mamie.', W - rx - 30, 8).forEach((l, i) => text(l, rx, 74 + i * 12, { size: 8, color: '#7a84a8' }));
     const up = Object.keys(UPGRADES).filter(id => Upg.lv(id)); if (up.length) text('Forge : ' + up.map(id => UPGRADES[id].name + ' ' + '★'.repeat(Upg.lv(id))).join(' · '), W / 2, H - 40, { size: 7.5, align: 'center', color: PAL.glow });
   },
   drawBestiary() {
-    const C = 5, g = { x0: 30, y0: 66, cw: 40, ch: 34 }, n = Bestiary.nFull();
+    const C = 5, g = { x0: 30, y0: 62, cw: 40, ch: BEASTS.length > 20 ? 28 : 34 }, n = Bestiary.nFull();
     text(`Bestiaire : ${n} / ${BEASTS.length} fiches complètes` + (SAVE.encyclo ? '  ★' : ''), g.x0, g.y0 - 12, { size: 9, color: PAL.lav, bold: true });
     BEASTS.forEach((b, k) => {
       const i = k % C, j = Math.floor(k / C), x = g.x0 + i * g.cw, y = g.y0 + j * g.ch, kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k];
       this.drawCell(x, y, g.cw, g.ch, k === this.psel, true);
       text(kills ? (Bestiary.full(b) ? '★' : String(kills)) : seen ? '?' : '', x + g.cw / 2 - 2, y + g.ch / 2 - 9, { size: kills ? 9 : 12, align: 'center', color: Bestiary.full(b) ? PAL.warm : kills ? PAL.white : '#3a4a7a', bold: true });
-      if (b.boss) R(x + 2, y + 2, 4, 4, '#c8a040');
+      if (b.boss) R(x + 2, y + 2, 4, 4, '#c8a040'); else if (b.mini) R(x + 2, y + 2, 4, 4, '#8a9ab0');
     });
     const b = BEASTS[this.psel], kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k], rx = 250;
     R(rx - 6, 58, W - rx - 18, 150, 'rgba(20,36,76,.6)');
     if (!seen) { text('???', rx, 66, { size: 10, bold: true, color: '#7a84a8' }); text('Une créature que tu n\'as pas encore croisée.', rx, 84, { size: 8, color: '#7a84a8' }); return; }
     if (!kills) { text('???', rx, 66, { size: 10, bold: true, color: '#7a84a8' }); text('Tu l\'as croisée. Bats-la pour en savoir plus.', rx, 84, { size: 8, color: '#7a84a8' }); return; }
-    text(b.name + (b.boss ? ' (gardien)' : ''), rx, 66, { size: 10, bold: true, color: PAL.warm });
+    text(b.name + (b.boss ? ' (gardien)' : b.mini ? ' (mini-boss)' : ''), rx, 66, { size: 10, bold: true, color: PAL.warm });
     text(b.zone, rx, 82, { size: 7.5, color: '#9aa4c8' });
-    text(`Vaincu${b.boss ? '' : 's'} : ${kills}` + (b.boss ? '' : ` / 10`), rx, 96, { size: 8, color: PAL.white });
+    text(`Vaincu${b.boss || b.mini ? '' : 's'} : ${kills}` + (b.boss || b.mini ? '' : ` / 10`), rx, 96, { size: 8, color: PAL.white });
     if (Bestiary.full(b)) { text('Points faibles : ' + b.weak, rx, 110, { size: 8, color: PAL.glow }); wrap('« ' + b.note + ' »', W - rx - 30, 8).forEach((l, i) => text(l, rx, 128 + i * 12, { size: 8, color: '#c8d0f0' })); }
     else text('Fiche complète à 10 victoires.', rx, 110, { size: 8, color: '#7a84a8' });
-    text('Récompenses chez le sage : 5, 12 et ' + BEASTS.length + ' fiches complètes.', W / 2, H - 40, { size: 7.5, align: 'center', color: '#9aa4c8' });
+    text('Récompenses chez Arthur, au village : 5, 12 et ' + BEASTS.length + ' fiches complètes.', W / 2, H - 40, { size: 7.5, align: 'center', color: '#9aa4c8' });
   },
   drawSouvenirs() {
     const ids = Object.keys(SOUVENIRS), C = 4, g = this.gridGeom(C), n = ids.filter(k => SAVE.souv && SAVE.souv[k]).length;
@@ -380,7 +380,7 @@ const UIMixin = {
   slotInfo(i) {
     const s = readSlot(i); if (!s) return null;
     const keep = SAVE; SAVE = Object.assign(defaultSave(s.hero), s, { inv: Object.assign(defaultSave().inv, s.inv || {}) });
-    const info = { hero: s.hero, name: Heroes.name(s.hero), hearts: s.maxHp / 2, money: s.money, frags: s.fragments || 0, obj: Story.objective(), time: Math.floor((s.playTime || 0) / 60) };
+    const info = { hero: s.hero, name: Heroes.name(s.hero), hearts: s.maxHp / 2, money: s.money, frags: s.fragments || 0, obj: Story.objective(), pct: Progress.pct(), time: Math.floor((s.playTime || 0) / 60) };
     SAVE = keep; return info;
   },
   updateSlots() {
@@ -410,7 +410,7 @@ const UIMixin = {
       for (let h = 0; h < info.hearts; h++) drawHeartShape(bx + 70 + h * 9, y + 23, 1.5, PAL.heart, '#c02848');
       drawItemIcon('money', bx + 70 + info.hearts * 9 + 8, y + 23, 0.8); text(String(info.money), bx + 70 + info.hearts * 9 + 15, y + 18, { size: 8, color: PAL.warm });
       text(info.obj, bx + 66, y + 31, { size: 6.5, color: '#9aa4c8' });
-      text(`${info.frags}/6`, bx + 306, y + 6, { size: 7, align: 'right', color: '#ffcf3a' }); text(`${info.time} min`, bx + 306, y + 18, { size: 7, align: 'right', color: '#7a84a8' });
+      text(`${info.pct} %`, bx + 306, y + 4, { size: 10, align: 'right', bold: true, color: PAL.glow }); text(`${info.frags}/6 · ${info.time} min`, bx + 306, y + 19, { size: 7, align: 'right', color: '#9aa4c8' });
     }
     const on = this.slotSel === 3; text(this.erasing ? 'Annuler' : 'Effacer une partie', W / 2, 46 + 3 * 52 + 4, { size: 9, align: 'center', color: on ? (this.erasing ? PAL.white : PAL.red) : '#7a84a8', bold: on });
     text('A : choisir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#6a74a0' });

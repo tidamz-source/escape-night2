@@ -547,7 +547,7 @@
  "captive_cage2": [
   {
    "who": "Mamie",
-   "text": "{hero} ! Mon petit cœur ! Fais attention à ce gros hibou, il a des serres comme des fourchettes à rôti.",
+   "text": "{hero} ! Ah, {hero} ! Fais attention à ce gros hibou, il a des serres comme des fourchettes à rôti.",
    "face": "smile",
    "faceOf": "claudine"
   }
@@ -583,7 +583,7 @@
  "reunion2": [
   {
    "who": "Mamie",
-   "text": "Mon petit ! Je m'installe dans la maison au toit de chaume, au sud-est du village. Rapporte-moi des champignons !",
+   "text": "{hero} ! Je m'installe dans la maison au toit de chaume, au sud-est du village. Rapporte-moi des champignons !",
    "face": "smile",
    "faceOf": "claudine"
   },
@@ -658,7 +658,7 @@
   },
   {
    "who": "Amandine",
-   "text": "Je file au village. Je vais ouvrir un comptoir : il y a des choses rares à échanger, ici.",
+   "text": "Je file au village. Je vais ouvrir un comptoir et dénicher des objets à échanger : tout ce qui pourra t'aider à retrouver les autres.",
    "face": "smile",
    "faceOf": "amandine"
   },
@@ -669,7 +669,7 @@
  "reunion3": [
   {
    "who": "Amandine",
-   "text": "Je prends la maison à louer, à côté de la forge : ce sera mon comptoir ! Passe me voir.",
+   "text": "Je prends la maison à louer, à côté de la forge : ce sera mon comptoir ! Je vais chercher partout des objets rares à échanger, de quoi t'aider dans ta quête. Passe me voir souvent.",
    "face": "smile",
    "faceOf": "amandine"
   },

@@ -84,13 +84,43 @@ const SIGNS = {
 };
 
 // ---------- meubles ----------
+// ce qu'on lit dans les bibliothèques (dans l'ordre, puis on recommence)
+const SHELF_TIPS = [
+  ['Un manuel d\'escrime', '« Reste appuyé sur le bouton d\'attaque : une épée bien forgée tourne sur elle-même en relâchant. »'],
+  ['Un almanach', '« Depuis que le Roi Minuit a arrêté le temps, l\'herbe d\'aube ne pousse plus. Elle reviendra avec la lumière. »'],
+  ['Un carnet de pêcheur', '« Le poisson mord quand le bouchon plonge. Ferre aussitôt, et vise le vert. »'],
+  ['Un vieux registre', '« Bourg-Luciole doit son nom aux lucioles qui veillaient sur le village. Elles se sont dispersées quand la nuit est tombée. »'],
+  ['Un traité de mécanique', '« Pour tirer une caisse : reste appuyé sur A contre elle, puis recule. »'],
+  ['Un recueil de contes', '« On dit que les murs fissurés cachent des grottes. Un pétard bien placé, et boum. »'],
+  ['Un livre de cuisine', '« Trois champignons, une bouteille vide et une grand-mère : la meilleure soupe du royaume. »'],
+  ['Un guide du voyageur', '« Le colporteur ne reste jamais au même endroit. Il suit l\'heure de la tour-horloge. »'],
+  ['Un livre de comptes', '« Amandine paie plus cher une marchandise différente chaque semaine. Demande-lui laquelle. »'],
+  ['Une chronique du royaume', '« Il y a cent ans, le roi d\'Aube-Figée avait peur de vieillir. Une nuit, il a arrêté la grande horloge… »'],
+  ['Un cahier d\'enfant', '« Arthur collectionne les cartes de monstres. Il dit que les gros comptent aussi. »'],
+  ['Un manuel de survie', '« Un cœur qui bat la chamade ? Une soupe chaude, et ça repart. »'],
+  ['Un guide des donjons', '« Quand une salle se referme, il faut vaincre tous ses gardiens pour la rouvrir. Et le trésor apparaît souvent à ce moment-là. »'],
+  ['Un poème', '« Six lanternes pour six heures, et la septième pour le jour. »'],
+  ['Un traité de forge', '« Les gardiens des donjons laissent des matériaux rares. Bertrand en fait des merveilles. »'],
+  ['Un atlas', '« Le royaume est vaste : il y a des chemins entre les régions, et des secrets au bord de chacun. »'],
+  ['Un carnet de bord', '« Le grappin s\'accroche aux poteaux et aux cibles. Pratique pour traverser l\'eau quand on ne sait pas nager. »'],
+  ['Un livre de bergère', '« Un mouton poussé gentiment finit toujours par rentrer à la bergerie. Un bélier, beaucoup moins. »'],
+  ['Une lettre jamais envoyée', '« Cher ermite… » Le reste est raturé. Quelqu\'un, au village, n\'ose pas.'],
+  ['Un grimoire', '« La boussole des secrets ne montre pas le nord. Elle tremble près des trésors cachés. »'],
+];
+function readShelf(G) {
+  const i = (SAVE.shelfI || 0) % SHELF_TIPS.length, [title, txt] = SHELF_TIPS[i];
+  SAVE.shelfI = i + 1; persist(); SFX.pickup();
+  G.say([{ text: `${title}. ${txt}` }]);
+}
 class Furniture {
   constructor(x, y, kind, o = {}) { this.x = x; this.y = y; this.kind = kind; this.o = o; this.t = rand(0, 5); const S = FURN[kind]; this.w = S.w; this.h = S.h; this.solid = S.solid !== false; this.ground = !!S.ground; if (S.light) this.light = S.light; }
   update(dt) { this.t += dt; }
   // derrière un comptoir : on parle au marchand par-dessus
-  behind(G) { return this.kind === 'counter' && G.area.ents.find(e => e instanceof NPC && Math.abs(e.x - this.x) < this.w / 2 + 8 && e.y < this.y && this.y - e.y < 30); }
-  canInteract() { return !!this.o.say || !!this.behind(G); }
-  interact(G) { const n = this.behind(G); if (n) return n.interact(G); G.say(this.o.say); }
+  behind(G) { return (this.kind === 'counter' || this.kind === 'table') && G.area.ents.find(e => e instanceof NPC && !e.dead && Math.abs(e.x - this.x) < this.w / 2 + 8 && e.y < this.y && this.y - e.y < 30); }
+  // les bibliothèques : une astuce, un bout d'histoire ou un secret à chaque lecture
+  get shelf() { return this.kind === 'shelf' || this.kind === 'books'; }
+  canInteract() { return !!this.o.say || this.shelf || !!this.behind(G); }
+  interact(G) { const n = this.behind(G); if (n) return n.interact(G); if (this.o.say) return G.say(this.o.say); if (this.shelf) return readShelf(G); }
   draw() { if (!this.ground) ell(this.x, this.y, this.w / 2 + 1, 2, 'rgba(0,0,0,.3)'); hi(this.x, this.y, !!this.o.flip, () => FURN[this.kind].draw(this.o, this.t)); }
 }
 const FURN = {
