@@ -7,6 +7,7 @@ const Inventory = {
     const it = this.item(id), inv = SAVE.inv; if (!it) return;
     if (it.kind === 'ammo') { this.addAmmo(it.ammo, it.qty); return; }
     if (it.kind === 'heartpiece') { SAVE.maxHp += 2; G.healFull(); persist(); return; }
+    if (it.kind === 'hpiece') { giveHeartPiece(G); return; }
     if (it.kind === 'bottle') { inv.bottles.push('vide'); }
     else if (it.kind === 'drink') { const i = inv.bottles.indexOf('vide'); if (i >= 0) inv.bottles[i] = id; }
     else inv.owned[id] = true;

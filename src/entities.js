@@ -118,7 +118,7 @@ class Player {
     if (this.inv > 0 || this.roll > 0 || this.dive > 0 || this.riding || G.state !== 'play') return;
     if (Effects.on('def')) dmg = dmg > 1 ? Math.ceil(dmg / 2) : (Math.random() < 0.5 ? 0 : 1); // bouillon de pierre
     if (this.bonusHp > 0) { const a = Math.min(this.bonusHp, dmg); this.bonusHp -= a; dmg -= a; } // cœur doré
-    this.hp -= dmg; this.inv = 1.1; SFX.hurt(); G.shake = 0.25; G.hitstop = 0.06;
+    this.hp -= dmg; this.inv = 1.1; SFX.hurt(); G.shake = 0.25; G.hitstop = 0.06; LumiFx.onHurt(G);
     const a = Math.atan2(this.y - 8 - fy, this.x - fx); this.kb = { x: Math.cos(a) * 170, y: Math.sin(a) * 170, t: 0.16 };
     this.atk = 0;
     if (this.hp <= 0) { this.hp = 0; G.gameOver(); }

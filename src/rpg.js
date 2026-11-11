@@ -460,7 +460,7 @@ function compassTarget(G) {
   if (!(SAVE.troc >= TROC.length)) return null; const P = G.player; let best = null, bd = 220;
   for (const e of G.area.ents) {
     if (e.dead || (e.room != null && G.area.rooms && e.room !== G.room)) continue;
-    const secret = (e instanceof Chest && !e.open && !e.hidden) || e instanceof HeartContainer || (e.isPickup && e.kind === 'heartpiece');
+    const secret = (e instanceof Chest && !e.open && !e.hidden) || e instanceof HeartContainer || (e.isPickup && e.kind === 'heartpiece') || e instanceof LostFirefly || (e instanceof SecretRock && e.secret);
     if (!secret) continue; const d = dist(P.x, P.y, e.x, e.y); if (d < bd) { bd = d; best = e; }
   }
   return best;
@@ -478,6 +478,10 @@ const PROGRESS = [
   [8, () => Object.keys(SOUVENIRS).filter(k => (SAVE.souv && SAVE.souv[k]) || (SAVE.pawn && SAVE.pawn[k])).length / Object.keys(SOUVENIRS).length],
   [5, () => Object.keys(UPGRADES).reduce((a, id) => a + Upg.lv(id), 0) / (Object.keys(UPGRADES).length * 2)], // forge
   [5, () => RECIPES.filter(r => (SAVE.recipes || {})[r.id]).length / RECIPES.length],                   // recettes
+  [10, () => Flies.n() / 30],                                                                          // lucioles perdues
+  [5, () => Flies.pow() / 6],                                                                          // pouvoirs de Lumi
+  [5, () => (SAVE.hpieces || 0) / 7],                                                                  // quarts de cœur
+  [3, () => ['grotte_collines', 'grotte_montagne', 'grotte_col', 'grotte_lande'].filter(k => SAVE['open_' + k]).length / 4], // grottes secrètes
 ];
 const Progress = {
   pct() { let w = 0, got = 0; for (const [k, f] of PROGRESS) { w += k; try { got += k * clamp(f() || 0, 0, 1); } catch (_) {} } return Math.floor(got / w * 100); },

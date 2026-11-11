@@ -164,13 +164,14 @@ class Chest {
           if (this.give === 'key') Keys.add(1);
           else if (this.give.startsWith('money:')) Wallet.add(Number(this.give.slice(6)));
           else if (this.give.startsWith('bigkey:')) SAVE['bigkey_' + this.give.slice(7)] = true;
+          else if (this.give === 'piece_coeur') c.hpMsg = giveHeartPiece(G);
           else Inventory.give(this.give);
           persist(); SFX.chest(); G.shake = 0.2; this.beam = 1;
           G.parts.burst(this.x, this.y - 14, 26, { c: ['#fff', '#ffe27a', '#ffcf3a'], life: 0.9, smin: 20, smax: 90, r: 2, drag: 2, up: 30 });
           G.raised = { kind, t: 1.6, at: { x: this.x, y: this.y - this.lift - (this.big ? 20 : 14) }, rise: 0 };
         } else if (G.raised) G.raised.rise = Math.min(1, (c.t - 0.75) / 0.7);
         if (c.opened && Math.random() < dt * 14) G.parts.add({ x: this.x + rand(-8, 8), y: this.y - 16 - this.lift, vy: -rand(20, 50), vx: rand(-6, 6), life: 0.9, c: pick(['#fff6c0', '#ffe27a', '#fff']), r: 1 });
-        if (c.t > 1.6) { G.cut = null; G.state = 'play'; G.say(this.msg || [{ text: 'Tu as trouvé une petite clé !' }], () => { this.beam = 0; this.busy = false; }); }
+        if (c.t > 1.6) { G.cut = null; G.state = 'play'; G.say(this.msg || (c.hpMsg ? [{ text: c.hpMsg }] : [{ text: 'Tu as trouvé une petite clé !' }]), () => { this.beam = 0; this.busy = false; }); }
       },
       draw: () => {} };
     G.state = 'cut';

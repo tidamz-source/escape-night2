@@ -275,15 +275,16 @@ class PaintedBridge {
 // ----- Les Collines (nord) : prairies, moutons, la grotte des lucioles -----
 function buildCollinesArea() {
   const Z = zoneGrid(13), { rect, set } = Z;
-  rect(30, ZH - 2, 4, 2, '1'); rect(ZW - 2, 20, 2, 4, '2');
+  rect(30, ZH - 2, 4, 2, '1'); rect(ZW - 2, 20, 2, 4, '2'); rect(0, 22, 2, 4, '3');
   rect(2, 2, 60, 6, '#'); rect(28, 6, 8, 2, '.'); rect(31, 6, 2, 2, 'G');                   // la falaise et la grotte
   rect(31, 8, 2, 38, '='); rect(33, 21, 29, 2, '='); rect(16, 35, 15, 2, '=');
   Z.ell(14, 17, 7, 4.5, '~', 0.15);
   for (const [cx, cy, w, h] of [[44, 10, 4, 3], [50, 30, 3, 3], [8, 26, 3, 4], [22, 42, 4, 2], [40, 40, 3, 2], [56, 12, 3, 4]]) rect(cx, cy, w, h, '#');
+  rect(2, 23, 29, 2, '=');                                                                      // le sentier du Sanctuaire des lucioles
   Z.flowers(160);
   const A = zoneArea('collines', Z.g, 'collines', { name: 'Les Collines', dark: 0.42 });
   A.houses = [{ id: 'berger', x: 14 * TS + 8, y: 35 * TS, o: { w: 5, d: 3, style: 'cabin', roof: '#5a4a3a' } }];
-  scatter(A, 17, [{ x: 26 * TS, y: 0, w: 12 * TS, h: ZH * TS }, { x: 8 * TS, y: 28 * TS, w: 14 * TS, h: 10 * TS }, { x: 42 * TS, y: 26 * TS, w: 14 * TS, h: 12 * TS }], { trees: 26, rocks: 12, flowers: 30, bushes: 24, kinds: ['oak1', 'oak2', 'pine1'] });
+  scatter(A, 17, [{ x: 0, y: 21 * TS, w: 31 * TS, h: 5 * TS }, { x: 8 * TS, y: 7 * TS, w: 10 * TS, h: 4 * TS }, { x: 26 * TS, y: 0, w: 12 * TS, h: ZH * TS }, { x: 8 * TS, y: 28 * TS, w: 14 * TS, h: 10 * TS }, { x: 42 * TS, y: 26 * TS, w: 14 * TS, h: 12 * TS }], { trees: 26, rocks: 12, flowers: 30, bushes: 24, kinds: ['oak1', 'oak2', 'pine1'] });
   A.spawn = function () {
     this.ents = [];
     for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));
@@ -293,7 +294,7 @@ function buildCollinesArea() {
     this.ents.push(new Decor(12 * TS, 38 * TS, 'fence'), new Decor(18 * TS, 38 * TS, 'fence'));
     this.ents.push(new Relay(36 * TS, 40 * TS, 'collines'));
     this.ents.push(new Sign(34 * TS, 10 * TS, [{ text: '« Grotte des lucioles. Ce qui dort au fond craint les cailloux bien lancés. »' }]));
-    this.ents.push(new Sign(58 * TS, 20 * TS, [{ text: '« À l\'est : la Montagne et les Mines des gnomes. »' }]));
+    this.ents.push(new Sign(58 * TS, 20 * TS, [{ text: '« À l\'est : la Montagne et les Mines des gnomes. »' }]), new Sign(6 * TS, 22 * TS, [{ text: '« À l\'ouest : le Sanctuaire des lucioles. »' }]));
     for (const [x, y] of [[20, 14], [40, 14], [46, 26], [12, 22], [24, 38], [54, 40]]) this.ents.push(new Raccoon(x * TS, y * TS));
     this.ents.push(new Bat(26 * TS, 12 * TS), new Bat(40 * TS, 30 * TS), new Shadow(52 * TS, 8 * TS + 8));
   };
@@ -346,10 +347,11 @@ function buildMontagneArea() {
   rect(48, 12, 9, 7, '~'); rect(50, 14, 3, 2, '.');                                          // le bassin et l'îlot du levier
   for (let i = 0; i < 18; i++) { const x = 4 + Math.floor(r() * 54), y = 9 + Math.floor(r() * 34); if (Math.abs(x - 40.5) < 4 || Math.abs(y - 21.5) < 3 || (x > 44 && y < 22)) continue; rect(x, y, 2 + Math.floor(r() * 3), 2 + Math.floor(r() * 3), '#'); }
   Z.flowers(40);
+  rect(20, 7, 6, 2, '.');                                                                        // devant la paroi fendue
   const A = zoneArea('montagne', Z.g, 'montagne', { name: 'La Montagne', dark: 0.45 });
   A.houses = [{ id: 'gnome', x: 14 * TS + 8, y: 35 * TS, o: { w: 4, d: 3, style: 'hut', roof: '#8a5a3a', wall: '#8a8490' } }];
   A.decor = [];
-  scatter(A, 39, [{ x: 34 * TS, y: 0, w: 14 * TS, h: 24 * TS }, { x: 8 * TS, y: 30 * TS, w: 12 * TS, h: 8 * TS }, { x: 46 * TS, y: 10 * TS, w: 14 * TS, h: 12 * TS }], { trees: 26, rocks: 22, flowers: 0, bushes: 10, kinds: ['pine1', 'pine2'] });
+  scatter(A, 39, [{ x: 18 * TS, y: 5 * TS, w: 10 * TS, h: 5 * TS }, { x: 34 * TS, y: 0, w: 14 * TS, h: 24 * TS }, { x: 8 * TS, y: 30 * TS, w: 12 * TS, h: 8 * TS }, { x: 46 * TS, y: 10 * TS, w: 14 * TS, h: 12 * TS }], { trees: 26, rocks: 22, flowers: 0, bushes: 10, kinds: ['pine1', 'pine2'] });
   A.spawn = function () {
     this.ents = [];
     for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));

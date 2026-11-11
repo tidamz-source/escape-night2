@@ -171,5 +171,10 @@
    "swim": 180
   },
   "desc": "Nage deux fois plus vite pendant 3 minutes."
+ },
+ "piece_coeur": {
+  "name": "Quart de cœur",
+  "kind": "hpiece",
+  "desc": "Quatre quarts, et ta vie maximale augmente d'un cœur."
  }
 }

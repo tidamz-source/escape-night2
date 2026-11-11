@@ -13,6 +13,7 @@ const G = {
     this.areas.lac = buildLacArea(); this.areas.cote = buildCoteArea(); this.areas.terres = buildTerresArea();
     this.areas.cave = buildCaveArea(); this.areas.bois = buildBoisArea(); this.areas.mines = buildMinesArea();
     this.areas.temple = buildTempleArea(); this.areas.tower = buildTowerArea(); this.areas.castle = buildCastleArea();
+    buildMonde(this.areas); // chemins entre les régions, sanctuaire des lucioles, grottes secrètes
     for (let i = 0; i < 26; i++) this.flies.push({ x: rand(0, 768), y: rand(0, 900), p: rand(0, 6), s: rand(0.4, 1) });
     this.light = document.createElement('canvas'); this.light.width = W * SC; this.light.height = H * SC; this.lctx = this.light.getContext('2d');
     Bus.on('money:changed', () => { this.moneyFlash = 0.4; });
@@ -44,7 +45,7 @@ const G = {
     if (id === 'royaume' && this.area && this.area.id !== 'royaume' && !(this.area.id || '').startsWith('in_')) Market.roll();
     this.area = this.areas[id]; this.area.arenaOn = null;
     this.room = this.area.rooms ? this.roomOf(pos.x, pos.y) : 0;
-    this.area.spawn();
+    this.area.spawn(); worldSpawn(this.area);
     if (this.area.zone) { spawnResources(this.area); peddlerSpawn(this.area); } // cueillette, minerai, colporteur
     const hp = this.player && !fresh ? this.player.hp : SAVE.maxHp;
     this.player = new Player(pos.x, pos.y, pos.dir); this.player.hp = Math.max(1, hp);
@@ -322,6 +323,7 @@ const G = {
     const P = this.player, A = this.area;
     P.update(dt, this);
     this.updateWind(dt);
+    LumiFx.update(dt, this);
     if (SAVE.met_lumi) Lumi.update(dt, P);
     if (this.freezeT > 0) this.freezeT -= dt;
     if (this.flashT > 0) this.flashT -= dt;
@@ -452,7 +454,7 @@ const G = {
       ctx.globalAlpha = 0.35; ell(x, y, 12, 12, '#ffe27a'); ctx.globalAlpha = 1;
       if (k === 'key') drawKey(x, y, 2); else if (k === 'heart') drawHeartShape(x, y, 2, '#ffcf3a', '#e09a20'); else drawItemIcon(k, x, y, 1.5);
     }
-    if (SAVE.met_lumi && !this.isMontage) Lumi.draw();
+    if (SAVE.met_lumi && !this.isMontage) { Lumi.draw(); LumiFx.draw(this); }
     this.parts.draw();
     ctx.restore();
     this.drawLight(cx, cy);
@@ -471,7 +473,7 @@ const G = {
   },
   lightsList(cx, cy) {
     const A = this.area, P = this.player, L = [];
-    L.push({ x: P.x, y: P.y - 12, r: (A.rooms ? 120 : 112) * (Effects.on('light') ? 1.7 : 1), c: 'rgba(200,220,255,' });
+    L.push({ x: P.x, y: P.y - 12, r: (A.rooms ? 120 : 112) * (Effects.on('light') ? 1.7 : 1) * (Flies.pow() >= 1 ? 1.35 : 1), c: 'rgba(200,220,255,' });
     if (SAVE.met_lumi) L.push(Lumi.light);
     for (const p of A.props) if (p.light) L.push({ x: p.x, y: p.y + (p.light.oy || -8), r: p.light.r, c: p.light.c, flick: p.light.flick, warm: p.light.warm });
     for (const e of A.ents) {

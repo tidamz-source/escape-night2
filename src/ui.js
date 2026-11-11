@@ -4,6 +4,7 @@
 // icônes d'objets (centrées sur x, y)
 function drawItemIcon(id, x, y, s = 1) {
   id = id || '';
+  if (typeof EXTRA_ICONS !== 'undefined' && EXTRA_ICONS[id]) return EXTRA_ICONS[id](x, y, s);
   if (MATS[id]) return drawMatIcon(id, x, y, s);
   if (id.startsWith('mat_')) return drawMatIcon(id.slice(4), x, y, s);
   if (id.startsWith('troc_')) return drawTrocIcon(id.slice(5), x, y, s);
@@ -212,6 +213,8 @@ const UIMixin = {
     // la sacoche
     const rx = 250, y0 = 60; text('Sacoche', rx, y0, { size: 9, color: PAL.lav, bold: true });
     const rows = [['star', `Progression : ${Progress.pct()} %`], ['money', `${Wallet.get()} / ${Wallet.cap()} écus`], ['fragment', `${SAVE.fragments || 0} / 6 fragments d'aube`]];
+    if (SAVE.fliesIntro) rows.push(['luciole', `${Flies.n()} / 30 lucioles perdues` + (Flies.pow() ? ` · Lumi ★${Flies.pow()}` : '')]);
+    if (SAVE.hpieces) rows.push(['piece_coeur', `${SAVE.hpieces % 4} / 4 quarts de cœur`]);
     if (Inventory.has('lance_pierre')) rows.push(['cailloux', `${Inventory.ammo('cailloux')} / ${Inventory.ammoMax('cailloux')} cailloux`]);
     if (Inventory.has('petards')) rows.push(['petards', `${Inventory.ammo('petards')} / ${Inventory.ammoMax('petards')} pétards`]);
     if (Inventory.ingredient('champignons') || SAVE.freed2) rows.push(['champignons', `${Inventory.ingredient('champignons')} champignon${Inventory.ingredient('champignons') > 1 ? 's' : ''}`]);
@@ -283,7 +286,7 @@ const UIMixin = {
   },
   // petite carte du royaume : où l'on est
   drawWorldMini(x, y) {
-    const Z = [['collines', 1, 0, 'Collines'], ['montagne', 2, 0, 'Montagne'], ['foret', 0, 1, 'Forêt'], ['royaume', 1, 1, 'Village'], ['terres', 0, 2, 'Terres'], ['lac', 1, 2, 'Lac'], ['cote', 2, 2, 'Côte']];
+    const Z = [['sanctuaire', 1, 0, 'Sanct.'], ['collines', 2, 0, 'Collines'], ['col', 3, 0, 'Col'], ['montagne', 4, 0, 'Mont.'], ['route_nord', 2, 1, 'Route'], ['foret', 0, 2, 'Forêt'], ['oree', 1, 2, 'Orée'], ['royaume', 2, 2, 'Village'], ['pres', 2, 3, 'Prés'], ['terres', 0, 4, 'Terres'], ['lande', 1, 4, 'Lande'], ['lac', 2, 4, 'Lac'], ['dunes', 3, 4, 'Dunes'], ['cote', 4, 4, 'Côte']];
     for (const [id, cx, cy, name] of Z) { const on = this.area.id === id, seen = SAVE.visitedZ && SAVE.visitedZ[id]; R(x + cx * 30, y + cy * 22, 28, 20, on ? '#2a5a66' : seen ? '#2b2540' : '#141428'); if (on && Math.floor(this.t * 3) % 2) R(x + cx * 30 + 12, y + cy * 22 + 8, 4, 4, PAL.glow); if (seen || on) text(name, x + cx * 30 + 14, y + cy * 22 + 13, { size: 5, align: 'center', color: '#c8d0f0', shadow: false }); }
   },
   drawMap(x0, y0) {

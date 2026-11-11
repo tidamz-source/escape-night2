@@ -134,13 +134,13 @@ const Lumi = {
     const tx = P.x - DV[P.dir][0] * 14 + 10, ty = P.y - 26 - DV[P.dir][1] * 6;
     this.x = lerp(this.x, tx, Math.min(1, dt * 3)); this.y = lerp(this.y, ty, Math.min(1, dt * 3));
   },
-  get light() { return { x: this.x, y: this.y, r: 46, c: 'rgba(255,230,140,' }; },
-  draw() { drawLumi(this.x, this.y + Math.sin(this.t * 3) * 2, this.t); },
+  get light() { const p = typeof Flies !== 'undefined' ? Flies.pow() : 0; return { x: this.x, y: this.y, r: (p >= 1 ? 80 : 46) + p * 4, c: 'rgba(255,230,140,' }; },
+  draw() { drawLumi(this.x, this.y + Math.sin(this.t * 3) * 2, this.t, 1 + (typeof Flies !== 'undefined' ? Flies.pow() : 0) * 0.12); },
 };
-function drawLumi(x, y, t) {
-  ctx.globalAlpha = 0.35; ell(x, y, 6, 6, '#ffe27a'); ctx.globalAlpha = 0.7;
-  const w = Math.abs(Math.sin(t * 18)) * 3 + 1; ell(x - 3, y - 2, w, 2, '#f4f7ff'); ell(x + 3, y - 2, w, 2, '#f4f7ff');
-  ctx.globalAlpha = 1; ell(x, y, 2.2, 2.2, '#fff6c0'); R(half(x - 0.5), half(y - 0.5), 1, 1, '#ffffff');
+function drawLumi(x, y, t, s = 1) { // s : Lumi grandit avec ses pouvoirs
+  ctx.globalAlpha = 0.35; ell(x, y, 6 * s, 6 * s, '#ffe27a'); ctx.globalAlpha = 0.7;
+  const w = (Math.abs(Math.sin(t * 18)) * 3 + 1) * s; ell(x - 3 * s, y - 2 * s, w, 2 * s, '#f4f7ff'); ell(x + 3 * s, y - 2 * s, w, 2 * s, '#f4f7ff');
+  ctx.globalAlpha = 1; ell(x, y, 2.2 * s, 2.2 * s, '#fff6c0'); R(half(x - 0.5), half(y - 0.5), 1, 1, '#ffffff');
 }
 
 // la branche du prologue
