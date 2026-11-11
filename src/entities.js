@@ -118,7 +118,7 @@ class Player {
     if (this.inv > 0 || this.roll > 0 || this.dive > 0 || this.riding || G.state !== 'play') return;
     if (Effects.on('def')) dmg = dmg > 1 ? Math.ceil(dmg / 2) : (Math.random() < 0.5 ? 0 : 1); // bouillon de pierre
     if (this.bonusHp > 0) { const a = Math.min(this.bonusHp, dmg); this.bonusHp -= a; dmg -= a; } // cœur doré
-    this.hp -= dmg; this.inv = 1.1; SFX.hurt(); G.shake = 0.25; G.hitstop = 0.06; LumiFx.onHurt(G);
+    this.hp -= dmg; this.inv = 1.1; SFX.hurt(); G.shake = 0.25; G.hitstop = 0.06; LumiFx.onHurt(G); Soupe.onHurt();
     const a = Math.atan2(this.y - 8 - fy, this.x - fx); this.kb = { x: Math.cos(a) * 170, y: Math.sin(a) * 170, t: 0.16 };
     this.atk = 0;
     if (this.hp <= 0) { this.hp = 0; G.gameOver(); }
@@ -211,7 +211,7 @@ class Player {
       if (this.aim[0] && this.aim[1]) { this.look = (this.aim[1] > 0 ? 'down' : 'up') + '_' + (this.aim[0] > 0 ? 'right' : 'left'); this.diagT = 0.12; }
       else if ((this.diagT -= dt) <= 0 || !(this.look || '').includes('_')) this.look = this.dir; // petit délai : relâcher deux touches n'est jamais simultané
     }
-    const SPEED = 76 * this.perk.speed; // Rox : +10 %
+    const SPEED = 76 * this.perk.speed * (Inventory.has('bottes') ? 1.15 : 1); // Rox : +10 % ; bottes de l'ermite : +15 %
     // accélération vive au démarrage, freinage plus doux à l'arrêt
     const hit = this.glide(dt, G, input ? dx * SPEED : 0, input ? dy * SPEED : 0, input ? 20 : 9, input ? { x: dx, y: dy } : null);
     const speed = Math.hypot(this.vx, this.vy);
@@ -266,6 +266,7 @@ class Player {
       this.hooking = new Hook(this, this.aim[0], this.aim[1], G.room); G.area.ents.push(this.hooking);
     }
     if (tool === 'canne') { this.shootCd = 0.4; Fishing.start(G); return; }
+    if (tool === 'harpe') { this.shootCd = 1; playHarp(G); return; }
     if (tool === 'petards') {
       if (G.area.ents.filter(e => e.isPetard && !e.dead).length >= 2) return;
       if (!Inventory.useAmmo('petards')) { SFX.nope(); Input.toast = { msg: 'Plus de pétards !', t: 1.5 }; this.shootCd = 0.4; return; }
@@ -380,9 +381,10 @@ class Enemy {
 
 class Raccoon extends Enemy {
   constructor(x, y, room) { super(x, y, { hp: 2, dmg: 1, room }); this.state = 'wander'; this.st = rand(0.5, 2); this.poof = ['#7a7f8c', '#c8ccd6', '#3a3d48']; this.loot = 'raccoon'; }
+  get friendly() { return SAVE.ratonsAmis && G.area.id === 'collines' && this.constructor === Raccoon; } // le procès gagné : les ratons des Collines font confiance
   update(dt, G) {
     if (this.physics(dt, G)) return;
-    this.t += dt; this.st -= dt; const P = G.player, d = dist(this.x, this.y, P.x, P.y);
+    this.t += dt; this.st -= dt; const P = G.player, d = this.friendly ? 999 : dist(this.x, this.y, P.x, P.y);
     if (this.state === 'wander') {
       if (this.st <= 0) { const a = rand(0, 6.28), s = Math.random() < 0.3 ? 0 : 28; this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s; this.st = rand(0.8, 2); }
       if (d < 80) { this.state = 'warn'; this.st = 0.45; this.vx = this.vy = 0; }
@@ -395,7 +397,7 @@ class Raccoon extends Enemy {
     const h1 = moveEnt(G.area, this, this.vx * dt, 0, { noExit: true }), h2 = moveEnt(G.area, this, 0, this.vy * dt, { noExit: true });
     if ((h1 || h2) && this.state === 'wander') this.st = 0;
     if ((h1 || h2) && this.state === 'charge') { this.state = 'rest'; this.st = 0.9; this.vx = this.vy = 0; }
-    this.touch(G);
+    if (!this.friendly) this.touch(G);
   }
   draw() {
     ell(this.x, this.y, 8, 2.5, 'rgba(0,0,0,.35)');

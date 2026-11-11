@@ -73,6 +73,7 @@ const UIMixin = {
     // effets des soupes, avec leur temps restant
     let ex = W - 40; for (const [k, ic] of [['def', 'bouillon'], ['light', 'veloute'], ['swim', 'elixir']]) if (Effects.on(k)) { R(ex - 2, 34, 28, 14, 'rgba(7,13,31,.55)'); drawItemIcon(ic, ex + 5, 41, 0.6); text(String(Math.ceil(Effects.t[k])), ex + 24, 37, { size: 6, align: 'right', color: PAL.white }); ex -= 32; }
     // boussole des secrets
+    Soupe.draw(); Peche.draw(); // jauge de la soupe chaude, chrono du concours de pêche
     const sec = compassTarget(this); if (sec) { const cx = W - 52, cy = 18, a = Math.atan2(sec.y - P.y, sec.x - P.x) + Math.sin(this.t * 20) * 0.08; ell(cx, cy, 8, 8, 'rgba(7,13,31,.7)'); ell(cx, cy, 6.5, 6.5, '#e8dcc8'); ctx.strokeStyle = '#d84a5a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * 5.5, cy + Math.sin(a) * 5.5); ctx.stroke(); }
     if (this.area.rooms && this.area.dungeon && SAVE['bigkey_' + this.area.dungeon]) { R(x + 76, 24, 18, 14, 'rgba(7,13,31,.55)'); drawItemIcon('bigkey', x + 85, 31, 0.8); }
     if (Keys.get() > 0 && this.area.rooms) { R(x + 44, 24, 28, 14, 'rgba(7,13,31,.55)'); drawKey(x + 52, 31, 1); text('×' + Keys.get(), x + 58, 26, { size: 8, color: PAL.warm }); }
@@ -130,12 +131,13 @@ const UIMixin = {
     const L = [];
     if (SAVE.got_branche) L.push({ kind: 'weapon', id: SAVE.inv.weapon });
     for (const id of Inventory.tools()) L.push({ kind: 'tool', id });
-    for (const id of ['bouclier', 'palmes']) if (Inventory.has(id)) L.push({ kind: 'gear', id });
+    for (const id of ['bouclier', 'palmes', 'bottes', 'coupe', 'grimoire']) if (Inventory.has(id)) L.push({ kind: 'gear', id });
     SAVE.inv.bottles.forEach((b, i) => L.push({ kind: 'bottle', i, id: b }));
     if (this.area.dungeon && SAVE['bigkey_' + this.area.dungeon]) L.push({ kind: 'key', id: 'bigkey' });
     return L;
   },
-  pauseTabs: ['Objets', 'Sac', 'Souvenirs', 'Bestiaire', 'Carte', 'Options'],
+  pauseTabs: ['Objets', 'Sac', 'Souvenirs', 'Bestiaire', 'Quêtes', 'Carte', 'Options'],
+  tabX(i) { return W / 2 - this.pauseTabs.length * 30 + i * 60; },
   // le sac : matériaux, ingrédients, objet d'échange
   sacItems() { const L = Mats.owned().map(id => ({ id, n: Mats.n(id) })); const t = Troc.held(); if (t) L.push({ id: 'troc_' + t, troc: t }); return L; },
   tabLen(t) { return t === 0 ? this.pauseItems().length : t === 1 ? this.sacItems().length : t === 2 ? Object.keys(SOUVENIRS).length : t === 3 ? BEASTS.length : 0; },
@@ -146,7 +148,7 @@ const UIMixin = {
     const nT = this.pauseTabs.length, grid = this.ptab <= 3;
     if (Input.pressed('cycle')) { this.ptab = (this.ptab + 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
     const tap = Input.lastTap; Input.lastTap = null;
-    if (tap && performance.now() - tap.time < 250 && tap.y < 30) { const t = Math.floor((tap.x - (W / 2 - 216)) / 72); if (t >= 0 && t < nT) { this.ptab = t; this.psel = 0; SFX.menu(); } return; }
+    if (tap && performance.now() - tap.time < 250 && tap.y < 30) { const t = Math.floor((tap.x - this.tabX(0)) / 60); if (t >= 0 && t < nT) { this.ptab = t; this.psel = 0; SFX.menu(); } return; }
     if (!grid) {
       if (Input.pressed('right')) { this.ptab = (this.ptab + 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
       if (Input.pressed('left')) { this.ptab = (this.ptab + nT - 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
@@ -165,7 +167,9 @@ const UIMixin = {
         if (e.kind === 'tool') { Inventory.equip(e.id); SFX.menu(); this.state = 'play'; return; }
         if (e.kind === 'bottle') { if (Inventory.drink(e.i, this.player)) SFX.drink(); else SFX.nope(); }
       }
-    } else if (this.ptab === 5) {
+    } else if (this.ptab === 4) {
+      const n = questLog().length; if (Input.pressed('down') && this.psel < n - 1) { this.psel++; SFX.menu(); } if (Input.pressed('up') && this.psel > 0) { this.psel--; SFX.menu(); }
+    } else if (this.ptab === 6) {
       this.menuNav(2);
       if (Input.pressed('a')) {
         SFX.menu();
@@ -178,9 +182,9 @@ const UIMixin = {
   drawPause() {
     R(0, 0, W, H, 'rgba(4,8,26,.88)');
     this.pauseTabs.forEach((t, i) => {
-      const x = W / 2 - 216 + i * 72, on = i === this.ptab;
-      R(x + 2, 8, 68, 18, on ? '#2a5a66' : 'rgba(20,36,76,.8)'); if (on) R(x + 2, 25, 68, 1, PAL.glow);
-      text(t, x + 36, 11, { size: 9, align: 'center', color: on ? PAL.white : '#7a84a8', bold: on });
+      const x = this.tabX(i), on = i === this.ptab;
+      R(x + 2, 8, 56, 18, on ? '#2a5a66' : 'rgba(20,36,76,.8)'); if (on) R(x + 2, 25, 56, 1, PAL.glow);
+      text(t, x + 30, 11, { size: 8.5, align: 'center', color: on ? PAL.white : '#7a84a8', bold: on });
     });
     R(W - 28, 6, 22, 22, 'rgba(20,36,76,.9)'); R(W - 28, 6, 22, 1, PAL.lav); R(W - 28, 27, 22, 1, PAL.lav); R(W - 28, 6, 1, 22, PAL.lav); R(W - 7, 6, 1, 22, PAL.lav);
     ctx.strokeStyle = PAL.white; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(W - 22, 12); ctx.lineTo(W - 12, 22); ctx.moveTo(W - 12, 12); ctx.lineTo(W - 22, 22); ctx.stroke();
@@ -190,8 +194,9 @@ const UIMixin = {
     if (this.ptab === 1) this.drawSac();
     if (this.ptab === 2) this.drawSouvenirs();
     if (this.ptab === 3) this.drawBestiary();
-    if (this.ptab === 4) this.drawMapTab();
-    if (this.ptab === 5) { text('Options', W / 2, 82, { size: 14, align: 'center', bold: true }); text(`Progression du jeu : ${Progress.pct()} %`, W / 2, 100, { size: 9, align: 'center', color: PAL.glow }); this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 116); }
+    if (this.ptab === 4) this.drawQuests();
+    if (this.ptab === 5) this.drawMapTab();
+    if (this.ptab === 6) { text('Options', W / 2, 82, { size: 14, align: 'center', bold: true }); text(`Progression du jeu : ${Progress.pct()} %`, W / 2, 100, { size: 9, align: 'center', color: PAL.glow }); this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 116); }
     if (!Input.padVisible) {
       const roll = Heroes.def().roll;
       text('Flèches : choisir · Espace : utiliser · E : onglet suivant · Échap : fermer' + (roll ? ' · L = roulade' : ''), W / 2, H - 12, { size: 6.5, align: 'center', color: '#6a74a0' });
@@ -259,6 +264,25 @@ const UIMixin = {
     if (Bestiary.full(b)) { text('Points faibles : ' + b.weak, rx, 110, { size: 8, color: PAL.glow }); wrap('« ' + b.note + ' »', W - rx - 30, 8).forEach((l, i) => text(l, rx, 128 + i * 12, { size: 8, color: '#c8d0f0' })); }
     else text('Fiche complète à 10 victoires.', rx, 110, { size: 8, color: '#7a84a8' });
     text('Récompenses chez Arthur, au village : 5, 12 et ' + BEASTS.length + ' fiches complètes.', W / 2, H - 40, { size: 7.5, align: 'center', color: '#9aa4c8' });
+  },
+  // le journal des quêtes : principales (souvenirs) et secondaires
+  drawQuests() {
+    const L = questLog(); this.psel = clamp(this.psel, 0, Math.max(0, L.length - 1));
+    const done = L.filter(q => q.st === 'done').length;
+    text(`Quêtes : ${done} terminée${done > 1 ? 's' : ''}`, 30, 58, { size: 9, color: PAL.lav, bold: true });
+    if (!L.length) { text('Aucune quête pour l\'instant. Les « ! » montrent qui a besoin d\'aide.', 30, 80, { size: 8, color: '#7a84a8' }); return; }
+    const per = 9, top = clamp(this.psel - 4, 0, Math.max(0, L.length - per));
+    L.slice(top, top + per).forEach((q, k) => {
+      const i = top + k, y = 74 + k * 15, on = i === this.psel;
+      R(26, y - 2, 196, 14, on ? 'rgba(143,243,234,.18)' : 'rgba(20,36,76,.6)'); if (on) R(26, y - 2, 2, 14, PAL.glow);
+      const ic = q.st === 'done' ? ['✓', PAL.green] : q.st === 'new' ? ['!', '#ffd23a'] : ['•', PAL.warm];
+      text(ic[0], 34, y, { size: 8, align: 'center', bold: true, color: ic[1] }); text(q.name, 42, y, { size: 7.5, color: q.st === 'done' ? '#8a90a8' : PAL.white });
+    });
+    if (L.length > per) text(`${this.psel + 1} / ${L.length}`, 124, 74 + per * 15, { size: 6.5, align: 'center', color: '#7a84a8' });
+    const q = L[this.psel], rx = 236; R(rx - 6, 58, W - rx - 18, 150, 'rgba(20,36,76,.6)');
+    text(q.name, rx, 64, { size: 9.5, bold: true, color: PAL.warm }); text(q.giver, rx, 80, { size: 7, color: '#9aa4c8' });
+    wrap(q.hint, W - rx - 30, 8).forEach((l, i) => text(l, rx, 96 + i * 12, { size: 8, color: q.st === 'done' ? '#8a90a8' : '#c8d0f0' }));
+    text(q.main ? 'Quête de souvenir' : 'Quête secondaire', rx, 196, { size: 6.5, color: '#6a74a0' });
   },
   drawSouvenirs() {
     const ids = Object.keys(SOUVENIRS), C = 4, g = this.gridGeom(C), n = ids.filter(k => SAVE.souv && SAVE.souv[k]).length;

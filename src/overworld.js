@@ -108,6 +108,10 @@ class ClockTower {
   get light() { return { r: 50 + this.shown * 10 + this.glow * 40, c: 'rgba(255,220,140,' }; }
   canInteract() { return true; }
   interact(G) {
+    if (SAVE.cleTour) return G.ask([{ text: 'La tour-horloge. Tu as la clé d\'Anselme, l\'ancien horloger.' }], ['Regarder la tour', 'Entrer', 'Rien'], i => { if (i === 0) this.look(G); if (i === 1) enterClockTower(G, this); });
+    this.look(G);
+  }
+  look(G) {
     const n = SAVE.fragments || 0; persist(); SFX.pickup();
     // la caméra monte le long de la tour pour la montrer en entier, avec son nom, puis redescend
     const P = G.player, top = this.y - (this.painted ? 150 : 250), mid = this.y - (this.painted ? 70 : 120), start = { x: P.x, y: P.y - 12 }, me = this;

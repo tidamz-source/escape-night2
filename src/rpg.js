@@ -43,6 +43,7 @@ function drawMatIcon(id, x, y, s = 1) {
     case 'ecaille': case 'ecaille_reine': { const c = id === 'ecaille' ? ['#5ac8b0', '#2a8a7a'] : ['#f0d0ff', '#a07ac8']; ell(x, y, 5 * s, 6 * s, c[1]); ell(x, y - 1 * s, 4 * s, 4.5 * s, c[0]); B(-1, -4, 1, 3, '#fff'); return; }
     case 'acier_gnome': B(-6, -2, 12, 6, '#5a5e6a'); B(-5, -3, 10, 2, '#9aa0b0'); B(-4, -2, 8, 1, '#d8dce8'); return;
     case 'poudre': B(-4, -4, 8, 9, '#8a4a2a'); B(-3, -6, 6, 2, '#c8a070'); B(-1, -8, 2, 2, '#ffd23a'); B(1, -9, 1, 1, '#ff7a1a'); return;
+    case 'pelote': ell(x, y, 5 * s, 5 * s, '#e8d8c8'); ctx.strokeStyle = '#b8a898'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.arc(x, y, 3 * s, 0.5, 3); ctx.stroke(); return;
     case 'eclat_ombre': B(-2, -6, 5, 12, '#2a1d48'); B(-4, -2, 3, 6, '#4a3a7a'); B(0, -5, 1, 4, '#c3b3ff'); return;
   }
 }
@@ -143,6 +144,7 @@ const BEASTS = [
   { k: 'Gargoyle', name: 'Gargouille', zone: 'Tour', weak: 'cailloux, épée', note: 'Fait la statue. Très mal.' },
   { k: 'BigWisp', name: 'Grand feu follet', zone: 'Grotte des lucioles', weak: 'épée', mini: true, note: 'Le chef des feux follets. Il brûle plus fort quand il est en colère, c\'est-à-dire tout le temps.' },
   { k: 'BigCrow', name: 'Corbeau géant', zone: 'Bois des murmures', weak: 'cailloux, frisbee', mini: true, note: 'Il vole les glands des écureuils, qui le lui rendent bien.' },
+  { k: 'GiantRaccoon', name: 'Raton laveur géant', zone: 'Là où va le colporteur', weak: 'épée', mini: true, note: 'Créature rare. Se déguise en créancier pour voler les colporteurs. Très mauvais acteur.' },
   { k: 'GreatShadow', name: 'La Grande Ombre', zone: 'Grotte des lucioles', weak: 'cailloux, puis épée', boss: true, note: 'Gardienne de la grotte. Elle a peur de la lumière, comme toutes les grandes ombres.' },
   { k: 'GreatOwl', name: 'Le Grand-Duc', zone: 'Bois des murmures', weak: 'frisbee, cailloux, épée au sol', boss: true, note: 'Ancien gardien du bois, ensorcelé. Il hulule en mineur.' },
   { k: 'IronMole', name: 'La Taupe de fer', zone: 'Mines des gnomes', weak: 'grappin, puis épée', boss: true, note: 'Les gnomes l\'avaient construite pour creuser. Elle a creusé un peu trop.' },
@@ -222,10 +224,11 @@ class Peddler {
   canInteract() { return true; }
   interact(G) {
     const wares = PEDDLER_WARES.filter(w => !SAVE[w.key]), pawn = Object.keys(SAVE.pawn || {}).filter(k => SAVE.pawn[k]);
-    const opts = [...wares.map(w => `${w.label} : ${w.price} écus`), 'Vendre un souvenir', ...(pawn.length ? ['Racheter un souvenir'] : []), 'Rien'];
+    const dop = Dette.option(), opts = [...wares.map(w => `${w.label} : ${Dette.price(w.price)} écus`), 'Vendre un souvenir', ...(pawn.length ? ['Racheter un souvenir'] : []), ...(dop ? [dop] : []), 'Rien'];
     G.ask([{ who: 'Le colporteur', text: 'Approche, approche ! Des merveilles de tout le royaume. Et dis donc, tes habits… tu les vends ?' }], opts, i => {
       const o = opts.at(i);
-      if (i < wares.length) { const w = wares.at(i); if (Wallet.get() < w.price) { SFX.nope(); return G.say([{ who: 'Le colporteur', text: 'Pas assez d\'écus ! Reviens plus riche.' }]); } return G.ask([{ who: 'Le colporteur', text: `${w.label} pour ${w.price} écus. ${Inventory.item(w.id) ? Inventory.item(w.id).desc : 'Les poissons dorés en raffolent.'}` }], ['L\'acheter', 'Non merci'], c => { if (c !== 0) return; Wallet.spend(w.price); SAVE[w.key] = true; if (w.id === 'appat') SAVE.appat = true; else Inventory.give(w.id); persist(); SFX.buy(); G.raise(w.id); G.say([{ who: 'Le colporteur', text: w.id === 'appat' ? 'Un appât doré : les poissons dorés ne lui résistent pas. Enfin, un peu moins.' : 'Affaire conclue ! Une pièce unique.' }]); }); }
+      if (o === dop) return Dette.talk(G);
+      if (i < wares.length) { const w = Object.assign({}, wares.at(i)); w.price = Dette.price(w.price); if (Wallet.get() < w.price) { SFX.nope(); return G.say([{ who: 'Le colporteur', text: 'Pas assez d\'écus ! Reviens plus riche.' }]); } return G.ask([{ who: 'Le colporteur', text: `${w.label} pour ${w.price} écus. ${Inventory.item(w.id) ? Inventory.item(w.id).desc : 'Les poissons dorés en raffolent.'}` }], ['L\'acheter', 'Non merci'], c => { if (c !== 0) return; Wallet.spend(w.price); SAVE[w.key] = true; if (w.id === 'appat') SAVE.appat = true; else Inventory.give(w.id); persist(); SFX.buy(); G.raise(w.id); G.say([{ who: 'Le colporteur', text: w.id === 'appat' ? 'Un appât doré : les poissons dorés ne lui résistent pas. Enfin, un peu moins.' : 'Affaire conclue ! Une pièce unique.' }]); }); }
       else if (o === 'Vendre un souvenir') {
         const own = Object.keys(SOUVENIRS).filter(k => SAVE.souv && SAVE.souv[k]).slice(0, 4);
         if (!own.length) return G.say([{ who: 'Le colporteur', text: 'Tu n\'as rien de ton monde à me vendre ? Dommage.' }]);
@@ -254,13 +257,14 @@ class Peddler {
 function peddlerSpawn(A) {
   const f = SAVE.fragments || 0, s = PEDDLER_SPOTS[Math.min(6, f)]; if (!s || s[0] !== A.id || SAVE.boss6) return;
   A.ents.push(new Peddler(s[1] * TS, s[2] * TS));
+  if (SQ.st('dette') === 1 || SQ.st('dette') === 2) A.ents.push(new Creditor(s[1] * TS + 70, s[2] * TS + 10)); // le créancier rôde
 }
 
 // ===== 6. revendre et échanger =====
 const WANTED = ['champignons', 'poisson_petit', 'minerai', 'herbe', 'cristal', 'plume', 'ecaille'];
 const Sell = {
   wanted: () => WANTED.at((SAVE.fragments || 0) % WANTED.length),
-  price(id) { return Math.round(MATS[id].price * (id === this.wanted() ? 1.5 : 1)); },
+  price(id) { return Math.round(MATS[id].price * (id === this.wanted() ? 1.5 : 1) * (SAVE.coupe && id.startsWith('poisson') ? 2 : 1)); }, // la coupe du champion : poissons payés double
 };
 // menu de revente commun : bourse pleine, « tu veux vendre autre chose ? »
 // o : { who, ids (ce que le marchand rachète), price(id), intro, none, thanks(id, n, gain) }
@@ -393,7 +397,7 @@ const Fishing = {
         G.fish = null; G.state = 'play';
         if (Math.abs(f.cur - f.zc) <= f.zone / 2) {
           const cm = Math.round({ poisson_petit: rand(12, 25), poisson_grand: rand(30, 60), poisson_dore: rand(40, 80) }[f.kind]);
-          Mats.add(f.kind, 1); SAVE.fishRec = Math.max(SAVE.fishRec || 0, cm); persist(); SFX.secret(); G.raise('mat_' + f.kind);
+          Mats.add(f.kind, 1); SAVE.fishRec = Math.max(SAVE.fishRec || 0, cm); persist(); SFX.secret(); G.raise('mat_' + f.kind); Peche.catch(cm);
           G.say([{ text: `${MATS[f.kind].name} : ${cm} cm !` + (cm >= (SAVE.fishRec || 0) ? ' Nouveau record !' : '') }]);
         } else { SFX.nope(); Input.toast = { msg: 'La ligne a cassé… raté !', t: 1.6 }; }
       }
@@ -421,7 +425,9 @@ const RECIPES = [
   { id: 'bouillon', need: { cristal: 1, champignons: 1 } },
   { id: 'veloute', need: { herbe_rare: 2 } },
   { id: 'soupe_doree', need: { poisson_dore: 1 } },
+  { id: 'soupe_berger', need: { herbe: 2, poisson_petit: 1 }, secret: 'recipeBerger' }, // recette offerte par le berger (la soupe chaude)
 ];
+const recipesKnown = () => RECIPES.filter(r => !r.secret || SAVE[r.secret]);
 const recipeOk = r => Object.entries(r.need).every(([k, n]) => Mats.n(k) >= n);
 const recipeTxt = r => Object.entries(r.need).map(([k, n]) => `${n} ${MATS[k].name.toLowerCase()}`).join(' + ');
 function mamieTalk(G) {
@@ -432,11 +438,11 @@ function mamieTalk(G) {
     return G.say([{ who: 'Mamie', text: `${nm}, tu n'as même pas une bouteille ? Tiens, prends celle-ci. C'est la seule que j'ai, alors ne la perds pas !` }, { who: 'Mamie', text: 'Rapporte-la-moi vide avec de bons ingrédients, et je te la remplis de soupe.' }]);
   }
   G.ask([{ who: 'Mamie', text: `${nm} ! Tu as faim ? Apporte-moi des ingrédients et une bouteille vide, je te la remplis de soupe.` }], ['Cuisiner', 'Tes recettes', 'Rien'], i => {
-    if (i === 1) return G.say(RECIPES.map(r => ({ who: 'Mamie', text: `${Inventory.item(r.id).name} : ${recipeTxt(r)}. ${Inventory.item(r.id).desc}` })));
+    if (i === 1) return G.say(recipesKnown().map(r => ({ who: 'Mamie', text: `${Inventory.item(r.id).name} : ${recipeTxt(r)}. ${Inventory.item(r.id).desc}` })));
     if (i !== 0) return;
     if (!Inventory.hasEmptyBottle()) return G.say([{ who: 'Mamie', text: bottles.length ? `Tes bouteilles sont pleines, ${nm}. Bois-en une d'abord, et reviens me voir.` : `Il me faut une bouteille vide pour y verser la soupe, ${nm}. L'épicière en vend.` }]);
-    const list = RECIPES.filter(recipeOk).slice(0, 4);
-    if (!list.length) return G.say([{ who: 'Mamie', text: `Tu n'as pas de quoi faire une soupe, ${nm}. Voilà mes recettes :` }, ...RECIPES.map(r => ({ who: 'Mamie', text: `${Inventory.item(r.id).name} : ${recipeTxt(r)}. ${Inventory.item(r.id).desc}` }))]);
+    const list = recipesKnown().filter(recipeOk).slice(0, 4);
+    if (!list.length) return G.say([{ who: 'Mamie', text: `Tu n'as pas de quoi faire une soupe, ${nm}. Voilà mes recettes :` }, ...recipesKnown().map(r => ({ who: 'Mamie', text: `${Inventory.item(r.id).name} : ${recipeTxt(r)}. ${Inventory.item(r.id).desc}` }))]);
     G.ask([{ who: 'Mamie', text: 'Qu\'est-ce que je te prépare ?' }], [...list.map(r => Inventory.item(r.id).name), 'Rien'], k => {
       if (k >= list.length) return; const r = list.at(k);
       for (const [m, n] of Object.entries(r.need)) Inventory.useIngredient(m, n);
@@ -482,6 +488,7 @@ const PROGRESS = [
   [5, () => Flies.pow() / 6],                                                                          // pouvoirs de Lumi
   [5, () => (SAVE.hpieces || 0) / 7],                                                                  // quarts de cœur
   [3, () => ['grotte_collines', 'grotte_montagne', 'grotte_col', 'grotte_lande'].filter(k => SAVE['open_' + k]).length / 4], // grottes secrètes
+  [14, () => Object.keys(SIDE).filter(k => SQ.done(k)).length / Object.keys(SIDE).length],                      // les dix quêtes secondaires
 ];
 const Progress = {
   pct() { let w = 0, got = 0; for (const [k, f] of PROGRESS) { w += k; try { got += k * clamp(f() || 0, 0, 1); } catch (_) {} } return Math.floor(got / w * 100); },

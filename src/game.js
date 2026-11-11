@@ -43,6 +43,7 @@ const G = {
 
   enter(id, pos, fresh) {
     if (id === 'royaume' && this.area && this.area.id !== 'royaume' && !(this.area.id || '').startsWith('in_')) Market.roll();
+    if (this.area && this.area.id !== id) Gerard.leave(this.area.id); // Gérard change de région quand on quitte la sienne
     this.area = this.areas[id]; this.area.arenaOn = null;
     this.room = this.area.rooms ? this.roomOf(pos.x, pos.y) : 0;
     this.area.spawn(); worldSpawn(this.area);
@@ -323,7 +324,7 @@ const G = {
     const P = this.player, A = this.area;
     P.update(dt, this);
     this.updateWind(dt);
-    LumiFx.update(dt, this);
+    LumiFx.update(dt, this); Soupe.update(dt, this); Peche.update(dt, this);
     if (SAVE.met_lumi) Lumi.update(dt, P);
     if (this.freezeT > 0) this.freezeT -= dt;
     if (this.flashT > 0) this.flashT -= dt;

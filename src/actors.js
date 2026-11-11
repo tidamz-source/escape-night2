@@ -53,6 +53,7 @@ class NPC {
   canInteract() { return true; }
   interact(G) {
     if (Troc.talk(this, G)) return; // chaîne d'échanges
+    if (sideTalk(this, G)) return; // quêtes secondaires
     if (this.o.quest) return Quests.talk(this.o.quest, G);
     if (this.o.fn) return this.o.fn(G);
     if (this.o.shop) { const sh = Shop.def(this.o.shop); G.say([{ who: sh.keeper, text: sh.hello }], () => G.openShop(this.o.shop)); }
@@ -65,7 +66,9 @@ class NPC {
     else if (this.o.sprite === 'dog') { const im = IMG.npc_dog_down; ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); if (im) { const w = im.width / 2.6, h = im.height / 2.6; ctx.drawImage(im, half(this.x - w / 2), half(this.y - h + Math.abs(Math.sin(this.t * 3))), w, h); } }
     else if (this.o.sprite === 'papa_down') { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, 'down', false, this.t); }
     else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }
+    else if (this.o.draw) this.o.draw(this);
     else drawPerson(this.x, this.y, LOOKS[this.o.look], this.t);
+    if (G.state === 'play' && sideOffer(this)) { const b = Math.round(Math.sin(this.t * 5)); R(this.x - 3, this.y - 46 + b, 6, 9, '#ffd23a'); text('!', this.x, this.y - 46 + b, { size: 8, align: 'center', bold: true, color: '#3a2410', shadow: false }); return; } // une quête à proposer
     if (G.player && dist(G.player.x, G.player.y, this.x, this.y) < 34 && G.state === 'play') { // bulle « parler »
       const b = Math.round(Math.sin(this.t * 5)); R(this.x - 4, this.y - 42 + b, 8, 7, '#f4f7ff'); R(this.x - 2, this.y - 35 + b, 2, 2, '#f4f7ff'); R(this.x - 3, this.y - 40 + b, 1, 1, '#14244c'); R(this.x, this.y - 40 + b, 1, 1, '#14244c'); R(this.x + 2, this.y - 40 + b, 1, 1, '#14244c');
     }

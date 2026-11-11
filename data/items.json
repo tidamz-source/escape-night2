@@ -176,5 +176,49 @@
   "name": "Quart de cœur",
   "kind": "hpiece",
   "desc": "Quatre quarts, et ta vie maximale augmente d'un cœur."
+ },
+ "harpe": {
+  "name": "Harpe de Mahaut",
+  "kind": "tool",
+  "desc": "Joue un air et te ramène à Bourg-Luciole, où que tu sois (sauf dans la salle d'un boss)."
+ },
+ "bottes": {
+  "name": "Bottes de l'ermite",
+  "kind": "gear",
+  "desc": "Fabriquées par l'ermite : on marche bien plus vite."
+ },
+ "coupe": {
+  "name": "Coupe du champion",
+  "kind": "gear",
+  "desc": "Gagnée au concours de pêche. Amandine paie tes poissons le double."
+ },
+ "grimoire": {
+  "name": "Grimoire du sage",
+  "kind": "gear",
+  "desc": "L'histoire du Roi Minuit, en sept pages."
+ },
+ "cle_tour": {
+  "name": "Clé de la tour-horloge",
+  "kind": "gear",
+  "desc": "La clé d'Anselme, l'ancien horloger."
+ },
+ "huile": {
+  "name": "Huile du phare",
+  "kind": "gear",
+  "desc": "Une huile qui brûlerait cent ans."
+ },
+ "lettre": {
+  "name": "Lettre",
+  "kind": "gear",
+  "desc": "Une lettre à porter."
+ },
+ "soupe_berger": {
+  "name": "Soupe du berger",
+  "kind": "drink",
+  "heal": 99,
+  "fx": {
+   "def": 60
+  },
+  "desc": "La recette de la grand-mère du berger. Rend toute la vie et protège un moment."
  }
 }

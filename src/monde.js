@@ -259,7 +259,7 @@ function buildPassage(def) {
     arrive[side] = side === 'N' ? { x: cx * TS, y: 4 * TS, dir: 'down' } : side === 'S' ? { x: cx * TS, y: (h - 4) * TS, dir: 'up' } : side === 'E' ? { x: (w - 3) * TS, y: cy * TS + 4, dir: 'left' } : { x: 3 * TS, y: cy * TS + 4, dir: 'right' };
     PASSAGE_ARRIVE[def.id + '_from_' + to] = arrive[side];
   }
-  A.exits = {}; for (const [, [d, to, key]] of Object.entries(def.sides)) A.exits[d] = goZone(to, key);
+  A.exits = {}; A.exitTo = {}; for (const [, [d, to, key]] of Object.entries(def.sides)) { A.exits[d] = goZone(to, key); A.exitTo[d] = [to, key]; }
   A.start = Object.values(arrive)[0];
   A.spawn = function () {
     this.ents = [];
@@ -332,6 +332,7 @@ function worldSpawn(A) {
   if (A.id === 'royaume') A.ents.push(villager('crieur', 30 * TS + 8, 33 * TS), villager('lavandiere', 50 * TS + 8, 27 * TS), villager('jules', 22 * TS + 8, 34 * TS), villager('lila', 24 * TS + 8, 35 * TS), villager('lampions', 12 * TS + 8, 14 * TS));
   if (A.id === 'collines') A.ents.push(new SecretRock(12 * TS + 8, 9 * TS, 'grotte_collines'));
   if (A.id === 'montagne') A.ents.push(new SecretRock(22 * TS + 8, 8 * TS, 'grotte_montagne'));
+  sqSpawn(A); // les quêtes secondaires
 }
 
 // ===== construction =====
@@ -346,12 +347,13 @@ function buildMonde(areas) {
   cave('grotte_col', 'Une grotte secrète', A => { chest(A, 'gl_heart', 'piece_coeur', null); });
   cave('grotte_lande', 'Le caveau oublié', A => { chest(A, 'gd_heart', 'piece_coeur', null); A.ents.push(new Sign(8 * TS, 9 * TS, [{ text: '« Le Roi Minuit avait un frère, qui aimait le soleil. Son nom a été effacé de toutes les pierres. »' }], 'stone')); });
   // les régions existantes passent maintenant par les chemins
-  const ex = (id, d, to, key) => { areas[id].exits[d] = goZone(to, key); };
+  const ex = (id, d, to, key) => { areas[id].exits[d] = goZone(to, key); (areas[id].exitTo = areas[id].exitTo || {})[d] = [to, key]; };
   ex('royaume', 1, 'route_nord', 'route_nord_from_royaume'); ex('royaume', 2, 'oree', 'oree_from_royaume'); ex('royaume', 3, 'pres', 'pres_from_royaume');
   ex('collines', 1, 'route_nord', 'route_nord_from_collines'); ex('collines', 2, 'col', 'col_from_collines'); ex('collines', 3, 'sanctuaire', 'sanctuaire_from_collines');
   ex('foret', 1, 'oree', 'oree_from_foret'); ex('montagne', 1, 'col', 'col_from_montagne');
   ex('lac', 1, 'pres', 'pres_from_lac'); ex('lac', 2, 'dunes', 'dunes_from_lac'); ex('lac', 3, 'lande', 'lande_from_lac');
   ex('cote', 1, 'dunes', 'dunes_from_cote'); ex('terres', 1, 'lande', 'lande_from_terres');
+  sqBuild(areas); // les lieux des quêtes : le phare, la grotte sous la mer
 }
 
 // ===== icônes =====
