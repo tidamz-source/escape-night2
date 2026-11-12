@@ -411,12 +411,15 @@ const G = {
     if (this.view === 'end') { this.drawEnd(); this.drawFade(); return; }
     if (this.view === 'credits') { this.drawCredits(); this.drawFade(); return; }
     this.drawWorld();
-    if (!this.isMontage && !(this.state === 'cut' && this.cut && this.cut.noHud)) this.drawHUD();
+    if (!this.isMontage && !(this.state === 'cut' && this.cut) && (this.lb || 0) < 0.3) this.drawHUD(); // pas d'interface pendant les cinématiques
     if (this.state === 'fish') Fishing.draw(this);
     if (this.state === 'dialog') this.drawDialog();
     if (this.state === 'pause') this.drawPause();
     if (this.state === 'shop') this.drawShop();
     if (this.state === 'travel') this.drawTravel();
+    // bandes noires de cinématique : elles descendent et remontent en douceur
+    this.lb = lerp(this.lb || 0, (this.state === 'cut' && this.cut) || this.isMontage ? 1 : 0, 0.14); if (this.lb < 0.01) this.lb = 0;
+    if (this.lb) { const bh = Math.round(26 * this.lb); R(0, 0, W, bh, '#000'); R(0, H - bh, W, bh, '#000'); }
     if (this.state === 'cut' && this.cut) this.cut.draw();
     if (this.state === 'over') this.drawOver();
     this.drawFade();

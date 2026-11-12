@@ -80,10 +80,10 @@ function drawCoin(x, y, c, d, t) {
 class Pickup {
   constructor(x, y, kind) { this.x = x; this.y = y; this.kind = kind; this.t = 0; this.w = 8; this.h = 6; this.vy = -60; this.z = 0; this.isPickup = true; this.fetchable = true; }
   // tombée sur un mur ou dans le vide : on la pose sur la case libre la plus proche, pour qu'elle reste attrapable
-  settle(A) {
+  settle(A, maxR = 48) {
     this.settled = true; const bad = (x, y) => { const t = A.tileAt(x, y); return SOLID.has(t) || t === 'v' || t === 'T' || blocked(A, { x: x - 4, y: y - 6, w: 8, h: 6 }, this); };
     if (!bad(this.x, this.y)) return;
-    for (let r = 4; r <= 48; r += 4) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = this.x + Math.cos(a) * r, y = this.y + Math.sin(a) * r; if (!bad(x, y)) { this.x = x; this.y = y; return; } }
+    for (let r = 4; r <= maxR; r += 4) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = this.x + Math.cos(a) * r, y = this.y + Math.sin(a) * r; if (!bad(x, y)) { this.x = x; this.y = y; return; } }
   }
   update(dt, G) {
     if (!this.settled) this.settle(G.area);

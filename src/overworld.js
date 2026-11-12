@@ -203,13 +203,18 @@ class GateLever extends RailLever {
   hit(d, fx, fy, G, src) { if (src === 'frisbee' || src === 'hook') this.pull(G); }
   pull(G) {
     if (SAVE.minesOpen || G.state !== 'play') return;
-    SFX.lever(); this.on = true; const gate = this.gate; let creak = 0;
-    G.camFocus = { x: gate.x, y: gate.y - 20 };
+    SFX.lever(); this.on = true; const gate = this.gate, P = G.player, from = { x: P.x, y: P.y - 12 }, to = { x: gate.x, y: gate.y - 20 }; let creak = 0;
+    const e = k => k * k * (3 - 2 * k);
+    G.camFocus = { x: from.x, y: from.y };
+    // la caméra glisse jusqu'à la grille, la grille se lève, puis la caméra revient au héros
     G.cut = { t: 0,
-      update: dt => { const c = G.cut; c.t += dt; G.parts.update(dt); G.updateCam();
-        if (c.t > 0.6 && c.t < 2.6) { gate.lift = (c.t - 0.6) / 2 * 34; G.shake = 0.12; if ((creak -= dt) <= 0) { creak = 0.35; SFX.push(); } if (Math.random() < dt * 20) G.parts.add({ x: gate.x + rand(-16, 16), y: gate.y - 2, vy: -rand(10, 30), vx: rand(-10, 10), life: 0.6, c: '#8a8070', r: 1.5 }); }
-        if (c.t > 2.6 && !c.done) { c.done = true; SFX.door(); G.shake = 0.35; }
-        if (c.t > 3.2) { SAVE.minesOpen = true; persist(); G.cut = null; G.camFocus = null; G.state = 'play'; G.say([{ text: 'Clac ! Au loin, la grille des Mines se lève dans un grondement de chaînes.' }, { who: 'Lumi', text: 'La grille est ouverte ! Les Mines des gnomes nous attendent, droit devant.' }]); } },
+      update: dt => { const c = G.cut; c.t += dt; G.parts.update(dt);
+        if (c.t < 1.4) { const k = e(c.t / 1.4); G.camFocus = { x: lerp(from.x, to.x, k), y: lerp(from.y, to.y, k) }; }
+        if (c.t > 1.6 && c.t < 3.6) { gate.lift = (c.t - 1.6) / 2 * 34; G.shake = 0.12; if ((creak -= dt) <= 0) { creak = 0.35; SFX.push(); } if (Math.random() < dt * 20) G.parts.add({ x: gate.x + rand(-16, 16), y: gate.y - 2, vy: -rand(10, 30), vx: rand(-10, 10), life: 0.6, c: pick(['#8a8478', '#6a6458']), r: 1.5 }); }
+        if (c.t > 3.6 && !c.done) { c.done = true; gate.lift = 34; SFX.door(); G.shake = 0.35; }
+        if (c.t > 4.3 && c.t < 5.3) { const k = e((c.t - 4.3) / 1); G.camFocus = { x: lerp(to.x, P.x, k), y: lerp(to.y, P.y - 12, k) }; }
+        if (G.shake > 0) G.shake -= dt; G.updateCam();
+        if (c.t > 5.3) { SAVE.minesOpen = true; persist(); G.cut = null; G.camFocus = null; G.state = 'play'; G.say([{ text: 'Clac ! Au loin, la grille des Mines se lève dans un grondement de chaînes.' }, { who: 'Lumi', text: 'La grille est ouverte ! Les Mines des gnomes nous attendent, droit devant.' }]); } },
       draw: () => {} };
     G.state = 'cut';
   }

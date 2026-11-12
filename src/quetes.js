@@ -127,6 +127,7 @@ class QuestThing {
   constructor(x, y, flag, kind, msg, after) { this.x = x; this.y = y; this.flag = flag; this.kind = kind; this.msg = msg; this.after = after; this.t = rand(0, 5); this.w = 10; this.h = 6; this.fetchable = true; this.isPickup = true; this.light = { r: 26, c: 'rgba(255,230,160,' }; }
   get dead() { return !!SAVE[this.flag] || this.gone; }
   update(dt, G) {
+    if (!this.settled) Pickup.prototype.settle.call(this, G.area, 220); // jamais dans l'eau ni dans un mur : sur la berge la plus proche
     this.t += dt; if (this.carried || G.state !== 'play') return;
     if (rectHit({ x: this.x - 7, y: this.y - 10, w: 14, h: 12 }, G.player.body())) { SAVE[this.flag] = true; this.gone = true; persist(); SFX.chest(); G.say(typeof this.msg === 'function' ? this.msg() : [{ text: this.msg }], this.after); }
   }
@@ -142,12 +143,12 @@ class QuestThing {
 
 // ===== 3. le livre perdu du sage : sept pages, l'histoire du Roi Minuit =====
 const PAGES = [
-  ['royaume', 9, 30, 'Une feuille du grimoire : « Il était une fois un roi qui aimait le soleil plus que tout. Chaque matin, il montait en haut de la tour-horloge pour le regarder se lever. »'],
+  ['royaume', 12, 30, 'Une feuille du grimoire : « Il était une fois un roi qui aimait le soleil plus que tout. Chaque matin, il montait en haut de la tour-horloge pour le regarder se lever. »'],
   ['collines', 14, 17, 'Une feuille du grimoire : « Le roi avait un frère cadet, qui riait fort et ne craignait rien. Le peuple l\'aimait davantage. Le roi en fut jaloux. »'],
   ['foret', 50, 37, 'Une feuille du grimoire : « Un jour, le roi vit dans son miroir son premier cheveu blanc. Il ne dormit plus. Il avait peur de vieillir, et d\'être oublié. »'],
-  ['montagne', 52, 16, 'Une feuille du grimoire : « Il demanda aux gnomes une machine pour arrêter le temps. Les gnomes refusèrent. Alors il alla trouver l\'horloger de la tour. »'],
-  ['lac', 20, 28, 'Une feuille du grimoire : « L\'horloger refusa aussi. Furieux, le roi brisa la pierre du soleil, cœur de l\'horloge, et la cacha. Il était minuit. Il le resta. »'],
-  ['cote', 39, 30, 'Une feuille du grimoire : « Le roi ne vieillit plus. Mais sans soleil, il dut voler la lumière des autres pour vivre. On l\'appela le Roi Minuit. »'],
+  ['montagne', 44, 22, 'Une feuille du grimoire : « Il demanda aux gnomes une machine pour arrêter le temps. Les gnomes refusèrent. Alors il alla trouver l\'horloger de la tour. »'],
+  ['lac', 10, 40, 'Une feuille du grimoire : « L\'horloger refusa aussi. Furieux, le roi brisa la pierre du soleil, cœur de l\'horloge, et la cacha. Il était minuit. Il le resta. »'],
+  ['cote', 34, 30, 'Une feuille du grimoire : « Le roi ne vieillit plus. Mais sans soleil, il dut voler la lumière des autres pour vivre. On l\'appela le Roi Minuit. »'],
   ['terres', 48, 20, 'Une feuille du grimoire : « Son frère partit vers l\'ouest chercher le soleil, et ne revint jamais. On dit que le roi l\'attend encore, chaque nuit, sur les remparts. »'],
 ];
 const Pages = {
