@@ -397,7 +397,7 @@ const Lettre = {
   tea(G) {
     SQ.set('lettre', 6); SAVE.ermiteMoved = true; persist();
     G.fadeTo(() => {
-      G.enter('royaume', { x: 22 * TS, y: 17 * TS, dir: 'up' }, false); G.banner = null; G.camFocus = { x: 21 * TS, y: 14 * TS }; G.updateCam();
+      G.enter('royaume', { x: 25 * TS, y: 16 * TS, dir: 'up' }, false); G.banner = null; G.camFocus = { x: 21 * TS, y: 13 * TS }; G.updateCam();
       G.say([{ text: 'Quelques jours plus tard, devant chez Pierrette…' }, say('Pierrette', 'Encore un peu de thé ?'), say('L\'ermite', 'Volontiers. Il est meilleur que celui des ombres.'), say('Pierrette', 'Vous savez, votre deuxième lettre… je l\'ai gardée sous mon oreiller.'), say('L\'ermite', 'Et moi, j\'ai gardé la vôtre. Enfin, ce que je n\'en ai pas mangé.'), { text: 'L\'ermite s\'installe à Bourg-Luciole. Il vend des bottes qui font marcher plus vite.' }], () => { G.camFocus = null; });
     }, '#000');
   },
@@ -505,7 +505,7 @@ function sqSpawn(A) {
   if (SQ.st('livre') === 1) PAGES.forEach(([z, x, y, txt], i) => { if (z === A.id && !SAVE['page' + i]) A.ents.push(new QuestThing(x * TS + 8, y * TS + 8, 'page' + i, 'page', () => [{ text: txt }, { text: `Feuille du grimoire : ${Pages.n()} / 7.` }])); });
   if (A.id === 'royaume') {
     A.ents.push(new Ghost(9 * TS, 24 * TS + 8));
-    if (SAVE.ermiteMoved) { A.ents.push(new NPC(20 * TS + 8, 14 * TS, { look: 'ermite', quest: 'ombres' })); A.ents.push(new Furniture(23 * TS, 15 * TS, 'table', { candle: true }), new Furniture(21.4 * TS, 15.6 * TS, 'stool'), new Furniture(24.6 * TS, 15.6 * TS, 'stool')); }
+    if (SAVE.ermiteMoved) { A.ents.push(new NPC(20 * TS + 8, 13 * TS, { look: 'ermite', quest: 'ombres' })); A.ents.push(new Furniture(23 * TS, 14 * TS, 'table', { candle: true }), new Furniture(21.4 * TS, 14.6 * TS, 'stool'), new Furniture(24.6 * TS, 14.6 * TS, 'stool')); }
   }
   if (A.id === 'cote') {
     A.ents.push(new LighthouseDoor(30 * TS, 44 * TS)); A.ents.push(new SeaPassage(44 * TS, 34 * TS));

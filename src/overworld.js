@@ -229,14 +229,14 @@ function buildVillageArea() {
   // porte (case du seuil) de chaque maison peinte : on y entre en montant
   const H = (id, tx, ty, o = {}) => ({ id, x: tx * TS + 8, y: ty * TS, o: Object.assign({ w: 3, d: 1, painted: true }, o) });
   A.houses = [
-    H('pierrette', 17, 12), H('gaspard', 45, 12),
-    H('auberge', 17, 22), H('bibliotheque', 45, 22),
-    H('forge', 17, 39), H('comptoir', 25, 39, { locked: () => !SAVE.freed1 ? '« Maison à louer. » La porte est fermée.' : SAVE.boss6 && '« Fermé. Amandine est au camping, de l\'autre côté de la faille. »' }),
+    H('pierrette', 17, 12), H('gaspard', 51, 12),
+    H('auberge', 17, 21), H('bibliotheque', 45.5, 21),
+    H('forge', 17, 38), H('comptoir', 39, 10, { locked: () => !SAVE.freed1 ? '« Maison à louer. » La porte est fermée.' : SAVE.boss6 && '« Fermé. Amandine est au camping, de l\'autre côté de la faille. »' }),
     H('epicerie', 39, 39), H('mahaut', 45, 39),
     H('mamie', 53, 39, { locked: () => !SAVE.freed2 ? 'Une maison au toit de chaume, avec un vieux chaudron dans la cheminée. Personne ne répond.' : SAVE.boss6 && 'Un mot sur la porte : « Partie faire des crêpes au camping. Mamie. »' }),
   ];
   // les réverbères peints éclairent la nuit
-  const lamps = [[23, 16], [40, 16], [23, 29], [40, 29], [13, 21], [52, 21], [34, 41], [28, 6], [33, 6]];
+  const lamps = [[22, 16], [39, 16], [22, 29], [40, 29]];
   A.spawn = function () {
     this.ents = [];
     for (const h of this.houses) this.ents.push(Object.assign(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)), { hid: h.id }));
@@ -254,7 +254,7 @@ function buildVillageArea() {
     this.ents.push(Object.assign(new Sign(13 * TS, 22 * TS, [{ text: '« Pont-levis de la Forêt. Fermé par ordre du Roi Minuit. »' }, { who: '{hero}', text: 'Il y a une cible sur l\'autre rive… Si seulement je pouvais l\'atteindre.', face: 'o' }]), { ghost: true }));
     this.ents.push(Object.assign(new Sign(35 * TS, 3 * TS, [{ text: '« Au nord : les Collines. Au sud : le Lac. À l\'ouest : la Forêt. »' }]), { ghost: true }));
     if (SAVE.q && SAVE.q.poules === 1) for (const [i, x, y] of [[0, 25 * TS, 13 * TS], [1, 56 * TS, 26 * TS], [2, 12 * TS, 40 * TS]]) if (!SAVE['poule' + i]) this.ents.push(new Chicken(x, y, i));
-    for (const [sid, x, y] of [['forge', 17, 39], ['comptoir', 25, 39], ['epicerie', 39, 39]]) this.ents.push(new PromoFlag(sid, x * TS + 24, y * TS + 6));
+    for (const [sid, x, y] of [['forge', 17, 38], ['comptoir', 39, 10], ['epicerie', 39, 39]]) this.ents.push(new PromoFlag(sid, x * TS + 24, y * TS + 6));
     questSpawns(this);
   };
   A.syncTiles = function () {
