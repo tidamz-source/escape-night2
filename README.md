@@ -97,6 +97,7 @@ Modules indépendants qui communiquent par un bus d'événements (`Bus.emit` / `
 ## Assets
 - `assets/npc/` : Mamie (Claudine), Amandine, Papa (4 directions × 9 images) et Goyave, repris d'Escape Night
 - `assets/swim/` : nageurs vus de dessus (piscine d'Escape Night)
+- `tools/collisions/` : **Atelier Collisions**, éditeur en ligne des collisions, portes et découpes « dessus » des cartes peintes (https://tidamz-source.github.io/escape-night2/tools/collisions/), export en pack .zip
 - `assets/src/*.ase` + `tools/ase2sheet.py` : Sacha (Aseprite, 1:1, cases 32 × 32)
 - `assets/cam.*`, `assets/rox.*` : placeholders repris d'Escape Night (`tools/en2sheet.py`, densité ×2), à remplacer par des .ase
 - `assets/faces/` : portraits des dialogues (Escape Night)
