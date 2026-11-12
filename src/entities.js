@@ -512,15 +512,15 @@ class Wisp extends Enemy {
 
 // mini-boss de la grotte : un grand feu follet qui crache des gerbes d'orbes
 class BigWisp extends Wisp {
-  constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 8; this.dmg = 1; this.w = 20; this.h = 10; this.alt = 18; this.cd = 2; this.light = { r: 80, c: 'rgba(120,220,255,' }; this.loot = 'pot'; this.isMini = true; }
+  constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 5; this.dmg = 1; this.w = 20; this.h = 10; this.alt = 18; this.cd = 2.6; this.light = { r: 80, c: 'rgba(120,220,255,' }; this.loot = 'pot'; this.isMini = true; }
   body() { return { x: this.x - 12, y: this.y - this.alt - 18, w: 24, h: 22 }; }
   update(dt, G) {
     if (this.physics(dt, G, true)) return;
-    this.t += dt; this.cd -= dt; const P = G.player, d = dist(this.x, this.y, P.x, P.y), a = Math.atan2(P.y - this.y, P.x - this.x), fury = this.hp <= 4;
+    this.t += dt; this.cd -= dt; const P = G.player, d = dist(this.x, this.y, P.x, P.y), a = Math.atan2(P.y - this.y, P.x - this.x), fury = this.hp <= 2;
     let want = 0; if (d < 80) want = -30; else if (d > 120) want = 40;
     this.x += (Math.cos(a) * want + Math.cos(this.t * 1.2) * 34) * dt; this.y += (Math.sin(a) * want + Math.sin(this.t * 1.7) * 24) * dt;
     this.clampArea(G);
-    if (this.cd <= 0) { this.cd = fury ? 1.6 : 2.4; SFX.shoot(); for (const o of fury ? [-0.5, -0.25, 0, 0.25, 0.5] : [-0.3, 0, 0.3]) { const orb = new Orb(this.x, this.y - this.alt, a + o); orb.room = this.room; G.area.ents.push(orb); } }
+    if (this.cd <= 0) { this.cd = fury ? 2.4 : 3.2; SFX.shoot(); for (const o of fury ? [-0.35, 0, 0.35] : [-0.25, 0.25]) { const orb = new Orb(this.x, this.y - this.alt, a + o); orb.room = this.room; G.area.ents.push(orb); } }
     this.touch(G);
   }
   draw() {

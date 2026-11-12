@@ -75,6 +75,7 @@ const G = {
   },
   inRoom(e) { return e.room == null || !this.area.rooms || e.room === this.room; },
   updateCam() {
+    if (this.slide) return; // pendant le glissement entre deux salles, c'est updateSlide qui tient la caméra
     const P = this.player, A = this.area, f = this.camFocus || { x: P.x, y: P.y - 12 };
     if (A.rooms) { const rr = this.roomRect(); this.cam.x = rr.x; this.cam.y = rr.y + 1; return; }
     this.cam.x = A.w <= W ? (A.w - W) / 2 : clamp(f.x - W / 2, 0, A.w - W);
@@ -160,9 +161,11 @@ const G = {
   freeCaptive(n = 1) {
     this.say(Story.script(n === 1 ? 'freed' : 'freed' + n), () => {
       Story.set('freed' + n); this.prevFragments = SAVE.fragments || 0; SAVE.fragments = Math.max(SAVE.fragments || 0, n); persist(); SFX.bigheart();
-      this.fadeTo(() => { this.enter('royaume', Object.assign({ dir: 'up' }, this.areas.royaume.plaza), false); this.pending = 'ceremony' + n; }, '#fff2c0');
+      this.fadeTo(() => { this.enter('royaume', Object.assign({ dir: 'up' }, this.areas.royaume.plaza), false); this.aimTower(70); this.pending = 'ceremony' + n; }, '#fff2c0');
     });
   },
+  // la caméra est déjà sur la tour quand l'image revient (pas de saut depuis le héros)
+  aimTower(dy) { const t = this.area.ents.find(e => e instanceof ClockTower); if (t) { this.camFocus = { x: t.x, y: t.y - dy }; this.updateCam(); } },
   // ---------- cinématiques ----------
   // la cérémonie du fragment : il descend du ciel jusqu'à la tour-horloge, les aiguilles avancent, une lanterne s'allume
   ceremony(n) {
@@ -216,7 +219,7 @@ const G = {
   finale() {
     this.say(Story.script('kingDown'), () => {
       Story.set('boss6'); SAVE.fragments = 6; persist(); SFX.bigheart();
-      this.fadeTo(() => { this.enter('royaume', Object.assign({ dir: 'up' }, this.areas.royaume.plaza), false); this.darkFrom = 0.2; this.pending = 'sunrise'; }, '#fff2c0');
+      this.fadeTo(() => { this.enter('royaume', Object.assign({ dir: 'up' }, this.areas.royaume.plaza), false); this.darkFrom = 0.2; this.aimTower(60); this.pending = 'sunrise'; }, '#fff2c0');
     });
   },
   // la pierre du soleil rejoint le cadran de la tour-horloge : les aiguilles filent jusqu'à midi
