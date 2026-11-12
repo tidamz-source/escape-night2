@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.5.8';
+const VERSION = 'v8.5.9';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -48,7 +48,7 @@ const SHEETS = {}; // planches des héros (format Aseprite JSON)
 const HERO_SHEETS = ['sacha', 'cam', 'rox'];
 const FACES = ['sacha', 'cam', 'rox', 'papa', 'amandine', 'claudine'].flatMap(w => ['smile', 'o', 'angry', 'wink'].map(m => `${w}_${m}`)).filter(k => k !== 'amandine_o' && k !== 'amandine_angry' && k !== 'amandine_wink' && k !== 'claudine_o' && k !== 'claudine_angry' && k !== 'claudine_wink');
 // PNJ PixelLab (assets/npc/pl/<clé>.png : 8 directions sur une ligne, l'animation d'attente de face en dessous)
-const PL_KEYS = ['garde', 'arthur', 'jules', 'lila', 'fantome', 'epiciere', 'sage', 'pierrette'];
+const PL_KEYS = ['garde', 'arthur', 'jules', 'lila', 'fantome', 'epiciere', 'sage', 'pierrette', 'fossoyeur', 'coquillages', 'hugo', 'herboriste'];
 const NPC_SPRITES = ['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'];
 const SWIMMERS = ['sacha', 'cam', 'rox', 'papa'];
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
