@@ -16,7 +16,7 @@ const SIDE = {
   concert: { name: 'Le concert de Mahaut', giver: 'Mahaut (Bourg-Luciole)', minFrag: 2, done: s => s === 2,
              hint: () => `Retrouve les 4 cordes du rouet-harpe dans les jarres et les buissons des Collines (${Concert.n()} / 4).` },
   livre:   { name: 'Le livre perdu du sage', giver: 'Le sage (bibliothèque)', minFrag: 1, done: s => s === 2,
-             hint: () => `Retrouve les 7 pages du grimoire, une par région (${Pages.n()} / 7). Le frisbee et le grappin rapportent ce qui est hors d'atteinte.` },
+             hint: () => `Retrouve les 7 feuilles perdues du grimoire (${Pages.n()} / 7). Le frisbee et le grappin rapportent ce qui est hors d'atteinte.` },
   gerard:  { name: 'Le mouton fugueur', giver: 'Le berger (Collines)', minFrag: 1, done: s => s === 2,
              hint: () => `Pousse Gérard jusqu'à l'enclos, à côté de la bergerie. On l'a vu vers ${GERARD_ZONES[(SAVE.gerard || {}).zone] || '?'}.` },
   peche:   { name: 'Le concours de pêche', giver: 'Le pêcheur (Lac)', minFrag: 3, req: () => Inventory.has('canne'), done: s => s === 2,
@@ -142,21 +142,21 @@ class QuestThing {
 
 // ===== 3. le livre perdu du sage : sept pages, l'histoire du Roi Minuit =====
 const PAGES = [
-  ['royaume', 9, 30, 'Page 1 : « Il était une fois un roi qui aimait le soleil plus que tout. Chaque matin, il montait en haut de la tour-horloge pour le regarder se lever. »'],
-  ['collines', 14, 17, 'Page 2 : « Le roi avait un frère cadet, qui riait fort et ne craignait rien. Le peuple l\'aimait davantage. Le roi en fut jaloux. »'],
-  ['foret', 50, 37, 'Page 3 : « Un jour, le roi vit dans son miroir son premier cheveu blanc. Il ne dormit plus. Il avait peur de vieillir, et d\'être oublié. »'],
-  ['montagne', 52, 16, 'Page 4 : « Il demanda aux gnomes une machine pour arrêter le temps. Les gnomes refusèrent. Alors il alla trouver l\'horloger de la tour. »'],
-  ['lac', 20, 28, 'Page 5 : « L\'horloger refusa aussi. Furieux, le roi brisa la pierre du soleil, cœur de l\'horloge, et la cacha. Il était minuit. Il le resta. »'],
-  ['cote', 39, 30, 'Page 6 : « Le roi ne vieillit plus. Mais sans soleil, il dut voler la lumière des autres pour vivre. On l\'appela le Roi Minuit. »'],
-  ['terres', 48, 20, 'Page 7 : « Son frère partit vers l\'ouest chercher le soleil, et ne revint jamais. On dit que le roi l\'attend encore, chaque nuit, sur les remparts. »'],
+  ['royaume', 9, 30, 'Une feuille du grimoire : « Il était une fois un roi qui aimait le soleil plus que tout. Chaque matin, il montait en haut de la tour-horloge pour le regarder se lever. »'],
+  ['collines', 14, 17, 'Une feuille du grimoire : « Le roi avait un frère cadet, qui riait fort et ne craignait rien. Le peuple l\'aimait davantage. Le roi en fut jaloux. »'],
+  ['foret', 50, 37, 'Une feuille du grimoire : « Un jour, le roi vit dans son miroir son premier cheveu blanc. Il ne dormit plus. Il avait peur de vieillir, et d\'être oublié. »'],
+  ['montagne', 52, 16, 'Une feuille du grimoire : « Il demanda aux gnomes une machine pour arrêter le temps. Les gnomes refusèrent. Alors il alla trouver l\'horloger de la tour. »'],
+  ['lac', 20, 28, 'Une feuille du grimoire : « L\'horloger refusa aussi. Furieux, le roi brisa la pierre du soleil, cœur de l\'horloge, et la cacha. Il était minuit. Il le resta. »'],
+  ['cote', 39, 30, 'Une feuille du grimoire : « Le roi ne vieillit plus. Mais sans soleil, il dut voler la lumière des autres pour vivre. On l\'appela le Roi Minuit. »'],
+  ['terres', 48, 20, 'Une feuille du grimoire : « Son frère partit vers l\'ouest chercher le soleil, et ne revint jamais. On dit que le roi l\'attend encore, chaque nuit, sur les remparts. »'],
 ];
 const Pages = {
   n: () => PAGES.filter((p, i) => SAVE['page' + i]).length,
   talk(G) {
     const s = SQ.st('livre');
-    if (s === 0 && SQ.open('livre')) { G.say([say('Le sage', 'Ah, te voilà. Un malheur : sept pages de mon grimoire se sont envolées par la fenêtre. Une par région, j\'en ai peur.'), say('Le sage', 'Elles racontent l\'histoire du Roi Minuit, avant qu\'il ne devienne… ce qu\'il est. Certaines ont dû se poser dans l\'eau : il faudra un objet qui vole pour les ramener.')], () => SQ.start('livre', G)); return true; }
-    if (s === 1 && this.n() < 7) { G.say([say('Le sage', `${this.n()} page${this.n() > 1 ? 's' : ''} sur 7. Continue : chaque région en cache une.`)]); return true; }
-    if (s === 1) { G.say([say('Le sage', 'Les sept pages ! Mon grimoire est complet. Assieds-toi, je vais te lire l\'histoire du Roi, du début à la fin.')], () => this.scene(G)); return true; }
+    if (s === 0 && SQ.open('livre')) { G.say([say('Le sage', 'Ah, te voilà. Un malheur : j\'ai perdu sept feuilles de mon grimoire. Le vent les a emportées par la fenêtre.'), say('Le sage', 'Elles racontent l\'histoire du Roi Minuit, avant qu\'il ne devienne… ce qu\'il est. Si tu les trouves, rapporte-les-moi.')], () => SQ.start('livre', G)); return true; }
+    if (s === 1 && this.n() < 7) { G.say([say('Le sage', `${this.n()} feuille${this.n() > 1 ? 's' : ''} sur 7. Il en manque encore ${7 - this.n()}.`)]); return true; }
+    if (s === 1) { G.say([say('Le sage', 'Les sept feuilles ! Mon grimoire est complet. Assieds-toi, je vais te lire l\'histoire du Roi, du début à la fin.')], () => this.scene(G)); return true; }
     return false;
   },
   scene(G) {
@@ -501,7 +501,7 @@ function sqSpawn(A) {
     if (SQ.st('gerard') >= 1) A.ents.push(new PenFence());
   }
   Gerard.spawn(A); Proces.spawn(A); Peche.spawn(A);
-  if (SQ.st('livre') === 1) PAGES.forEach(([z, x, y, txt], i) => { if (z === A.id && !SAVE['page' + i]) A.ents.push(new QuestThing(x * TS + 8, y * TS + 8, 'page' + i, 'page', () => [{ text: txt }, { text: `Page du grimoire : ${Pages.n()} / 7.` }])); });
+  if (SQ.st('livre') === 1) PAGES.forEach(([z, x, y, txt], i) => { if (z === A.id && !SAVE['page' + i]) A.ents.push(new QuestThing(x * TS + 8, y * TS + 8, 'page' + i, 'page', () => [{ text: txt }, { text: `Feuille du grimoire : ${Pages.n()} / 7.` }])); });
   if (A.id === 'royaume') {
     A.ents.push(new Ghost(9 * TS, 24 * TS + 8));
     if (SAVE.ermiteMoved) { A.ents.push(new NPC(20 * TS + 8, 14 * TS, { look: 'ermite', quest: 'ombres' })); A.ents.push(new Furniture(23 * TS, 15 * TS, 'table', { candle: true }), new Furniture(21.4 * TS, 15.6 * TS, 'stool'), new Furniture(24.6 * TS, 15.6 * TS, 'stool')); }

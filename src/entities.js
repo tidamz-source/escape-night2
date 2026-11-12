@@ -331,7 +331,8 @@ class Player {
     const base = { down: Math.PI / 2, up: -Math.PI / 2, left: Math.PI, right: 0 }[this.dir];
     const sweep = this.dir === 'left' ? -1 : 1;
     const ang = base + sweep * lerp(-1.15, 1.15, Math.min(1, p * 1.6));
-    const hx = this.x + (this.dir === 'left' ? -4 : this.dir === 'right' ? 4 : 0), hy = this.y - (this.dir === 'up' ? 13 : 9);
+    // la poignée est dans la main droite : à gauche de l'écran quand on fait face, à droite quand on est de dos
+    const hx = this.x + { down: -5, up: 5, left: -4, right: 4 }[this.dir], hy = this.y - { down: 11, up: 12, left: 11, right: 11 }[this.dir];
     const L = Math.round(17 * this.perk.reach), ex = hx + Math.cos(ang) * L, ey = hy + Math.sin(ang) * L, sword = SAVE.inv.weapon === 'epee_bois' || SAVE.inv.weapon === 'epee_fer', iron = SAVE.inv.weapon === 'epee_fer';
     ctx.lineCap = 'round';
     if (sword) { // épée de bois : lame claire, garde

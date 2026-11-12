@@ -153,7 +153,7 @@ const G = {
     if (!sheltered && P.y + 70 * dt < rr.y + rr.h - 40) moveEnt(A, P, 0, 70 * dt, { noExit: true }); // le vent ne pousse jamais hors de la salle
   },
   // répliques : brutes ou déjà mises en forme par Story
-  say(lines, done) { this.dialog = { lines: lines.map(l => l.who !== undefined && 'mood' in l ? l : Story.lines([l])[0]), i: 0, c: 0, done }; this.state = 'dialog'; },
+  say(lines, done) { this.shake = 0; this.dialog = { lines: lines.map(l => l.who !== undefined && 'mood' in l ? l : Story.lines([l])[0]), i: 0, c: 0, done }; this.state = 'dialog'; },
   raise(kind) { this.raised = { kind, t: 1.6 }; },
   gameOver() { this.state = 'over'; this.overT = 0; this.menu = 0; },
 
