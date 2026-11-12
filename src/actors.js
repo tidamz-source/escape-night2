@@ -19,6 +19,8 @@ const LOOKS = {
   gardien:    { skin: '#d8a880', hair: '#5a5a5a', top: '#2a3a6a', legs: '#2a2a3a', beard: true, hat: '#2a2a3a' },
   ermite:     { skin: '#c8a8a0', hair: '#c8c8d0', top: '#4a3a5a', legs: '#2a2030', robe: true, beard: true },
   arthur:     { skin: '#f0c8a0', hair: '#c8742a', top: '#3a8ac8', legs: '#3a3a5a', child: true },
+  firmin:     { skin: '#c8906a', hair: '#5a4a3a', top: '#6a4a2a', legs: '#2a3a4a', hat: '#c8b888' },
+  gaelle:     { skin: '#9a6a4a', hair: '#1a1a1a', top: '#3a8a4a', legs: '#4a3a2a' },
   forain:     { skin: '#e0b48e', hair: '#2a2a2a', top: '#d84a4a', legs: '#2a2a3a', hat: '#2a2a3a' },
 };
 function shade(c, k) { const n = parseInt(c.slice(1), 16), f = v => clamp(Math.round(v * k), 0, 255); return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => f(v).toString(16).padStart(2, '0')).join(''); }
@@ -44,7 +46,7 @@ function drawPerson(x, y, L, t) {
 }
 
 // PNJ PixelLab : 48 × 48, 8 directions, même échelle que les héros (÷ 1,4) ; les enfants un peu plus petits
-const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 1, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 2, anim: 8 }, pierrette: { foot: 1 }, fossoyeur: { foot: 1 }, coquillages: { foot: 1 }, hugo: { foot: 2 }, herboriste: { foot: 3 } };
+const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 1, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 2, anim: 8 }, pierrette: { foot: 1 }, fossoyeur: { foot: 1 }, coquillages: { foot: 1 }, hugo: { foot: 2 }, herboriste: { foot: 3 }, bucheron: { foot: 1 }, gnome: { foot: 2, child: 0.6 }, firmin: { foot: 1 }, gaelle: { foot: 1 }, artificiere: { foot: 1 }, gardien: { foot: 2 }, ermite: { foot: 1 }, vagabond: { foot: 0 }, pauline: { foot: 1, child: 0.78 }, odette: { foot: 2 } };
 const plDir = (dx, dy) => (Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) + 8) % 8; // 0 face, 2 droite, 4 dos, 6 gauche
 function drawPL(key, x, y, di, t, alpha = 1, scale = 1) {
   const im = IMG['pl_' + key], m = PL_NPCS[key]; if (!im || !m) return false;
@@ -74,7 +76,7 @@ class NPC {
   update(dt) { this.t += dt; }
   draw() {
     if (this.o.hero) { ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)'); drawHero(this.o.hero(), this.x, this.y, 'down', false, this.t); }
-    else if (this.o.gnome) drawGnomeNPC(this.x, this.y, this.t);
+    else if (this.o.gnome) { if (IMG.pl_gnome) { ell(this.x, this.y, 5, 2, 'rgba(0,0,0,.35)'); drawPL('gnome', this.x, this.y, plFace(this), this.t); } else drawGnomeNPC(this.x, this.y, this.t); }
     else if (this.o.sprite === 'dog') { const im = IMG.npc_dog_down; ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); if (im) { const w = im.width / 2.6, h = im.height / 2.6; ctx.drawImage(im, half(this.x - w / 2), half(this.y - h + Math.abs(Math.sin(this.t * 3))), w, h); } }
     else if (this.o.sprite === 'papa_down') { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, 'down', false, this.t); }
     else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }

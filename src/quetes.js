@@ -254,7 +254,7 @@ const Peche = {
     }
     c.round++; c.t = 90; c.best = 0; lines.push({ text: `Manche ${c.round} : c'est reparti !` }); G.say(lines);
   },
-  spawn(A) { if (A.id === 'lac' && G.contest) A.ents.push(new NPC(26 * TS + 8, 17 * TS + 8, { look: 'pecheur', sq: 'firmin' }), new NPC(35 * TS + 8, 17 * TS + 8, { look: 'herboriste', sq: 'gaelle' })); },
+  spawn(A) { if (A.id === 'lac' && G.contest) A.ents.push(new NPC(26 * TS + 8, 17 * TS + 8, { look: 'firmin', sq: 'firmin' }), new NPC(35 * TS + 8, 17 * TS + 8, { look: 'gaelle', sq: 'gaelle' })); },
   draw() { const c = G.contest; if (!c) return; R(W - 158, 22, 154, 24, 'rgba(7,13,31,.8)'); text(`Manche ${c.round} / 3 · ${Math.ceil(Math.max(0, c.t))} s`, W - 81, 24, { size: 7.5, align: 'center', color: PAL.warm }); text(`Meilleure prise : ${c.best} cm · ${c.wins} manche${c.wins > 1 ? 's' : ''} gagnée${c.wins > 1 ? 's' : ''}`, W - 81, 35, { size: 6.5, align: 'center', color: '#c8d0f0' }); },
 };
 
