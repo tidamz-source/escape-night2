@@ -84,8 +84,10 @@ details summary{cursor:pointer;font-size:12.5px;color:var(--mute)}
 
 <header>
   <h1>Atelier Collisions</h1>
-  <label class="btn pri" for="fImg">Ouvrir une carte</label>
+  <label class="btn pri" for="fImg">Nouvelle carte</label>
   <input id="fImg" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+  <label class="btn" for="fImg2" title="Garde la grille, les portes et les découpes : pour une carte repeinte">Changer l'image</label>
+  <input id="fImg2" type="file" accept="image/png,image/jpeg,image/webp" hidden>
   <div class="field"><label for="iTs">Case</label><input id="iTs" type="number" min="4" max="256" step="1" value="32"><span>px</span></div>
   <div class="field"><label for="iSc">Échelle carte → jeu</label><input id="iSc" type="number" min="1" max="8" step="1" value="2"><span>×</span></div>
   <div class="field"><label for="iKey">Nom de la carte</label><input id="iKey" type="text" value="royaume" style="width:110px"></div>
@@ -122,7 +124,7 @@ details summary{cursor:pointer;font-size:12.5px;color:var(--mute)}
     <canvas id="cv"></canvas>
     <div class="status" id="status">—</div>
     <div class="zoom"><button class="btn" id="zOut" aria-label="Dézoomer">−</button><button class="btn" id="zFit">Ajuster</button><button class="btn" id="zIn" aria-label="Zoomer">+</button></div>
-    <div class="drop" id="drop" hidden>Dépose ta carte ici</div>
+    <div class="drop" id="drop" hidden>Dépose l'image : nouvelle carte vierge</div>
   </div>
 
   <aside class="r">
@@ -579,13 +581,16 @@ async function setImage(src, keep) {
   if (!keep) { P.doors = []; P.cuts = []; }
   updDims(); fit(); changed();
 }
-async function openFile(f) { if (!f || !f.type.startsWith('image/')) return toast('Dépose une image PNG, JPG ou WebP (exporte ton PSD en PNG).');
-  undo.length = 0; redo.length = 0; const same = W && P.grid.length; await setImage(URL.createObjectURL(f), true); idbPut('img', f);
-  toast(same ? 'Carte remplacée : collisions, découpes et portes conservées.' : 'Carte chargée.'); }
-$('#fImg').onchange = e => { openFile(e.target.files[0]); e.target.value = ''; };
+async function openFile(f, keep) { if (!f || !f.type.startsWith('image/')) return toast('Dépose une image PNG, JPG ou WebP (exporte ton PSD en PNG).');
+  undo.length = 0; redo.length = 0; sel = null; sprite = null;
+  if (!keep) { const k = f.name.replace(/\.[^.]+$/, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); P.key = k || 'carte'; $('#iKey').value = P.key; P.grid = []; }
+  await setImage(URL.createObjectURL(f), keep); idbPut('img', f);
+  toast(keep ? 'Image remplacée : grille, portes et découpes conservées.' : `Nouvelle carte « ${P.key} » : ${P.cols}×${P.rows} cases, tout est vierge.`); }
+$('#fImg').onchange = e => { openFile(e.target.files[0], false); e.target.value = ''; };
+$('#fImg2').onchange = e => { openFile(e.target.files[0], true); e.target.value = ''; };
 stage.addEventListener('dragover', e => { e.preventDefault(); $('#drop').hidden = false; });
 stage.addEventListener('dragleave', () => $('#drop').hidden = true);
-stage.addEventListener('drop', e => { e.preventDefault(); $('#drop').hidden = true; openFile(e.dataTransfer.files[0]); });
+stage.addEventListener('drop', e => { e.preventDefault(); $('#drop').hidden = true; openFile(e.dataTransfer.files[0], false); });
 $('#bSample').onclick = async () => { undo.push(snap()); await loadSample(); toast('Exemple Bourg-Luciole rechargé.'); };
 async function loadSample() { await setImage(SAMPLE_IMG, false); loadProject(SAMPLE); idbPut('img', null); fit(); }
 
