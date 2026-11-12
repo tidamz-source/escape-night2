@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.5.8** : premiers PNJ PixelLab (48 × 48, 8 directions, à l'échelle des héros) : le garde, Arthur, Jules, Lila, le fantôme de 3 h, Mère Grenadine, le sage (avec son animation) et Pierrette ; ils se tournent vers le héros. Fichiers : `assets/npc/pl/<clé>.png`.
 - **8.5.7** : la maison du sage devient un intérieur peint (image + collisions de l'Atelier) ; on parle au sage par-dessus son bureau, les rayonnages peints se lisent toujours ; moteur : tout intérieur avec `paint:` utilise sa carte peinte.
 - **8.5.6** : nouvelle carte de Bourg-Luciole (graphismes et collisions refaits par Damien) ; le comptoir d'Amandine passe en haut, au-dessus de l'horloge ; découpes « dessus » recalculées (toits, tour, puits, réverbères, panneaux) ; portes, réverbères, Jules, Lila, l'allumeur de lampions et le thé de l'ermite replacés.
 - **8.5.5** : un seul niveau de nuit partout et tout le temps (plus d'éclaircissement par fragment, par région ou par salle) ; seules les lumières locales varient ; plein jour dehors après la victoire finale.

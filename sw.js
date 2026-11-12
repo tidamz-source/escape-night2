@@ -1,16 +1,17 @@
 // À chaque déploiement : changer VERSION ici, VERSION dans src/core.js et les ?v= dans index.html.
-const VERSION = 'v8.5.7';
+const VERSION = 'v8.5.8';
 const CACHE = 'escape-night2-' + VERSION;
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
 const SCRIPTS = ['src/core.js', 'src/bus.js', 'src/input.js', 'src/systems/save.js', 'src/systems/heroes.js', 'src/systems/inventory.js', 'src/systems/wallet.js', 'src/systems/shop.js', 'src/systems/story.js', 'src/systems/loot.js', 'src/world.js', 'src/entities.js', 'src/objects.js', 'src/actors.js', 'src/interiors.js', 'src/bois.js', 'src/tools.js', 'src/mines.js', 'src/lac.js', 'src/temple.js', 'src/tower.js', 'src/castle.js', 'src/quests.js', 'src/rpg.js', 'src/dungeon.js', 'src/cave.js', 'src/maps.js', 'src/overworld.js', 'src/houses.js', 'src/areas.js', 'src/monde.js', 'src/quetes.js', 'src/ui.js', 'src/game.js'];
 const FACES = ['sacha', 'cam', 'rox', 'papa'].flatMap(w => ['smile', 'o', 'angry', 'wink'].map(m => `${w}_${m}`)).concat(['amandine_smile', 'claudine_smile']);
 const FILES = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png',
-  ...SCRIPTS.map(s => s + '?v=8.5.5'),
+  ...SCRIPTS.map(s => s + '?v=' + VERSION.slice(1)),
   ...['heroes', 'items', 'shops', 'dialogues'].map(k => `data/${k}.json?v=${VERSION}`),
   ...['sacha', 'cam', 'rox'].flatMap(h => [`assets/${h}.png?v=${VERSION}`, `assets/${h}.json?v=${VERSION}`]),
   ...FACES.map(f => `assets/faces/${f}.png?v=${VERSION}`),
   ...PROPS.map(k => `assets/props/${k}.png?v=${VERSION}`),
   ...['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'].map(k => `assets/npc/${k}.png?v=${VERSION}`),
+  ...['garde', 'arthur', 'jules', 'lila', 'fantome', 'epiciere', 'sage', 'pierrette'].map(k => `assets/npc/pl/${k}.png?v=${VERSION}`),
   ...['sacha', 'cam', 'rox', 'papa'].flatMap(k => [0, 1].map(i => `assets/swim/${k}${i}.png?v=${VERSION}`)),
   ...['royaume_paves'].map(k => `assets/tiles/${k}.png?v=${VERSION}`),
   ...['royaume', 'royaume_dessus', 'biblio', 'biblio_dessus'].map(k => `assets/maps/${k}.png?v=${VERSION}`)];

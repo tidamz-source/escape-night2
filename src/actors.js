@@ -43,6 +43,18 @@ function drawPerson(x, y, L, t) {
   });
 }
 
+// PNJ PixelLab : 48 × 48, 8 directions, même échelle que les héros (÷ 1,4) ; les enfants un peu plus petits
+const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 0, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 2, anim: 8 }, pierrette: { foot: 1 } };
+const plDir = (dx, dy) => (Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) + 8) % 8; // 0 face, 2 droite, 4 dos, 6 gauche
+function drawPL(key, x, y, di, t, alpha = 1, scale = 1) {
+  const im = IMG['pl_' + key], m = PL_NPCS[key]; if (!im || !m) return false;
+  const k = scale * (m.child || 1) / 1.4, s = 48 * k; let sx = di * 48, sy = 0;
+  if (m.anim && di === 0) { sx = (Math.floor(t * 6) % m.anim) * 48; sy = 48; }
+  ctx.globalAlpha = alpha; ctx.drawImage(im, sx, sy, 48, 48, half(x - s / 2), half(y - s + m.foot * k), s, s); ctx.globalAlpha = 1; return true;
+}
+// il se tourne vers le héros quand il s'approche
+function plFace(e) { const P = G.player; if (P && dist(P.x, P.y, e.x, e.y) < 72) e.di = plDir(P.x - e.x, P.y - e.y); else if (e.di == null || (e.diT = (e.diT || 0) + 1) > 240) { e.di = e.o && e.o.face != null ? e.o.face : 0; e.diT = 0; } return e.di; }
+
 // personnage dessiné depuis un sprite d'Escape Night (densité ×2)
 function drawSprite(key, x, y) { const im = IMG['npc_' + key]; if (im) ctx.drawImage(im, half(x - im.width / 4), half(y - im.height / 2), im.width / 2, im.height / 2); }
 
@@ -67,6 +79,7 @@ class NPC {
     else if (this.o.sprite === 'papa_down') { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, 'down', false, this.t); }
     else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }
     else if (this.o.draw) this.o.draw(this);
+    else if (IMG['pl_' + this.o.look] && PL_NPCS[this.o.look]) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawPL(this.o.look, this.x, this.y, plFace(this), this.t); }
     else drawPerson(this.x, this.y, LOOKS[this.o.look], this.t);
     if (G.state === 'play' && sideOffer(this)) { const b = Math.round(Math.sin(this.t * 5)); R(this.x - 3, this.y - 46 + b, 6, 9, '#ffd23a'); text('!', this.x, this.y - 46 + b, { size: 8, align: 'center', bold: true, color: '#3a2410', shadow: false }); return; } // une quête à proposer
     if (G.player && dist(G.player.x, G.player.y, this.x, this.y) < 34 && G.state === 'play') { // bulle « parler »

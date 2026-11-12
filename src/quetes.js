@@ -429,7 +429,7 @@ class Ghost {
     G.say([say('Le fantôme', 'Anselme ! Je m\'appelais Anselme. J\'étais l\'horloger de la tour.'), say('Anselme', 'Le roi est venu, une nuit. Il voulait que j\'arrête l\'horloge pour toujours. J\'ai refusé. Alors il a brisé la pierre du soleil… et le temps s\'est figé, avec moi dedans.'), say('Anselme', 'Prends la clé de la tour-horloge. Mes outils sont encore là-haut. Et ceci, que je gardais pour un jour meilleur.'), { text: hp }, say('Anselme', 'Merci, enfant. Je peux enfin me reposer…')], () => { this.gone = true; G.parts.burst(this.x, this.y - 20, 30, { c: ['#cfe0ff', '#fff'], life: 1.2, r: 2, up: 30 }); });
   }
   update(dt) { this.t += dt; }
-  draw() { const y = this.y - 6 + Math.sin(this.t * 2) * 3; ctx.globalAlpha = 0.55 + 0.15 * Math.sin(this.t * 3); hi(this.x, y, false, () => { D(-12, -44, 24, 36, '#cfe0ff'); D(-14, -10, 6, 8, '#cfe0ff'); D(-4, -10, 6, 10, '#cfe0ff'); D(8, -10, 6, 7, '#cfe0ff'); D(-10, -56, 20, 14, '#e8f0ff'); D(-6, -50, 3, 4, '#3a4a7a'); D(3, -50, 3, 4, '#3a4a7a'); D(-3, -44, 6, 3, '#3a4a7a'); D(-16, -36, 6, 4, '#c8a040'); }); ctx.globalAlpha = 1; }
+  draw() { const y = this.y - 6 + Math.sin(this.t * 2) * 3; if (IMG.pl_fantome) { drawPL('fantome', this.x, y, plFace(this), this.t, 0.62 + 0.14 * Math.sin(this.t * 3)); return; } ctx.globalAlpha = 0.55 + 0.15 * Math.sin(this.t * 3); hi(this.x, y, false, () => { D(-12, -44, 24, 36, '#cfe0ff'); D(-14, -10, 6, 8, '#cfe0ff'); D(-4, -10, 6, 10, '#cfe0ff'); D(8, -10, 6, 7, '#cfe0ff'); D(-10, -56, 20, 14, '#e8f0ff'); D(-6, -50, 3, 4, '#3a4a7a'); D(3, -50, 3, 4, '#3a4a7a'); D(-3, -44, 6, 3, '#3a4a7a'); D(-16, -36, 6, 4, '#c8a040'); }); ctx.globalAlpha = 1; }
 }
 
 // ===== 10. le procès du raton laveur =====
