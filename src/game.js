@@ -1,6 +1,9 @@
 'use strict';
 // ---------- le jeu : états, transitions, scènes, rendu du monde ----------
 const DARK_K = 0.62; // < 1 : nuit moins sombre partout (1 = l'obscurité d'origine)
+const NIGHT = 0.40;  // un seul niveau de nuit pour tout le jeu (seules les lumières locales varient)
+// après la victoire finale : plein jour dehors, intérieurs éclairés, souterrains toujours dans la pénombre
+const nightLevel = A => !SAVE.boss6 ? NIGHT : A.rooms || A.secret || /^phare/.test(A.id) ? NIGHT : A.interior ? 0.15 : 0.05;
 const G = {
   state: 'boot', t: 0, areas: {}, area: null, player: null, parts: new Parts(),
   cam: { x: 0, y: 0 }, shake: 0, hitstop: 0, dialog: null, fade: null, slide: null, room: 0,
@@ -172,7 +175,7 @@ const G = {
     const tower = this.area.ents.find(e => e instanceof ClockTower), from = this.prevFragments != null ? this.prevFragments : n - 1;
     if (!tower) return this.playReunion(n);
     tower.shown = from; tower.hand = from; this.camFocus = { x: tower.x, y: tower.y - 70 }; this.updateCam();
-    const darkA = Math.max(0.12, 0.5 - 0.055 * from), darkB = Math.max(0.12, 0.5 - 0.055 * n);
+    const darkA = NIGHT, darkB = NIGHT; // la nuit ne s'éclaircit plus à chaque fragment
     let chimed = false, lit = false;
     this.cut = {
       t: 0,
@@ -219,13 +222,13 @@ const G = {
   finale() {
     this.say(Story.script('kingDown'), () => {
       Story.set('boss6'); SAVE.fragments = 6; persist(); SFX.bigheart();
-      this.fadeTo(() => { this.enter('royaume', Object.assign({ dir: 'up' }, this.areas.royaume.plaza), false); this.darkFrom = 0.2; this.aimTower(60); this.pending = 'sunrise'; }, '#fff2c0');
+      this.fadeTo(() => { this.enter('royaume', Object.assign({ dir: 'up' }, this.areas.royaume.plaza), false); this.darkFrom = NIGHT; this.aimTower(60); this.pending = 'sunrise'; }, '#fff2c0');
     });
   },
   // la pierre du soleil rejoint le cadran de la tour-horloge : les aiguilles filent jusqu'à midi
   sunrise() {
     const tower = this.area.ents.find(e => e instanceof ClockTower); if (!tower) return this.montage();
-    tower.shown = 6; tower.hand = 6; this.camFocus = { x: tower.x, y: tower.y - 60 }; this.updateCam(); this.darkFrom = 0.2;
+    tower.shown = 6; tower.hand = 6; this.camFocus = { x: tower.x, y: tower.y - 60 }; this.updateCam(); this.darkFrom = NIGHT;
     const face = { x: tower.x, y: tower.y - 81 }; let hit = false, chimes = 0;
     this.cut = {
       t: 0,
@@ -233,7 +236,7 @@ const G = {
         const c = this.cut; c.t += dt; this.parts.update(dt); tower.t += dt; if (this.flashT > 0) this.flashT -= dt; if (this.shake > 0) this.shake -= dt; if (tower.glow > 0) tower.glow -= dt * 0.5;
         if (c.t < 2.2) { const k = c.t / 2.2; c.sx = face.x + Math.sin(k * 7) * 40 * (1 - k); c.sy = lerp(face.y - 260, face.y, k * k); if (Math.random() < dt * 50) this.parts.add({ x: c.sx, y: c.sy, vy: -12, vx: rand(-25, 25), life: 0.8, c: pick(['#ffe27a', '#fff', '#ffcf3a']), r: 1.5 }); }
         else if (!hit) { hit = true; SFX.crystal(); SFX.bigheart(); this.flashT = 0.35; this.shake = 0.5; tower.glow = 1.2; this.parts.burst(face.x, face.y, 60, { c: ['#ffe27a', '#fff', '#ffcf3a'], life: 1.4, smin: 30, smax: 180, r: 2, drag: 1.3 }); }
-        if (c.t > 2.4 && c.t < 5.6) { const k = clamp((c.t - 2.4) / 3, 0, 1); tower.hand = lerp(6, 12, k * k * (3 - 2 * k)); this.darkFrom = lerp(0.2, 0, k); if (Math.floor(k * 6) > chimes) { chimes++; SFX.chime(); tower.glow = 1.2; } }
+        if (c.t > 2.4 && c.t < 5.6) { const k = clamp((c.t - 2.4) / 3, 0, 1); tower.hand = lerp(6, 12, k * k * (3 - 2 * k)); this.darkFrom = lerp(NIGHT, 0.05, k); if (Math.floor(k * 6) > chimes) { chimes++; SFX.chime(); tower.glow = 1.2; } }
         if (c.t > 5.6 && !c.noon) { c.noon = true; tower.hand = 12; SFX.bigheart(); this.flashT = 0.3; }
         if (c.t > 8) { this.cut = null; this.state = 'play'; this.say(Story.script('sunrise'), () => this.fadeTo(() => this.montage(), '#fff6e0')); }
       },
@@ -257,7 +260,7 @@ const G = {
       t: 0,
       update: dt => {
         const c = this.cut; c.t += dt; const lt = c.t - cur * D, k = clamp(lt / D, 0, 1); if (this.flashT > 0) this.flashT -= dt;
-        this.camFocus = { x: lerp(p.x0, p.x1, k), y: lerp(p.y0, p.y1, k) }; this.darkFrom = lerp(0.6, 0.02, clamp(lt / 2, 0, 1));
+        this.camFocus = { x: lerp(p.x0, p.x1, k), y: lerp(p.y0, p.y1, k) }; this.darkFrom = lerp(NIGHT, 0.05, clamp(lt / 2, 0, 1));
         if (Math.random() < dt * 20) this.parts.add({ x: this.cam.x + rand(0, W), y: this.cam.y + rand(0, H), vy: -8, vx: rand(-4, 4), life: 1.6, c: pick(['#fff6c0', '#ffe27a']), r: 1 });
         this.parts.update(dt);
         if (lt >= D) { cur++; if (cur >= zones.length) { this.cut = null; this.isMontage = false; this.camFocus = null; this.darkFrom = null; this.fadeTo(() => { this.enter('camp', this.areas.camp.dawn, false); this.pending = 'campDawn'; }, '#fff2c0'); return; } go(cur); p = pan(this.area); SFX.chime(); }
@@ -495,9 +498,9 @@ const G = {
     const A = this.area, l = this.lctx, L = this.lightsList(cx, cy);
     l.setTransform(1, 0, 0, 1, 0, 0); l.globalCompositeOperation = 'source-over';
     l.clearRect(0, 0, W * SC, H * SC);
-    const rd = this.darkFrom != null ? this.darkFrom : A.roomDark ? A.roomDark(this.room) : null;
+    const rd = this.darkFrom != null ? this.darkFrom : nightLevel(A);
     // DARK_K : luminosité globale (le voile de nuit est atténué partout)
-    l.fillStyle = `rgba(4,8,26,${((rd != null ? rd : A.dark) * DARK_K).toFixed(3)})`;
+    l.fillStyle = `rgba(4,8,26,${(rd * DARK_K).toFixed(3)})`;
     l.fillRect(0, 0, W * SC, H * SC);
     l.globalCompositeOperation = 'destination-out';
     for (const o of L) {
