@@ -21,7 +21,16 @@ Object.assign(INTERIORS, {
     put('table', 14, 9.2, { food: true }); put('barrel', 2, 9.4); put('barrel', 3.2, 9.6); put('rug', 9.5, 9.4, { color: '#8a3a2a' });
     npc(A, 12, 8.6, { hero: () => Heroes.captive(1), talk: 'enfant1', when: 'freed3&!boss6' }); // après la fin, la famille est au camping
   } },
-  bibliotheque: { name: 'La bibliothèque', w: 20, h: 11, build(put, at, A) {
+  // la maison du sage est peinte (assets/maps/biblio.png) : le bureau, les rayonnages et la cheminée sont dans l'image
+  bibliotheque: { name: 'La bibliothèque', w: 20, h: 11, paint: 'biblio',
+    lights: [[21.5, 9.6, 80], [17, 5, 40], [26.5, 5, 40], [16.4, 8.2, 30], [27, 8.2, 30], [4, 7.4, 26]],
+    shelves: [[8.5, 11.2, 4], [33, 11.2, 3]],
+    people(put, at, A) {
+      const sage = npc(A, 22.5, 11.9, { look: 'sage', fn: sageTalk });
+      A.ents.push(new TalkSpot(22.5 * TS, 16.6 * TS, 9 * TS, sage)); // devant le bureau : on lui parle par-dessus
+      npc(A, 11.5, 13.6, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4&!boss6' });
+    },
+    build(put, at, A) {
     for (const x of [3, 7, 13, 17]) put('shelf', x, 3.2);
     put('rug', 10, 8.6, { color: '#3a4a8a' }); put('table', 10, 6.2, { candle: true }); put('books', 6, 7.4); put('lamp', 2, 8.6); put('plant', 18, 9.4);
     npc(A, 10, 5.2, { look: 'sage', fn: sageTalk });

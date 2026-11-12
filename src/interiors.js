@@ -186,6 +186,7 @@ class ShopItem {
 const INTERIORS = {};
 function interiorArea(id, house, fromArea) {
   const def = INTERIORS[id], w = def.w || 18, h = def.h || 11;
+  if (def.paint && PAINTED[def.paint] && IMG['map_' + def.paint]) return paintedInterior(id, def, house, fromArea);
   const g = makeGrid(w, h, '_'), { rect } = gridTools(g);
   rect(0, 0, w, 2, 'W'); rect(0, 0, 1, h, 'W'); rect(w - 1, 0, 1, h, 'W'); rect(0, h - 1, w, 1, 'W');
   rect(Math.floor(w / 2) - 1, h - 1, 2, 1, 'D');
@@ -203,6 +204,30 @@ function interiorArea(id, house, fromArea) {
   };
   return A;
 }
+// intérieur peint (image + grille de l'Atelier Collisions) : la sortie est la case '1', le décor est dans l'image
+function paintedInterior(id, def, house, fromArea) {
+  const k = def.paint, g = PAINTED[k].map(r => r.split(''));
+  const A = new Area('in_' + id, g, 'house');
+  A.interior = true; A.name = def.name; A.dark = def.dark != null ? def.dark : 0.22; A.paint = 'map_' + k;
+  const door = []; g.forEach((r, y) => r.forEach((c, x) => { if (c === '1') door.push([x, y]); }));
+  const top = Math.min(...door.map(d => d[1])), xs = door.filter(d => d[1] === top).map(d => d[0]);
+  A.start = def.start ? { x: def.start[0] * TS, y: def.start[1] * TS, dir: 'up' } : { x: ((Math.min(...xs) + Math.max(...xs) + 1) / 2) * TS, y: top * TS - 4, dir: 'up' };
+  A.wake = A.start;
+  A.exits = { 1: G => { G.enter(fromArea, { x: house.x, y: house.y + 12, dir: 'down' }); } };
+  A.spawn = function () {
+    this.ents = [];
+    for (const o of OVERHEAD[k] || []) this.ents.push(new Overhead('map_' + k + '_dessus', o));
+    for (const [x, y, r] of def.lights || []) this.ents.push(new LightSpot(x * TS, y * TS, { r, c: 'rgba(255,200,120,' }));
+    for (const [x, y, w] of def.shelves || []) this.ents.push(new ShelfSpot(x * TS, y * TS, w * TS));
+    const put = (kind, tx, ty, o) => { const f = new Furniture(tx * TS, ty * TS, kind, o); this.ents.push(f); return f; };
+    if (def.people) def.people.call(this, put, null, this);
+  };
+  return A;
+}
+// les rayonnages peints : on y lit les mêmes livres que dans les bibliothèques dessinées
+class ShelfSpot { constructor(x, y, w) { this.x = x; this.y = y; this.w = w; this.h = 10; this.solid = false; } canInteract() { return true; } interact(G) { readShelf(G); } update() {} draw() {} }
+// parler à quelqu'un par-dessus un grand meuble peint (le bureau du sage)
+class TalkSpot { constructor(x, y, w, who) { this.x = x; this.y = y; this.w = w; this.h = 10; this.solid = false; this.who = who; } canInteract() { return !this.who.dead; } interact(G) { this.who.interact(G); } update() {} draw() {} }
 // étals d'une boutique alignés sur une rangée
 function shopRow(A, shop, tx, ty, gap = 3) {
   const def = Shop.def(shop); let i = 0;

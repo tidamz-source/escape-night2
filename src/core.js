@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.5.6';
+const VERSION = 'v8.5.7';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -64,7 +64,7 @@ function loadAssets() {
   for (const f of FACES) jobs.push(loadImage('face_' + f, `assets/faces/${f}.png?v=${VERSION}`));
   for (const k of NPC_SPRITES) jobs.push(loadImage('npc_' + k, `assets/npc/${k}.png?v=${VERSION}`));
   for (const k of SWIMMERS) for (const i of [0, 1]) jobs.push(loadImage('swim_' + k + i, `assets/swim/${k}${i}.png?v=${VERSION}`));
-  for (const k of ['royaume']) { jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); jobs.push(loadImage('map_' + k + '_dessus', `assets/maps/${k}_dessus.png?v=${VERSION}`)); }
+  for (const k of ['royaume', 'biblio']) { jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); jobs.push(loadImage('map_' + k + '_dessus', `assets/maps/${k}_dessus.png?v=${VERSION}`)); }
   for (const [k, f] of Object.entries(WANG_FILES)) jobs.push(loadImage('wang_' + k, `assets/tiles/${f}.png?v=${VERSION}`));
   jobs.push(loadData());
   return Promise.all(jobs);

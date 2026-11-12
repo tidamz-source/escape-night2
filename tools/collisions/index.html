@@ -151,7 +151,7 @@ details summary{cursor:pointer;font-size:12.5px;color:var(--mute)}
       <h2>Exporter</h2>
       <button class="btn pri" id="bZip">Télécharger le pack (.zip)</button>
       <div class="grid2"><button class="btn" id="cGrid">Copier la grille</button><button class="btn" id="cOver">Copier OVERHEAD</button><button class="btn" id="cDoors">Copier les portes</button><button class="btn" id="bCtrl">Image de contrôle</button></div>
-      <p class="hint">Le pack contient la grille, l'atlas des découpes (PNG), leurs coordonnées OVERHEAD, les portes, l'image de contrôle et le projet pour reprendre plus tard.</p>
+      <p class="hint">Le pack contient la carte peinte, la grille, l'atlas des découpes (PNG), leurs coordonnées OVERHEAD, les portes, l'image de contrôle et le projet pour reprendre plus tard.</p>
     </div>
     <div class="sec">
       <h2>Importer</h2>
@@ -545,9 +545,9 @@ $('#bZip').onclick = async () => {
   try {
     const z = new JSZip(), at = buildAtlas();
     z.file('collisions.txt', gridText() + '\n'); z.file('overhead.txt', overText(at.over) + '\n'); z.file('portes.txt', doorsText() + '\n');
-    z.file(`${P.key}_dessus.png`, await toBlob(at.cnv)); z.file(`${P.key}_controle.png`, await toBlob(controlCanvas()));
+    z.file(`${P.key}.png`, await toBlob(IMG)); z.file(`${P.key}_dessus.png`, await toBlob(at.cnv)); z.file(`${P.key}_controle.png`, await toBlob(controlCanvas()));
     z.file('projet.json', JSON.stringify(projectJSON(), null, 1));
-    z.file('LISEZMOI.txt', `Pack de collisions « ${P.key} »\n\ncollisions.txt : la grille (${P.cols}×${P.rows} cases de ${P.ts} px). . sol, # mur, ~ eau, h obstacle bas, 1-9 sorties.\n${P.key}_dessus.png : l'atlas des découpes qui passent devant le héros, empilées verticalement.\noverhead.txt : pour chaque découpe, sy/w/h dans l'atlas, x/y de dessin et base (ligne de tri) en pixels de jeu (carte ÷ ${P.scale}).\nportes.txt : les seuils de porte en cases (x peut valoir n,5).\nprojet.json : à rouvrir dans l'Atelier Collisions avec la même carte.\n`);
+    z.file('LISEZMOI.txt', `Pack de collisions « ${P.key} »\n\n${P.key}.png : la carte peinte (le décor).\ncollisions.txt : la grille (${P.cols}×${P.rows} cases de ${P.ts} px). . sol, # mur, ~ eau, h obstacle bas, 1-9 sorties.\n${P.key}_dessus.png : l'atlas des découpes qui passent devant le héros, empilées verticalement.\noverhead.txt : pour chaque découpe, sy/w/h dans l'atlas, x/y de dessin et base (ligne de tri) en pixels de jeu (carte ÷ ${P.scale}).\nportes.txt : les seuils de porte en cases (x peut valoir n,5).\nprojet.json : à rouvrir dans l'Atelier Collisions avec la même carte.\n`);
     save(`${P.key}_collisions.zip`, await z.generateAsync({ type: 'blob' }));
   } finally { b.textContent = 'Télécharger le pack (.zip)'; b.disabled = false; }
 };
