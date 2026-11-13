@@ -58,8 +58,17 @@ function drawPL(key, x, y, di, t, alpha = 1, scale = 1) {
 // o : { flip, rot, alpha, foot (marge sous les pieds, en px d'image), flash (silhouette blanche quand il est touché) }
 const WHITE = {};
 function whiteOf(key) { if (WHITE[key]) return WHITE[key]; const im = IMG[key], c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); return (WHITE[key] = c); }
+// marge transparente sous chaque case (calculée une fois) : pour poser les pieds pile sur l'ombre
+const FOOT = {};
+function cellFoot(key, col, row, cw, ch) {
+  const id = key + ':' + col + ':' + row; if (FOOT[id] != null) return FOOT[id];
+  const im = IMG[key], c = document.createElement('canvas'); c.width = cw; c.height = ch; const x = c.getContext('2d'); x.drawImage(im, col * cw, row * ch, cw, ch, 0, 0, cw, ch);
+  let d; try { d = x.getImageData(0, 0, cw, ch).data; } catch (_) { return (FOOT[id] = 0); }
+  for (let yy = ch - 1; yy >= 0; yy--) for (let xx = 0; xx < cw; xx++) if (d[(yy * cw + xx) * 4 + 3] > 40) return (FOOT[id] = ch - 1 - yy);
+  return (FOOT[id] = 0);
+}
 function drawCell(key, col, row, cw, ch, x, y, k, o = {}) {
-  const im = IMG[key]; if (!im) return false; const w = cw * k, h = ch * k, dy = -h + (o.foot || 0) * k;
+  const im = IMG[key]; if (!im) return false; const foot = o.foot === 'auto' ? cellFoot(key, col, row, cw, ch) : (o.foot || 0), w = cw * k, h = ch * k, dy = -h + foot * k;
   ctx.save(); ctx.translate(half(x), half(y)); if (o.flip) ctx.scale(-1, 1); if (o.rot) ctx.rotate(o.rot);
   ctx.globalAlpha = o.alpha != null ? o.alpha : 1; ctx.drawImage(im, col * cw, row * ch, cw, ch, -w / 2, dy, w, h);
   if (o.flash) { ctx.globalAlpha = 0.85; ctx.drawImage(whiteOf(key), col * cw, row * ch, cw, ch, -w / 2, dy, w, h); }
@@ -78,7 +87,7 @@ function drawMob(e, key, o = {}) {
   let col = e._di, row = 0;
   if (o.pose && m.pose) row = 9; else if (m.n && (mv || o.anim)) { row = 1 + e._di; col = Math.floor((e.t || 0) * (o.fps || 10)) % m.n; }
   if (o.sh !== 0) ell(e.x, e.y, o.sh || 6, 2, 'rgba(0,0,0,.3)');
-  drawCell('mob_' + key, col, row, m.c, m.c, e.x, e.y - (o.alt || 0), (o.scale || 1) * (e.isMini ? 1 : m.k || MOB_K) / 1.4, { foot: m.foot, flash: e.flash > 0, alpha: o.alpha });
+  drawCell('mob_' + key, col, row, m.c, m.c, e.x, e.y - (o.alt || 0), (o.scale || 1) * (e.isMini ? 1 : m.k || MOB_K) / 1.4, { foot: o.alt ? m.foot : 'auto', flash: e.flash > 0, alpha: o.alpha }); // au sol : les pieds pile sur l'ombre
   if (e.stunT > 0) for (let i = 0; i < 3; i++) { const a = (e.t || 0) * 5 + i * 2.1; R(half(e.x + Math.cos(a) * 7), half(e.y - (o.alt || 0) - (e.isMini ? 34 : 26) + Math.sin(a) * 2), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
   return true;
 }
