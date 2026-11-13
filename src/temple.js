@@ -36,6 +36,7 @@ class Crab extends Enemy { // crabe : file de côté vers le héros, pince quand
     this.touch(G);
   }
   draw() {
+    if (drawMob(this, 'crab', { fps: 14, sh: 8 })) return;
     ell(this.x, this.y, 8, 2.5, 'rgba(0,0,0,.35)');
     const fl = this.flash > 0, f = Math.floor(this.t * 12) % 2, c1 = fl ? '#fff' : '#d8503a', c2 = fl ? '#fff' : '#ff8a6a';
     hi(this.x, this.y, false, () => {
@@ -68,6 +69,7 @@ class Eel extends Enemy { // anguille : sort de l'eau, crache une bulle, replong
   draw() {
     if (this.up < 0.05) { if (this.wet && Math.sin(this.t * 4) > 0.5) R(half(this.x - 2), half(this.y - 3), 4, 1, '#cfe0ff'); return; }
     const fl = this.flash > 0, k = this.up, wv = Math.sin(this.t * 6) * 2;
+    if (IMG.mob_eel) { ctx.save(); ctx.beginPath(); ctx.rect(this.x - 24, this.y - 70, 48, 67); ctx.clip(); drawMob(this, 'eel', { pose: this.state === 'spit', alt: -(1 - k) * 34, sh: 0 }); ctx.restore(); R(half(this.x - 9), half(this.y - 3), 18, 2, 'rgba(207,224,255,.6)'); return; } // elle sort de l'eau
     ctx.save(); ctx.beginPath(); ctx.rect(this.x - 20, this.y - 60, 40, 58); ctx.clip();
     hi(this.x + wv * 0.3, this.y + (1 - k) * 30, false, () => {
       const c1 = fl ? '#fff' : '#2a7a5a', c2 = fl ? '#fff' : '#4aaa7a';

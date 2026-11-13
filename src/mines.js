@@ -5,6 +5,7 @@
 class Gnome extends Raccoon { // gnome mineur : casque à lampe, pioche, charge quand on approche
   constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 2; this.loot = 'gnome'; this.poof = ['#c83a3a', '#e8dcc8', '#6a4a3a']; this.light = { r: 34, c: 'rgba(255,220,140,' }; }
   draw() {
+    if (drawMob(this, 'gnome', { pose: this.state === 'warn' || this.state === 'charge', fps: 10, sh: 7 })) return;
     ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)');
     const moving = this.vx || this.vy, f = moving ? Math.floor(this.t * (this.state === 'charge' ? 14 : 7)) % 2 : 0, fl = this.flash > 0, wb = this.state === 'warn' ? Math.sin(this.t * 60) * 0.5 : 0;
     hi(this.x + wb, this.y, this.face < 0, () => {
@@ -32,6 +33,7 @@ class CrystalSpider extends Enemy { // araignée de cristal : bondit vers le hé
     this.touch(G);
   }
   draw() {
+    if (drawMob(this, 'spider', { alt: -this.z, anim: true, fps: 12, sh: 7 })) return;
     ell(this.x, this.y, 6, 2, 'rgba(0,0,0,.35)');
     const fl = this.flash > 0, f = Math.floor(this.t * 10) % 2;
     hi(this.x, this.y + this.z, this.face < 0, () => {

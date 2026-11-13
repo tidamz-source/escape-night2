@@ -108,6 +108,7 @@ class Squirrel extends Enemy { // écureuil : garde ses distances et lance des g
     this.touch(G);
   }
   draw() {
+    if (drawMob(this, 'squirrel', { alt: this.hop > 0 ? Math.sin(this.hop / 0.35 * Math.PI) * 4 : 0, sh: 5 })) return;
     const fl = this.flash > 0, j = this.hop > 0 ? Math.sin(this.hop / 0.35 * Math.PI) * 4 : 0;
     ell(this.x, this.y, 5, 1.8, 'rgba(0,0,0,.35)');
     hi(this.x, this.y - j, this.face < 0, () => {
@@ -122,6 +123,7 @@ class Squirrel extends Enemy { // écureuil : garde ses distances et lance des g
 class Crow extends Bat { // corbeau
   constructor(x, y, room) { super(x, y, room); this.loot = 'bat'; this.poof = ['#1a1a22', '#3a3a4a', '#fff']; }
   draw() {
+    if (drawMob(this, 'crow', { anim: true, fps: 12, alt: this.alt + Math.sin(this.t * 8), sh: 5 })) return;
     ell(this.x, this.y, 5, 1.8, 'rgba(0,0,0,.3)');
     const f = Math.floor(this.t * 12) % 2, fl = this.flash > 0, b = fl ? '#fff' : '#1a1a22', wc = fl ? '#fff' : '#2a2a36';
     hi(this.x, this.y - this.alt + Math.sin(this.t * 8), this.face < 0, () => {

@@ -412,6 +412,7 @@ class Raccoon extends Enemy {
     if (!this.friendly) this.touch(G);
   }
   draw() {
+    if (drawMob(this, 'raccoon', { fps: this.state === 'charge' ? 16 : 10, alt: this.state === 'warn' ? Math.abs(Math.sin(this.t * 30)) : 0, sh: 8 })) return;
     ell(this.x, this.y, 8, 2.5, 'rgba(0,0,0,.35)');
     const moving = this.vx || this.vy, f = moving ? Math.floor(this.t * (this.state === 'charge' ? 16 : 8)) % 2 : 0, wb = this.state === 'warn' ? Math.sin(this.t * 60) * 0.5 : 0;
     const fl = this.flash > 0;
@@ -456,6 +457,7 @@ class Bat extends Enemy {
     this.clampArea(G); this.touch(G);
   }
   draw() {
+    if (drawMob(this, 'bat', { anim: true, fps: 14, alt: this.alt + Math.sin(this.t * 10), sh: 5 })) return;
     ell(this.x, this.y, 5, 1.8, 'rgba(0,0,0,.3)');
     const f = Math.floor(this.t * 14) % 2, fl = this.flash > 0, b = fl ? '#fff' : '#6a4a86', wc = fl ? '#fff' : '#4a3266', wl = fl ? '#fff' : '#8a6ab0';
     hi(this.x, this.y - this.alt + Math.sin(this.t * 10), false, () => {
@@ -479,6 +481,7 @@ class Shadow extends Enemy {
     this.touch(G);
   }
   draw() {
+    if (drawMob(this, 'shadow', { sh: 9, alpha: 0.92 })) return;
     const sq = Math.sin(this.t * 5), fl = this.flash > 0;
     ell(this.x, this.y, 9, 3, 'rgba(0,0,0,.45)');
     hi(this.x, this.y, this.vx < 0, () => {
@@ -506,6 +509,7 @@ class Wisp extends Enemy {
     this.touch(G);
   }
   draw() {
+    if (IMG.mob_wisp) { ctx.globalAlpha = 0.3; ell(this.x, this.y - this.alt - 14, 11 + Math.sin(this.t * 8), 11 + Math.sin(this.t * 8), this.cd < 0.5 ? '#ffffff' : '#6fd3ff'); ctx.globalAlpha = 1; drawMob(this, 'wisp', { anim: true, fps: 12, alt: this.alt + Math.sin(this.t * 3) * 2, sh: 4 }); return; }
     ell(this.x, this.y, 4, 1.5, 'rgba(0,0,0,.3)');
     const y = this.y - this.alt + Math.sin(this.t * 3) * 2, fl = this.flash > 0, charge = this.cd < 0.5;
     ctx.globalAlpha = 0.35; ell(this.x, y - 2, 9 + Math.sin(this.t * 8), 9 + Math.sin(this.t * 8), '#6fd3ff'); ctx.globalAlpha = 1;
