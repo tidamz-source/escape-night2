@@ -4,7 +4,7 @@
 // icônes d'objets (centrées sur x, y)
 function drawItemIcon(id, x, y, s = 1) {
   id = id || '';
-  const im = IMG['item_' + ({ vide: 'bouteille', key: 'cle', petards5: 'petards' }[id] || id)];
+  const im = IMG['item_' + ({ vide: 'bouteille', key: 'cle', money: 'ecu1', cailloux10: 'cailloux', pelote: 'troc_laine', heart: 'coeur' }[id] || id)];
   if (im) { const k = Math.min(0.6, 16 / Math.max(im.width, im.height)) * s, w = im.width * k, h = im.height * k; ctx.drawImage(im, Math.round((x - w / 2) * 2) / 2, Math.round((y - h / 2) * 2) / 2, w, h); return; }
   if (typeof EXTRA_ICONS !== 'undefined' && EXTRA_ICONS[id]) return EXTRA_ICONS[id](x, y, s);
   if (MATS[id]) return drawMatIcon(id, x, y, s);

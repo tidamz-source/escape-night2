@@ -65,14 +65,20 @@ class Scratches {
 // ---------- ramassables ----------
 // cœurs, pièces et cailloux : rebondissent puis clignotent avant de disparaître
 const PICKUPS = {
-  heart:  { draw: (x, y) => drawHeartShape(x, y - 5, 2, PAL.heart, '#c02848'), take: G => { G.healBy(2); SFX.pickup(); } },
-  coin1:  { draw: (x, y, t) => drawCoin(x, y - 4, '#c8a060', '#8a6a3a', t), take: () => { Wallet.add(1); SFX.coin(); } },
-  coin5:  { draw: (x, y, t) => drawCoin(x, y - 4, '#d8dce8', '#8a90a8', t), take: () => { Wallet.add(5); SFX.coin(); } },
-  coin20: { draw: (x, y, t) => drawCoin(x, y - 4, '#ffd23a', '#c08a10', t), take: () => { Wallet.add(20); SFX.coin(); } },
+  heart:  { draw: (x, y) => pickImg('coeur', x, y - 5, 9) || drawHeartShape(x, y - 5, 2, PAL.heart, '#c02848'), take: G => { G.healBy(2); SFX.pickup(); } },
+  coin1:  { draw: (x, y, t) => pickImg('ecu1', x, y - 4, 7, t) || drawCoin(x, y - 4, '#c8a060', '#8a6a3a', t), take: () => { Wallet.add(1); SFX.coin(); } },
+  coin5:  { draw: (x, y, t) => pickImg('ecu5', x, y - 5, 9) || drawCoin(x, y - 4, '#d8dce8', '#8a90a8', t), take: () => { Wallet.add(5); SFX.coin(); } },
+  coin20: { draw: (x, y, t) => pickImg('ecu20', x, y - 4, 11) || drawCoin(x, y - 4, '#ffd23a', '#c08a10', t), take: () => { Wallet.add(20); SFX.coin(); } },
   mushroom: { draw: (x, y) => { R(x - 1, y - 4, 2, 4, '#e8dcc8'); R(x - 4, y - 7, 8, 3, '#d8504a'); R(x - 3, y - 8, 6, 1, '#e86a5a'); R(x - 2, y - 7, 1, 1, '#fff'); R(x + 1, y - 6, 1, 1, '#fff'); }, take: () => { Inventory.addIngredient('champignons', 1); SFX.pickup(); } },
-  petards: { draw: (x, y) => drawPetardIcon(x, y - 4, 0.7), take: () => { Inventory.addAmmo('petards', 3); SFX.pickup(); } },
-  stones: { draw: (x, y) => { R(x - 4, y - 4, 3, 3, '#8a8698'); R(x - 1, y - 5, 3, 3, '#a8a4b8'); R(x + 1, y - 3, 3, 3, '#7a7688'); R(x - 1, y - 5, 1, 1, '#e0dcf0'); }, take: () => { Inventory.addAmmo('cailloux', 5); SFX.pickup(); } },
+  petards: { draw: (x, y) => pickImg('petards5', x, y - 5, 10) || drawPetardIcon(x, y - 4, 0.7), take: () => { Inventory.addAmmo('petards', 3); SFX.pickup(); } },
+  stones: { draw: (x, y) => { if (pickImg('cailloux', x, y - 3, 9)) return; R(x - 4, y - 4, 3, 3, '#8a8698'); R(x - 1, y - 5, 3, 3, '#a8a4b8'); R(x + 1, y - 3, 3, 3, '#7a7688'); R(x - 1, y - 5, 1, 1, '#e0dcf0'); }, take: () => { Inventory.addAmmo('cailloux', 5); SFX.pickup(); } },
 };
+// sprite PixelLab d'un ramassable (taille max en px logiques) ; t = rotation de la pièce
+function pickImg(k, x, y, max, t) {
+  const im = IMG['item_' + k]; if (!im) return false;
+  const q = max / Math.max(im.width, im.height), w = im.width * q * (t === undefined ? 1 : Math.max(0.15, Math.abs(Math.cos(t * 4)))), h = im.height * q;
+  ctx.drawImage(im, x - w / 2, y - h / 2, w, h); return true;
+}
 function drawCoin(x, y, c, d, t) {
   const w = Math.max(1, Math.round(Math.abs(Math.cos(t * 4)) * 3));
   R(half(x - w), half(y - 3), w * 2, 6, d); R(half(x - w + 0.5), half(y - 3), Math.max(1, w * 2 - 1), 5, c); R(half(x - 0.5), half(y - 2), 1, 1, '#fff');

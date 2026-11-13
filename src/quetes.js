@@ -134,6 +134,7 @@ class QuestThing {
   draw() {
     ell(this.x, this.y, 5, 2, 'rgba(0,0,0,.3)'); const y = this.y - 6 + Math.sin(this.t * 3);
     if (this.kind === 'corde') { ctx.strokeStyle = '#e8d8b0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, y, 4, 0, 5.5); ctx.stroke(); R(half(this.x + 3), half(y - 4), 2, 2, '#c8a040'); }
+    else if (this.kind === 'page' && IMG.item_feuille) drawItemIcon('feuille', this.x, y, 0.7);
     else if (this.kind === 'page') { R(this.x - 4, y - 5, 8, 10, '#f0e8d0'); R(this.x - 3, y - 3, 6, 1, '#8a7a5a'); R(this.x - 3, y - 1, 6, 1, '#8a7a5a'); R(this.x - 3, y + 1, 4, 1, '#8a7a5a'); }
     else if (this.kind === 'plume') drawMatIcon('plume', this.x, y, 0.8);
     else ell(this.x, y, 3, 3, '#ffe27a');
