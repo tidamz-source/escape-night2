@@ -147,7 +147,7 @@ class Chest {
     this.lift = this.big ? 9 : 0; // les gros coffres trônent sur un piédestal à marches, visible même avant que le coffre apparaisse
   }
   get open() { return !!SAVE[this.flag]; }
-  get hidden() { return !!this.reveal && !SAVE[this.reveal]; }
+  get hidden() { const r = this.reveal; return !!r && !(Array.isArray(r) ? r.every(f => SAVE[f]) : SAVE[r]); } // reveal : un drapeau ou une liste de drapeaux
   get solid() { return this.big || !this.hidden; }
   get light() { if (this.beam) return { r: this.big ? 80 : 64, c: 'rgba(255,230,150,', warm: true }; return !this.hidden && !this.open ? { r: this.big ? 44 : 26, c: 'rgba(255,207,122,' } : null; }
   canInteract() { return !this.hidden && !this.open && !this.busy; }

@@ -253,7 +253,7 @@ function buildCastleArea() {
     rooms: { blast: [0, 3], entry: [1, 3], sling: [2, 3], gallery: [3, 3], hook: [0, 2], hall: [1, 2], swim: [2, 2], frisbee: [3, 2], armory: [0, 1], papa: [1, 1], bigkey: [2, 1], king: [1, 0] },
     entry: 'entry', boss: 'king', bossShutter: false, prison: false,
     links: [['entry', 'blast'], ['entry', 'sling'], ['sling', 'gallery'], ['entry', 'hall'], ['hall', 'hook'], ['hall', 'swim'], ['swim', 'frisbee'],
-      ['hall', 'papa', { seal: true }], ['papa', 'armory', { key: 'castleDoor1' }], ['papa', 'bigkey', { shut: () => !SAVE.papaFreed || G.area.arenaOn === G.area.h.R.papa }], ['papa', 'king', { big: true }]],
+      ['hall', 'papa', { seal: true }], ['papa', 'armory', { key: 'castleDoor1' }], ['papa', 'bigkey', { shut: () => !SAVE.papaFreed || G.area.arenaOn === G.area.h.R.papa || G.area.arenaOn === G.area.h.R.bigkey }], ['papa', 'king', { big: true }]],
     tiles(room) {
       const b = room('blast'); b.rect(14, 2, 2, 13, 'W'); b.rect(14, 7, 2, 2, '_');
       const s = room('sling'); s.rect(10, 2, 5, 13, 'v');
@@ -267,9 +267,11 @@ function buildCastleArea() {
     },
     syncTiles() { const want = SAVE.castleBridge ? 'b' : 'v'; let ch = false; for (let y = br.y; y < br.y + 2; y++) for (let x = br.x; x < br.x + 5; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; ch = true; } if (ch) this.rerender(); },
     arenas: {
+      bigkey: { flag: 'arenaCBK', onStart(G) { G.banner = { text: 'Le Garde noir', t: 2 }; } },
       papa: { flag: 'papaFight', onStart(G) { const b = G.area.ents.find(e => e.isBoss && e.room === G.room); if (b) G.say(Story.script('papaIntro'), () => b.wake(G)); G.banner = { text: 'Le Chevalier Minuit', t: 2.2 }; }, onClear(G) { G.say(Story.script('papaFreed'), () => { Story.set('papaFreed'); }); } },
       king: { flag: 'boss6', onStart(G) { const b = G.area.ents.find(e => e.isBoss && e.room === G.room); if (b) G.say(Story.script('kingIntro'), () => b.wake(G)); G.banner = { text: 'Le Roi Minuit', t: 2.2 }; }, onClear(G) { G.finale(); } },
     },
+    migrate() { if (SAVE.castleBigKey) SAVE.arenaCBK = true; },
     after(A, h) { A.roomDark = room => room === h.R.king && SAVE.boss6 ? 0.05 : null; },
     make(n, L, h) {
       const { mk } = h, pot = (x, y) => h.pot(n, x, y);
@@ -282,7 +284,7 @@ function buildCastleArea() {
       if (n === 'swim') L.push(mk(Eel, n, 9, 5), mk(Eel, n, 21, 11), mk(Eel, n, 20, 5));
       if (n === 'frisbee') L.push(mk(Gargoyle, n, 8, 11), mk(Gargoyle, n, 21, 11), mk(SkeletonKnight, n, 14, 10), pot(4, 13), pot(25, 13));
       if (n === 'armory') L.push(mk(SkeletonKnight, n, 10, 8), mk(SkeletonKnight, n, 19, 8), pot(3, 3), pot(26, 3), pot(3, 13), pot(26, 13), pot(14, 13));
-      if (n === 'bigkey') L.push(mk(Wisp, n, 6, 4), mk(Wisp, n, 23, 4), pot(3, 13), pot(26, 13));
+      if (n === 'bigkey') { L.push(pot(3, 13), pot(26, 13)); if (!SAVE.arenaCBK) L.push(mk(Wisp, n, 6, 4), mk(Wisp, n, 23, 4), mk(BlackGuard, n, 14, 7)); } // le Garde noir et deux feux follets
       if (n === 'papa') { if (!SAVE.papaFight) { const p = h.pos(n, 240, 120); L.push(new MidnightKnight(p.x, p.y, h.R.papa)); } L.push(pot(3, 12), pot(26, 12)); }
       if (n === 'king') { if (!SAVE.boss6) { const p = h.pos(n, 240, 110); L.push(new MidnightKing(p.x, p.y, h.R.king)); } L.push(pot(3, 12), pot(26, 12), pot(3, 4), pot(26, 4)); }
     },
@@ -310,7 +312,7 @@ function buildCastleArea() {
         ['papa', new Shutter(door('papa', 'S').x, door('papa', 'S').y, 'v', () => G.area.arenaOn === R.papa)],
         ['armory', mk(Chest, 'armory', 14, 7, { flag: 'castleHeart', give: 'piece_coeur', big: true, msg: null })],
         ...clocks('bigkey', [[4, 8]]), ...[[120, 90, 1, 1], [360, 90, -1, 1], [150, 200, 1, -1], [330, 200, -1, -1]].map(([x, y, sx, sy]) => ['bigkey', new BounceBlade(P('bigkey', x, y).x, P('bigkey', x, y).y, sx, sy, 95)]),
-        ['bigkey', mk(Chest, 'bigkey', 24, 8, { flag: 'castleBigKey', give: 'bigkey:castle', big: true, msg: [{ text: 'La grande clé du château ! Elle ouvre la salle du trône.' }] })],
+        ['bigkey', mk(Chest, 'bigkey', 24, 8, { flag: 'castleBigKey', give: 'bigkey:castle', big: true, reveal: 'arenaCBK', msg: [{ text: 'La grande clé du château ! Elle ouvre la salle du trône.' }] })],
         ['king', new Shutter(door('king', 'S').x, door('king', 'S').y, 'v', () => G.area.arenaOn === R.king)],
         ['king', new PapaAlly(P('king', 120, 220).x, P('king', 120, 220).y)],
         ...clocks('king', [[5, 8], [24, 8]]),

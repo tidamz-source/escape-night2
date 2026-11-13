@@ -33,6 +33,21 @@ class SkeletonKnight extends Enemy { // chevalier squelette : son bouclier pare 
     if (this.stunT > 0) return;
   }
 }
+// mini-boss du Château : le Garde noir, un chevalier squelette géant ; son bouclier pare de face, il faut le prendre à revers
+class BlackGuard extends SkeletonKnight {
+  constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 8; this.w = 20; this.h = 8; this.loot = 'pot'; this.isMini = true; this.ccd = 2.5; this.dash = 0; }
+  body() { return { x: this.x - 16, y: this.y - 60, w: 32, h: 60 }; }
+  update(dt, G) {
+    if (this.dash > 0) { if (this.physics(dt, G)) return; this.t += dt; this.dash -= dt; const h1 = moveEnt(G.area, this, Math.cos(this.fa) * 150 * dt, 0, { noExit: true }), h2 = moveEnt(G.area, this, 0, Math.sin(this.fa) * 150 * dt, { noExit: true }); if (h1 || h2) { this.dash = 0; this.stunT = 1.2; G.shake = 0.2; SFX.tink(); } this.touch(G); return; }
+    super.update(dt, G); if (this.dead || this.stunT > 0) return;
+    this.ccd -= dt; if (this.ccd <= 0 && dist(G.player.x, G.player.y, this.x, this.y) < 160) { this.ccd = this.hp <= 4 ? 2 : 3; this.dash = 0.55; SFX.roar(); } // il fonce : s'il percute un mur, il est sonné
+  }
+  draw() {
+    ctx.save(); ctx.translate(this.x, this.y); ctx.scale(1.4, 1.4); ctx.translate(-this.x, -this.y); super.draw(); ctx.restore();
+    if (this.stunT > 0) for (let i = 0; i < 3; i++) { const a = this.t * 5 + i * 2.1; R(half(this.x + Math.cos(a) * 10), half(this.y - 82 + Math.sin(a) * 3), 2, 2, '#ffe27a'); }
+    if (this.hp < this.maxHp) { R(half(this.x - 14), half(this.y - 88), 28, 2, 'rgba(7,13,31,.8)'); R(half(this.x - 14), half(this.y - 88), 28 * Math.max(0, this.hp) / this.maxHp, 2, '#b49aff'); }
+  }
+}
 class Gargoyle extends Bat { // gargouille : une statue qui s'éveille quand on s'approche
   constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 2; this.awake = false; this.loot = 'gargoyle'; this.poof = ['#5a5468', '#8a8498', '#2a2438']; }
   get solid() { return !this.awake; }
@@ -53,6 +68,22 @@ class Gargoyle extends Bat { // gargouille : une statue qui s'éveille quand on 
       if (f) { D(-24, -12, 16, 6, w); D(8, -12, 16, 6, w); } else { D(-22, -20, 14, 6, w); D(8, -20, 14, 6, w); }
       D(-8, -14, 16, 14, c); D(-6, -22, 12, 9, '#6a6478'); D(-4, -18, 2, 2, '#ff7a1a'); D(2, -18, 2, 2, '#ff7a1a'); D(-6, -26, 3, 4, c); D(3, -26, 3, 4, c);
     });
+  }
+}
+// mini-boss de la Tour : la Grande Gargouille, statue géante qui garde la grande clé ; elle crache des éclats de pierre
+class BigGargoyle extends Gargoyle {
+  constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 8; this.alt = 22; this.w = 18; this.h = 10; this.fcd = 2.2; this.loot = 'pot'; this.isMini = true; }
+  body() { return this.awake ? { x: this.x - 14, y: this.y - this.alt - 16, w: 28, h: 24 } : { x: this.x - 20, y: this.y - 50, w: 40, h: 50 }; }
+  update(dt, G) {
+    const was = this.awake; super.update(dt, G); if (!this.awake || this.dead || this.stunT > 0 || this.kb.t > 0) return;
+    if (!was) G.banner = { text: 'La Grande Gargouille', t: 2 };
+    this.fcd -= dt; const P = G.player;
+    if (this.fcd <= 0 && this.state !== 'swoop') { this.fcd = this.hp <= 4 ? 1.6 : 2.4; SFX.shoot(); const a = Math.atan2(P.y - this.y, P.x - this.x); for (const o of [-0.35, 0, 0.35]) { const r = new Rock(this.x, this.y - 14, a + o); r.room = this.room; G.area.ents.push(r); } }
+  }
+  draw() {
+    ctx.save(); ctx.translate(this.x, this.y); ctx.scale(1.8, 1.8); ctx.translate(-this.x, -this.y);
+    const al = this.alt; this.alt = al / 1.8; super.draw(); this.alt = al; ctx.restore();
+    if (this.awake && this.hp < this.maxHp) { R(half(this.x - 14), half(this.y - this.alt - 36), 28, 2, 'rgba(7,13,31,.8)'); R(half(this.x - 14), half(this.y - this.alt - 36), 28 * Math.max(0, this.hp) / this.maxHp, 2, '#ff9a3a'); }
   }
 }
 class Barrel { // tonneau de poudre : explose avec un pétard (et casse tout autour)
@@ -167,7 +198,8 @@ function buildTowerArea() {
       const t = room('torches'); t.rect(9, 3, 12, 1, 'W'); t.rect(9, 3, 1, 4, 'W'); t.rect(20, 3, 1, 4, 'W');
       for (const [x, y] of [[8, 6], [21, 6], [8, 11], [21, 11]]) room('bigkey').set(x, y, 'k');
     },
-    arenas: { arena: arenaStd('arenaR'), boss: bossArena('boss5', 'Le Chevalier de fer') },
+    arenas: { arena: arenaStd('arenaR'), bigkey: { flag: 'arenaRBK' }, boss: bossArena('boss5', 'Le Chevalier de fer') },
+    migrate() { if (SAVE.towerBigKey) SAVE.arenaRBK = true; },
     make(n, L, h) {
       const { mk } = h, pot = (x, y) => h.pot(n, x, y);
       if (n === 'entry') L.push(pot(4, 13), pot(25, 13), mk(SkeletonKnight, n, 20, 9), mk(Gargoyle, n, 9, 6));
@@ -176,7 +208,7 @@ function buildTowerArea() {
       if (n === 'hub') L.push(mk(SkeletonKnight, n, 20, 6), pot(25, 13), pot(25, 3), mk(Barrel, n, 22, 10), mk(Barrel, n, 12, 4));
       if (n === 'torches') L.push(mk(SkeletonKnight, n, 6, 11), mk(Gargoyle, n, 24, 10), pot(4, 13), pot(25, 13));
       if (n === 'balls') L.push(pot(26, 3), pot(26, 13), mk(Gargoyle, n, 4, 13));
-      if (n === 'bigkey') L.push(mk(SkeletonKnight, n, 10, 8), mk(SkeletonKnight, n, 19, 8), pot(3, 3), pot(26, 3));
+      if (n === 'bigkey') { L.push(pot(3, 3), pot(26, 3)); if (!SAVE.arenaRBK) L.push(mk(SkeletonKnight, n, 8, 11), mk(SkeletonKnight, n, 21, 11), mk(BigGargoyle, n, 14, 5)); } // la Grande Gargouille et deux chevaliers squelettes
       if (n === 'gargoyle') L.push(mk(Gargoyle, n, 8, 4), mk(Gargoyle, n, 21, 4), mk(Gargoyle, n, 8, 12), mk(Gargoyle, n, 21, 12), mk(SkeletonKnight, n, 14, 8), pot(3, 13), pot(26, 13));
       if (n === 'secret') L.push(mk(Barrel, n, 8, 6), mk(Barrel, n, 21, 6), pot(3, 3), pot(26, 3), pot(3, 13), pot(26, 13));
       if (n === 'boss') { if (!SAVE.boss5) { const p = h.pos(n, 240, 150); L.push(new IronKnight(p.x, p.y, h.R.boss)); } L.push(pot(3, 12), pot(26, 12), pot(3, 4), pot(26, 4)); }
@@ -197,7 +229,7 @@ function buildTowerArea() {
         ['balls', new Blade(pos('balls', 80, 112).x, pos('balls', 80, 112).y, 1, 0, 320, 90, 'ball')],
         ['balls', new Blade(pos('balls', 400, 208).x, pos('balls', 400, 208).y, -1, 0, 320, 110, 'ball')],
         ['balls', mk(Sign, 'balls', 24, 8, [{ text: '« Ce mur sonne creux. »' }])],
-        ['bigkey', mk(Chest, 'bigkey', 14, 8, { flag: 'towerBigKey', give: 'bigkey:tower', big: true, msg: [{ text: 'La grande clé de la tour ! Elle ouvre la salle du Chevalier de fer.' }] })],
+        ['bigkey', mk(Chest, 'bigkey', 14, 8, { flag: 'towerBigKey', give: 'bigkey:tower', big: true, reveal: 'arenaRBK', msg: [{ text: 'La grande clé de la tour ! Elle ouvre la salle du Chevalier de fer.' }] })],
         ['secret', mk(Chest, 'secret', 14, 8, { flag: 'towerHeart', give: 'piece_coeur', big: true, msg: null })],
         ['gargoyle', mk(Sign, 'gargoyle', 4, 8, [{ text: '« Ici dort la réserve secrète. »' }])],
         ['prison', new Cage(cg.x, cg.y, { n: 5, boss: 'boss5', drawCaptive: (x, y) => { const im = IMG.npc_dog_down; if (im) ctx.drawImage(im, half(x - im.width / 5.2), half(y - im.height / 2.6), im.width / 2.6, im.height / 2.6); } })],

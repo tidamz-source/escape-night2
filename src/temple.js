@@ -2,6 +2,30 @@
 // ---------- donjon 4 : le Temple englouti (palmes et tuba, niveau de l'eau, Reine des remous, enfant n°2) ----------
 
 // ---------- ennemis ----------
+// mini-boss du Temple : le Crabe géant, qui garde le bassin de la grande clé ; il charge de côté et crache des bulles
+class CrabBubble extends Orb {
+  constructor(x, y, a) { super(x, y, a); this.vx *= 0.7; this.vy *= 0.7; this.light = { r: 14, c: 'rgba(150,220,255,' }; }
+  draw() { const y = this.y - this.alt + Math.sin(this.t * 8) * 1.5; ell(this.x, this.y, 2.5, 1, 'rgba(0,0,0,.25)'); R(half(this.x - 3), half(y - 3), 6, 6, 'rgba(160,220,255,.7)'); R(half(this.x - 2), half(y - 2), 2, 2, '#fff'); }
+}
+class GiantCrab extends Enemy {
+  constructor(x, y, room) { super(x, y, { hp: 8, dmg: 1, room }); this.maxHp = 8; this.st = 1; this.bcd = 2; this.w = 28; this.h = 10; this.loot = 'pot'; this.isMini = true; this.poof = ['#d8503a', '#ff8a6a', '#fff']; }
+  body() { return { x: this.x - 20, y: this.y - 30, w: 40, h: 30 }; }
+  update(dt, G) {
+    if (this.physics(dt, G)) return;
+    this.t += dt; this.st -= dt; this.bcd -= dt; const P = G.player, d = dist(P.x, P.y, this.x, this.y);
+    if (this.st <= 0) { this.st = this.hp <= 4 ? rand(0.6, 1) : rand(0.9, 1.4); const a = Math.atan2(P.y - this.y, P.x - this.x); this.vx = Math.cos(a) * (this.hp <= 4 ? 80 : 62); this.vy = Math.sin(a) * 30; }
+    if (this.bcd <= 0) { this.bcd = this.hp <= 4 ? 1.8 : 2.6; SFX.shoot(); const a = Math.atan2(P.y - this.y, P.x - this.x); for (const o of [-0.3, 0.3]) { const b = new CrabBubble(this.x, this.y - 14, a + o); b.room = this.room; G.area.ents.push(b); } }
+    const h1 = moveEnt(G.area, this, this.vx * dt, 0, { noExit: true }), h2 = moveEnt(G.area, this, 0, this.vy * dt, { noExit: true }); if (h1 || h2) this.st = 0;
+    this.touch(G);
+  }
+  draw() {
+    ctx.save(); ctx.translate(this.x, this.y); ctx.scale(1.8, 1.8); ctx.translate(-this.x, -this.y);
+    Crab.prototype.draw.call(this);
+    hi(this.x, this.y, false, () => { D(-6, -20, 3, 3, '#ffd04a'); D(-2, -22, 4, 3, '#ffd04a'); D(3, -20, 3, 3, '#ffd04a'); }); // une petite couronne de coquillages
+    ctx.restore();
+    if (this.hp < this.maxHp) { R(half(this.x - 14), half(this.y - 50), 28, 2, 'rgba(7,13,31,.8)'); R(half(this.x - 14), half(this.y - 50), 28 * Math.max(0, this.hp) / this.maxHp, 2, '#ff6a7a'); }
+  }
+}
 class Crab extends Enemy { // crabe : file de côté vers le héros, pince quand il est près
   constructor(x, y, room) { super(x, y, { hp: 2, dmg: 1, room }); this.st = rand(0.5, 1.5); this.w = 14; this.h = 6; this.loot = 'crab'; this.poof = ['#d8503a', '#ff8a6a', '#fff']; }
   update(dt, G) {
@@ -230,7 +254,8 @@ function buildTempleArea() {
       };
       A.syncTiles();
     },
-    arenas: { arena: arenaStd('arenaT'), boss: bossArena('boss4', 'La Reine des remous') },
+    arenas: { arena: arenaStd('arenaT'), cascade: { flag: 'arenaTBK', when(G) { const rr = G.roomRect(); return G.player.x > rr.x + 11 * TS && G.player.x < rr.x + 18 * TS; }, onStart(G) { G.banner = { text: 'Le Crabe géant', t: 2 }; } }, boss: bossArena('boss4', 'La Reine des remous') },
+    migrate() { if (SAVE.templeBigKey) SAVE.arenaTBK = true; },
     make(n, L, h) {
       const { mk } = h, pot = (x, y) => h.pot(n, x, y);
       if (n === 'entry') L.push(pot(4, 13), pot(25, 13), mk(Crab, n, 6, 10), mk(Crab, n, 23, 10), mk(Eel, n, 12, 4), mk(Eel, n, 18, 5));
@@ -242,7 +267,7 @@ function buildTempleArea() {
       if (n === 'east') L.push(mk(Eel, n, 12, 6), mk(Eel, n, 20, 10), mk(Crab, n, 4, 12));
       if (n === 'bigkey') L.push(mk(Eel, n, 7, 5), mk(Eel, n, 22, 9), mk(Crab, n, 4, 12), mk(Crab, n, 25, 12));
       if (n === 'gallery') L.push(mk(Eel, n, 6, 6), mk(Eel, n, 14, 11), mk(Eel, n, 22, 6), mk(Crab, n, 14, 8), pot(3, 13), pot(26, 13));
-      if (n === 'cascade') L.push(mk(Crab, n, 14, 9), mk(Crab, n, 15, 13), mk(Eel, n, 9, 5), mk(Eel, n, 20, 5), mk(Eel, n, 25, 12), pot(3, 3), pot(3, 13));
+      if (n === 'cascade') { L.push(pot(3, 3), pot(3, 13)); if (!SAVE.arenaTBK) L.push(mk(GiantCrab, n, 14, 8), mk(Crab, n, 12, 12), mk(Crab, n, 16, 4)); else L.push(mk(Crab, n, 14, 9), mk(Eel, n, 9, 5), mk(Eel, n, 20, 5)); } // le Crabe géant garde le bassin de la grande clé
       if (n === 'boss') { const bp = h.pos(n, 15 * TS, 9 * TS), pool = { cx: bp.x, cy: bp.y, rx: 7 * TS - 8, ry: 4 * TS - 6 }; if (!SAVE.boss4) L.push(new WhirlQueen(pool.cx, pool.cy, h.R.boss, pool)); L.push(pot(3, 13), pot(26, 13)); }
     },
     fixed(h) {
@@ -264,7 +289,7 @@ function buildTempleArea() {
         ['bigkey', mk(Sign, 'bigkey', 24, 13, [{ text: '« La clé du bassin de la Reine dort à l\'est, au fond du bassin de la cascade. »' }])],
         ['cascade', mk(Valve, 'cascade', 14, 5)],
         ['cascade', mk(Sign, 'cascade', 4, 7, [{ text: '« Eau haute : on traverse à la nage. Eau basse : le fond du bassin se découvre. Chaque manivelle règle toutes les eaux du temple. »' }])],
-        ['cascade', new Chest(pos('cascade', 22 * TS + 8, 9 * TS).x, pos('cascade', 22 * TS + 8, 9 * TS).y, { flag: 'templeBigKey', give: 'bigkey:temple', big: true, reveal: 'waterLow', msg: [{ text: 'La grande clé du temple ! Elle ouvre le bassin de la Reine.' }] })],
+        ['cascade', new Chest(pos('cascade', 22 * TS + 8, 9 * TS).x, pos('cascade', 22 * TS + 8, 9 * TS).y, { flag: 'templeBigKey', give: 'bigkey:temple', big: true, reveal: ['waterLow', 'arenaTBK'], msg: [{ text: 'La grande clé du temple ! Elle ouvre le bassin de la Reine.' }] })],
         ['gallery', new DiveSpot(pos('gallery', 360, 104).x, pos('gallery', 360, 104).y, 'templeGallery', 'money:50', [{ text: 'Un coffret englouti : 50 écus !' }])],
         ['prison', new Cage(cg.x, cg.y, { n: 4, boss: 'boss4', drawCaptive: (x, y, t) => drawHero(Heroes.captive(2), x, y, 'down', false, t) })],
         ...br('boss', [[4, 3], [25, 3]]), ...br('entry', [[3, 3], [26, 3]]), ...br('hub', [[3, 2], [26, 2]]), ...br('palmes', [[3, 3], [26, 3]]), ...br('arena', [[14, 3]]), ...br('dive', [[26, 4]]),

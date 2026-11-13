@@ -126,7 +126,7 @@ const G = {
     const A = this.area; if (!A.arenas) return;
     const ar = A.arenas[this.room]; if (!ar || SAVE[ar.flag]) return;
     const alive = A.ents.some(e => e.isEnemy && !e.dead && e.room === this.room);
-    if (alive && A.arenaOn !== this.room) {
+    if (alive && A.arenaOn !== this.room && (!ar.when || ar.when(this))) { // ar.when : la bagarre ne commence qu'à cet endroit de la salle
       const rr = this.roomRect(), P = this.player;
       if (P.x > rr.x + 64 && P.x < rr.x + rr.w - 64 && P.y > rr.y + 60 && P.y < rr.y + rr.h - 52) { A.arenaOn = this.room; if (ar.onStart) ar.onStart(this); }
     } else if (!alive) {
