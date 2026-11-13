@@ -296,13 +296,14 @@ function buildCollinesArea() {
   A.spawn = function () {
     this.ents = [];
     for (const h of this.houses) this.ents.push(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)));
+    for (const o of OVERHEAD.collines) this.ents.push(new Overhead('map_collines_dessus', o)); // feuillages, toit et moulin : Sacha passe derrière
     for (const [x, y] of [[44, 14], [50, 20], [60, 31], [30, 47], [66, 47]]) this.ents.push(new Sheep(x * TS, y * TS));
     this.ents.push(new Relay(34 * TS, 30 * TS, 'collines'));
     this.ents.push(Object.assign(new Sign(40 * TS, 11 * TS, [{ text: '« Grotte des lucioles. Ce qui dort au fond craint les cailloux bien lancés. »' }]), { ghost: true })); // panneaux peints
     this.ents.push(Object.assign(new Sign(68 * TS, 22 * TS, [{ text: '« À l\'est : la Montagne et les Mines des gnomes. »' }]), { ghost: true }));
-    this.ents.push(new Sign(5 * TS, 36 * TS, [{ text: '« À l\'ouest : le Sanctuaire des lucioles. »' }]));
+    this.ents.push(new Sign(6 * TS, 25 * TS, [{ text: '« À l\'ouest : le Sanctuaire des lucioles. »' }]));
     for (const [x, y] of [[39, 21], [35, 38]]) this.ents.push(new LightSpot(x * TS + 8, y * TS + 4, { r: 40, c: 'rgba(255,220,150,', oy: -20 })); // les lanternes peintes
-    for (const [x, y] of [[20, 12], [50, 12], [60, 37], [10, 28], [26, 47], [48, 47]]) this.ents.push(new Raccoon(x * TS, y * TS));
+    for (const [x, y] of [[20, 12], [50, 12], [60, 37], [12, 34], [26, 47], [48, 47]]) this.ents.push(new Raccoon(x * TS, y * TS));
     this.ents.push(new Bat(28 * TS, 12 * TS), new Bat(46 * TS, 32 * TS), new Shadow(60 * TS, 10 * TS + 8));
   };
   A.start = ZONE_ARRIVE.collines_from_village;

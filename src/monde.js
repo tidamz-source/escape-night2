@@ -339,7 +339,7 @@ function buildSanctuaire() {
     spawn(A) { A.ents.push(new FireflyShrine(20 * TS, 9 * TS)); A.ents.push(new Sign(24 * TS, 16 * TS, [{ text: '« Sanctuaire des lucioles. Rapportez-y les lucioles égarées. »' }])); } });
   return A;
 }
-ZONE_ARRIVE.collines_from_sanct = { x: 3 * TS, y: 38 * TS + 4, dir: 'right' };
+ZONE_ARRIVE.collines_from_sanct = { x: 5 * TS, y: 28 * TS + 4, dir: 'right' };
 
 // ===== où vont les lucioles, les quarts de cœur et les habitants, à chaque visite =====
 function worldSpawn(A) {
