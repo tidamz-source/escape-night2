@@ -211,7 +211,8 @@ class Chest {
       ctx.restore();
     }
     const gc = IMG.item_grand_coffre;
-    if (this.big && !this.open && gc) { const w = gc.width * 0.62, h = gc.height * 0.62; ctx.drawImage(gc, this.x + (this.jx || 0) - w / 2, by + (this.jy || 0) - h + 2, w, h); if (Math.floor(this.t * 2) % 3 === 0) R(this.x + 6, by - h + 6, 1, 1, '#fff'); return; }
+    const gi = this.open ? IMG.item_grand_coffre_open : gc;
+    if (this.big && gi) { const w = gi.width * 0.62, h = gi.height * 0.62; ctx.drawImage(gi, this.x + (this.jx || 0) - w / 2, by + (this.jy || 0) - h + 2, w, h); if (!this.open && Math.floor(this.t * 2) % 3 === 0) R(this.x + 6, by - h + 6, 1, 1, '#fff'); return; }
     hi(this.x + (this.jx || 0), by + (this.jy || 0), false, () => {
       const gold = this.give.startsWith('bigkey') && !(this.big && gc), g1 = gold ? '#c08a10' : this.big ? (gc ? '#6b3e75' : '#4a6ab0') : '#7a4a24', g2 = gold ? '#ffd23a' : this.big ? (gc ? '#8a5a98' : '#6a8ad0') : '#a06a34', g3 = gold ? '#8a5a10' : this.big ? (gc ? '#45293f' : '#2a3a70') : '#4a2a14', l1 = gold ? '#e0a820' : this.big ? (gc ? '#6b3e75' : '#5a7ac0') : '#8a5a2c', l2 = gold ? '#fff2a0' : this.big ? (gc ? '#8a5a98' : '#8aaae0') : '#b07a3c', l3 = gold ? '#6a4a10' : this.big ? (gc ? '#2e222f' : '#1a2a5a') : '#5a3418';
       D(-15, -18, 30, 18, g1); D(-15, -18, 30, 2, g2); D(-15, -2, 30, 2, g3);

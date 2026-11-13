@@ -1,5 +1,5 @@
 // À chaque déploiement : changer VERSION ici, VERSION dans src/core.js et les ?v= dans index.html.
-const VERSION = 'v8.9.5';
+const VERSION = 'v8.9.6';
 const CACHE = 'escape-night2-' + VERSION;
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
 const SCRIPTS = ['src/core.js', 'src/bus.js', 'src/input.js', 'src/systems/save.js', 'src/systems/heroes.js', 'src/systems/inventory.js', 'src/systems/wallet.js', 'src/systems/shop.js', 'src/systems/story.js', 'src/systems/loot.js', 'src/world.js', 'src/entities.js', 'src/objects.js', 'src/actors.js', 'src/interiors.js', 'src/bois.js', 'src/tools.js', 'src/mines.js', 'src/lac.js', 'src/temple.js', 'src/tower.js', 'src/castle.js', 'src/quests.js', 'src/rpg.js', 'src/dungeon.js', 'src/cave.js', 'src/maps.js', 'src/overworld.js', 'src/houses.js', 'src/areas.js', 'src/monde.js', 'src/quetes.js', 'src/ui.js', 'src/game.js'];
