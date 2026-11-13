@@ -3,6 +3,7 @@
 
 // Papa, dessiné depuis les planches d'Escape Night (9 images par direction : 0 = immobile, 1 à 8 = marche)
 function drawPapa(x, y, dir, moving, t, o = {}) {
+  if (IMG.pl_papa && !o.tint) { drawPL('papa', x, y - (moving ? Math.abs(Math.sin(t * 10)) : 0), { down: 0, right: 2, up: 4, left: 6 }[dir] || 0, t, o.alpha != null ? o.alpha : 1); return; } // sprite PixelLab
   const im = IMG['npc_papa_' + dir]; if (!im) { R(x - 6, y - 40, 12, 40, '#4a6a9a'); return; }
   const fw = im.width / 9, fh = im.height, f = moving ? 1 + Math.floor(t * 10) % 8 : 0, s = o.s || 0.5, w = fw * s, h = fh * s;
   ctx.save(); if (o.alpha != null) ctx.globalAlpha = o.alpha;
@@ -72,9 +73,10 @@ class MidnightKnight extends Enemy {
     if (this.state === 'dying' && Math.floor(this.t * 16) % 2) return;
     ell(this.x, this.y, 9, 3, 'rgba(0,0,0,.4)');
     const moving = this.state === 'walk' || this.state === 'charge', wob = this.state === 'aim' ? Math.sin(this.t * 50) : 0;
-    drawPapa(this.x + wob, this.y, this.dir, moving, this.t * (this.state === 'charge' ? 2 : 1), { tint: this.flash > 0 ? '#ffffff' : '#2a1a5a' });
+    if (IMG.boss_mknight) { const P = G.player, di = this.state === 'charge' ? plDir(Math.cos(this.ca), Math.sin(this.ca)) : plDir(P.x - this.x, P.y - this.y); drawCell('boss_mknight', di, 0, 96, 96, this.x + wob, this.y - (moving ? Math.abs(Math.sin(this.t * 8)) : 0), 0.55, { foot: 2, flash: this.flash > 0 }); }
+    else { drawPapa(this.x + wob, this.y, this.dir, moving, this.t * (this.state === 'charge' ? 2 : 1), { tint: this.flash > 0 ? '#ffffff' : '#2a1a5a' });
     // heaume et cape de minuit
-    hi(this.x + wob, this.y, false, () => { D(-14, -96, 28, 18, '#1a1030'); D(-14, -96, 28, 3, '#4a3a7a'); D(-10, -86, 20, 3, '#c3b3ff'); D(-2, -104, 4, 8, '#c3b3ff'); D(-18, -78, 36, 6, '#2a1d4a'); });
+    hi(this.x + wob, this.y, false, () => { D(-14, -96, 28, 18, '#1a1030'); D(-14, -96, 28, 3, '#4a3a7a'); D(-10, -86, 20, 3, '#c3b3ff'); D(-2, -104, 4, 8, '#c3b3ff'); D(-18, -78, 36, 6, '#2a1d4a'); }); }
     if (this.state === 'dizzy') for (let i = 0; i < 4; i++) { const a = this.t * 5 + i * Math.PI / 2; R(half(this.x + Math.cos(a) * 12), half(this.y - 54 + Math.sin(a) * 3), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
     if (this.state === 'aim') text('!', this.x, this.y - 64, { size: 12, align: 'center', color: PAL.red, bold: true });
   }
@@ -212,6 +214,10 @@ class MidnightKing extends Enemy {
     }
     ell(this.x, this.y, 16, 5, 'rgba(0,0,0,.45)');
     const fl = this.flash > 0, held = this.state === 'held' || this.state === 'down', bob = held ? 0 : Math.sin(this.t * 2) * 2;
+    if (IMG.boss_king) { // sprite PixelLab : tourné vers le héros ; bouclier d'ombre en phase 2
+      const P = G.player; drawCell('boss_king', held ? 0 : plDir(P.x - this.x, P.y - this.y), 0, 128, 128, this.x, this.y - this.alt + bob, 0.5, { foot: 5, flash: fl, rot: held ? Math.sin(this.t * 20) * 0.05 : 0 });
+      if (this.phase === 2 && this.shield && !held) { ctx.globalAlpha = 0.28 + 0.08 * Math.sin(this.t * 4); ell(this.x, this.y - this.alt - 30 + bob, 34, 38, '#2a1d4a'); ctx.globalAlpha = 0.6; ctx.strokeStyle = '#c3b3ff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(this.x, this.y - this.alt - 30 + bob, 34, 38, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
+    } else
     hi(this.x, this.y - this.alt + bob, false, () => {
       const robe = fl ? '#fff' : '#1a1030', robe2 = fl ? '#fff' : '#2a1d4a', trim = '#c3b3ff';
       D(-28, -70, 56, 70, robe); D(-34, -20, 68, 20, robe); D(-28, -70, 56, 4, robe2); D(-2, -66, 4, 64, trim);

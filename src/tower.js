@@ -155,6 +155,12 @@ class IronKnight extends Enemy {
     if (this.state === 'dying' && Math.floor(this.t * 20) % 2) return;
     ell(this.x, this.y, 22, 6, 'rgba(0,0,0,.45)');
     const fl = this.flash > 0, f = this.state === 'walk' ? Math.floor(this.t * 4) % 2 : 0, wob = this.state === 'stagger' ? Math.sin(this.t * 40) * 2 : 0, A = this.armor + (this.phase === 2 ? 2 : 0);
+    if (IMG.boss_iknight) { // sprite PixelLab : tourné vers le héros ; il lève l'épée (léger recul) avant de frapper
+      const P = G.player, up = this.state === 'wind', sl = this.state === 'slash';
+      drawCell('boss_iknight', plDir(P.x - this.x, P.y - this.y), 0, 128, 128, this.x + wob, this.y - f, 0.55, { foot: 3, flash: fl, rot: up ? -0.08 : sl ? 0.1 : 0 });
+      if (this.armor < 4) for (let i = 0; i < 4 - this.armor; i++) if (Math.random() < 0.15) G.parts.add({ x: this.x + rand(-14, 14), y: this.y - rand(30, 60), vy: -12, life: 0.6, c: '#8ab8ff', r: 1 }); // la brume bleue s'échappe des pièces perdues
+      return;
+    }
     hi(this.x + wob, this.y, this.face < 0, () => {
       const steel = fl ? '#fff' : '#9a9eaa', dark = fl ? '#fff' : '#5a5e6a', light = fl ? '#fff' : '#c8ccd8', under = fl ? '#fff' : '#3a2a4a';
       D(-16, -36, 12, 36 - f * 4, dark); D(4, -36, 12, 32 + f * 4, dark); D(-18, -4, 16, 4, '#2a2c34'); D(2, -4, 16, 4, '#2a2c34');

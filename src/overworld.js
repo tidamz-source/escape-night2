@@ -42,7 +42,9 @@ class Decor {
   update(dt) { this.t += dt; }
   canInteract() { return !!this.o.say; }
   interact(G) { G.say(this.o.say); }
-  draw() { if (!this.ground) ell(this.x, this.y, this.w / 2 + 2, 2.5, 'rgba(0,0,0,.35)'); hi(this.x, this.y, !!this.o.flip, () => DECOR[this.kind].draw(this.t, this.o)); }
+  draw() {
+    if (this.kind === 'sheep' && IMG.mob_sheep) { ell(this.x, this.y, 9, 2.5, 'rgba(0,0,0,.35)'); drawCell('mob_sheep', this.o.flip ? 7 : 1, 0, 64, 64, this.x, this.y - (Math.abs(Math.sin(this.t * 2)) > 0.9 ? 1 : 0), MOB_K / 1.4, { foot: 'auto' }); return; } // mouton PixelLab
+    if (!this.ground) ell(this.x, this.y, this.w / 2 + 2, 2.5, 'rgba(0,0,0,.35)'); hi(this.x, this.y, !!this.o.flip, () => DECOR[this.kind].draw(this.t, this.o)); }
 }
 const DECOR = {
   dead: { w: 10, h: 6, draw: () => { D(-4, -60, 8, 60, '#2a1e2a'); D(-4, -60, 3, 60, '#3a2a3a'); D(-22, -50, 20, 4, '#2a1e2a'); D(-22, -62, 4, 14, '#2a1e2a'); D(4, -40, 18, 4, '#2a1e2a'); D(18, -52, 4, 14, '#2a1e2a'); D(-12, -74, 4, 16, '#2a1e2a'); D(6, -70, 4, 12, '#2a1e2a'); } },

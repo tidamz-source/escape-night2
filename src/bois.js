@@ -237,6 +237,10 @@ class GreatOwl extends Enemy {
     const sh = clamp(1 - this.alt / 60, 0.4, 1);
     ell(this.x, this.y, 20 * sh, 5 * sh, 'rgba(0,0,0,.45)');
     const fl = this.flash > 0, air = this.alt > 4, flap = air ? Math.sin(this.t * (this.state === 'swoop' ? 8 : 12)) : 0, down = this.state === 'down';
+    if (IMG.boss_owl) { // sprite PixelLab : tourné vers le héros, il oscille en vol, il bascule au sol quand il est à terre
+      const P = G.player; drawCell('boss_owl', down ? 0 : plDir(P.x - this.x, P.y - this.y), 0, 128, 128, this.x, this.y - this.alt + (air ? flap * 2 : 0), 0.5, { foot: 9, flash: fl, rot: down ? 0.35 : this.state === 'swoop' ? 0.15 : 0 });
+      if (down) for (let i = 0; i < 4; i++) { const a = this.t * 4 + i * Math.PI / 2; R(half(this.x + Math.cos(a) * 16), half(this.y - 50 + Math.sin(a) * 4), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
+    } else
     hi(this.x, this.y - this.alt, false, () => {
       const c1 = fl ? '#fff' : '#7a5a3a', c2 = fl ? '#fff' : '#a07a4a', c3 = fl ? '#fff' : '#f0e0c0', c4 = fl ? '#fff' : '#4a3424';
       if (air) for (const s of [-1, 1]) { // ailes déployées

@@ -46,12 +46,12 @@ function drawPerson(x, y, L, t) {
 }
 
 // PNJ PixelLab : 48 × 48, 8 directions, même échelle que les héros (÷ 1,4) ; les enfants un peu plus petits
-const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 1, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 10, anim: 8, c: 64 }, pierrette: { foot: 1 }, fossoyeur: { foot: 1 }, coquillages: { foot: 1 }, hugo: { foot: 2 }, herboriste: { foot: 3 }, bucheron: { foot: 1 }, gnome: { foot: 2, child: 0.6 }, firmin: { foot: 1 }, gaelle: { foot: 1 }, artificiere: { foot: 1 }, gardien: { foot: 2 }, ermite: { foot: 1 }, vagabond: { foot: 0 }, pauline: { foot: 1, child: 0.78 }, odette: { foot: 2 }, lavandiere: { foot: 1 }, crieur: { foot: 11, anim: 9, c: 68 }, forgeron: { foot: 1, c: 56, child: 0.9 } };
+const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 1, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 10, anim: 8, c: 64 }, pierrette: { foot: 1 }, fossoyeur: { foot: 1 }, coquillages: { foot: 1 }, hugo: { foot: 2 }, herboriste: { foot: 3 }, bucheron: { foot: 1 }, gnome: { foot: 2, child: 0.6 }, firmin: { foot: 1 }, gaelle: { foot: 1 }, artificiere: { foot: 1 }, gardien: { foot: 2 }, ermite: { foot: 1 }, vagabond: { foot: 0 }, pauline: { foot: 1, child: 0.78 }, odette: { foot: 2 }, lavandiere: { foot: 1 }, crieur: { foot: 11, anim: 9, c: 68 }, forgeron: { foot: 1, c: 56, child: 0.9 }, bastien: { foot: 1, child: 0.84 }, pervenche: { foot: 1 }, margot: { foot: 1 }, pecheur: { foot: 2 }, berger: { foot: 1 }, mahaut: { foot: 1 }, gaspard: { foot: 3 }, amandine: { foot: 2 }, claudine: { foot: 2 }, papa: { foot: 2 }, aubergiste: { foot: 2, anim: 2, fps: 0.4 }, lampions: { foot: 2 } };
 const plDir = (dx, dy) => (Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) + 8) % 8; // 0 face, 2 droite, 4 dos, 6 gauche
 function drawPL(key, x, y, di, t, alpha = 1, scale = 1) {
   const im = IMG['pl_' + key], m = PL_NPCS[key]; if (!im || !m) return false;
   const c = m.c || 48, k = scale * (m.child || 1) / 1.4, s = c * k; let sx = di * c, sy = 0;
-  if (m.anim && di === 0) { sx = (Math.floor(t * 6) % m.anim) * c; sy = c; }
+  if (m.anim && di === 0) { sx = (Math.floor(t * (m.fps || 6)) % m.anim) * c; sy = c; }
   ctx.globalAlpha = alpha; ctx.drawImage(im, sx, sy, c, c, half(x - s / 2), half(y - s + m.foot * k), s, s); ctx.globalAlpha = 1; return true;
 }
 // une case d'une planche (boss, monstres) posée par les pieds en (x, y) ; k : échelle (0,5 = 1 pixel d'image par pixel d'écran)
@@ -76,7 +76,7 @@ function drawCell(key, col, row, cw, ch, x, y, k, o = {}) {
 }
 // monstres PixelLab (assets/mobs/<clé>.png) : ligne 0 = 8 directions au repos, lignes 1-8 = animation par direction, ligne 9 = pose spéciale
 const MOB_K = 0.75; // les monstres ordinaires à 75 % (les mini-boss gardent leur taille) ; k : taille propre à un monstre (ombre, squelette : 100 %)
-const MOB_SPR = { raccoon: { c: 64, n: 8, foot: 11 }, bat: { c: 68, n: 9, foot: 16 }, shadow: { k: 1, c: 48, n: 0, foot: 5 }, wisp: { c: 52, n: 9, foot: 8 }, squirrel: { c: 64, n: 8, foot: 12 }, crow: { c: 64, n: 9, foot: 13 }, gnome: { c: 60, n: 8, foot: 9, pose: 1 }, spider: { c: 64, n: 8, foot: 11 }, crab: { c: 60, n: 8, foot: 12 }, eel: { c: 48, n: 0, foot: 4, pose: 1 }, skeleton: { k: 1, c: 68, n: 8, foot: 11, pose: 1 }, gargoyle: { c: 60, n: 9, foot: 11 } };
+const MOB_SPR = { raccoon: { c: 64, n: 8, foot: 11 }, bat: { c: 68, n: 9, foot: 16 }, shadow: { k: 1, c: 48, n: 0, foot: 5 }, wisp: { c: 52, n: 9, foot: 8 }, squirrel: { c: 64, n: 8, foot: 12 }, crow: { c: 64, n: 9, foot: 13 }, gnome: { c: 60, n: 8, foot: 9, pose: 1 }, spider: { c: 64, n: 8, foot: 11 }, crab: { c: 60, n: 8, foot: 12 }, eel: { c: 48, n: 0, foot: 4, pose: 1 }, skeleton: { k: 1, c: 68, n: 8, foot: 11, pose: 1 }, gargoyle: { c: 60, n: 9, foot: 11 }, dog: { c: 60, n: 8, foot: 11 }, sheep: { c: 64, n: 6, foot: 12 }, ram: { k: 0.9, c: 60, n: 8, foot: 10 }, chicken: { k: 0.6, c: 52, n: 8, foot: 7 } };
 // o : { dir (sinon : sens du déplacement, ou vers le héros), anim (animer même immobile), pose, fps, alt (hauteur de vol), scale, alpha, sh (ombre) }
 function drawMob(e, key, o = {}) {
   const m = MOB_SPR[key]; if (!m || !IMG['mob_' + key]) return false;
@@ -95,7 +95,7 @@ function drawMob(e, key, o = {}) {
 function plFace(e) { return e.o && e.o.face != null ? e.o.face : 0; }
 
 // personnage dessiné depuis un sprite d'Escape Night (densité ×2)
-function drawSprite(key, x, y) { const im = IMG['npc_' + key]; if (im) ctx.drawImage(im, half(x - im.width / 4), half(y - im.height / 2), im.width / 2, im.height / 2); }
+function drawSprite(key, x, y) { if (IMG['pl_' + key] && PL_NPCS[key]) { drawPL(key, x, y, 0, G.t || 0); return; } const im = IMG['npc_' + key]; if (im) ctx.drawImage(im, half(x - im.width / 4), half(y - im.height / 2), im.width / 2, im.height / 2); }
 
 class NPC {
   // o : { look, talk (id dans dialogues.json) | shop (id dans shops.json), when (condition d'apparition), hero (fonction → id d'un enfant) }
@@ -114,6 +114,7 @@ class NPC {
   draw() {
     if (this.o.hero) { ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)'); drawHero(this.o.hero(), this.x, this.y, 'down', false, this.t); }
     else if (this.o.gnome) { if (IMG.pl_gnome) { ell(this.x, this.y, 5, 2, 'rgba(0,0,0,.35)'); drawPL('gnome', this.x, this.y, plFace(this), this.t); } else drawGnomeNPC(this.x, this.y, this.t); }
+    else if (this.o.sprite === 'dog' && IMG.mob_dog) drawMob(this, 'dog', { sh: 6 }); // Goyave
     else if (this.o.sprite === 'dog') { const im = IMG.npc_dog_down; ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); if (im) { const w = im.width / 2.6, h = im.height / 2.6; ctx.drawImage(im, half(this.x - w / 2), half(this.y - h + Math.abs(Math.sin(this.t * 3))), w, h); } }
     else if (this.o.sprite === 'papa_down') { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, 'down', false, this.t); }
     else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }

@@ -110,6 +110,7 @@ class Chicken { // une poule échappée : elle file quand on approche ; on l'att
     if (rectHit({ x: this.x - 6, y: this.y - 9, w: 12, h: 11 }, P.body())) { this.dead = true; SAVE['poule' + this.i] = true; Quests.add('poules'); SFX.cluck(); G.parts.burst(this.x, this.y - 6, 10, { c: ['#fff', '#f0e8d8', '#ffcf3a'], life: 0.5, r: 1.5, up: 30, g: 120 }); }
   }
   draw() {
+    if (drawMob(this, 'chicken', { sh: 4, fps: 14 })) return;
     ell(this.x, this.y, 5, 1.8, 'rgba(0,0,0,.3)');
     const f = Math.floor(this.t * 10) % 2 && (this.vx || this.vy);
     hi(this.x, this.y, this.face < 0, () => { D(-8, -16, 14, 12, '#f8f4ec'); D(4, -22, 8, 10, '#f8f4ec'); D(12, -18, 4, 3, '#ffb02e'); D(6, -26, 4, 4, '#e83a3a'); D(8, -20, 2, 2, '#1a1a1a'); D(-12, -14, 6, 6, '#e8e0d4'); D(-4, -4, 2, 4 - f * 2, '#ffb02e'); D(2, -4, 2, 2 + f * 2, '#ffb02e'); });

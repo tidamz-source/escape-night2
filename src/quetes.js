@@ -252,6 +252,7 @@ class GerardBlock extends Block {
     ell(this.x, this.y, 9, 3, 'rgba(0,0,0,.35)');
     const dz = this.stun > 0, wob = dz ? Math.round(Math.sin(this.t * 10)) : 0;
     if (this.flash > 0 && Math.floor(this.t * 30) % 2) ctx.globalAlpha = 0.5;
+    if (IMG.mob_ram) drawMob(this, 'ram', { sh: 0, alt: dz ? 0 : 0, dir: this.mv ? plDir(this.mv.vx, this.mv.vy) : (dz ? 0 : undefined) }); else
     hi(this.x + wob, this.y + 1, this.face > 0, () => { DECOR.sheep.draw(dz ? 0 : this.t); D(-24, -30, 8, 4, '#e8d8b0'); D(-26, -28, 4, 6, '#e8d8b0'); }); // des cornes de bélier
     ctx.globalAlpha = 1;
     if (dz) for (let i = 0; i < 3; i++) { const a = this.t * 5 + i * 2.1; R(half(this.x + Math.cos(a) * 8), half(this.y - 26 + Math.sin(a) * 2), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
