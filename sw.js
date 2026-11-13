@@ -1,5 +1,5 @@
 // À chaque déploiement : changer VERSION ici, VERSION dans src/core.js et les ?v= dans index.html.
-const VERSION = 'v8.7.7';
+const VERSION = 'v8.7.8';
 const CACHE = 'escape-night2-' + VERSION;
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
 const SCRIPTS = ['src/core.js', 'src/bus.js', 'src/input.js', 'src/systems/save.js', 'src/systems/heroes.js', 'src/systems/inventory.js', 'src/systems/wallet.js', 'src/systems/shop.js', 'src/systems/story.js', 'src/systems/loot.js', 'src/world.js', 'src/entities.js', 'src/objects.js', 'src/actors.js', 'src/interiors.js', 'src/bois.js', 'src/tools.js', 'src/mines.js', 'src/lac.js', 'src/temple.js', 'src/tower.js', 'src/castle.js', 'src/quests.js', 'src/rpg.js', 'src/dungeon.js', 'src/cave.js', 'src/maps.js', 'src/overworld.js', 'src/houses.js', 'src/areas.js', 'src/monde.js', 'src/quetes.js', 'src/ui.js', 'src/game.js'];
@@ -11,7 +11,7 @@ const FILES = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.pn
   ...FACES.map(f => `assets/faces/${f}.png?v=${VERSION}`),
   ...PROPS.map(k => `assets/props/${k}.png?v=${VERSION}`),
   ...['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'].map(k => `assets/npc/${k}.png?v=${VERSION}`),
-  ...['garde', 'arthur', 'jules', 'lila', 'fantome', 'epiciere', 'sage', 'pierrette', 'fossoyeur', 'coquillages', 'hugo', 'herboriste', 'bucheron', 'gnome', 'firmin', 'gaelle', 'artificiere', 'gardien', 'ermite', 'vagabond', 'pauline', 'odette', 'lavandiere', 'crieur'].map(k => `assets/npc/pl/${k}.png?v=${VERSION}`),
+  ...['garde', 'arthur', 'jules', 'lila', 'fantome', 'epiciere', 'sage', 'pierrette', 'fossoyeur', 'coquillages', 'hugo', 'herboriste', 'bucheron', 'gnome', 'firmin', 'gaelle', 'artificiere', 'gardien', 'ermite', 'vagabond', 'pauline', 'odette', 'lavandiere', 'crieur', 'forgeron'].map(k => `assets/npc/pl/${k}.png?v=${VERSION}`),
   ...['boss/shadow', 'boss/queen', 'boss/mole', 'mobs/boar', 'mobs/raccoon', 'mobs/bat', 'mobs/shadow', 'mobs/wisp', 'mobs/squirrel', 'mobs/crow', 'mobs/gnome', 'mobs/spider', 'mobs/crab', 'mobs/eel', 'mobs/skeleton', 'mobs/gargoyle'].map(k => `assets/${k}.png?v=${VERSION}`),
   ...['sacha', 'cam', 'rox', 'papa'].flatMap(k => [0, 1].map(i => `assets/swim/${k}${i}.png?v=${VERSION}`)),
   ...['royaume_paves'].map(k => `assets/tiles/${k}.png?v=${VERSION}`),
