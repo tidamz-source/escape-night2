@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.7.6** : l'ombre et le chevalier squelette reprennent leur pleine taille (100 %).
 - **8.7.5** : la Taupe de fer a un sprite par état d'armure (3, 2, 1 puis aucune plaque) ; les plaques dessinées par-dessus disparaissent.
 - **8.7.4** : menu debug « Combats » (écran titre ; s'ouvre avec ?debug ou 5 tapes sur le numéro de version) : accès direct aux 13 combats de boss et mini-boss, Sacha invincible, rien n'est sauvegardé.
 - **8.7.3** : les monstres ordinaires passent à 75 % de leur taille (les mini-boss et les boss ne changent pas) ; la gargouille endormie s'affiche entière.

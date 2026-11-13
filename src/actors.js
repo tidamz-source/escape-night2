@@ -66,8 +66,8 @@ function drawCell(key, col, row, cw, ch, x, y, k, o = {}) {
   ctx.restore(); return true;
 }
 // monstres PixelLab (assets/mobs/<clé>.png) : ligne 0 = 8 directions au repos, lignes 1-8 = animation par direction, ligne 9 = pose spéciale
-const MOB_K = 0.75; // les monstres ordinaires à 75 % (les mini-boss gardent leur taille)
-const MOB_SPR = { raccoon: { c: 64, n: 8, foot: 11 }, bat: { c: 68, n: 9, foot: 16 }, shadow: { c: 48, n: 0, foot: 5 }, wisp: { c: 52, n: 9, foot: 8 }, squirrel: { c: 64, n: 8, foot: 12 }, crow: { c: 64, n: 9, foot: 13 }, gnome: { c: 60, n: 8, foot: 9, pose: 1 }, spider: { c: 64, n: 8, foot: 11 }, crab: { c: 60, n: 8, foot: 12 }, eel: { c: 48, n: 0, foot: 4, pose: 1 }, skeleton: { c: 68, n: 8, foot: 11, pose: 1 }, gargoyle: { c: 60, n: 9, foot: 11 } };
+const MOB_K = 0.75; // les monstres ordinaires à 75 % (les mini-boss gardent leur taille) ; k : taille propre à un monstre (ombre, squelette : 100 %)
+const MOB_SPR = { raccoon: { c: 64, n: 8, foot: 11 }, bat: { c: 68, n: 9, foot: 16 }, shadow: { k: 1, c: 48, n: 0, foot: 5 }, wisp: { c: 52, n: 9, foot: 8 }, squirrel: { c: 64, n: 8, foot: 12 }, crow: { c: 64, n: 9, foot: 13 }, gnome: { c: 60, n: 8, foot: 9, pose: 1 }, spider: { c: 64, n: 8, foot: 11 }, crab: { c: 60, n: 8, foot: 12 }, eel: { c: 48, n: 0, foot: 4, pose: 1 }, skeleton: { k: 1, c: 68, n: 8, foot: 11, pose: 1 }, gargoyle: { c: 60, n: 9, foot: 11 } };
 // o : { dir (sinon : sens du déplacement, ou vers le héros), anim (animer même immobile), pose, fps, alt (hauteur de vol), scale, alpha, sh (ombre) }
 function drawMob(e, key, o = {}) {
   const m = MOB_SPR[key]; if (!m || !IMG['mob_' + key]) return false;
@@ -78,7 +78,7 @@ function drawMob(e, key, o = {}) {
   let col = e._di, row = 0;
   if (o.pose && m.pose) row = 9; else if (m.n && (mv || o.anim)) { row = 1 + e._di; col = Math.floor((e.t || 0) * (o.fps || 10)) % m.n; }
   if (o.sh !== 0) ell(e.x, e.y, o.sh || 6, 2, 'rgba(0,0,0,.3)');
-  drawCell('mob_' + key, col, row, m.c, m.c, e.x, e.y - (o.alt || 0), (o.scale || 1) * (e.isMini ? 1 : MOB_K) / 1.4, { foot: m.foot, flash: e.flash > 0, alpha: o.alpha });
+  drawCell('mob_' + key, col, row, m.c, m.c, e.x, e.y - (o.alt || 0), (o.scale || 1) * (e.isMini ? 1 : m.k || MOB_K) / 1.4, { foot: m.foot, flash: e.flash > 0, alpha: o.alpha });
   if (e.stunT > 0) for (let i = 0; i < 3; i++) { const a = (e.t || 0) * 5 + i * 2.1; R(half(e.x + Math.cos(a) * 7), half(e.y - (o.alt || 0) - (e.isMini ? 34 : 26) + Math.sin(a) * 2), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
   return true;
 }
