@@ -539,7 +539,7 @@ function frame(now) {
 }
 (async function boot() {
   resetT(); R(0, 0, W, H, PAL.ink); text('Chargement…', W / 2, H / 2 - 4, { align: 'center', color: PAL.glow });
-  try { await document.fonts.load(`10px ${FONT}`); } catch (_) {}
+  try { await Promise.all([document.fonts.load(`10px ${FONT}`), document.fonts.load(`10px ${FONT_T}`)]); } catch (_) {}
   await loadAssets();
   G.init();
   requestAnimationFrame(frame);

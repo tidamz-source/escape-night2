@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.8.1';
+const VERSION = 'v8.9.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -9,6 +9,7 @@ function resetT() { ctx.setTransform(SC, 0, 0, SC, 0, 0); ctx.imageSmoothingEnab
 resetT();
 
 const FONT = '"Pixelify Sans", "Courier New", monospace';
+const FONT_T = '"Silkscreen", "Pixelify Sans", "Courier New", monospace'; // titres et étiquettes des menus (bois et parchemin)
 const PAL = { ink: '#070d1f', night: '#0c1530', deep: '#14244c', teal: '#1d5c66', glow: '#8ff3ea', lav: '#c3b3ff', warm: '#ffcf7a', white: '#f4f7ff', red: '#ff6b7a', green: '#7be38f', heart: '#ff4d6a' };
 
 // ---------- utilitaires ----------
@@ -30,12 +31,13 @@ const D = R;
 
 function text(str, x, y, o = {}) {
   const size = o.size || 8;
-  ctx.font = `${o.bold ? 700 : 500} ${size}px ${FONT}`;
+  ctx.font = o.font === 't' ? `${o.bold ? 700 : 400} ${size}px ${FONT_T}` : `${o.bold ? 700 : 500} ${size}px ${FONT}`;
+  if (o.font === 't') str = String(str).toUpperCase();
   ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'top';
   if (o.shadow !== false) { ctx.fillStyle = o.shadowColor || 'rgba(0,0,0,.75)'; ctx.fillText(str, x + 0.5, y + 0.5); }
   ctx.fillStyle = o.color || PAL.white; ctx.fillText(str, x, y);
 }
-function textW(str, size = 8) { ctx.font = `500 ${size}px ${FONT}`; return ctx.measureText(str).width; }
+function textW(str, size = 8, font) { ctx.font = font === 't' ? `400 ${size}px ${FONT_T}` : `500 ${size}px ${FONT}`; return ctx.measureText(font === 't' ? String(str).toUpperCase() : str).width; }
 function wrap(str, maxW, size = 8) {
   const words = str.split(' '), lines = []; let cur = '';
   for (const w of words) { const t = cur ? cur + ' ' + w : w; if (textW(t, size) > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }

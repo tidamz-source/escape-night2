@@ -42,10 +42,52 @@ function drawItemIcon(id, x, y, s = 1) {
     if (id === 'money') { D(-3 * u, -4 * u, 6 * u, 8 * u, '#ffd23a'); D(-2 * u, -3 * u, 4 * u, 6 * u, '#ffe27a'); D(-1 * u, -2 * u, 1 * u, 1 * u, '#fff'); }
   }, s);
 }
-function box(x, y, w, h, o = {}) {
-  R(x - 2, y - 2, w + 4, h + 4, PAL.ink); R(x, y, w, h, o.fill || '#14244c');
-  R(x + 1, y + 1, w - 2, 1, o.edge || PAL.lav); R(x + 1, y + h - 2, w - 2, 1, '#0c1530');
+// ---------- habillage des menus : bois, parchemin, laiton ----------
+const UIC = { ink: '#4a2c17', soft: '#7a5a3a', mute: '#a08462', title: '#7a3a1e', red: '#b8282a', redL: '#d33a36', gold: '#e0a743', goldL: '#f6d27a', rivet: '#5a3410',
+  parch: '#f4e4c1', parchL: '#fff3d8', parchD: '#e3c996', cell: '#e7d0a2', cellE: '#ecdcb8', sel: '#fff1cf', edge: '#6b4325',
+  wood: '#9a6638', woodD: '#7a4a26', woodL: '#c08850', plank: '#5b3920', plankD: '#4a2e19', dark: '#24130a', cream: '#f6e7c8' };
+// texte sur parchemin (brun, sans ombre) ; o.font = 't' pour les titres en capitales pixel
+function ptext(str, x, y, o = {}) { text(str, x, y, Object.assign({ color: UIC.ink, shadow: false }, o)); }
+// texte crème sur le bois (avec ombre portée brune)
+function wtext(str, x, y, o = {}) { text(str, x, y, Object.assign({ color: UIC.cream, shadowColor: UIC.dark }, o)); }
+// fond de planches (écrans de menu plein écran)
+function woodBg() {
+  R(0, 0, W, H, UIC.plank);
+  for (let y = 0, k = 0; y < H; y += 18, k++) { R(0, y + 16, W, 1, UIC.plankD); R(0, y + 17, W, 1, '#2e1a0d'); const j = (k * 157) % 360 + 40; R(j, y, 1, 16, '#3d2414'); R(j + 1, y, 1, 16, '#6b4628'); }
 }
+// coin de laiton riveté
+function brass(x, y) { R(x, y, 6, 6, UIC.gold); R(x, y, 6, 1, UIC.goldL); R(x + 2, y + 2, 2, 2, UIC.rivet); }
+// cadre de bois + parchemin ; o.on : liseré doré (sélection)
+function panel(x, y, w, h, o = {}) {
+  if (o.on) R(x - 6, y - 6, w + 12, h + 12, UIC.goldL);
+  R(x - 5, y - 5, w + 10, h + 10, UIC.dark); R(x - 4, y - 4, w + 8, h + 8, UIC.woodL); R(x - 3, y - 3, w + 6, h + 6, UIC.wood); R(x - 3, y + h / 2, w + 6, h / 2 + 3, UIC.woodD);
+  R(x - 1, y - 1, w + 2, h + 2, UIC.edge); R(x, y, w, h, o.fill || UIC.parch); R(x + 1, y + 1, w - 2, 1, o.fill ? 'rgba(255,255,255,.25)' : UIC.parchL); R(x + 1, y + h - 2, w - 2, 1, UIC.parchD);
+  brass(x - 5, y - 5); brass(x + w - 1, y - 5); brass(x - 5, y + h - 1); brass(x + w - 1, y + h - 1);
+}
+function box(x, y, w, h, o = {}) { panel(x, y, w, h, o); }
+// case d'objet : creusée dans le parchemin ; on = sélection dorée ; empty = case vide
+function cellBox(x, y, w, h, on, empty, tint) {
+  if (on) { R(x - 2, y - 2, w + 4, h + 4, UIC.goldL); R(x - 1, y - 1, w + 2, h + 2, UIC.rivet); }
+  R(x, y, w, h, on ? UIC.gold : UIC.woodD); R(x + 1, y + 1, w - 2, h - 2, on ? UIC.sel : empty ? UIC.cellE : (tint || UIC.cell));
+  if (!empty && !on) R(x + 1, y + 1, w - 2, 1, '#c9a46c');
+}
+// bouton de bois biseauté ; on = rouge cerclé d'or
+function woodBtn(x, y, w, h, label, on, size = 6.5) {
+  if (on) R(x - 2, y - 2, w + 4, h + 4, UIC.gold);
+  R(x - 1, y - 1, w + 2, h + 3, UIC.dark); R(x, y, w, h, on ? '#f08060' : UIC.woodL); R(x + 1, y + 1, w - 2, h - 2, on ? UIC.redL : UIC.wood); R(x + 1, y + (h >> 1), w - 2, h - 2 - (h >> 1), on ? '#a8232a' : UIC.woodD);
+  if (label) wtext(label, x + w / 2, y + (h - size) / 2 + 0.5, { size, align: 'center', font: 't', shadowColor: on ? '#5a0f12' : UIC.dark });
+}
+// banderole rouge à queues découpées, centrée sur cx
+function ribbon(cx, y, txt, size = 7.5, font) {
+  const w = textW(txt, size, font) + 24, x = Math.round(cx - w / 2), h = 15;
+  for (const s of [-1, 1]) { const tx = s < 0 ? x - 9 : x + w + 1; R(tx - 1, y + 3, 9, 13, UIC.dark); R(tx, y + 4, 8, 11, '#8a1a20'); R(s < 0 ? tx : tx + 5, y + 8, 3, 3, UIC.plank); }
+  R(x - 1, y - 1, w + 2, h + 2, UIC.dark); R(x, y, w, h, '#f08060'); R(x + 1, y + 1, w - 2, h - 2, UIC.redL); R(x + 1, y + 8, w - 2, h - 9, '#a8232a');
+  text(txt, cx, y + (h - size) / 2, { size, align: 'center', color: '#fff6e0', shadowColor: '#5a0f12', font });
+}
+// jauge brune remplie
+function gauge(x, y, w, v, c) { R(x, y, w, 6, UIC.edge); R(x + 1, y + 1, w - 2, 4, '#d9bf8c'); const f = Math.round((w - 2) * clamp(v, 0, 1)); if (f) { R(x + 1, y + 1, f, 4, c); R(x + 1, y + 4, f, 1, 'rgba(0,0,0,.2)'); } }
+// touche A / B
+function keyCap(x, y, k, c) { R(x - 1, y - 1, 10, 9, UIC.dark); R(x, y, 8, 7, c); text(k, x + 4, y + 0.5, { size: 5.5, align: 'center', color: '#fff6e0', shadow: false, font: 't', bold: true }); }
 function heroHeight(id) { const sh = SHEETS[DATA.heroes[id].sheet]; return sh.meta.scale === '2' ? 37 : sh.meta.scale === '1.4' ? 32 : 31; }
 
 const UIMixin = {
@@ -102,30 +144,27 @@ const UIMixin = {
     const lumi = line.who === 'Lumi', face = line.face && IMG[`face_${line.face}_${line.mood}`] ? line.face : null;
     let tx = bx + 12;
     if (face || lumi) {
-      R(bx + 8, by + 9, 46, 46, '#0c1530'); R(bx + 8, by + 9, 46, 1, '#2a3a6a');
+      cellBox(bx + 8, by + 9, 46, 46, false, false, '#e9d3a6');
       if (face) drawFace(face, line.mood, bx + 12, by + 12, 1.5);
       else { ctx.globalAlpha = 0.5; ell(bx + 31, by + 32, 14, 14, '#ffe27a'); ctx.globalAlpha = 1; drawLumi(bx + 31, by + 32 + Math.sin(this.t * 3), this.t); }
       tx = bx + 64;
     }
-    if (line.who) { R(bx + 8, by - 8, textW(line.who, 8) + 10, 12, lumi ? '#ffe27a' : PAL.warm); text(line.who, bx + 13, by - 7, { color: PAL.ink, shadow: false, bold: true }); }
+    if (line.who) { const nw = textW(line.who, 8) + 12; R(bx + 6, by - 11, nw + 2, 15, UIC.dark); R(bx + 7, by - 10, nw, 13, lumi ? UIC.goldL : UIC.woodL); R(bx + 8, by - 9, nw - 2, 11, lumi ? UIC.gold : UIC.wood); R(bx + 8, by - 3, nw - 2, 5, lumi ? '#c88a20' : UIC.woodD); text(line.who, bx + 13, by - 9, { color: lumi ? UIC.ink : UIC.cream, shadow: !lumi, shadowColor: UIC.dark, bold: true }); }
     const maxW = bx + bw - 14 - tx, shown = line.text.slice(0, Math.floor(d.c));
     let fs = 8, lh = 12, lines = wrap(line.text, maxW, fs);
     if (lines.length * lh > bh - 8) { fs = 7; lh = 10; lines = wrap(line.text, maxW, fs); } // texte long dans la boîte étroite : un cran plus petit
     let count = 0, ty = by + (lines.length * lh > bh - 16 ? 6 : 12);
-    for (const ln of lines) { text(shown.slice(count, count + ln.length), tx, ty, { size: fs }); count += ln.length + 1; ty += lh; }
+    for (const ln of lines) { ptext(shown.slice(count, count + ln.length), tx, ty, { size: fs }); count += ln.length + 1; ty += lh; }
     if (d.choices && d.i === d.lines.length - 1 && d.c >= line.text.length) {
       const cw = Math.max(...d.choices.map(c => textW(c, 8))) + 30, cx = clamp(bx + bw - cw - 6, 4, W - cw - 4), cy = by - d.choices.length * 14 - 10;
       box(cx, cy, cw, d.choices.length * 14 + 6); d.cx = cx; d.cy = cy + 4;
-      d.choices.forEach((c, k) => { const on = k === d.pick; text((on ? '▸ ' : '  ') + c, cx + 8, cy + 4 + k * 14, { size: 8, color: on ? PAL.glow : '#c8d0f0', bold: on }); });
-    } else if (d.c >= line.text.length && Math.floor(this.t * 3) % 2) { ctx.fillStyle = PAL.glow; ctx.beginPath(); ctx.moveTo(bx + bw - 16, by + bh - 12); ctx.lineTo(bx + bw - 10, by + bh - 12); ctx.lineTo(bx + bw - 13, by + bh - 8); ctx.fill(); }
+      d.choices.forEach((c, k) => { const on = k === d.pick; if (on) R(cx + 2, cy + 3 + k * 14, cw - 4, 12, UIC.sel); ptext((on ? '▸ ' : '  ') + c, cx + 8, cy + 4 + k * 14, { size: 8, color: on ? UIC.red : UIC.soft, bold: on }); });
+    } else if (d.c >= line.text.length && Math.floor(this.t * 3) % 2) { ctx.fillStyle = UIC.red; ctx.beginPath(); ctx.moveTo(bx + bw - 16, by + bh - 12); ctx.lineTo(bx + bw - 10, by + bh - 12); ctx.lineTo(bx + bw - 13, by + bh - 8); ctx.fill(); }
   },
 
   drawMenu(items, x, y, sel = this.menu) {
-    items.forEach((it, i) => {
-      const on = i === sel;
-      text(it, x, y + i * 16, { size: 10, align: 'center', color: on ? PAL.glow : '#9aa4c8' });
-      if (on) { const w = textW(it, 10); text('▸', x - w / 2 - 10, y + i * 16, { size: 10, color: PAL.glow }); }
-    });
+    const bw = Math.max(110, ...items.map(it => textW(it, 6.5, 't') + 24));
+    items.forEach((it, i) => woodBtn(Math.round(x - bw / 2), y + i * 16 - 2, bw, 13, it, i === sel));
   },
 
   // ---------- pause : objets (grille), souvenirs, carte, options ----------
@@ -138,11 +177,18 @@ const UIMixin = {
     if (this.area.dungeon && SAVE['bigkey_' + this.area.dungeon]) L.push({ kind: 'key', id: 'bigkey' });
     return L;
   },
+  // onglet Objets : l'arme et l'outil équipés en haut, puis la grille des objets, puis la rangée des bouteilles
+  invLayout() {
+    const all = this.pauseItems(), O = all.filter(e => e.kind !== 'weapon' && e.kind !== 'bottle'), B = all.filter(e => e.kind === 'bottle');
+    const nr = Math.max(2, Math.ceil(O.length / 5)), st = nr > 2 ? 30 : 36, cs = st - 6, by = 118 + nr * st + 10;
+    const pos = [...O.map((e, k) => ({ x: 30 + (k % 5) * st, y: 118 + Math.floor(k / 5) * st, r: Math.floor(k / 5), c: k % 5 })), ...B.map((e, k) => ({ x: 30 + k * st, y: by, r: nr, c: k }))];
+    return { items: [...O, ...B], pos, nr, st, cs, by, weapon: all.find(e => e.kind === 'weapon') };
+  },
   pauseTabs: ['Objets', 'Sac', 'Souvenirs', 'Bestiaire', 'Quêtes', 'Carte', 'Options'],
-  tabX(i) { return W / 2 - this.pauseTabs.length * 30 + i * 60; },
+  tabX(i) { return 12 + i * 62; },
   // le sac : matériaux, ingrédients, objet d'échange
   sacItems() { const L = Mats.owned().map(id => ({ id, n: Mats.n(id) })); const t = Troc.held(); if (t) L.push({ id: 'troc_' + t, troc: t }); return L; },
-  tabLen(t) { return t === 0 ? this.pauseItems().length : t === 1 ? this.sacItems().length : t === 2 ? Object.keys(SOUVENIRS).length : t === 3 ? BEASTS.length : 0; },
+  tabLen(t) { return t === 0 ? this.invLayout().items.length : t === 1 ? this.sacItems().length : t === 2 ? Object.keys(SOUVENIRS).length : t === 3 ? BEASTS.length : 0; },
   tabCols(t) { return t === 2 ? 4 : 5; },
   updatePause() {
     if (Input.pressed('start') || Input.pressed('b')) { this.state = 'play'; SFX.menu(); return; }
@@ -150,185 +196,233 @@ const UIMixin = {
     const nT = this.pauseTabs.length, grid = this.ptab <= 3;
     if (Input.pressed('cycle')) { this.ptab = (this.ptab + 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
     const tap = Input.lastTap; Input.lastTap = null;
-    if (tap && performance.now() - tap.time < 250 && tap.y < 30) { const t = Math.floor((tap.x - this.tabX(0)) / 60); if (t >= 0 && t < nT) { this.ptab = t; this.psel = 0; SFX.menu(); } return; }
+    if (tap && performance.now() - tap.time < 250 && tap.y < 26) { const t = Math.floor((tap.x - this.tabX(0)) / 62); if (t >= 0 && t < nT) { this.ptab = t; this.psel = 0; SFX.menu(); } return; }
+    const tabBy = d => { this.ptab = (this.ptab + d + nT) % nT; this.psel = 0; this.menu = 0; SFX.menu(); };
     if (!grid) {
-      if (Input.pressed('right')) { this.ptab = (this.ptab + 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
-      if (Input.pressed('left')) { this.ptab = (this.ptab + nT - 1) % nT; this.psel = 0; this.menu = 0; SFX.menu(); }
+      if (Input.pressed('right')) tabBy(1);
+      if (Input.pressed('left')) tabBy(-1);
     }
-    if (grid) {
-      const n = this.tabLen(this.ptab), C = this.tabCols(this.ptab);
-      if (!n) { if (Input.pressed('right') || Input.pressed('left')) { this.ptab = (this.ptab + (Input.pressed('right') ? 1 : nT - 1)) % nT; SFX.menu(); } return; }
-      const mv = d => { const v = this.psel + d; if (v >= 0 && v < n) { this.psel = v; SFX.menu(); } };
-      if (Input.pressed('right')) { if (this.psel % C === C - 1 || this.psel === n - 1) { this.ptab = (this.ptab + 1) % nT; this.psel = 0; SFX.menu(); } else mv(1); }
-      if (Input.pressed('left')) { if (this.psel % C === 0) { this.ptab = (this.ptab + nT - 1) % nT; this.psel = 0; SFX.menu(); } else mv(-1); }
-      if (Input.pressed('down')) mv(C); if (Input.pressed('up')) mv(-C);
-      // toucher une case
-      if (tap && performance.now() - tap.time < 250) { const g = this.gridGeom(C), i = Math.floor((tap.x - g.x0) / g.cw), j = Math.floor((tap.y - g.y0) / g.ch); if (i >= 0 && i < C && j >= 0) { const k = j * C + i; if (k < n) { if (k === this.psel) Input.held.a = true, Input.prev.a = false; this.psel = k; SFX.menu(); } } }
-      if (this.ptab === 0 && Input.pressed('a')) {
-        const e = this.pauseItems()[this.psel]; if (!e) return;
+    if (this.ptab === 0) { // objets : rangées de longueurs différentes
+      const g = this.invLayout(), n = g.items.length;
+      if (!n) { if (Input.pressed('right')) tabBy(1); if (Input.pressed('left')) tabBy(-1); return; }
+      this.psel = clamp(this.psel, 0, n - 1); const p = g.pos[this.psel];
+      const at = (r, c) => g.pos.findIndex(q => q.r === r && q.c === c);
+      if (Input.pressed('right')) { const k = at(p.r, p.c + 1); if (k >= 0) { this.psel = k; SFX.menu(); } else tabBy(1); }
+      if (Input.pressed('left')) { if (p.c === 0) tabBy(-1); else { this.psel = at(p.r, p.c - 1); SFX.menu(); } }
+      for (const [b, d] of [['down', 1], ['up', -1]]) if (Input.pressed(b)) {
+        for (let r = p.r + d; r >= 0 && r <= g.nr; r += d) { const row = g.pos.map((q, k) => [q, k]).filter(([q]) => q.r === r); if (!row.length) continue; row.sort((a, b2) => Math.abs(a[0].c - p.c) - Math.abs(b2[0].c - p.c)); this.psel = row[0][1]; SFX.menu(); break; }
+      }
+      if (tap && performance.now() - tap.time < 250) { const k = g.pos.findIndex(q => tap.x >= q.x && tap.x < q.x + g.cs && tap.y >= q.y && tap.y < q.y + g.cs); if (k >= 0) { if (k === this.psel) Input.held.a = true, Input.prev.a = false; this.psel = k; SFX.menu(); } }
+      if (Input.pressed('a')) {
+        const e = g.items[this.psel]; if (!e) return;
         if (e.kind === 'tool') { Inventory.equip(e.id); SFX.menu(); this.state = 'play'; return; }
         if (e.kind === 'bottle') { if (Inventory.drink(e.i, this.player)) SFX.drink(); else SFX.nope(); }
       }
+    } else if (grid) {
+      const n = this.tabLen(this.ptab), C = this.tabCols(this.ptab);
+      if (!n) { if (Input.pressed('right') || Input.pressed('left')) tabBy(Input.pressed('right') ? 1 : -1); return; }
+      const mv = d => { const v = this.psel + d; if (v >= 0 && v < n) { this.psel = v; SFX.menu(); } };
+      if (Input.pressed('right')) { if (this.psel % C === C - 1 || this.psel === n - 1) tabBy(1); else mv(1); }
+      if (Input.pressed('left')) { if (this.psel % C === 0) tabBy(-1); else mv(-1); }
+      if (Input.pressed('down')) mv(C); if (Input.pressed('up')) mv(-C);
+      // toucher une case
+      if (tap && performance.now() - tap.time < 250) { const g = this.ptab === 3 ? this.beastGeom() : this.gridGeom(C), i = Math.floor((tap.x - g.x0) / g.cw), j = Math.floor((tap.y - g.y0) / g.ch); if (i >= 0 && i < C && j >= 0) { const k = j * C + i; if (k < n) { this.psel = k; SFX.menu(); } } }
     } else if (this.ptab === 4) {
       const n = questLog().length; if (Input.pressed('down') && this.psel < n - 1) { this.psel++; SFX.menu(); } if (Input.pressed('up') && this.psel > 0) { this.psel--; SFX.menu(); }
     } else if (this.ptab === 6) {
       this.menuNav(2);
-      if (Input.pressed('a')) {
+      const ti = this.menuTap([0, 1], 118); let go = Input.pressed('a'); if (ti >= 0) { this.menu = ti; go = true; }
+      if (go) {
         SFX.menu();
         if (this.menu === 0) { PREFS.muted = !PREFS.muted; savePrefs(); }
         else { persist(); this.state = 'title'; this.view = 'title'; this.menu = 0; }
       }
     }
   },
-  gridGeom(C) { return C === 5 ? { x0: 30, y0: 74, cw: 40, ch: 40 } : { x0: 40, y0: 74, cw: 48, ch: 48 }; },
+  gridGeom(C) { return C === 5 ? { x0: 30, y0: 74, cw: 40, ch: 40 } : { x0: 34, y0: 74, cw: 48, ch: 48 }; },
+  beastGeom() { const rows = Math.ceil(BEASTS.length / 5); return { x0: 30, y0: 74, cw: 40, ch: Math.min(34, Math.floor(166 / rows)) }; },
+  // cadres communs des onglets : panneau gauche (liste) et panneau droit (fiche)
+  pauseFrames(lh = 186, rh = 186) { panel(22, 54, 208, lh); if (rh) panel(250, 54, 206, rh); },
+  label(t, x, y) { ptext(t, x, y, { size: 6, font: 't', bold: true, color: UIC.title }); },
   drawPause() {
-    R(0, 0, W, H, 'rgba(4,8,26,.88)');
-    this.pauseTabs.forEach((t, i) => {
-      const x = this.tabX(i), on = i === this.ptab;
-      R(x + 2, 8, 56, 18, on ? '#2a5a66' : 'rgba(20,36,76,.8)'); if (on) R(x + 2, 25, 56, 1, PAL.glow);
-      text(t, x + 30, 11, { size: 8.5, align: 'center', color: on ? PAL.white : '#7a84a8', bold: on });
-    });
-    R(W - 28, 6, 22, 22, 'rgba(20,36,76,.9)'); R(W - 28, 6, 22, 1, PAL.lav); R(W - 28, 27, 22, 1, PAL.lav); R(W - 28, 6, 1, 22, PAL.lav); R(W - 7, 6, 1, 22, PAL.lav);
-    ctx.strokeStyle = PAL.white; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(W - 22, 12); ctx.lineTo(W - 12, 22); ctx.moveTo(W - 12, 12); ctx.lineTo(W - 22, 22); ctx.stroke();
+    woodBg();
+    this.pauseTabs.forEach((t, i) => woodBtn(this.tabX(i), 7, 58, 15, t, i === this.ptab, 5.5));
+    woodBtn(W - 26, 6, 20, 17, '', false);
+    ctx.strokeStyle = UIC.cream; ctx.lineWidth = 2; ctx.lineCap = 'square'; ctx.beginPath(); ctx.moveTo(W - 20, 10); ctx.lineTo(W - 12, 18); ctx.moveTo(W - 12, 10); ctx.lineTo(W - 20, 18); ctx.stroke();
     const obj = Story.objective();
-    if (obj) { R(24, 32, W - 48, 18, 'rgba(255,207,122,.12)'); text('Objectif : ' + obj, W / 2, 36, { size: 7.5, align: 'center', color: PAL.warm }); }
+    if (obj) { const t = 'Objectif : ' + obj, fs = textW(t, 6.5) > W - 70 ? 5.5 : 6.5; ribbon(W / 2, 30, t, fs); }
     if (this.ptab === 0) this.drawInventory();
     if (this.ptab === 1) this.drawSac();
     if (this.ptab === 2) this.drawSouvenirs();
     if (this.ptab === 3) this.drawBestiary();
     if (this.ptab === 4) this.drawQuests();
     if (this.ptab === 5) this.drawMapTab();
-    if (this.ptab === 6) { text('Options', W / 2, 82, { size: 14, align: 'center', bold: true }); text(`Progression du jeu : ${Progress.pct()} %`, W / 2, 100, { size: 9, align: 'center', color: PAL.glow }); this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 116); }
+    if (this.ptab === 6) {
+      panel(150, 62, 180, 96);
+      ptext('Options', W / 2, 70, { size: 10, align: 'center', font: 't', bold: true, color: UIC.title });
+      ptext(`Progression du jeu : ${Progress.pct()} %`, W / 2, 90, { size: 8, align: 'center', color: UIC.soft });
+      this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 118);
+    }
     if (!Input.padVisible) {
       const roll = Heroes.def().roll;
-      text('Flèches : choisir · Espace : utiliser · E : onglet suivant · Échap : fermer' + (roll ? ' · L = roulade' : ''), W / 2, H - 12, { size: 6.5, align: 'center', color: '#6a74a0' });
+      wtext('Flèches : choisir · Espace : utiliser · E : onglet suivant · Échap : fermer' + (roll ? ' · L = roulade' : ''), W / 2, H - 10, { size: 6, align: 'center', color: '#d9bf8c' });
     }
   },
-  drawCell(x, y, w, h, on, has) { R(x, y, w - 4, h - 4, on ? 'rgba(143,243,234,.18)' : 'rgba(20,36,76,.7)'); R(x, y, w - 4, 1, on ? PAL.glow : '#2a3a6a'); R(x, y + h - 5, w - 4, 1, '#0c1530'); if (on) { R(x, y, 1, h - 4, PAL.glow); R(x + w - 5, y, 1, h - 4, PAL.glow); R(x, y + h - 5, w - 4, 1, PAL.glow); } },
+  drawCell(x, y, w, h, on, has) { cellBox(x, y, w - 4, h - 4, on, !has); },
   drawInventory() {
-    const L = this.pauseItems(), C = 5, g = this.gridGeom(C);
-    text('Objets', g.x0, g.y0 - 14, { size: 9, color: PAL.lav, bold: true });
-    for (let k = 0; k < Math.max(15, Math.ceil(L.length / C) * C); k++) {
-      const i = k % C, j = Math.floor(k / C), x = g.x0 + i * g.cw, y = g.y0 + j * g.ch, e = L[k], on = k === this.psel;
-      this.drawCell(x, y, g.cw, g.ch, on && !!e, !!e);
-      if (!e) continue;
-      drawItemIcon(e.kind === 'bottle' ? e.id : e.id, x + g.cw / 2 - 2, y + g.ch / 2 - 4, 1.1);
-      if (e.kind === 'tool' && Inventory.tool() === e.id) { R(x + 2, y + 2, 9, 8, PAL.lav); text('B', x + 6.5, y + 2.5, { size: 6, align: 'center', color: PAL.ink, shadow: false, bold: true }); }
-      if (e.kind === 'weapon') { R(x + 2, y + 2, 9, 8, '#ff8a9a'); text('A', x + 6.5, y + 2.5, { size: 6, align: 'center', color: PAL.ink, shadow: false, bold: true }); }
-      const it = Inventory.item(e.id); if (it && it.ammo) text(String(Inventory.ammo(it.ammo)), x + g.cw - 7, y + g.ch - 14, { size: 6.5, align: 'right', bold: true });
-    }
-    // la sacoche
-    const rx = 250, y0 = 60; text('Sacoche', rx, y0, { size: 9, color: PAL.lav, bold: true });
-    const rows = [['star', `Progression : ${Progress.pct()} %`], ['money', `${Wallet.get()} / ${Wallet.cap()} écus`], ['fragment', `${SAVE.fragments || 0} / 6 fragments d'aube`]];
-    if (SAVE.fliesIntro) rows.push(['luciole', `${Flies.n()} / 30 lucioles perdues` + (Flies.pow() ? ` · Lumi ★${Flies.pow()}` : '')]);
-    if (SAVE.hpieces) rows.push(['piece_coeur', `${SAVE.hpieces % 4} / 4 quarts de cœur`]);
-    if (Inventory.has('lance_pierre')) rows.push(['cailloux', `${Inventory.ammo('cailloux')} / ${Inventory.ammoMax('cailloux')} cailloux`]);
-    if (Inventory.has('petards')) rows.push(['petards', `${Inventory.ammo('petards')} / ${Inventory.ammoMax('petards')} pétards`]);
-    if (Inventory.ingredient('champignons') || SAVE.freed2) rows.push(['champignons', `${Inventory.ingredient('champignons')} champignon${Inventory.ingredient('champignons') > 1 ? 's' : ''}`]);
-    if (this.area.rooms) rows.push(['cle', `${Keys.get()} petite${Keys.get() > 1 ? 's' : ''} clé${Keys.get() > 1 ? 's' : ''}` + (this.area.dungeon && SAVE['bigkey_' + this.area.dungeon] ? ' · grande clé' : '')]);
-    if (this.area.id === 'castle') rows.push(['seal', `${SEALS.filter(q => SAVE[q[0]]).length} / 5 sceaux de l'aube`]);
-    const sp = rows.length > 6 ? 17 : 20; rows.forEach(([ic, t], i) => { if (ic === 'star') text('★', rx + 10, y0 + 15 + i * sp, { size: 9, align: 'center', color: PAL.glow }); else drawItemIcon(ic, rx + 10, y0 + 22 + i * sp, 0.9); text(t, rx + 24, y0 + 17 + i * sp, { size: 8, color: ic === 'star' ? PAL.glow : undefined }); });
-    const sel = L[this.psel], it = sel && (sel.id === 'bigkey' ? { name: 'Grande clé', desc: 'Ouvre la porte du boss de ce donjon.' } : Inventory.item(sel.id === 'vide' ? 'bouteille' : sel.id));
-    if (it) { R(24, H - 54, W - 48, 30, 'rgba(20,36,76,.7)'); text(it.name, W / 2, H - 50, { size: 8.5, align: 'center', bold: true, color: PAL.white }); text(it.desc + (sel.kind === 'bottle' && sel.id !== 'vide' ? '  A : boire.' : sel.kind === 'tool' ? '  A : équiper sur B.' : ''), W / 2, H - 38, { size: 7, align: 'center', color: '#c8d0f0' }); }
+    const g = this.invLayout(), L = g.items, sel = L[this.psel], tool = Inventory.tool();
+    panel(22, 54, 196, g.by + g.cs + 6 - 54);
+    // équipé : arme sur A, outil sur B
+    this.label('Équipé', 30, 59);
+    const eq = (x, k, c, tint, id, extra) => { cellBox(x, 68, 30, 30, false, !id, tint); if (id) drawItemIcon(id, x + 15, 81, 1.1); keyCap(x + 35, 71, k, c); if (id) { ptext(Inventory.item(id).name, x + 35, 83, { size: 6.5 }); if (extra) ptext(extra, x + 35 + textW(Inventory.item(id).name, 6.5) + 3, 83, { size: 6.5, color: UIC.mute }); } };
+    eq(30, 'A', UIC.red, '#f3d6c4', g.weapon && g.weapon.id);
+    const ti = tool && Inventory.item(tool); eq(118, 'B', '#6a4fb0', '#e2d6ee', tool, ti && ti.ammo ? String(Inventory.ammo(ti.ammo)) : '');
+    R(30, 104, 180, 1, UIC.parchD);
+    this.label('Objets', 30, 108);
+    for (let k = 0; k < g.nr * 5; k++) { const x = 30 + (k % 5) * g.st, y = 118 + Math.floor(k / 5) * g.st; if (!g.pos.some((q, i) => q.r < g.nr && q.x === x && q.y === y)) cellBox(x, y, g.cs, g.cs, false, true); }
+    this.label('Bouteilles', 30, g.by - 10);
+    for (let k = 0; k < 5; k++) if (!g.pos.some(q => q.r === g.nr && q.c === k)) cellBox(30 + k * g.st, g.by, g.cs, g.cs, false, true);
+    L.forEach((e, k) => {
+      const p = g.pos[k], on = k === this.psel;
+      cellBox(p.x, p.y, g.cs, g.cs, on, false);
+      drawItemIcon(e.id, p.x + g.cs / 2, p.y + g.cs / 2 - 1, g.cs > 26 ? 1.1 : 1);
+      if (e.kind === 'tool' && tool === e.id) keyCap(p.x + 1, p.y + 1, 'B', '#6a4fb0');
+      const it = Inventory.item(e.id); if (it && it.ammo) text(String(Inventory.ammo(it.ammo)), p.x + g.cs - 2, p.y + g.cs - 8, { size: 6, align: 'right', bold: true, color: '#fff6e0', shadowColor: UIC.dark });
+    });
+    // fiche de l'objet choisi
+    const rx = 236, rw = 222; panel(rx, 54, rw, 84);
+    const it = sel && (sel.id === 'bigkey' ? { name: 'Grande clé', desc: 'Ouvre la porte du boss de ce donjon.' } : Inventory.item(sel.id === 'vide' ? 'bouteille' : sel.id));
+    if (it) {
+      cellBox(rx + 6, 60, 46, 46, false, false, '#fbeccb'); drawItemIcon(sel.id, rx + 29, 82, 2);
+      ptext(it.name, rx + 58, 60, { size: 7.5, font: 't', bold: true });
+      const tags = [{ tool: 'Outil', gear: 'Équipement', bottle: sel.id === 'vide' ? 'Bouteille' : 'Boisson', key: 'Clé' }[sel.kind] || 'Objet'];
+      if (sel.kind === 'tool' && tool === sel.id) tags.push('Sur B');
+      let tx = rx + 58; tags.forEach((t, i) => { const w = textW(t, 5, 't') + 8; R(tx, 71, w, 8, i ? UIC.gold : UIC.woodD); text(t, tx + 4, 72.5, { size: 5, font: 't', color: i ? UIC.ink : UIC.cream, shadow: false }); tx += w + 4; });
+      wrap(it.desc, rw - 66, 6.5).slice(0, 3).forEach((l, i) => ptext(l, rx + 58, 83 + i * 8.5, { size: 6.5, color: UIC.soft }));
+      const act = sel.kind === 'tool' ? 'Équiper sur B' : sel.kind === 'bottle' && sel.id !== 'vide' ? 'Boire' : '';
+      let ax = rx + 8; if (act) { keyCap(ax, 125, 'A', UIC.red); ptext(act, ax + 12, 125, { size: 6.5 }); ax += 22 + textW(act, 6.5); }
+      keyCap(ax, 125, 'B', '#9a7a5a'); ptext('Fermer', ax + 12, 125, { size: 6.5, color: UIC.mute });
+    } else ptext('Aucun objet pour l\'instant.', rx + 10, 64, { size: 7, color: UIC.mute });
+    // la sacoche : écus, munitions, compteurs
+    const sy = 152; panel(rx, sy, rw, 88); this.label('Sacoche', rx + 8, sy + 4);
+    const best = (ids, def) => { for (const id of ids) if (Inventory.has(id)) return Inventory.item(id).name; return def; };
+    const rows = [['money', `${Wallet.get()} / ${Wallet.cap()} écus`, Wallet.get() / Wallet.cap(), '#e0a743', best(['bourse_geante', 'grande_bourse', 'bourse'], 'Petite bourse')]];
+    const bag = best(['sacoche_voyage', 'carquois'], 'Sacoche');
+    if (Inventory.has('lance_pierre')) rows.push(['cailloux', `${Inventory.ammo('cailloux')} / ${Inventory.ammoMax('cailloux')} cailloux`, Inventory.ammo('cailloux') / Inventory.ammoMax('cailloux'), '#8c8a94', bag]);
+    if (Inventory.has('petards')) rows.push(['petards', `${Inventory.ammo('petards')} / ${Inventory.ammoMax('petards')} pétards`, Inventory.ammo('petards') / Math.max(1, Inventory.ammoMax('petards')), '#c8302e', bag]);
+    rows.forEach(([ic, t, v, c, up], i) => { const y = sy + 15 + i * 13; drawItemIcon(ic, rx + 14, y + 4, 0.8); ptext(t, rx + 24, y, { size: 6.5 }); gauge(rx + 98, y + 1, 54, v, c); ptext(up, rx + rw - 8, y + 1.5, { size: 4.5, font: 't', align: 'right', color: UIC.mute }); });
+    const C = [['fragment', `${SAVE.fragments || 0} / 6`], ['star', `${Progress.pct()} %`]];
+    if (SAVE.hpieces) C.splice(1, 0, ['piece_coeur', `${SAVE.hpieces % 4} / 4`]);
+    if (SAVE.fliesIntro) C.splice(C.length - 1, 0, ['luciole', `${Flies.n()} / 30` + (Flies.pow() ? ` ★${Flies.pow()}` : '')]);
+    if (Inventory.ingredient('champignons')) C.splice(C.length - 1, 0, ['champignons', `${Inventory.ingredient('champignons')}`]);
+    if (this.area.rooms) C.splice(C.length - 1, 0, ['cle', `${Keys.get()}`]);
+    if (this.area.id === 'castle') C.splice(C.length - 1, 0, ['seal', `${SEALS.filter(q => SAVE[q[0]]).length} / 5`]);
+    R(rx + 8, sy + 56, rw - 16, 1, UIC.parchD);
+    C.forEach(([ic, t], i) => { const x = rx + 10 + (i % 4) * 52, y = sy + 61 + Math.floor(i / 4) * 12; if (ic === 'star') ptext('★', x + 4, y, { size: 7, align: 'center', color: UIC.title }); else drawItemIcon(ic, x + 4, y + 4, 0.75); ptext(t, x + 12, y, { size: 6.5, color: ic === 'star' ? UIC.title : UIC.ink }); });
   },
   drawSac() {
     const L = this.sacItems(), C = 5, g = this.gridGeom(C);
-    text('Sac : matériaux et ingrédients', g.x0, g.y0 - 14, { size: 9, color: PAL.lav, bold: true });
+    this.pauseFrames();
+    this.label('Sac : matériaux et ingrédients', g.x0, g.y0 - 14);
     for (let k = 0; k < Math.max(15, Math.ceil(L.length / C) * C); k++) {
       const i = k % C, j = Math.floor(k / C), x = g.x0 + i * g.cw, y = g.y0 + j * g.ch, e = L[k], on = k === this.psel;
       this.drawCell(x, y, g.cw, g.ch, on && !!e, !!e); if (!e) continue;
       drawItemIcon(e.id, x + g.cw / 2 - 2, y + g.ch / 2 - 4, 1.1);
-      if (e.n) text('×' + e.n, x + g.cw - 7, y + g.ch - 14, { size: 6.5, align: 'right', bold: true });
+      if (e.n) text('×' + e.n, x + g.cw - 7, y + g.ch - 13, { size: 6, align: 'right', bold: true, color: '#fff6e0', shadowColor: UIC.dark });
     }
-    const e = L[this.psel], rx = 250; R(rx - 6, 64, W - rx - 18, 120, 'rgba(20,36,76,.6)');
+    const e = L[this.psel], rx = 258;
     if (e) {
       const name = e.troc ? TROC_ITEMS[e.troc] : MATS[e.id].name, desc = e.troc ? 'Un objet à échanger. Quelqu\'un, quelque part, en a sûrement besoin.' : MATS[e.id].desc + (MATS[e.id].rare ? ' Matériau rare : Bertrand s\'en sert à la forge.' : ' Ça pourrait intéresser un marchand.');
-      text(name, rx, 72, { size: 10, bold: true, color: PAL.warm }); wrap(desc, W - rx - 30, 8).forEach((l, i) => text(l, rx, 92 + i * 12, { size: 8, color: '#c8d0f0' }));
-    } else wrap('Ton sac est vide. Cueille, pêche, casse des rochers : tout se revend chez Amandine ou se cuisine chez Mamie.', W - rx - 30, 8).forEach((l, i) => text(l, rx, 74 + i * 12, { size: 8, color: '#7a84a8' }));
-    const up = Object.keys(UPGRADES).filter(id => Upg.lv(id)); if (up.length) text('Forge : ' + up.map(id => UPGRADES[id].name + ' ' + '★'.repeat(Upg.lv(id))).join(' · '), W / 2, H - 40, { size: 7.5, align: 'center', color: PAL.glow });
+      ptext(name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title }); wrap(desc, 190, 7.5).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.soft }));
+    } else wrap('Ton sac est vide. Cueille, pêche, casse des rochers : tout se revend chez Amandine ou se cuisine chez Mamie.', 190, 7.5).forEach((l, i) => ptext(l, rx, 64 + i * 11, { size: 7.5, color: UIC.mute }));
+    const up = Object.keys(UPGRADES).filter(id => Upg.lv(id)); if (up.length) wrap('Forge : ' + up.map(id => UPGRADES[id].name + ' ' + '★'.repeat(Upg.lv(id))).join(' · '), 190, 6.5).forEach((l, i, a) => ptext(l, rx, 232 - (a.length - i) * 9, { size: 6.5, color: UIC.title }));
   },
   drawBestiary() {
-    const C = 5, g = { x0: 30, y0: 62, cw: 40, ch: BEASTS.length > 20 ? 28 : 34 }, n = Bestiary.nFull();
-    text(`Bestiaire : ${n} / ${BEASTS.length} fiches complètes` + (SAVE.encyclo ? '  ★' : ''), g.x0, g.y0 - 12, { size: 9, color: PAL.lav, bold: true });
+    const C = 5, g = this.beastGeom(), n = Bestiary.nFull();
+    this.pauseFrames();
+    this.label(`Bestiaire : ${n} / ${BEASTS.length}` + (SAVE.encyclo ? '  ★' : ''), g.x0, g.y0 - 14);
     BEASTS.forEach((b, k) => {
       const i = k % C, j = Math.floor(k / C), x = g.x0 + i * g.cw, y = g.y0 + j * g.ch, kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k];
-      this.drawCell(x, y, g.cw, g.ch, k === this.psel, true);
-      text(kills ? (Bestiary.full(b) ? '★' : String(kills)) : seen ? '?' : '', x + g.cw / 2 - 2, y + g.ch / 2 - 9, { size: kills ? 9 : 12, align: 'center', color: Bestiary.full(b) ? PAL.warm : kills ? PAL.white : '#3a4a7a', bold: true });
-      if (b.boss) R(x + 2, y + 2, 4, 4, '#c8a040'); else if (b.mini) R(x + 2, y + 2, 4, 4, '#8a9ab0');
+      this.drawCell(x, y, g.cw, g.ch, k === this.psel, !!seen);
+      ptext(kills ? (Bestiary.full(b) ? '★' : String(kills)) : seen ? '?' : '', x + g.cw / 2 - 2, y + g.ch / 2 - 8, { size: kills ? 8 : 10, align: 'center', color: Bestiary.full(b) ? UIC.red : kills ? UIC.ink : UIC.mute, bold: true });
+      if (b.boss) R(x + 2, y + 2, 4, 4, UIC.gold); else if (b.mini) R(x + 2, y + 2, 4, 4, '#8a7a6a');
     });
-    const b = BEASTS[this.psel], kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k], rx = 250;
-    R(rx - 6, 58, W - rx - 18, 150, 'rgba(20,36,76,.6)');
-    if (!seen) { text('???', rx, 66, { size: 10, bold: true, color: '#7a84a8' }); text('Une créature que tu n\'as pas encore croisée.', rx, 84, { size: 8, color: '#7a84a8' }); return; }
-    if (!kills) { text('???', rx, 66, { size: 10, bold: true, color: '#7a84a8' }); text('Tu l\'as croisée. Bats-la pour en savoir plus.', rx, 84, { size: 8, color: '#7a84a8' }); return; }
-    text(b.name + (b.boss ? ' (gardien)' : b.mini ? ' (mini-boss)' : ''), rx, 66, { size: 10, bold: true, color: PAL.warm });
-    text(b.zone, rx, 82, { size: 7.5, color: '#9aa4c8' });
-    text(`Vaincu${b.boss || b.mini ? '' : 's'} : ${kills}` + (b.boss || b.mini ? '' : ` / 10`), rx, 96, { size: 8, color: PAL.white });
-    if (Bestiary.full(b)) { text('Points faibles : ' + b.weak, rx, 110, { size: 8, color: PAL.glow }); wrap('« ' + b.note + ' »', W - rx - 30, 8).forEach((l, i) => text(l, rx, 128 + i * 12, { size: 8, color: '#c8d0f0' })); }
-    else text('Fiche complète à 10 victoires.', rx, 110, { size: 8, color: '#7a84a8' });
-    text('Récompenses chez Arthur, au village : 5, 12 et ' + BEASTS.length + ' fiches complètes.', W / 2, H - 40, { size: 7.5, align: 'center', color: '#9aa4c8' });
+    const b = BEASTS[this.psel], kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k], rx = 258;
+    wrap('Récompenses chez Arthur, au village : 5, 12 et ' + BEASTS.length + ' fiches complètes.', 190, 6.5).forEach((l, i, a) => ptext(l, rx, 232 - (a.length - i) * 9, { size: 6.5, color: UIC.mute }));
+    if (!seen) { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); ptext('Une créature que tu n\'as pas encore croisée.', rx, 80, { size: 7.5, color: UIC.mute }); return; }
+    if (!kills) { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); ptext('Tu l\'as croisée. Bats-la pour en savoir plus.', rx, 80, { size: 7.5, color: UIC.mute }); return; }
+    ptext(b.name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title });
+    ptext((b.boss ? 'Gardien · ' : b.mini ? 'Mini-boss · ' : '') + b.zone, rx, 76, { size: 7, color: UIC.mute });
+    ptext(`Vaincu${b.boss || b.mini ? '' : 's'} : ${kills}` + (b.boss || b.mini ? '' : ` / 10`), rx, 90, { size: 7.5 });
+    if (Bestiary.full(b)) { ptext('Points faibles : ' + b.weak, rx, 104, { size: 7.5, color: UIC.red }); wrap('« ' + b.note + ' »', 190, 7.5).forEach((l, i) => ptext(l, rx, 122 + i * 11, { size: 7.5, color: UIC.soft })); }
+    else ptext('Fiche complète à 10 victoires.', rx, 104, { size: 7.5, color: UIC.mute });
   },
   // le journal des quêtes : principales (souvenirs) et secondaires
   drawQuests() {
     const L = questLog(); this.psel = clamp(this.psel, 0, Math.max(0, L.length - 1));
     const done = L.filter(q => q.st === 'done').length;
-    text(`Quêtes : ${done} terminée${done > 1 ? 's' : ''}`, 30, 58, { size: 9, color: PAL.lav, bold: true });
-    if (!L.length) { text('Aucune quête pour l\'instant. Les « ! » montrent qui a besoin d\'aide.', 30, 80, { size: 8, color: '#7a84a8' }); return; }
-    const per = 9, top = clamp(this.psel - 4, 0, Math.max(0, L.length - per));
+    this.pauseFrames(186, L.length ? 186 : 0);
+    this.label(`Quêtes : ${done} terminée${done > 1 ? 's' : ''}`, 30, 60);
+    if (!L.length) { wrap('Aucune quête pour l\'instant. Les « ! » montrent qui a besoin d\'aide.', 190, 7.5).forEach((l, i) => ptext(l, 30, 78 + i * 11, { size: 7.5, color: UIC.mute })); return; }
+    const per = 10, top = clamp(this.psel - 4, 0, Math.max(0, L.length - per));
     L.slice(top, top + per).forEach((q, k) => {
       const i = top + k, y = 74 + k * 15, on = i === this.psel;
-      R(26, y - 2, 196, 14, on ? 'rgba(143,243,234,.18)' : 'rgba(20,36,76,.6)'); if (on) R(26, y - 2, 2, 14, PAL.glow);
-      const ic = q.st === 'done' ? ['✓', PAL.green] : q.st === 'new' ? ['!', '#ffd23a'] : ['•', PAL.warm];
-      text(ic[0], 34, y, { size: 8, align: 'center', bold: true, color: ic[1] }); text(q.name, 42, y, { size: 7.5, color: q.st === 'done' ? '#8a90a8' : PAL.white });
+      if (on) { R(27, y - 3, 198, 14, UIC.goldL); R(28, y - 2, 196, 12, UIC.sel); } else R(28, y + 11, 196, 1, UIC.parchD);
+      const ic = q.st === 'done' ? ['✓', '#3a8a4a'] : q.st === 'new' ? ['!', UIC.red] : ['•', UIC.gold];
+      ptext(ic[0], 35, y, { size: 8, align: 'center', bold: true, color: ic[1] }); ptext(q.name, 43, y, { size: 7, color: q.st === 'done' ? UIC.mute : UIC.ink, bold: on });
     });
-    if (L.length > per) text(`${this.psel + 1} / ${L.length}`, 124, 74 + per * 15, { size: 6.5, align: 'center', color: '#7a84a8' });
-    const q = L[this.psel], rx = 236; R(rx - 6, 58, W - rx - 18, 150, 'rgba(20,36,76,.6)');
-    text(q.name, rx, 64, { size: 9.5, bold: true, color: PAL.warm }); text(q.giver, rx, 80, { size: 7, color: '#9aa4c8' });
-    wrap(q.hint, W - rx - 30, 8).forEach((l, i) => text(l, rx, 96 + i * 12, { size: 8, color: q.st === 'done' ? '#8a90a8' : '#c8d0f0' }));
-    text(q.main ? 'Quête de souvenir' : 'Quête secondaire', rx, 196, { size: 6.5, color: '#6a74a0' });
+    if (L.length > per) ptext(`${this.psel + 1} / ${L.length}`, 126, 226, { size: 6.5, align: 'center', color: UIC.mute });
+    const q = L[this.psel], rx = 258;
+    wrap(q.name, 190, 8).slice(0, 2).forEach((l, i) => ptext(l, rx, 62 + i * 11, { size: 8, bold: true, color: UIC.title }));
+    ptext(q.giver, rx, 86, { size: 7, color: UIC.mute });
+    wrap(q.hint, 190, 7.5).forEach((l, i) => ptext(l, rx, 102 + i * 11, { size: 7.5, color: q.st === 'done' ? UIC.mute : UIC.soft }));
+    ptext(q.main ? 'Quête de souvenir' : 'Quête secondaire', rx, 226, { size: 5, font: 't', color: UIC.mute });
   },
   drawSouvenirs() {
     const ids = Object.keys(SOUVENIRS), C = 4, g = this.gridGeom(C), n = ids.filter(k => SAVE.souv && SAVE.souv[k]).length;
-    text(`Souvenirs du monde réel : ${n} / 7`, g.x0, g.y0 - 14, { size: 9, color: PAL.lav, bold: true });
+    this.pauseFrames();
+    this.label(`Souvenirs : ${n} / 7`, 30, g.y0 - 14);
     ids.forEach((id, k) => {
       const i = k % C, j = Math.floor(k / C), x = g.x0 + i * g.cw, y = g.y0 + j * g.ch, has = SAVE.souv && SAVE.souv[id];
-      this.drawCell(x, y, g.cw, g.ch, k === this.psel, true);
-      if (has) drawSouvenir(id, x + g.cw / 2 - 2, y + g.ch / 2 - 2, 1.2); else text('?', x + g.cw / 2 - 2, y + g.ch / 2 - 10, { size: 14, align: 'center', color: '#3a4a7a', bold: true });
+      this.drawCell(x, y, g.cw, g.ch, k === this.psel, !!has);
+      if (has) drawSouvenir(id, x + g.cw / 2 - 2, y + g.ch / 2 - 2, 1.2); else ptext('?', x + g.cw / 2 - 2, y + g.ch / 2 - 9, { size: 12, align: 'center', color: UIC.mute, bold: true });
     });
-    const id = ids[this.psel], S = SOUVENIRS[id], has = SAVE.souv && SAVE.souv[id];
-    const rx = 250; R(rx - 6, 64, W - rx - 18, 120, 'rgba(20,36,76,.6)');
-    if (has) { text(S.name, rx, 72, { size: 10, bold: true, color: PAL.warm }); wrap(S.desc, W - rx - 30, 8).forEach((l, i) => text(l, rx, 92 + i * 12, { size: 8, color: '#c8d0f0' })); }
-    else { text('???', rx, 72, { size: 10, bold: true, color: '#7a84a8' }); wrap('Un objet de ton monde, perdu quelque part dans le royaume. Les habitants qui ont besoin d\'aide le savent peut-être.', W - rx - 30, 8).forEach((l, i) => text(l, rx, 92 + i * 12, { size: 8, color: '#7a84a8' })); }
-    if (n === 7) text('Collection complète ! Une surprise t\'attend à la fin.', W / 2, H - 40, { size: 8, align: 'center', color: PAL.glow });
+    const id = ids[this.psel], S = SOUVENIRS[id], has = SAVE.souv && SAVE.souv[id], rx = 258;
+    if (has) { ptext(S.name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title }); wrap(S.desc, 190, 7.5).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.soft })); }
+    else { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); wrap('Un objet de ton monde, perdu quelque part dans le royaume. Les habitants qui ont besoin d\'aide le savent peut-être.', 190, 7.5).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.mute })); }
+    if (n === 7) wrap('Collection complète ! Une surprise t\'attend à la fin.', 190, 7.5).forEach((l, i) => ptext(l, rx, 214 + i * 11, { size: 7.5, color: UIC.red }));
   },
   drawMapTab() {
     const A = this.area;
     if (A.map) { this.drawMap(W / 2 - 72, 64); return; }
-    const bw = A.zone ? 260 : 360, bh = 160, s = Math.min(bw / A.w, bh / A.h), w = A.w * s, h = A.h * s, x0 = A.zone ? 40 : (W - w) / 2, y0 = 60;
-    R(x0 - 3, y0 - 3, w + 6, h + 6, PAL.ink); ctx.drawImage((A.paint && IMG[A.paint]) || A.layer, x0, y0, w, h); R(x0, y0, w, h, 'rgba(4,8,26,.35)');
+    const bw = A.zone ? 260 : 360, bh = 160, s = Math.min(bw / A.w, bh / A.h), w = A.w * s, h = A.h * s, x0 = A.zone ? 40 : (W - w) / 2, y0 = 62;
+    panel(x0, y0, w, h); ctx.drawImage((A.paint && IMG[A.paint]) || A.layer, x0, y0, w, h); R(x0, y0, w, h, 'rgba(60,30,10,.18)');
     for (const e of A.ents) if (e.isHouse && !e.ghost) R(x0 + (e.x - e.w / 2) * s, y0 + (e.y - e.h) * s, e.w * s, e.h * s, '#a85a3a');
-    if (Math.floor(this.t * 3) % 2) { R(x0 + this.player.x * s - 2, y0 + this.player.y * s - 2, 4, 4, PAL.glow); }
-    text(A.name, x0 + w / 2, y0 + 4, { size: 7, align: 'center', color: PAL.warm });
-    if (A.zone) this.drawWorldMini(x0 + w + 8, y0);
+    if (Math.floor(this.t * 3) % 2) { R(x0 + this.player.x * s - 3, y0 + this.player.y * s - 3, 6, 6, UIC.dark); R(x0 + this.player.x * s - 2, y0 + this.player.y * s - 2, 4, 4, UIC.redL); }
+    ribbon(x0 + w / 2, y0 + h - 4, A.name, 6.5);
+    if (A.zone) this.drawWorldMini(x0 + w + 14, y0);
   },
   // petite carte du royaume : où l'on est
   drawWorldMini(x, y) {
     const Z = [['sanctuaire', 1, 0, 'Sanct.'], ['collines', 2, 0, 'Collines'], ['col', 3, 0, 'Col'], ['montagne', 4, 0, 'Mont.'], ['route_nord', 2, 1, 'Route'], ['foret', 0, 2, 'Forêt'], ['oree', 1, 2, 'Orée'], ['royaume', 2, 2, 'Village'], ['pres', 2, 3, 'Prés'], ['terres', 0, 4, 'Terres'], ['lande', 1, 4, 'Lande'], ['lac', 2, 4, 'Lac'], ['dunes', 3, 4, 'Dunes'], ['cote', 4, 4, 'Côte']];
-    for (const [id, cx, cy, name] of Z) { const on = this.area.id === id, seen = SAVE.visitedZ && SAVE.visitedZ[id]; R(x + cx * 30, y + cy * 22, 28, 20, on ? '#2a5a66' : seen ? '#2b2540' : '#141428'); if (on && Math.floor(this.t * 3) % 2) R(x + cx * 30 + 12, y + cy * 22 + 8, 4, 4, PAL.glow); if (seen || on) text(name, x + cx * 30 + 14, y + cy * 22 + 13, { size: 5, align: 'center', color: '#c8d0f0', shadow: false }); }
+    panel(x, y, 148, 108);
+    for (const [id, cx, cy, name] of Z) { const on = this.area.id === id, seen = SAVE.visitedZ && SAVE.visitedZ[id], X = x + 2 + cx * 29, Y = y + 2 + cy * 21; cellBox(X, Y, 27, 19, on, !seen && !on); if (on && Math.floor(this.t * 3) % 2) R(X + 11, Y + 2, 4, 4, UIC.redL); if (seen || on) ptext(name, X + 13.5, Y + 11, { size: 5, align: 'center', color: on ? UIC.red : UIC.soft }); }
   },
   drawMap(x0, y0) {
     const A = this.area, cw = 48, ch = 28, M = A.map, C = A.rooms.cols;
     x0 -= (C - 3) * cw / 2;
-    text(M.title, x0 + C * cw / 2, y0, { size: 8, align: 'center', color: PAL.lav });
+    const nr = A.rooms.rows; panel(x0 - 8, y0 - 6, C * cw + 16, 22 + nr * ch + 8);
+    ptext(M.title, x0 + C * cw / 2, y0, { size: 7, align: 'center', font: 't', bold: true, color: UIC.title });
     const links = M.links;
     const cell = i => ({ x: x0 + (i % C) * cw, y: y0 + 16 + Math.floor(i / C) * ch });
     const seen = i => SAVE.visited && SAVE.visited[A.id + i];
-    for (const [a, b] of links) { if (!seen(a) && !seen(b)) continue; const p = cell(a), q = cell(b); R(Math.min(p.x, q.x) + cw / 2 - 2, Math.min(p.y, q.y) + ch / 2 - 2, Math.abs(p.x - q.x) + 4, Math.abs(p.y - q.y) + 4, '#3a3354'); }
+    for (const [a, b] of links) { if (!seen(a) && !seen(b)) continue; const p = cell(a), q = cell(b); R(Math.min(p.x, q.x) + cw / 2 - 2, Math.min(p.y, q.y) + ch / 2 - 2, Math.abs(p.x - q.x) + 4, Math.abs(p.y - q.y) + 4, UIC.woodD); }
     for (const i of A.rooms.list) {
       if (!seen(i)) continue;
       const p = cell(i), cur = i === this.room;
-      R(p.x + 4, p.y + 3, cw - 8, ch - 6, cur ? '#2a5a66' : '#2b2540'); R(p.x + 4, p.y + 3, cw - 8, 1, cur ? PAL.glow : '#4a4266');
-      if (cur && Math.floor(this.t * 3) % 2) R(p.x + cw / 2 - 2, p.y + ch / 2 - 2, 4, 4, PAL.glow);
-      if (i === M.boss) text(SAVE[M.bossFlag] ? '✓' : '☠', p.x + cw / 2, p.y + 7, { size: 9, align: 'center', color: SAVE[M.bossFlag] ? PAL.green : PAL.red });
+      cellBox(p.x + 4, p.y + 3, cw - 8, ch - 6, cur, false);
+      if (cur && Math.floor(this.t * 3) % 2) R(p.x + cw / 2 - 2, p.y + ch / 2 - 2, 4, 4, UIC.redL);
+      if (i === M.boss) ptext(SAVE[M.bossFlag] ? '✓' : '☠', p.x + cw / 2, p.y + 7, { size: 9, align: 'center', color: SAVE[M.bossFlag] ? '#3a8a4a' : UIC.red });
     }
   },
 
@@ -348,23 +442,23 @@ const UIMixin = {
     }
   },
   drawShop() {
-    const sh = this.shop, def = Shop.def(sh.id), bw = 340, bh = 196, bx = (W - bw) / 2, by = 30;
-    R(0, 0, W, H, 'rgba(4,8,26,.55)'); box(bx, by, bw, bh);
-    text(def.name, bx + 14, by + 10, { size: 12, bold: true, color: PAL.warm });
-    drawItemIcon('money', bx + bw - 62, by + 17, 0.9); text(`${Wallet.get()} écus`, bx + bw - 54, by + 12, { size: 8, color: PAL.warm });
+    const sh = this.shop, def = Shop.def(sh.id), bw = 340, bh = 204, bx = (W - bw) / 2, by = 30;
+    R(0, 0, W, H, 'rgba(20,10,4,.55)'); panel(bx, by, bw, bh);
+    ribbon(W / 2, by - 12, def.name, 8, 't');
+    drawItemIcon('money', bx + bw - 62, by + 11, 0.9); ptext(`${Wallet.get()} écus`, bx + bw - 54, by + 6, { size: 7.5, bold: true, color: UIC.title });
     def.items.forEach((e, i) => {
-      const it = Inventory.item(e.id), st = Shop.state(sh.id, e), on = i === sh.sel, y = by + 36 + i * 30;
-      R(bx + 10, y, bw - 20, 26, on ? 'rgba(143,243,234,.14)' : 'rgba(7,13,31,.4)'); if (on) R(bx + 10, y, 2, 26, PAL.glow);
-      drawItemIcon(e.id === 'cailloux10' ? 'cailloux' : e.id, bx + 28, y + 13);
-      text(it.name, bx + 44, y + 4, { size: 9, color: st.ok ? PAL.white : '#7a84a8', bold: on });
-      if (!st.ok) text(st.why, bx + 44, y + 15, { size: 6.5, color: '#c88a9a' });
-      if (e.cost) { const [k, n] = Object.entries(e.cost)[0]; drawItemIcon(k, bx + bw - 54, y + 13, 1); text(String(n), bx + bw - 46, y + 8, { size: 9, color: st.ok ? PAL.warm : '#7a84a8', bold: true }); }
-      else { drawItemIcon('money', bx + bw - 54, y + 13, 0.8); text(String(e.price), bx + bw - 46, y + 8, { size: 9, color: st.ok ? PAL.warm : '#7a84a8', bold: true }); }
+      const it = Inventory.item(e.id), st = Shop.state(sh.id, e), on = i === sh.sel, y = by + 18 + i * 24;
+      if (on) { R(bx + 9, y - 1, bw - 18, 24, UIC.goldL); R(bx + 10, y, bw - 20, 22, UIC.sel); } else R(bx + 10, y + 22, bw - 20, 1, UIC.parchD);
+      cellBox(bx + 14, y + 2, 18, 18, false, false); drawItemIcon(e.id === 'cailloux10' ? 'cailloux' : e.id, bx + 23, y + 11, 0.85);
+      ptext(it.name, bx + 40, y + 2, { size: 8.5, color: st.ok ? UIC.ink : UIC.mute, bold: on });
+      if (!st.ok) ptext(st.why, bx + 40, y + 12, { size: 6.5, color: UIC.red });
+      if (e.cost) { const [k, n] = Object.entries(e.cost)[0]; drawItemIcon(k, bx + bw - 54, y + 12, 1); ptext(String(n), bx + bw - 46, y + 7, { size: 8.5, color: st.ok ? UIC.title : UIC.mute, bold: true }); }
+      else { drawItemIcon('money', bx + bw - 54, y + 12, 0.8); ptext(String(e.price), bx + bw - 46, y + 7, { size: 8.5, color: st.ok ? UIC.title : UIC.mute, bold: true }); }
     });
     const e = def.items[sh.sel], desc = sh.msgT > 0 ? sh.msg : Inventory.item(e.id).desc;
-    R(bx + 10, by + bh - 40, bw - 20, 1, '#2a3a6a');
-    wrap(desc, bw - 28, 8).slice(0, 2).forEach((l, i) => text(l, bx + 14, by + bh - 34 + i * 11, { size: 8, color: sh.msgT > 0 ? PAL.glow : '#c8d0f0' }));
-    text('A : acheter   ·   B : sortir', W / 2, by + bh + 8, { size: 7, align: 'center', color: '#9aa4c8' });
+    R(bx + 10, by + bh - 38, bw - 20, 1, UIC.parchD);
+    wrap(desc, bw - 28, 7.5).slice(0, 2).forEach((l, i) => ptext(l, bx + 14, by + bh - 32 + i * 11, { size: 7.5, color: sh.msgT > 0 ? UIC.red : UIC.soft, bold: sh.msgT > 0 }));
+    wtext('A : acheter   ·   B : sortir', W / 2, by + bh + 9, { size: 7, align: 'center' });
   },
 
   // ---------- titre, parties, choix du héros ----------
@@ -394,9 +488,9 @@ const UIMixin = {
     if (go) { SFX.menu(); if (this.menu === items.length - 1) { this.state = 'title'; this.menu = 0; return; } const f = Debug.FIGHTS[this.menu]; this.fadeTo(() => Debug.start(f)); }
   },
   drawDebug() {
-    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#070d1f'); g.addColorStop(1, '#1a1030'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    text('COMBATS · DEBUG', W / 2, 14, { size: 14, align: 'center', bold: true, color: PAL.glow });
-    text('Sacha, invincible · rien n\'est sauvegardé', W / 2, 30, { size: 7, align: 'center', color: '#8a94c0' });
+    woodBg();
+    ribbon(W / 2, 8, 'Combats · debug', 8, 't');
+    wtext('Sacha, invincible · rien n\'est sauvegardé', W / 2, 29, { size: 7, align: 'center', color: '#d9bf8c' });
     this.drawMenu(Debug.items(), W / 2, 44);
   },
   drawTitle() {
@@ -442,21 +536,21 @@ const UIMixin = {
   },
   drawSlots() {
     this.drawTitleBackdrop();
-    text(this.erasing ? 'Quelle partie effacer ?' : 'Choisis une partie', W / 2, 18, { size: 14, align: 'center', bold: true, color: this.erasing ? PAL.red : PAL.white });
+    ribbon(W / 2, 12, this.erasing ? 'Quelle partie effacer ?' : 'Choisis une partie', 8, 't');
     for (let i = 0; i < 3; i++) {
       const y = 46 + i * 52, on = i === this.slotSel, info = this.slotInfo(i), bx = W / 2 - 160;
-      box(bx, y, 320, 44, { fill: on ? '#1e3a6a' : '#14244c', edge: on ? (this.erasing ? PAL.red : PAL.glow) : '#3a4a7a' });
-      text(`${i + 1}`, bx + 12, y + 15, { size: 12, bold: true, color: on ? PAL.glow : '#5a6a9a' });
-      if (!info) { text('Nouvelle partie', bx + 44, y + 15, { size: 10, color: on ? PAL.white : '#9aa4c8' }); continue; }
+      panel(bx, y, 320, 44, { on, fill: on && this.erasing ? '#f3cdbf' : on ? UIC.sel : undefined });
+      ptext(`${i + 1}`, bx + 12, y + 15, { size: 12, bold: true, font: 't', color: on ? UIC.red : UIC.mute });
+      if (!info) { ptext('Nouvelle partie', bx + 44, y + 15, { size: 10, color: on ? UIC.ink : UIC.soft }); continue; }
       drawHero(info.hero, bx + 44, y + 40, 'down', false, this.t, 34 / heroHeight(info.hero));
-      text(info.name, bx + 66, y + 6, { size: 10, bold: true });
+      ptext(info.name, bx + 66, y + 5, { size: 8, bold: true, font: 't' });
       for (let h = 0; h < info.hearts; h++) drawHeartShape(bx + 70 + h * 9, y + 23, 1.5, PAL.heart, '#c02848');
-      drawItemIcon('money', bx + 70 + info.hearts * 9 + 8, y + 23, 0.8); text(String(info.money), bx + 70 + info.hearts * 9 + 15, y + 18, { size: 8, color: PAL.warm });
-      text(info.obj, bx + 66, y + 31, { size: 6.5, color: '#9aa4c8' });
-      text(`${info.pct} %`, bx + 306, y + 4, { size: 10, align: 'right', bold: true, color: PAL.glow }); text(`${info.frags}/6 · ${info.time} min`, bx + 306, y + 19, { size: 7, align: 'right', color: '#9aa4c8' });
+      drawItemIcon('money', bx + 70 + info.hearts * 9 + 8, y + 23, 0.8); ptext(String(info.money), bx + 70 + info.hearts * 9 + 15, y + 18, { size: 8, bold: true, color: UIC.title });
+      ptext(info.obj.length > 70 ? info.obj.slice(0, 68) + '…' : info.obj, bx + 66, y + 31, { size: 6, color: UIC.soft });
+      ptext(`${info.pct} %`, bx + 306, y + 4, { size: 10, align: 'right', bold: true, color: UIC.red }); ptext(`${info.frags}/6 · ${info.time} min`, bx + 306, y + 19, { size: 7, align: 'right', color: UIC.mute });
     }
-    const on = this.slotSel === 3; text(this.erasing ? 'Annuler' : 'Effacer une partie', W / 2, 46 + 3 * 52 + 4, { size: 9, align: 'center', color: on ? (this.erasing ? PAL.white : PAL.red) : '#7a84a8', bold: on });
-    text('A : choisir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#6a74a0' });
+    const on = this.slotSel === 3; woodBtn(W / 2 - 60, 46 + 3 * 52 + 1, 120, 15, this.erasing ? 'Annuler' : 'Effacer une partie', on, 6);
+    text('A : choisir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#8a94c0' });
   },
   updateHeroes() {
     if (Input.pressed('b')) { this.state = 'slots'; SFX.menu(); return; }
@@ -469,18 +563,18 @@ const UIMixin = {
   },
   drawHeroes() {
     this.drawTitleBackdrop();
-    text('Qui part à l\'aventure ?', W / 2, 14, { size: 14, align: 'center', bold: true });
+    ribbon(W / 2, 10, 'Qui part à l\'aventure ?', 8, 't');
     Heroes.order().forEach((id, i) => {
       const d = Heroes.def(id), x = 100 + i * 140, on = i === this.heroSel;
-      box(x - 62, 40, 124, 190, { fill: on ? '#1e3a6a' : '#14244c', edge: on ? PAL.glow : '#3a4a7a' });
-      ctx.globalAlpha = on ? 0.35 : 0.15; ell(x, 140, 34, 8, '#c3b3ff'); ctx.globalAlpha = 1;
+      panel(x - 62, 40, 124, 190, { on, fill: on ? UIC.sel : undefined });
+      ctx.globalAlpha = on ? 0.35 : 0.2; ell(x, 140, 34, 8, UIC.woodD); ctx.globalAlpha = 1;
       drawHero(id, x, 140, 'down', on, this.t, 74 / heroHeight(id));
-      text(d.name, x, 152, { size: 13, align: 'center', bold: true, color: on ? PAL.glow : PAL.white });
-      wrap(d.desc, 112, 7.5).forEach((l, k) => text(l, x, 172 + k * 10, { size: 7.5, align: 'center', color: '#c8d0f0' }));
-      wrap(d.perk, 112, 7.5).forEach((l, k) => text(l, x, 198 + k * 10, { size: 7.5, align: 'center', color: PAL.warm }));
+      ptext(d.name, x, 152, { size: 10, align: 'center', bold: true, font: 't', color: on ? UIC.red : UIC.ink });
+      wrap(d.desc, 112, 7.5).forEach((l, k) => ptext(l, x, 172 + k * 10, { size: 7.5, align: 'center', color: UIC.soft }));
+      wrap(d.perk, 112, 7.5).forEach((l, k) => ptext(l, x, 198 + k * 10, { size: 7.5, align: 'center', color: UIC.title, bold: true }));
     });
-    if (Input.padVisible) { box(8, 6, 58, 20, { fill: '#14244c', edge: '#3a4a7a' }); text('◂ Retour', 37, 11, { size: 8, align: 'center', color: '#c8d0f0' }); }
-    text(Input.padVisible ? 'Touche un personnage pour le choisir, puis touche-le encore pour partir' : '◂ ▸ : choisir   ·   A : partir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#6a74a0' });
+    if (Input.padVisible) woodBtn(8, 8, 58, 16, '◂ Retour', false, 6);
+    text(Input.padVisible ? 'Touche un personnage pour le choisir, puis touche-le encore pour partir' : '◂ ▸ : choisir   ·   A : partir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#8a94c0' });
   },
   drawTitleBackdrop() {
     const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#070d1f'); g.addColorStop(1, '#14244c'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -490,12 +584,12 @@ const UIMixin = {
     R(0, 0, W, H, 'rgba(4,8,26,.88)');
     const bw = 360, bx = (W - bw) / 2, by = 60, bh = 140;
     box(bx, by, bw, bh);
-    text('Installer Escape Night 2', W / 2, by + 12, { size: 12, align: 'center', bold: true, color: PAL.glow });
+    ptext('Installer Escape Night 2', W / 2, by + 12, { size: 9, align: 'center', bold: true, font: 't', color: UIC.title });
     const lines = PWA.ios()
       ? ['Sur iPhone / iPad (Safari) :', '1. Touche le bouton Partager (carré avec une flèche).', '2. Choisis « Sur l\'écran d\'accueil ».', '3. Lance le jeu depuis la nouvelle icône.']
       : ['Ouvre le menu du navigateur (⋮ en haut à droite),', 'puis choisis « Installer l\'application »', 'ou « Ajouter à l\'écran d\'accueil ».', 'Le jeu marchera ensuite en plein écran, même hors ligne.'];
-    lines.forEach((l, i) => text(l, bx + 20, by + 38 + i * 16, { size: 8, color: i === 0 && PWA.ios() ? PAL.warm : PAL.white }));
-    if (Math.floor(this.t * 2) % 2) text('A : fermer', W / 2, by + bh - 16, { size: 8, align: 'center', color: PAL.glow });
+    lines.forEach((l, i) => ptext(l, bx + 20, by + 38 + i * 16, { size: 8, color: i === 0 && PWA.ios() ? UIC.title : UIC.ink, bold: i === 0 && PWA.ios() }));
+    if (Math.floor(this.t * 2) % 2) ptext('A : fermer', W / 2, by + bh - 16, { size: 8, align: 'center', color: UIC.red });
   },
 
   // ---------- fin de partie, fin de la version 1 ----------
@@ -544,10 +638,10 @@ const UIMixin = {
     this.fadeTo(() => this.enter(R0.area, R0.pos(), false), '#fff2c0');
   },
   drawTravel() {
-    R(0, 0, W, H, 'rgba(4,8,26,.7)');
-    const L = this.travel.list, items = [...L.map(k => RELAYS[k].name), 'Rester ici'], bh = 50 + items.length * 16;
-    box(W / 2 - 110, 60, 220, bh);
-    text('Où veux-tu aller ?', W / 2, 70, { size: 10, align: 'center', bold: true, color: PAL.warm });
+    R(0, 0, W, H, 'rgba(20,10,4,.6)');
+    const L = this.travel.list, items = [...L.map(k => RELAYS[k].name), 'Rester ici'], bh = 44 + items.length * 16;
+    panel(W / 2 - 110, 64, 220, bh);
+    ribbon(W / 2, 54, 'Où veux-tu aller ?', 7.5, 't');
     this.drawMenu(items, W / 2, 96);
   },
   // ---------- générique de fin ----------
