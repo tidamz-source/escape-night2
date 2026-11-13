@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.6.4** : Gérard le bélier : il faut l'assommer (épée, caillou…) avant de le pousser ou le tirer, toujours bien en face (plus de poussée en biais) ; réveillé, il s'écarte quand on s'approche. Au bord d'un précipice, le héros vacille un instant avant de tomber : on peut se rattraper.
 - **8.6.3** : PNJ PixelLab de Rosalie la lavandière et du crieur.
 - **8.6.2** : la bibliothèque encore réduite : 640 × 357, grille 20 × 12, centrée à l'écran.
 - **8.6.1** : la bibliothèque du sage tient dans un écran (image ramenée à 960 × 536, grille 30 × 17) ; les intérieurs peints se font en 960 × 540 (cases de 32 px).

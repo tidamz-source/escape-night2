@@ -194,16 +194,48 @@ const Gerard = {
   },
   leave(fromId) { const g = SAVE.gerard; if (SQ.st('gerard') !== 1 || !g || g.zone !== fromId || g.key) return; const z = Object.keys(GERARD_SPOTS).filter(k => k !== fromId); g.zone = pick(z); persist(); },
 };
-// Gérard se pousse et se tire comme un bloc ; poussé sur une sortie, il file dans la région voisine
+// Gérard : il faut d'abord l'assommer (épée, caillou…), puis il se pousse et se tire comme un bloc, bien en face, jamais en biais.
+// Réveillé, il s'écarte quand on s'approche. Poussé sur une sortie, il file dans la région voisine.
 class GerardBlock extends Block {
-  constructor(x, y) { super(x, y); this.t = rand(0, 5); this.face = 1; this.st = 3; }
+  constructor(x, y) { super(x, y); this.t = rand(0, 5); this.face = 1; this.st = 3; this.stun = 0; this.fleeCd = 1; this.nag = 0; }
+  get body() { return () => ({ x: this.x - 10, y: this.y - 22, w: 20, h: 22 }); }
+  hit(d, fx, fy, G) {
+    if (this.mv) return; const was = this.stun > 0; this.stun = 5; this.flash = 0.2; SFX.hit(); if (!was) SFX.baa();
+    G.parts.burst(this.x, this.y - 14, 8, ['#fff6c0', '#ffffff']);
+    if (!was && !SAVE.gerardStunTip) { SAVE.gerardStunTip = true; Input.toast = { msg: 'Gérard est sonné : pousse-le vite !', t: 2.2 }; }
+  }
+  canGrab() { return this.stun > 0; } // réveillé, on ne l'agrippe pas : A donne un coup d'épée
+  // le héros doit être bien en face de lui pour le pousser ou le tirer
+  facing(dir, G) { const P = G.player, [vx] = DV[dir]; return vx ? Math.abs(P.y - this.y) < 7 : Math.abs(P.x - this.x) < 7; }
+  canGo(vx, vy, G, flee) {
+    const tb = { x: this.x - 8 + vx * 16, y: this.y - 16 + vy * 16, w: 16, h: 16 };
+    if (tb.x < 0 || tb.y < 0 || tb.x + 16 > G.area.w || tb.y + 16 > G.area.h || blocked(G.area, tb, this)) return false;
+    if (flee) { const t = G.area.tileAt(tb.x + 8, tb.y + 8), tx = Math.floor((tb.x + 8) / TS), ty = Math.floor((tb.y + 8) / TS);
+      if (EXITS.has(t) || (G.area.exitTo && G.area.exitTo[t])) return false;
+      if (G.area.id === 'collines' && tx >= PEN.x && tx < PEN.x + PEN.w && ty >= PEN.y && ty < PEN.y + PEN.h) return false;
+      if (rectHit(tb, boxOf(G.player))) return false; }
+    return true;
+  }
   push(dir, G) {
-    if (this.mv) return; const [vx, vy] = DV[dir], tb = { x: this.x - 8 + vx * 16, y: this.y - 16 + vy * 16, w: 16, h: 16 };
+    if (this.mv) return;
+    if (!(this.stun > 0)) { if (this.nag <= 0) { this.nag = 2.5; SFX.baa(); Input.toast = { msg: 'Gérard résiste ! Assomme-le d\'abord.', t: 1.8 }; } this.face = -this.face; return; }
+    if (!this.facing(dir, G)) return;
+    const [vx, vy] = DV[dir], tb = { x: this.x - 8 + vx * 16, y: this.y - 16 + vy * 16, w: 16, h: 16 };
     if (tb.x < 0 || tb.y < 0 || tb.x + 16 > G.area.w || tb.y + 16 > G.area.h || blocked(G.area, tb, this)) return;
     this.mv = { vx, vy, d: 0 }; if (vx) this.face = vx; SFX.baa(); SAVE.gerard.moved = true;
   }
   update(dt, G) {
-    this.t += dt; const was = !!this.mv; super.update(dt, G);
+    this.t += dt; if (this.stun > 0) this.stun -= dt; if (this.nag > 0) this.nag -= dt; if (this.flash > 0) this.flash -= dt; if (this.fleeCd > 0) this.fleeCd -= dt;
+    // réveillé, il s'écarte d'une case ou deux quand le héros s'approche
+    const P = G.player;
+    if (!this.mv && !(this.stun > 0) && P.grab !== this && this.fleeCd <= 0 && dist(P.x, P.y, this.x, this.y) < 34) {
+      const dx = this.x - P.x, dy = this.y - P.y, main = Math.abs(dx) > Math.abs(dy) ? [[Math.sign(dx) || 1, 0], [0, Math.sign(dy) || 1], [0, -(Math.sign(dy) || 1)]] : [[0, Math.sign(dy) || 1], [Math.sign(dx) || 1, 0], [-(Math.sign(dx) || 1), 0]];
+      const go = main.find(([vx, vy]) => this.canGo(vx, vy, G, true));
+      if (go) { this.mv = { vx: go[0], vy: go[1], d: 0, flee: true }; if (go[0]) this.face = go[0]; SFX.baa(); }
+      this.fleeCd = rand(0.5, 0.9);
+    }
+    const was = !!this.mv, fled = this.mv && this.mv.flee; super.update(dt, G);
+    if (was && !this.mv && fled) return;
     if (was && !this.mv) {
       const t = G.area.tileAt(this.x, this.y - 8), to = G.area.exitTo && G.area.exitTo[t];
       if (to) { SAVE.gerard = { zone: to[0], key: to[1], moved: true }; persist(); this.dead = true; Input.toast = { msg: 'Gérard file dans la région voisine…', t: 2 }; return; }
@@ -218,7 +250,11 @@ class GerardBlock extends Block {
   }
   draw() {
     ell(this.x, this.y, 9, 3, 'rgba(0,0,0,.35)');
-    hi(this.x, this.y + 1, this.face > 0, () => { DECOR.sheep.draw(this.t); D(-24, -30, 8, 4, '#e8d8b0'); D(-26, -28, 4, 6, '#e8d8b0'); }); // des cornes de bélier
+    const dz = this.stun > 0, wob = dz ? Math.round(Math.sin(this.t * 10)) : 0;
+    if (this.flash > 0 && Math.floor(this.t * 30) % 2) ctx.globalAlpha = 0.5;
+    hi(this.x + wob, this.y + 1, this.face > 0, () => { DECOR.sheep.draw(dz ? 0 : this.t); D(-24, -30, 8, 4, '#e8d8b0'); D(-26, -28, 4, 6, '#e8d8b0'); }); // des cornes de bélier
+    ctx.globalAlpha = 1;
+    if (dz) for (let i = 0; i < 3; i++) { const a = this.t * 5 + i * 2.1; R(half(this.x + Math.cos(a) * 8), half(this.y - 26 + Math.sin(a) * 2), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
     text('Gérard', this.x, this.y - 30, { size: 5.5, align: 'center', color: '#fff6c0' });
   }
 }

@@ -148,7 +148,8 @@ class Player {
     if (this.hooking) { this.glide(dt, G, 0, 0, 14); return; }
     // chute dans le vide (Mines) : un demi-cœur, et retour au dernier bord
     if (this.fallT > 0) { this.fallT -= dt; if (this.fallT <= 0) this.afterFall(G); return; }
-    if (area.fallVoid && this.roll <= 0 && area.tileAt(this.x, this.y - 3) === 'v') { this.fallT = 0.55; this.vx = this.vy = 0; this.kb.t = 0; this.atk = 0; this.grab = null; SFX.fall(); return; }
+    // au bord du vide : le héros vacille un instant (on peut se rattraper) avant de tomber
+    if (area.fallVoid && this.roll <= 0 && area.tileAt(this.x, this.y - 3) === 'v') { if ((this.edgeT = (this.edgeT || 0) + dt) > 0.35) { this.edgeT = 0; this.fallT = 0.55; this.vx = this.vy = 0; this.kb.t = 0; this.atk = 0; this.grab = null; SFX.fall(); return; } } else this.edgeT = 0;
     if (this.bump > 0) this.bump -= dt;
     if (this.shootCd > 0) this.shootCd -= dt;
     if (this.shootT > 0) this.shootT -= dt;
@@ -193,7 +194,7 @@ class Player {
     if (Input.pressed('a')) {
       const target = G.interactTarget(this);
       if (target) { target.interact(G, this); return; }
-      const heavy = G.frontEnt(this, e => e instanceof Block && !e.mv);
+      const heavy = G.frontEnt(this, e => e instanceof Block && !e.mv && (!e.canGrab || e.canGrab()));
       if (heavy) { this.grab = heavy; this.grabMv = null; this.vx = this.vy = 0; SFX.push(); return; }
       if (!SAVE.got_branche) return; // pas encore d'arme
       this.atk = ATK_TIME; this.atkHit.clear(); SFX.swing(); this.atkFrom = true; this.charge = 0; return;
@@ -294,6 +295,7 @@ class Player {
   draw() {
     if (this.fallT > 0) { const k = this.fallT / 0.55; ctx.save(); ctx.translate(this.x, this.y); ctx.rotate((1 - k) * 3); ctx.scale(k, k); ctx.translate(-this.x, -this.y); drawHero(SAVE.hero, this.x, this.y, this.dir, false, G.t); ctx.restore(); return; }
     if (this.inv > 0 && Math.floor(this.inv * 20) % 2) return;
+    if (this.edgeT > 0) { ctx.save(); ctx.translate(Math.sin(G.t * 40) * 1.2, 0); this.edgeT = -this.edgeT; this.draw(); this.edgeT = -this.edgeT; ctx.restore(); text('!', this.x, this.y - 40, { size: 9, align: 'center', color: PAL.warm, bold: true }); return; } // il vacille au bord du vide
     if (this.swimming && !this.pull) { const lk = this.look && this.look.split('_').includes(this.dir) && heroHasDir(SAVE.hero, this.look) ? this.look : this.dir; drawSwimmer(SAVE.hero, this.x, this.y, lk, this.anim, this.dive > 0, this.moving); return; }
     if (this.riding) { drawHero(SAVE.hero, this.x, this.y - 6, 'down', false, G.t); return; }
     ell(this.x, this.y - 0.5, 7, 2.6, 'rgba(0,0,0,.42)');
