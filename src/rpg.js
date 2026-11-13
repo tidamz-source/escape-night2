@@ -218,7 +218,7 @@ class PromoFlag {
   draw() { hi(this.x, this.y, false, () => { D(-1, -40, 2, 40, '#5a3418'); const w = Math.sin(this.t * 4) * 2; D(1, -40, 16 + w, 10, '#e84a5a'); D(1, -36, 16 + w, 2, '#ffd23a'); }); text('-30%', this.x + 9, this.y - 21, { size: 4.5, align: 'center', color: '#fff', bold: true }); }
 }
 // le colporteur : une région différente selon l'heure de la tour-horloge
-const PEDDLER_SPOTS = { 1: ['collines', 34, 30], 2: ['foret', 34, 26], 3: ['montagne', 20, 36], 4: ['lac', 30, 20], 5: ['cote', 20, 24], 6: ['terres', 30, 30] };
+const PEDDLER_SPOTS = { 1: ['collines', 41, 28], 2: ['foret', 34, 26], 3: ['montagne', 20, 36], 4: ['lac', 30, 20], 5: ['cote', 20, 24], 6: ['terres', 30, 30] };
 const PEDDLER_WARES = [
   { id: 'bouteille', price: 120, key: 'peddler_bottle', label: 'Bouteille vide' },
   { id: 'sacoche_voyage', price: 220, key: 'peddler_bag', label: 'Sacoche de voyageur' },

@@ -190,7 +190,7 @@ class ClockTower {
 function relayPos(area, x, y) { return () => ({ x: x * TS + 8, y: (y + 2) * TS + 4, dir: 'down', area }); }
 const ZONE_ARRIVE = {
   village_from_collines: { x: 32 * TS, y: 4 * TS, dir: 'down' }, village_from_foret: { x: 3 * TS, y: 24 * TS + 4, dir: 'right' }, village_from_lac: { x: 32 * TS, y: 44 * TS, dir: 'up' },
-  collines_from_village: { x: 32 * TS, y: 44 * TS, dir: 'up' }, collines_from_montagne: { x: 60 * TS, y: 22 * TS, dir: 'left' },
+  collines_from_village: { x: 37 * TS + 8, y: 51 * TS, dir: 'up' }, collines_from_montagne: { x: 70 * TS, y: 26 * TS, dir: 'left' },
   foret_from_village: { x: 60 * TS, y: 24 * TS + 4, dir: 'left' },
   montagne_from_collines: { x: 3 * TS, y: 22 * TS, dir: 'right' },
   lac_from_village: { x: 32 * TS, y: 4 * TS, dir: 'down' }, lac_from_cote: { x: 60 * TS, y: 32 * TS, dir: 'left' }, lac_from_terres: { x: 3 * TS, y: 38 * TS, dir: 'right' },
@@ -287,33 +287,26 @@ class PaintedBridge {
 }
 
 // ----- Les Collines (nord) : prairies, moutons, la grotte des lucioles -----
+// carte peinte (assets/maps/collines.png) ; la grille PAINTED.collines ne sert qu'aux collisions
 function buildCollinesArea() {
-  const Z = zoneGrid(13), { rect, set } = Z;
-  rect(30, ZH - 2, 4, 2, '1'); rect(ZW - 2, 20, 2, 4, '2'); rect(0, 22, 2, 4, '3');
-  rect(2, 2, 60, 6, '#'); rect(28, 6, 8, 2, '.'); rect(31, 6, 2, 2, 'G');                   // la falaise et la grotte
-  rect(31, 8, 2, 38, '='); rect(33, 21, 29, 2, '='); rect(16, 35, 15, 2, '=');
-  Z.ell(14, 17, 7, 4.5, '~', 0.15);
-  for (const [cx, cy, w, h] of [[44, 10, 4, 3], [50, 30, 3, 3], [8, 26, 3, 4], [22, 42, 4, 2], [40, 40, 3, 2], [56, 12, 3, 4]]) rect(cx, cy, w, h, '#');
-  rect(2, 23, 29, 2, '=');                                                                      // le sentier du Sanctuaire des lucioles
-  Z.flowers(160);
-  const A = zoneArea('collines', Z.g, 'collines', { name: 'Les Collines', dark: 0.42 });
-  A.houses = [{ id: 'berger', x: 14 * TS + 8, y: 35 * TS, o: { w: 5, d: 3, style: 'cabin', roof: '#5a4a3a' } }];
-  scatter(A, 17, [{ x: 0, y: 21 * TS, w: 31 * TS, h: 5 * TS }, { x: 8 * TS, y: 7 * TS, w: 10 * TS, h: 4 * TS }, { x: 26 * TS, y: 0, w: 12 * TS, h: ZH * TS }, { x: 8 * TS, y: 28 * TS, w: 14 * TS, h: 10 * TS }, { x: 42 * TS, y: 26 * TS, w: 14 * TS, h: 12 * TS }], { trees: 26, rocks: 12, flowers: 30, bushes: 24, kinds: ['oak1', 'oak2', 'pine1'] });
+  const g = PAINTED.collines.map(r => r.split(''));
+  const A = zoneArea('collines', g, 'collines', { name: 'Les Collines', dark: 0.42 });
+  A.paint = 'map_collines'; A.bushSpots = [];
+  A.houses = [{ id: 'berger', x: 16.4 * TS + 8, y: 41 * TS, o: { w: 3, d: 1, painted: true } }]; // la bergerie peinte : on entre par la porte, en montant
   A.spawn = function () {
     this.ents = [];
-    for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));
     for (const h of this.houses) this.ents.push(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)));
-    this.ents.push(new Entrance(32 * TS, 8 * TS, 'cave'));
-    for (const [x, y] of [[10, 30], [20, 26], [24, 32], [44, 16], [52, 18]]) this.ents.push(new Sheep(x * TS, y * TS));
-    this.ents.push(new Decor(12 * TS, 38 * TS, 'fence'), new Decor(18 * TS, 38 * TS, 'fence'));
-    this.ents.push(new Relay(36 * TS, 40 * TS, 'collines'));
-    this.ents.push(new Sign(34 * TS, 10 * TS, [{ text: '« Grotte des lucioles. Ce qui dort au fond craint les cailloux bien lancés. »' }]));
-    this.ents.push(new Sign(58 * TS, 20 * TS, [{ text: '« À l\'est : la Montagne et les Mines des gnomes. »' }]), new Sign(6 * TS, 22 * TS, [{ text: '« À l\'ouest : le Sanctuaire des lucioles. »' }]));
-    for (const [x, y] of [[20, 14], [40, 14], [46, 26], [12, 22], [24, 38], [54, 40]]) this.ents.push(new Raccoon(x * TS, y * TS));
-    this.ents.push(new Bat(26 * TS, 12 * TS), new Bat(40 * TS, 30 * TS), new Shadow(52 * TS, 8 * TS + 8));
+    for (const [x, y] of [[44, 14], [50, 20], [60, 31], [30, 47], [66, 47]]) this.ents.push(new Sheep(x * TS, y * TS));
+    this.ents.push(new Relay(34 * TS, 30 * TS, 'collines'));
+    this.ents.push(Object.assign(new Sign(40 * TS, 11 * TS, [{ text: '« Grotte des lucioles. Ce qui dort au fond craint les cailloux bien lancés. »' }]), { ghost: true })); // panneaux peints
+    this.ents.push(Object.assign(new Sign(68 * TS, 22 * TS, [{ text: '« À l\'est : la Montagne et les Mines des gnomes. »' }]), { ghost: true }));
+    this.ents.push(new Sign(5 * TS, 36 * TS, [{ text: '« À l\'ouest : le Sanctuaire des lucioles. »' }]));
+    for (const [x, y] of [[39, 21], [35, 38]]) this.ents.push(new LightSpot(x * TS + 8, y * TS + 4, { r: 40, c: 'rgba(255,220,150,', oy: -20 })); // les lanternes peintes
+    for (const [x, y] of [[20, 12], [50, 12], [60, 37], [10, 28], [26, 47], [48, 47]]) this.ents.push(new Raccoon(x * TS, y * TS));
+    this.ents.push(new Bat(28 * TS, 12 * TS), new Bat(46 * TS, 32 * TS), new Shadow(60 * TS, 10 * TS + 8));
   };
   A.start = ZONE_ARRIVE.collines_from_village;
-  A.fromDungeon = { x: 32 * TS, y: 9 * TS + 8, dir: 'down' };
+  A.fromDungeon = { x: 37 * TS + 8, y: 11 * TS + 8, dir: 'down' };
   A.exits = { 1: goZone('royaume', 'village_from_collines'), 2: goZone('montagne', 'montagne_from_collines'), G: G => G.enter('cave', G.areas.cave.start) };
   return A;
 }

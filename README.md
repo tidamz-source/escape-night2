@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.11.0** : les Collines deviennent une carte peinte (75×56 cases) : grotte des lucioles au nord, bergerie, moulin, étang ; tout ce qui s'y trouvait (moutons, ratons, relais, quêtes, luciole perdue, rocher secret) est replacé.
 - **8.10.2** : plus aucune ombre sous le sanctuaire.
 - **8.10.1** : le sanctuaire est posé au sol (plus de grande ombre portée sous l'arche).
 - **8.10.0** : nouveau Sanctuaire des lucioles (arche PixelLab) : la Mère des lucioles flotte au milieu, les 6 alvéoles s'allument une à une à chaque don de Lumi.

@@ -415,7 +415,7 @@ class IronGate { // grille fermée par une clé unique ou une condition
 // ---------- luciole-relais : voyage rapide (après la libération du deuxième enfant) ----------
 const RELAYS = {
   village: { name: 'Bourg-Luciole', area: 'royaume', pos: () => ({ x: 26 * TS, y: 31 * TS + 4, dir: 'down' }) },
-  collines: { name: 'Les Collines', area: 'collines', pos: () => ({ x: 36 * TS, y: 42 * TS + 4, dir: 'down' }) },
+  collines: { name: 'Les Collines', area: 'collines', pos: () => ({ x: 34 * TS, y: 32 * TS + 4, dir: 'down' }) },
   foret: { name: 'La Forêt', area: 'foret', pos: () => ({ x: 54 * TS, y: 29 * TS + 4, dir: 'down' }) },
   montagne: { name: 'La Montagne', area: 'montagne', pos: () => ({ x: 8 * TS, y: 27 * TS + 4, dir: 'down' }) },
   lac: { name: 'Le Lac', area: 'lac', pos: () => ({ x: 38 * TS, y: 13 * TS + 4, dir: 'down' }) },

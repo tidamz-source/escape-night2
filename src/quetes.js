@@ -94,7 +94,7 @@ const Soupe = {
 // ===== 2. le concert de Mahaut =====
 const Concert = {
   n: () => [0, 1, 2, 3].filter(i => SAVE['corde' + i]).length,
-  spots: [[6, 10], [46, 9], [54, 32], [8, 30]],
+  spots: [[10, 12], [50, 10], [64, 34], [6, 30]],
   talk(G) {
     const s = SQ.st('concert');
     if (s === 0 && SQ.open('concert')) { G.say([say('Mahaut', 'Mon rouet-harpe a perdu ses quatre cordes ! Le vent les a emportées jusque dans les Collines…'), say('Mahaut', 'Je crois qu\'elles se sont prises dans des jarres et des buissons. Si tu les retrouves, je donnerai un concert sur la place !')], () => SQ.start('concert', G)); return true; }
@@ -145,7 +145,7 @@ class QuestThing {
 // ===== 3. le livre perdu du sage : sept pages, l'histoire du Roi Minuit =====
 const PAGES = [
   ['royaume', 12, 30, 'Une feuille du grimoire : « Il était une fois un roi qui aimait le soleil plus que tout. Chaque matin, il montait en haut de la tour-horloge pour le regarder se lever. »'],
-  ['collines', 14, 17, 'Une feuille du grimoire : « Le roi avait un frère cadet, qui riait fort et ne craignait rien. Le peuple l\'aimait davantage. Le roi en fut jaloux. »'],
+  ['collines', 26, 20, 'Une feuille du grimoire : « Le roi avait un frère cadet, qui riait fort et ne craignait rien. Le peuple l\'aimait davantage. Le roi en fut jaloux. »'],
   ['foret', 50, 37, 'Une feuille du grimoire : « Un jour, le roi vit dans son miroir son premier cheveu blanc. Il ne dormit plus. Il avait peur de vieillir, et d\'être oublié. »'],
   ['montagne', 44, 22, 'Une feuille du grimoire : « Il demanda aux gnomes une machine pour arrêter le temps. Les gnomes refusèrent. Alors il alla trouver l\'horloger de la tour. »'],
   ['lac', 10, 40, 'Une feuille du grimoire : « L\'horloger refusa aussi. Furieux, le roi brisa la pierre du soleil, cœur de l\'horloge, et la cacha. Il était minuit. Il le resta. »'],
@@ -172,8 +172,8 @@ const Pages = {
 
 // ===== 4. le mouton fugueur =====
 const GERARD_ZONES = { collines: 'les Collines', route_nord: 'la Route des Bergers', col: 'le Col des Sapins', sanctuaire: 'le Sanctuaire des lucioles' };
-const GERARD_SPOTS = { collines: [50, 25], route_nord: [24, 24], col: [30, 17], sanctuaire: [30, 17] };
-const PEN = { x: 19, y: 38, w: 7, h: 4 }; // l'enclos, à côté de la bergerie (tuiles)
+const GERARD_SPOTS = { collines: [52, 34], route_nord: [24, 24], col: [30, 17], sanctuaire: [30, 17] };
+const PEN = { x: 24, y: 44, w: 7, h: 4 }; // l'enclos, à côté de la bergerie (tuiles)
 const Gerard = {
   talk(G) {
     const s = SQ.st('gerard');
@@ -184,7 +184,7 @@ const Gerard = {
   // apparition dans sa zone ; s'il n'a pas été poussé, il change de région à chaque fois qu'on quitte la sienne
   spawn(A) {
     const s = SQ.st('gerard'), g = SAVE.gerard;
-    if (s === 2 && A.id === 'collines') { A.ents.push(Object.assign(new Sheep(22 * TS, 40 * TS), { gerard: true })); if ((SAVE.playTime || 0) - (SAVE.peloteT || 0) > 480) { SAVE.peloteT = SAVE.playTime || 0; A.ents.push(new Forage(23 * TS + 8, 39 * TS + 12, 'pelote')); } }
+    if (s === 2 && A.id === 'collines') { A.ents.push(Object.assign(new Sheep(27 * TS, 46 * TS), { gerard: true })); if ((SAVE.playTime || 0) - (SAVE.peloteT || 0) > 480) { SAVE.peloteT = SAVE.playTime || 0; A.ents.push(new Forage(28 * TS + 8, 45 * TS + 12, 'pelote')); } }
     if (s === 2 || s === 0 || !g) return;
     if (g.zone !== A.id) return;
     let x, y; if (g.key) { const a = ZONE_ARRIVE[g.key], [dx, dy] = DV[a.dir]; x = a.x + dx * 40; y = a.y + dy * 40; } else { const [tx, ty] = GERARD_SPOTS[A.id]; x = tx * TS + 8; y = ty * TS + 16; }
@@ -501,10 +501,10 @@ const Proces = {
   spawn(A) {
     if (SQ.st('proces') !== 1 && !(SQ.st('proces') === 2 && A.id === 'collines')) return;
     if (A.id === 'collines') {
-      A.ents.push(new NPC(35 * TS + 8, 38 * TS, { sq: 'filou', draw: n => Raccoon.prototype.draw.call({ x: n.x, y: n.y, t: n.t, vx: 0, vy: 0, state: 'wander', flash: 0, face: 1 }), fn: G => G.say([say('Filou', SQ.st('proces') === 2 ? 'Krrr ! (Filou est tout content.)' : 'Krrr… (Filou baisse les oreilles. Il a l\'air triste, et il sent la mûre.)')]) }));
+      A.ents.push(new NPC(33 * TS + 8, 38 * TS, { sq: 'filou', draw: n => Raccoon.prototype.draw.call({ x: n.x, y: n.y, t: n.t, vx: 0, vy: 0, state: 'wander', flash: 0, face: 1 }), fn: G => G.say([say('Filou', SQ.st('proces') === 2 ? 'Krrr ! (Filou est tout content.)' : 'Krrr… (Filou baisse les oreilles. Il a l\'air triste, et il sent la mûre.)')]) }));
       if (SQ.st('proces') === 1) {
-        A.ents.push(villager2('bastien', 24 * TS + 8, 30 * TS), villager2('pervenche', 44 * TS + 8, 24 * TS));
-        for (const [k, x, y] of [['plume', 10, 39], ['mures', 40, 30], ['nid', 38, 16]]) if (!(SAVE.procC || {})[k]) A.ents.push(new ClueSpot(x * TS + 8, y * TS, k));
+        A.ents.push(villager2('bastien', 27 * TS + 8, 32 * TS), villager2('pervenche', 44 * TS + 8, 22 * TS));
+        for (const [k, x, y] of [['plume', 8, 44], ['mures', 45, 36], ['nid', 44, 16]]) if (!(SAVE.procC || {})[k]) A.ents.push(new ClueSpot(x * TS + 8, y * TS, k));
       }
     }
   },

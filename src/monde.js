@@ -84,7 +84,7 @@ class HeartPiece {
 // ===== lucioles perdues : les sœurs de Lumi =====
 // [id, zone, x (tuiles), y (tuiles)] ; pour un donjon : [id, zone, salle, x px, y px]
 const FIREFLIES = [
-  ['f_vil', 'royaume', 13, 32], ['f_col', 'collines', 58, 6], ['f_for', 'foret', 6, 10], ['f_mon', 'montagne', 58, 44], ['f_lac', 'lac', 4, 30], ['f_cot', 'cote', 6, 6], ['f_ter', 'terres', 58, 8],
+  ['f_vil', 'royaume', 13, 32], ['f_col', 'collines', 67, 8], ['f_for', 'foret', 6, 10], ['f_mon', 'montagne', 58, 44], ['f_lac', 'lac', 4, 30], ['f_cot', 'cote', 6, 6], ['f_ter', 'terres', 58, 8],
   ['f_d1', 'cave', 'treasure', 400, 200], ['f_d2', 'bois', 'treasure', 80, 200], ['f_d3', 'mines', 'shaft', 400, 80], ['f_d4', 'temple', 'gallery', 240, 130], ['f_d5', 'tower', 'secret', 240, 200], ['f_d6', 'castle', 'armory', 400, 200],
   ['f_rn1', 'route_nord', 6, 6], ['f_rn2', 'route_nord', 34, 24], ['f_col1', 'col', 6, 24], ['f_col2', 'col', 34, 6], ['f_or1', 'oree', 6, 6], ['f_or2', 'oree', 34, 26],
   ['f_pr1', 'pres', 6, 24], ['f_du1', 'dunes', 20, 6], ['f_la1', 'lande', 34, 24], ['f_la2', 'lande', 6, 24],
@@ -339,7 +339,7 @@ function buildSanctuaire() {
     spawn(A) { A.ents.push(new FireflyShrine(20 * TS, 9 * TS)); A.ents.push(new Sign(24 * TS, 16 * TS, [{ text: '« Sanctuaire des lucioles. Rapportez-y les lucioles égarées. »' }])); } });
   return A;
 }
-ZONE_ARRIVE.collines_from_sanct = { x: 3 * TS, y: 24 * TS + 4, dir: 'right' };
+ZONE_ARRIVE.collines_from_sanct = { x: 3 * TS, y: 38 * TS + 4, dir: 'right' };
 
 // ===== où vont les lucioles, les quarts de cœur et les habitants, à chaque visite =====
 function worldSpawn(A) {
@@ -349,7 +349,7 @@ function worldSpawn(A) {
     else A.ents.push(new LostFirefly(f[2] * TS + 8, f[3] * TS + 8, f[0], f[4] === 'exact'));
   }
   if (A.id === 'royaume') A.ents.push(villager('crieur', 30 * TS + 8, 33 * TS), villager('lavandiere', 50 * TS + 8, 27 * TS), villager('jules', 45 * TS + 8, 28 * TS), villager('lila', 47 * TS + 8, 29 * TS), villager('lampions', 15 * TS + 8, 13 * TS));
-  if (A.id === 'collines') A.ents.push(new SecretRock(12 * TS + 8, 9 * TS, 'grotte_collines'));
+  if (A.id === 'collines') A.ents.push(new SecretRock(17 * TS + 8, 10 * TS, 'grotte_collines'));
   if (A.id === 'montagne') A.ents.push(new SecretRock(22 * TS + 8, 8 * TS, 'grotte_montagne'));
   sqSpawn(A); // les quêtes secondaires
 }
