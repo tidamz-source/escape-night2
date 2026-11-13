@@ -54,6 +54,17 @@ function drawPL(key, x, y, di, t, alpha = 1, scale = 1) {
   if (m.anim && di === 0) { sx = (Math.floor(t * 6) % m.anim) * 48; sy = 48; }
   ctx.globalAlpha = alpha; ctx.drawImage(im, sx, sy, 48, 48, half(x - s / 2), half(y - s + m.foot * k), s, s); ctx.globalAlpha = 1; return true;
 }
+// une case d'une planche (boss, monstres) posée par les pieds en (x, y) ; k : échelle (0,5 = 1 pixel d'image par pixel d'écran)
+// o : { flip, rot, alpha, foot (marge sous les pieds, en px d'image), flash (silhouette blanche quand il est touché) }
+const WHITE = {};
+function whiteOf(key) { if (WHITE[key]) return WHITE[key]; const im = IMG[key], c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); return (WHITE[key] = c); }
+function drawCell(key, col, row, cw, ch, x, y, k, o = {}) {
+  const im = IMG[key]; if (!im) return false; const w = cw * k, h = ch * k, dy = -h + (o.foot || 0) * k;
+  ctx.save(); ctx.translate(half(x), half(y)); if (o.flip) ctx.scale(-1, 1); if (o.rot) ctx.rotate(o.rot);
+  ctx.globalAlpha = o.alpha != null ? o.alpha : 1; ctx.drawImage(im, col * cw, row * ch, cw, ch, -w / 2, dy, w, h);
+  if (o.flash) { ctx.globalAlpha = 0.85; ctx.drawImage(whiteOf(key), col * cw, row * ch, cw, ch, -w / 2, dy, w, h); }
+  ctx.restore(); return true;
+}
 // il se tourne vers le héros quand il s'approche
 function plFace(e) { const P = G.player; if (P && dist(P.x, P.y, e.x, e.y) < 72) e.di = plDir(P.x - e.x, P.y - e.y); else if (e.di == null || (e.diT = (e.diT || 0) + 1) > 240) { e.di = e.o && e.o.face != null ? e.o.face : 0; e.diT = 0; } return e.di; }
 

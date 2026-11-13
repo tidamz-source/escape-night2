@@ -160,6 +160,10 @@ class WhirlQueen extends Enemy {
       if (k > 0.5 && Math.floor(this.t * 10) % 2) { ctx.strokeStyle = 'rgba(255,90,90,.7)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(this.tx, this.ty, r + 3, (r + 3) * 0.38, 0, 0, 7); ctx.stroke(); }
     } else ell(this.x, this.y, 20, 5, 'rgba(0,0,0,.4)');
     const flop = this.state === 'flop', wig = flop ? Math.sin(this.t * 18) * 3 : this.state === 'land' ? Math.sin(this.t * 6) * 1.5 : 0;
+    if (IMG.boss_queen) { // sprite PixelLab : 8 directions, elle se tortille hors de l'eau
+      const P = G.player, leap = this.state === 'leap', dx = leap ? this.tx - this.x : P.x - this.x, dy = leap ? this.ty - this.y : P.y - this.y;
+      drawCell('boss_queen', plDir(dx, dy), 0, 128, 128, this.x, this.y - this.alt, 0.5, { foot: 7, flash: fl, rot: flop ? Math.sin(this.t * 18) * 0.18 : this.state === 'land' ? Math.sin(this.t * 6) * 0.05 : 0 });
+    } else
     hi(this.x, this.y - this.alt, this.tx < this.fx, () => {
       const c1 = fl ? '#fff' : '#2a6ab0', c2 = fl ? '#fff' : '#4a9ae0', c3 = fl ? '#fff' : '#ffcf3a';
       D(-34, -40 + wig, 60, 34, c1); D(-30, -46 + wig, 50, 8, c2); D(-34, -14 + wig, 60, 6, '#cfe0ff');

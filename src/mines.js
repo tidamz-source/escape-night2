@@ -129,7 +129,17 @@ class IronMole extends Enemy {
     ell(this.x, this.y, 22, 6, '#2a1e16'); ell(this.x, this.y - 1, 18, 4.5, '#4a3628');
     if (this.state === 'sleep' || (this.state === 'down' && k < 0.05)) { for (let i = 0; i < 3; i++) R(half(this.x - 10 + i * 8), half(this.y - 4 - (i % 2) * 2), 3, 2, '#6a5040'); return; }
     ctx.save(); ctx.beginPath(); ctx.rect(this.x - 60, this.y - 120, 120, 120); ctx.clip();
-    const fl = this.flash > 0, oy = (1 - k) * 44;
+    const fl = this.flash > 0, oy = (1 - k) * (IMG.boss_mole ? 64 : 44);
+    if (IMG.boss_mole) { // sprite PixelLab : tournée vers le héros, la vapeur fume quand elle est de face
+      const P = G.player, di = P ? plDir(P.x - this.x, P.y - this.y) : 0, walk = di === 0;
+      drawCell('boss_mole', walk ? Math.floor(this.t * 8) % 8 : di, walk ? 1 : 0, 128, 128, this.x, this.y + oy, 0.5, { foot: 5, flash: fl });
+      // les plaques d'armure qu'il reste à arracher au grappin
+      const pl = (x, y, w, h) => { R(half(this.x + x), half(this.y + oy + y), w, h, fl ? '#fff' : '#6a6e7a'); R(half(this.x + x), half(this.y + oy + y), w, 1, '#c8ccd8'); R(half(this.x + x + 1), half(this.y + oy + y + 2), 1, 1, '#ffb040'); R(half(this.x + x + w - 2), half(this.y + oy + y + 2), 1, 1, '#ffb040'); R(half(this.x + x + 1), half(this.y + oy + y + h - 2), 1, 1, '#ffb040'); R(half(this.x + x + w - 2), half(this.y + oy + y + h - 2), 1, 1, '#ffb040'); };
+      if (this.plates >= 3) pl(-20, -34, 8, 13);
+      if (this.plates >= 2) pl(12, -34, 8, 13);
+      if (this.plates >= 1) pl(-6, -24, 12, 9);
+      ctx.restore(); return;
+    }
     hi(this.x, this.y + oy, false, () => {
       const c1 = fl ? '#fff' : '#5a5e6a', c2 = fl ? '#fff' : '#7a7e8a', c3 = fl ? '#fff' : '#3a3d48';
       D(-32, -70, 64, 70, c1); D(-28, -78, 56, 10, c1); D(-32, -70, 64, 4, c2);

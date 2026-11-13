@@ -419,7 +419,7 @@ class GreatShadow extends Enemy {
     this.poof = ['#1a1030', '#4a2a7a', '#c3b3ff', '#000', '#ff3a6a'];
   }
   size() { return this.state === 'stun' ? 0.8 : this.state === 'intro' ? Math.max(0.1, this.rise) : this.state === 'sleep' ? 0.1 : 1; }
-  body() { const s = this.size(); return { x: this.x - 17 * s, y: this.y - 34 * s, w: 34 * s, h: 34 * s }; }
+  body() { const s = this.size(); return IMG.boss_shadow ? { x: this.x - 22 * s, y: this.y - 40 * s, w: 44 * s, h: 40 * s } : { x: this.x - 17 * s, y: this.y - 34 * s, w: 34 * s, h: 34 * s }; }
   get light() { return this.eye > 0.3 ? { r: 64, c: 'rgba(255,70,120,' } : this.state === 'stun' ? { r: 44, c: 'rgba(195,179,255,' } : null; }
   clampArea(G) { const r = G.roomRect(); this.x = clamp(this.x, r.x + 64, r.x + r.w - 64); this.y = clamp(this.y, r.y + 80, r.y + r.h - 44); }
   wake(G) { if (this.state !== 'sleep') return; this.state = 'intro'; this.st = 1.8; SFX.roar(); G.shake = 0.6; }
@@ -512,6 +512,11 @@ class GreatShadow extends Enemy {
     const s = this.size(), fl = this.flash > 0, stun = this.state === 'stun', bob = Math.sin(this.t * 2.2) * 2 * s;
     ell(this.x, this.y, 22 * s, 6 * s, 'rgba(0,0,0,.5)');
     if (this.state === 'dying' && Math.floor(this.t * 20) % 2) return;
+    if (IMG.boss_shadow) { // sprite PixelLab : œil fermé / œil ouvert
+      drawCell('boss_shadow', this.eye > 0.08 ? 1 : 0, 0, 106, 92, this.x, this.y + 2 + bob, 0.5 * s, { flash: fl, alpha: stun ? 0.8 : 1 });
+      if (stun) for (let i = 0; i < 4; i++) { const a = this.t * 4 + i * Math.PI / 2; R(half(this.x + Math.cos(a) * 18), half(this.y - 46 * s + Math.sin(a) * 4), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
+      return;
+    }
     hi(this.x, this.y - 4 + bob, false, () => {
       const wob = Math.round(Math.sin(this.t * 4) * 3), W2 = 70 + wob, H2 = 62 - wob;
       const c1 = fl ? '#fff' : stun ? '#3a2d5a' : '#0d0718', c2 = fl ? '#fff' : stun ? '#5a4a7a' : '#24123e', c3 = fl ? '#fff' : stun ? '#7a6a9a' : '#3d2466';

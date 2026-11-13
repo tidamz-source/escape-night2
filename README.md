@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.6.0** : premiers boss et monstres PixelLab : la Grande Ombre (œil fermé / ouvert), la Taupe de fer (8 directions, vapeur de face, plaques d'armure toujours visibles), la Reine des remous (8 directions, se tortille sur la terre ferme) et le sanglier (8 directions, course). Planches dans `assets/boss/` et `assets/mobs/` ; chaque boss garde son ancien dessin si l'image manque.
 - **8.5.10** : PNJ PixelLab du bûcheron, du gnome, de Firmin et Gaëlle (les rivaux du concours de pêche, qui ont maintenant leur propre tête), de l'artificière, du gardien du phare, de l'ermite, du vagabond, de Pauline et d'Odette.
 - **8.5.9** : nouveaux PNJ PixelLab : le fossoyeur, le ramasseur de coquillages, Hugo le passeur, l'herboriste et un nouveau Jules.
 - **8.5.8** : premiers PNJ PixelLab (48 × 48, 8 directions, à l'échelle des héros) : le garde, Arthur, Jules, Lila, le fantôme de 3 h, Mère Grenadine, le sage (avec son animation) et Pierrette ; ils se tournent vers le héros. Fichiers : `assets/npc/pl/<clé>.png`.

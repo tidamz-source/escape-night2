@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.5.10';
+const VERSION = 'v8.6.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -49,6 +49,8 @@ const HERO_SHEETS = ['sacha', 'cam', 'rox'];
 const FACES = ['sacha', 'cam', 'rox', 'papa', 'amandine', 'claudine'].flatMap(w => ['smile', 'o', 'angry', 'wink'].map(m => `${w}_${m}`)).filter(k => k !== 'amandine_o' && k !== 'amandine_angry' && k !== 'amandine_wink' && k !== 'claudine_o' && k !== 'claudine_angry' && k !== 'claudine_wink');
 // PNJ PixelLab (assets/npc/pl/<clé>.png : 8 directions sur une ligne, l'animation d'attente de face en dessous)
 const PL_KEYS = ['garde', 'arthur', 'jules', 'lila', 'fantome', 'epiciere', 'sage', 'pierrette', 'fossoyeur', 'coquillages', 'hugo', 'herboriste', 'bucheron', 'gnome', 'firmin', 'gaelle', 'artificiere', 'gardien', 'ermite', 'vagabond', 'pauline', 'odette'];
+// boss et monstres PixelLab (planches : 8 directions sur une ligne, animations en dessous)
+const BOSS_IMGS = [['boss_shadow', 'boss/shadow'], ['boss_queen', 'boss/queen'], ['boss_mole', 'boss/mole'], ['mob_boar', 'mobs/boar']];
 const NPC_SPRITES = ['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'];
 const SWIMMERS = ['sacha', 'cam', 'rox', 'papa'];
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
@@ -64,6 +66,7 @@ function loadAssets() {
     jobs.push(fetch(`assets/${h}.json?v=${VERSION}`).then(r => r.json()).then(j => { SHEETS[h] = j; }).catch(() => {}));
   }
   for (const f of FACES) jobs.push(loadImage('face_' + f, `assets/faces/${f}.png?v=${VERSION}`));
+  for (const [k, p] of BOSS_IMGS) jobs.push(loadImage(k, `assets/${p}.png?v=${VERSION}`));
   for (const k of PL_KEYS) jobs.push(loadImage('pl_' + k, `assets/npc/pl/${k}.png?v=${VERSION}`));
   for (const k of NPC_SPRITES) jobs.push(loadImage('npc_' + k, `assets/npc/${k}.png?v=${VERSION}`));
   for (const k of SWIMMERS) for (const i of [0, 1]) jobs.push(loadImage('swim_' + k + i, `assets/swim/${k}${i}.png?v=${VERSION}`));

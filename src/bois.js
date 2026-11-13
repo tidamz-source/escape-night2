@@ -70,6 +70,10 @@ class Boar extends Raccoon { // sanglier : charge plus fort, encaisse plus
   draw() {
     ell(this.x, this.y, 9, 2.5, 'rgba(0,0,0,.35)');
     const moving = this.vx || this.vy, f = moving ? Math.floor(this.t * (this.state === 'charge' ? 16 : 8)) % 2 : 0, wb = this.state === 'warn' ? Math.sin(this.t * 60) * 0.5 : 0, fl = this.flash > 0;
+    if (IMG.mob_boar) { // sprite PixelLab : 8 directions, 4 images de course
+      const di = moving ? plDir(this.vx, this.vy) : (this.face < 0 ? 6 : 2), run = moving ? 1 + Math.floor(this.t * (this.state === 'charge' ? 14 : 8)) % 4 : 0;
+      drawCell('mob_boar', di, run, 48, 48, this.x + wb, this.y, 1 / 1.4, { foot: 3, flash: fl });
+    } else
     hi(this.x + wb, this.y, this.face < 0, () => {
       const c = fl ? '#fff' : '#5a3a2a', d = fl ? '#fff' : '#3a2418', l = fl ? '#fff' : '#7a5a3a';
       D(-14, -22, 30, 16, c); D(-12, -24, 24, 4, d); for (let i = 0; i < 5; i++) D(-8 + i * 5, -27, 2, 4, d); // crête
