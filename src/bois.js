@@ -315,6 +315,7 @@ class Target { // cible du pont-levis : à toucher de loin
   draw() {
     ell(this.x, this.y, 7, 2, 'rgba(0,0,0,.35)');
     const done = SAVE[this.flag];
+    if (decoImg('target', this.x, this.y, 0.66, 1)) { if (done) { R(half(this.x - 1.5), half(this.y - 23.5), 3, 3, '#ffe27a'); R(half(this.x - 0.5), half(this.y - 23), 1.5, 1.5, '#8a8698'); } return; } // touchée : le centre s'allume
     hi(this.x, this.y, false, () => {
       D(-3, -30, 6, 30, '#5a3a22'); D(-16, -58, 32, 32, '#5a3a22');
       D(-14, -56, 28, 28, '#f0e8d8'); D(-10, -52, 20, 20, '#d83a3a'); D(-6, -48, 12, 12, '#f0e8d8'); D(-3, -45, 6, 6, done ? '#ffe27a' : '#d83a3a');
