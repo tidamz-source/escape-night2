@@ -161,7 +161,7 @@ class IronMole extends Enemy {
     const fl = this.flash > 0, oy = (1 - k) * (IMG.boss_mole ? 64 : 44);
     if (IMG.boss_mole) { // sprite PixelLab : tournée vers le héros, la vapeur fume quand elle est de face
       const P = G.player, di = P ? plDir(P.x - this.x, P.y - this.y) : 0, walk = di === 0;
-      drawCell('boss_mole', walk ? Math.floor(this.t * 8) % 8 : di, walk ? 1 : 0, 128, 128, this.x, this.y + oy, 0.5, { foot: 5, flash: fl });
+      drawCell('boss_mole', walk ? Math.floor(this.t * 8) % 8 : di, walk ? 1 : 0, 168, 168, this.x, this.y + oy, 0.5, { foot: 25, flash: fl });
       // les plaques d'armure qu'il reste à arracher au grappin
       const pl = (x, y, w, h) => { R(half(this.x + x), half(this.y + oy + y), w, h, fl ? '#fff' : '#6a6e7a'); R(half(this.x + x), half(this.y + oy + y), w, 1, '#c8ccd8'); R(half(this.x + x + 1), half(this.y + oy + y + 2), 1, 1, '#ffb040'); R(half(this.x + x + w - 2), half(this.y + oy + y + 2), 1, 1, '#ffb040'); R(half(this.x + x + 1), half(this.y + oy + y + h - 2), 1, 1, '#ffb040'); R(half(this.x + x + w - 2), half(this.y + oy + y + h - 2), 1, 1, '#ffb040'); };
       if (this.plates >= 3) pl(-20, -34, 8, 13);

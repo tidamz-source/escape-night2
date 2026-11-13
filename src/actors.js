@@ -46,13 +46,13 @@ function drawPerson(x, y, L, t) {
 }
 
 // PNJ PixelLab : 48 × 48, 8 directions, même échelle que les héros (÷ 1,4) ; les enfants un peu plus petits
-const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 1, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 2, anim: 8 }, pierrette: { foot: 1 }, fossoyeur: { foot: 1 }, coquillages: { foot: 1 }, hugo: { foot: 2 }, herboriste: { foot: 3 }, bucheron: { foot: 1 }, gnome: { foot: 2, child: 0.6 }, firmin: { foot: 1 }, gaelle: { foot: 1 }, artificiere: { foot: 1 }, gardien: { foot: 2 }, ermite: { foot: 1 }, vagabond: { foot: 0 }, pauline: { foot: 1, child: 0.78 }, odette: { foot: 2 }, lavandiere: { foot: 1 }, crieur: { foot: 1, anim: 9 } };
+const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 1, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 10, anim: 8, c: 64 }, pierrette: { foot: 1 }, fossoyeur: { foot: 1 }, coquillages: { foot: 1 }, hugo: { foot: 2 }, herboriste: { foot: 3 }, bucheron: { foot: 1 }, gnome: { foot: 2, child: 0.6 }, firmin: { foot: 1 }, gaelle: { foot: 1 }, artificiere: { foot: 1 }, gardien: { foot: 2 }, ermite: { foot: 1 }, vagabond: { foot: 0 }, pauline: { foot: 1, child: 0.78 }, odette: { foot: 2 }, lavandiere: { foot: 1 }, crieur: { foot: 11, anim: 9, c: 68 } };
 const plDir = (dx, dy) => (Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) + 8) % 8; // 0 face, 2 droite, 4 dos, 6 gauche
 function drawPL(key, x, y, di, t, alpha = 1, scale = 1) {
   const im = IMG['pl_' + key], m = PL_NPCS[key]; if (!im || !m) return false;
-  const k = scale * (m.child || 1) / 1.4, s = 48 * k; let sx = di * 48, sy = 0;
-  if (m.anim && di === 0) { sx = (Math.floor(t * 6) % m.anim) * 48; sy = 48; }
-  ctx.globalAlpha = alpha; ctx.drawImage(im, sx, sy, 48, 48, half(x - s / 2), half(y - s + m.foot * k), s, s); ctx.globalAlpha = 1; return true;
+  const c = m.c || 48, k = scale * (m.child || 1) / 1.4, s = c * k; let sx = di * c, sy = 0;
+  if (m.anim && di === 0) { sx = (Math.floor(t * 6) % m.anim) * c; sy = c; }
+  ctx.globalAlpha = alpha; ctx.drawImage(im, sx, sy, c, c, half(x - s / 2), half(y - s + m.foot * k), s, s); ctx.globalAlpha = 1; return true;
 }
 // une case d'une planche (boss, monstres) posée par les pieds en (x, y) ; k : échelle (0,5 = 1 pixel d'image par pixel d'écran)
 // o : { flip, rot, alpha, foot (marge sous les pieds, en px d'image), flash (silhouette blanche quand il est touché) }
@@ -66,7 +66,7 @@ function drawCell(key, col, row, cw, ch, x, y, k, o = {}) {
   ctx.restore(); return true;
 }
 // monstres PixelLab (assets/mobs/<clé>.png) : ligne 0 = 8 directions au repos, lignes 1-8 = animation par direction, ligne 9 = pose spéciale
-const MOB_SPR = { raccoon: { n: 8, foot: 3 }, bat: { n: 9, foot: 6 }, shadow: { n: 0, foot: 5 }, wisp: { n: 9, foot: 6 }, squirrel: { n: 8, foot: 4 }, crow: { n: 9, foot: 5 }, gnome: { n: 8, foot: 3, pose: 1 }, spider: { n: 8, foot: 3 }, crab: { n: 8, foot: 6 }, eel: { n: 0, foot: 4, pose: 1 }, skeleton: { n: 8, foot: 1, pose: 1 }, gargoyle: { n: 9, foot: 5 } };
+const MOB_SPR = { raccoon: { c: 64, n: 8, foot: 11 }, bat: { c: 68, n: 9, foot: 16 }, shadow: { c: 48, n: 0, foot: 5 }, wisp: { c: 52, n: 9, foot: 8 }, squirrel: { c: 64, n: 8, foot: 12 }, crow: { c: 64, n: 9, foot: 13 }, gnome: { c: 60, n: 8, foot: 9, pose: 1 }, spider: { c: 64, n: 8, foot: 11 }, crab: { c: 60, n: 8, foot: 12 }, eel: { c: 48, n: 0, foot: 4, pose: 1 }, skeleton: { c: 68, n: 8, foot: 11, pose: 1 }, gargoyle: { c: 60, n: 9, foot: 11 } };
 // o : { dir (sinon : sens du déplacement, ou vers le héros), anim (animer même immobile), pose, fps, alt (hauteur de vol), scale, alpha, sh (ombre) }
 function drawMob(e, key, o = {}) {
   const m = MOB_SPR[key]; if (!m || !IMG['mob_' + key]) return false;
@@ -77,7 +77,7 @@ function drawMob(e, key, o = {}) {
   let col = e._di, row = 0;
   if (o.pose && m.pose) row = 9; else if (m.n && (mv || o.anim)) { row = 1 + e._di; col = Math.floor((e.t || 0) * (o.fps || 10)) % m.n; }
   if (o.sh !== 0) ell(e.x, e.y, o.sh || 6, 2, 'rgba(0,0,0,.3)');
-  drawCell('mob_' + key, col, row, 48, 48, e.x, e.y - (o.alt || 0), (o.scale || 1) / 1.4, { foot: m.foot, flash: e.flash > 0, alpha: o.alpha });
+  drawCell('mob_' + key, col, row, m.c, m.c, e.x, e.y - (o.alt || 0), (o.scale || 1) / 1.4, { foot: m.foot, flash: e.flash > 0, alpha: o.alpha });
   if (e.stunT > 0) for (let i = 0; i < 3; i++) { const a = (e.t || 0) * 5 + i * 2.1; R(half(e.x + Math.cos(a) * 7), half(e.y - (o.alt || 0) - 34 + Math.sin(a) * 2), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
   return true;
 }

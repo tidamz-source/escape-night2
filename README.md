@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.7.2** : animations PixelLab entières (elles étaient rognées à droite : chauves-souris, crieur, sage, monstres, taupe, sanglier) ; les corbeaux restent de face.
 - **8.7.1** : les 12 monstres en PixelLab (raton laveur, chauve-souris, ombre, feu follet, écureuil, corbeau, gnome mineur, araignée de cristal, crabe, anguille, chevalier squelette, gargouille) : 8 directions, animations de marche ou de vol, pose d'attaque pour le gnome, l'anguille et le chevalier ; leurs versions géantes suivent. Le crieur agite sa cloche.
 - **8.7.0** : un mini-boss garde la grande clé dans chaque donjon : Crabe géant (Temple, bassin de la cascade), Grande Gargouille (Tour), Garde noir (Château) ; le coffre n'apparaît qu'après leur défaite.
 - **8.6.9** : Mines : un mini-boss, la Chauve-souris de cristal, garde la grande clé dans la salle des poteaux (avec deux chauves-souris ; le coffre apparaît quand elle tombe).
