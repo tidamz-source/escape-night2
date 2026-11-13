@@ -28,6 +28,7 @@ const Mats = {
   owned: () => Object.keys(MATS).filter(id => Inventory.ingredient(id) > 0),
 };
 function drawMatIcon(id, x, y, s = 1) {
+  if (IMG['item_' + id]) return drawItemIcon(id, x, y, s);
   const u = s, B = (dx, dy, w, h, c) => R(x + dx * u, y + dy * u, w * u, h * u, c);
   switch (id) {
     case 'champignons': return PICKUPS.mushroom.draw(x, y + 5 * s);
@@ -47,7 +48,7 @@ function drawMatIcon(id, x, y, s = 1) {
     case 'eclat_ombre': B(-2, -6, 5, 12, '#2a1d48'); B(-4, -2, 3, 6, '#4a3a7a'); B(0, -5, 1, 4, '#c3b3ff'); return;
   }
 }
-for (const id of Object.keys(MATS)) PICKUPS['mat_' + id] = { draw: (x, y) => drawMatIcon(id, x, y - 5, 0.8), take: () => { Inventory.addIngredient(id, 1); SFX.pickup(); } };
+for (const id of Object.keys(MATS)) PICKUPS['mat_' + id] = { draw: (x, y) => drawMatIcon(id, x, y - 5, IMG['item_' + id] ? 0.62 : 0.8), take: () => { Inventory.addIngredient(id, 1); SFX.pickup(); } };
 
 // ===== effets temporaires (soupes) =====
 const Effects = {
