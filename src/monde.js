@@ -160,6 +160,8 @@ const LumiFx = {
 };
 
 // ===== le Sanctuaire des lucioles : l'autel où Lumi reçoit ses pouvoirs =====
+const SHRINE_K = 0.6; // taille de l'arche PixelLab (px logiques par px d'image)
+const SHRINE_SLOTS = [[23, 49.5], [29.5, 31.5], [47.5, 20.5], [68.5, 20.5], [87.5, 32.5], [94.5, 49.5]]; // les 6 alvéoles, dans l'ordre où elles s'allument
 class FireflyShrine {
   constructor(x, y) { this.x = x; this.y = y; this.w = 60; this.h = 16; this.solid = true; this.t = 0; }
   get light() { return { r: 90 + Flies.pow() * 8, c: 'rgba(255,230,150,' }; }
@@ -184,9 +186,16 @@ class FireflyShrine {
   update(dt, G) { this.t += dt; if (Math.random() < dt * 8) G.parts.add({ x: this.x + rand(-40, 40), y: this.y - rand(10, 70), vy: -8, vx: rand(-6, 6), life: 1.5, c: pick(FLY_COLORS)[0], r: 1 }); }
   draw() {
     ell(this.x, this.y + 2, 40, 7, 'rgba(0,0,0,.4)');
-    if (decoImg('shrine', this.x, this.y, 0.57, 3)) { // la Mère des lucioles et les dons déjà reçus
-      const g = 0.35 + 0.25 * Math.sin(this.t * 2); ctx.globalAlpha = g; ell(this.x, this.y - 40, 9, 9, '#e6c8ff'); ctx.globalAlpha = 1;
-      for (let i = 0; i < 6; i++) { const a = -Math.PI + (i + 0.5) * Math.PI / 6; R(half(this.x + Math.cos(a) * 26 - 1.5), half(this.y - 52 + Math.sin(a) * 14 - 1.5), 3, 3, i < Flies.pow() ? FLY_COLORS[i % FLY_COLORS.length][0] : 'rgba(40,40,60,.6)'); }
+    if (decoImg('shrine', this.x, this.y, SHRINE_K, 2)) { // l'arche PixelLab : la Mère des lucioles flotte au milieu, les 6 alvéoles s'allument une à une
+      const im = IMG.deco_shrine, k = SHRINE_K, ox = this.x - im.width * k / 2, oy = this.y + 2 - im.height * k, P = (u, v) => [ox + u * k, oy + v * k];
+      SHRINE_SLOTS.forEach(([u, v], i) => {
+        if (i >= Flies.pow()) return; const [x, y] = P(u, v), c = FLY_COLORS[i % FLY_COLORS.length], g = 0.5 + 0.3 * Math.sin(this.t * 3 + i);
+        ctx.globalAlpha = g; ell(x, y, 5, 5, c[0]); ctx.globalAlpha = 1; ell(x, y, 2.6, 2.6, c[0]); ell(x - 0.6, y - 0.6, 1.2, 1.2, c[1]);
+      });
+      const [mx, my0] = P(57.5, 72), my = my0 + Math.sin(this.t * 1.6) * 2.5, g = 0.55 + 0.25 * Math.sin(this.t * 2.4);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = g * 0.5; ell(mx, my, 13, 13, '#c9a8ff'); ctx.globalAlpha = g; ell(mx, my, 6, 6, '#e6c8ff'); ctx.restore();
+      ell(mx, my, 2.6, 2.6, '#fbf4ff'); const w = Math.sin(this.t * 22) > 0 ? 2.5 : 1.5; ctx.globalAlpha = 0.7; ell(mx - 3, my - 2, w, 1.5, '#ffffff'); ell(mx + 3, my - 2, w, 1.5, '#ffffff'); ctx.globalAlpha = 1;
+      if (Math.random() < 0.08) G.parts.add({ x: mx + rand(-4, 4), y: my + rand(-3, 3), vy: -rand(6, 14), vx: rand(-4, 4), life: 1, c: pick(['#e6c8ff', '#fbf4ff']), r: 1 });
       return;
     }
     hi(this.x, this.y, false, () => {
