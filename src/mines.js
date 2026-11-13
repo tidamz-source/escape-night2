@@ -56,6 +56,33 @@ class Rock extends Orb { // caillou projeté par la Taupe
   draw() { const y = this.y - this.alt; ell(this.x, this.y, 2.5, 1, 'rgba(0,0,0,.3)'); R(half(this.x - 3), half(y - 3), 6, 6, '#6a5040'); R(half(this.x - 3), half(y - 3), 3, 3, '#8a6a50'); }
 }
 
+// ---------- mini-boss : la Chauve-souris de cristal (salle des poteaux, grande clé) ----------
+// Elle plane au-dessus du vide, pique sur le héros, lâche des éclats de cristal et appelle deux chauves-souris.
+class CrystalShard extends Orb {
+  constructor(x, y, a) { super(x, y, a); this.light = { r: 18, c: 'rgba(170,140,255,' }; }
+  draw() { const y = this.y - this.alt; ell(this.x, this.y, 2.5, 1, 'rgba(0,0,0,.3)'); R(half(this.x - 2), half(y - 4), 4, 8, '#b49aff'); R(half(this.x - 1), half(y - 3), 2, 4, '#fff'); }
+}
+class BigBat extends Bat {
+  constructor(x, y, room) { super(x, y, room); this.hp = this.maxHp = 7; this.dmg = 1; this.w = 18; this.h = 10; this.alt = 22; this.fcd = 2.4; this.ccd = 4; this.loot = 'pot'; this.isMini = true; this.poof = ['#8a6aaa', '#c8b0ff', '#fff']; this.light = { r: 40, c: 'rgba(170,140,255,' }; }
+  body() { return { x: this.x - 13, y: this.y - this.alt - 13, w: 26, h: 20 }; }
+  update(dt, G) {
+    super.update(dt, G); if (this.dead || this.stunT > 0 || this.kb.t > 0 || this.hookT > 0) return;
+    const P = G.player; this.fcd -= dt; this.ccd -= dt;
+    if (this.fcd <= 0 && this.state !== 'swoop') { this.fcd = this.hp <= 3 ? 1.7 : 2.5; SFX.shoot(); const a = Math.atan2(P.y - this.y, P.x - this.x); for (const o of [-0.4, 0, 0.4]) { const s = new CrystalShard(this.x, this.y - 12, a + o); s.room = this.room; G.area.ents.push(s); } }
+    if (this.ccd <= 0) { this.ccd = 8; const n = G.area.ents.filter(e => e instanceof Bat && !(e instanceof BigBat) && !e.dead && e.room === this.room).length;
+      if (n < 2) { SFX.roar(); for (const dx of [-30, 30].slice(0, 2 - n)) { const b = new Bat(this.x + dx, this.y, this.room); b.sx = b.x; b.sy = b.y; G.area.ents.push(b); } } }
+    if (this.state === 'swoop') { this.x += this.vx * dt * 0.4; this.y += this.vy * dt * 0.4; this.clampArea(G); }
+  }
+  draw() {
+    ctx.save(); ctx.translate(this.x, this.y); ctx.scale(1.9, 1.9); ctx.translate(-this.x, -this.y);
+    const al = this.alt; this.alt = al / 1.9; super.draw();
+    const y = this.y - this.alt + Math.sin(this.t * 10), fl = this.flash > 0; // des cristaux lui poussent sur la tête et le dos
+    hi(this.x, y, false, () => { for (const [x, h] of [[-5, 7], [-1, 10], [3, 7]]) { D(x, -14 - h, 3, h, fl ? '#fff' : '#b49aff'); D(x, -14 - h, 1, h, '#fff'); } });
+    this.alt = al; ctx.restore();
+    if (this.hp < this.maxHp) { R(half(this.x - 12), half(this.y - this.alt - 32), 24, 2, 'rgba(7,13,31,.8)'); R(half(this.x - 12), half(this.y - this.alt - 32), 24 * Math.max(0, this.hp) / this.maxHp, 2, '#b49aff'); }
+  }
+}
+
 // ---------- boss : la Taupe de fer ----------
 // Elle creuse sous le sol et surgit sous le héros. Une fois sortie, le grappin lui arrache ses 3 plaques d'armure ;
 // quand son cœur mécanique est à nu, on le frappe à l'arme (2 coups par sortie).
@@ -192,7 +219,8 @@ function buildMinesArea() {
       for (const [x, y] of [[10, 6], [19, 6], [10, 11], [19, 11]]) room('shaft').set(x, y, 'k');
     },
     roomDark: (room, R) => room === R.shaft ? 0.6 : null,
-    arenas: { arena: arenaStd('arenaM'), boss: bossArena('boss3', 'La Taupe de fer') },
+    arenas: { arena: arenaStd('arenaM'), posts: { flag: 'arenaMBK', onStart(G) { G.banner = { text: 'La Chauve-souris de cristal', t: 2 }; } }, boss: bossArena('boss3', 'La Taupe de fer') },
+    migrate() { if (SAVE.minesBigKey) SAVE.arenaMBK = true; }, // anciennes sauvegardes : grande clé déjà prise
     make(n, L, h) {
       const { mk } = h, pot = (x, y) => h.pot(n, x, y);
       if (n === 'entry') L.push(pot(4, 13), pot(25, 13), pot(4, 3), mk(Gnome, n, 20, 9), mk(Bat, n, 9, 6));
@@ -202,7 +230,7 @@ function buildMinesArea() {
       if (n === 'hub') L.push(mk(Bat, n, 14, 6), mk(Bat, n, 18, 10), pot(24, 2), pot(4, 2));
       if (n === 'grappin') L.push(mk(Gnome, n, 8, 5), mk(Gnome, n, 8, 11), mk(CrystalSpider, n, 20, 11), pot(4, 13), pot(4, 3));
       if (n === 'spider') L.push(mk(CrystalSpider, n, 8, 5), mk(CrystalSpider, n, 21, 5), mk(CrystalSpider, n, 8, 11), mk(CrystalSpider, n, 21, 11), pot(3, 13), pot(26, 13));
-      if (n === 'posts') L.push(mk(Bat, n, 12, 5), mk(Bat, n, 22, 12), pot(4, 13));
+      if (n === 'posts') { L.push(pot(4, 13)); if (!SAVE.arenaMBK) L.push(mk(Bat, n, 12, 5), mk(Bat, n, 22, 6), mk(BigBat, n, 20, 7)); } // la Chauve-souris de cristal et ses chauves-souris
       if (n === 'hall') L.push(mk(Gnome, n, 5, 8), mk(Gnome, n, 24, 8), mk(CrystalSpider, n, 14, 4), pot(3, 13), pot(26, 13));
       if (n === 'boss') { if (!SAVE.boss3) { const p = h.pos(n, 240, 160); L.push(new IronMole(p.x, p.y, h.R.boss)); } L.push(pot(3, 12), pot(26, 12)); }
     },
@@ -232,7 +260,8 @@ function buildMinesArea() {
         ['grappin', mk(Chest, 'grappin', 25, 3, { flag: 'grappinCoins', give: 'money:30', msg: [{ text: 'Tu as trouvé 30 écus !' }] })],
         ['spider', mk(Chest, 'spider', 14, 8, { flag: 'minesHeart', give: 'piece_coeur', big: true, msg: null })],
         ['posts', mk(Post, 'posts', 5, 10)], ['posts', mk(Post, 'posts', 12, 8)], ['posts', mk(Post, 'posts', 15, 4)], ['posts', mk(Post, 'posts', 17, 3)], ['posts', mk(Post, 'posts', 20, 10)],
-        ['posts', mk(Chest, 'posts', 24, 11, { flag: 'minesBigKey', give: 'bigkey:mines', big: true, msg: [{ text: 'La grande clé des Mines ! Elle ouvre la porte de la Taupe de fer.' }] })],
+        ['posts', new Shutter(h.door('posts', 'W').x, h.door('posts', 'W').y, 'h', () => G.area.arenaOn === h.R.posts)],
+        ['posts', mk(Chest, 'posts', 24, 11, { flag: 'minesBigKey', give: 'bigkey:mines', big: true, reveal: 'arenaMBK', msg: [{ text: 'La grande clé des Mines ! Elle ouvre la porte de la Taupe de fer.' }] })],
         ['prison', new Cage(cg.x, cg.y, { n: 3, boss: 'boss3', drawCaptive: (x, y, t) => drawHero(Heroes.captive(1), x, y, 'down', false, t) })],
         ...lamps('entry', [[9, 3], [20, 3]]), ...lamps('arena', [[3, 8], [26, 8]]), ...lamps('crate', [[6, 3], [12, 3]]), ...lamps('shaft', [[14, 3]]),
         ...lamps('hub', [[4, 13], [25, 13], [24, 2]]), ...lamps('grappin', [[3, 8], [14, 3]]), ...lamps('posts', [[3, 4], [26, 13]]), ...lamps('spider', [[3, 3], [26, 3]]),
