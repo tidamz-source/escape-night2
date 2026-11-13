@@ -95,7 +95,7 @@ class IronMole extends Enemy {
       case 'sleep': return;
       case 'down': // sous terre : un monticule file vers le héros
         this.rise = Math.max(0, this.rise - dt * 4);
-        { const a = Math.atan2(P.y - this.y, P.x - this.x), sp = this.phase === 1 ? 70 : 95; this.x += Math.cos(a) * sp * dt; this.y += Math.sin(a) * sp * dt; this.clampArea(G); }
+        { const a = Math.atan2(P.y - this.y, P.x - this.x), sp = this.phase === 1 ? 42 : 54; /* nettement plus lente que le héros (76) : on peut la semer */ this.x += Math.cos(a) * sp * dt; this.y += Math.sin(a) * sp * dt; this.clampArea(G); }
         if (Math.random() < dt * 25) G.parts.add({ x: this.x + rand(-10, 10), y: this.y - 2, vx: rand(-30, 30), vy: rand(-50, -10), g: 200, life: 0.5, c: pick(['#5a4434', '#7a5a44', '#3a2a20']), r: 1.5 });
         if (this.st <= 0) { this.state = 'emerge'; this.st = 0.5; SFX.dig(); G.shake = 0.3; }
         return;

@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.6.7** : la Taupe de fer file sous terre nettement moins vite que le héros (42 puis 54 au lieu de 70 puis 95).
 - **8.6.6** : le sage est bien derrière son bureau (le bureau passe devant lui) ; les PNJ suivent le héros du regard de plus loin et plus longtemps ; au bord du vide, on s'arrête comme contre un muret : on ne tombe qu'en forçant vers le vide (plus de point d'exclamation).
 - **8.6.5** : collisions de la bibliothèque retouchées par Damien.
 - **8.6.4** : Gérard le bélier : il faut l'assommer (épée, caillou…) avant de le pousser ou le tirer, toujours bien en face (plus de poussée en biais) ; réveillé, il s'écarte quand on s'approche. Au bord d'un précipice, le héros vacille un instant avant de tomber : on peut se rattraper.
