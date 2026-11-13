@@ -23,12 +23,12 @@ Object.assign(INTERIORS, {
   } },
   // la maison du sage est peinte (assets/maps/biblio.png) : le bureau, les rayonnages et la cheminée sont dans l'image
   bibliotheque: { name: 'La bibliothèque', w: 20, h: 11, paint: 'biblio',
-    lights: [[21.5, 9.6, 80], [17, 5, 40], [26.5, 5, 40], [16.4, 8.2, 30], [27, 8.2, 30], [4, 7.4, 26]],
-    shelves: [[8.5, 11.2, 4], [33, 11.2, 3]],
+    lights: [[15, 6.7, 60], [11.9, 3.5, 30], [18.5, 3.5, 30], [11.4, 5.7, 22], [18.8, 5.7, 22], [2.8, 5.2, 20]],
+    shelves: [[5.9, 7.9, 2.8], [22.6, 7.9, 2]],
     people(put, at, A) {
-      const sage = npc(A, 22.5, 11.9, { look: 'sage', fn: sageTalk });
-      A.ents.push(new TalkSpot(22.5 * TS, 16.6 * TS, 9 * TS, sage)); // devant le bureau : on lui parle par-dessus
-      npc(A, 11.5, 13.6, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4&!boss6' });
+      const sage = npc(A, 15.7, 8.3, { look: 'sage', fn: sageTalk });
+      A.ents.push(new TalkSpot(15.7 * TS, 11.4 * TS, 6.3 * TS, sage)); // devant le bureau : on lui parle par-dessus
+      npc(A, 8, 9.5, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4&!boss6' });
     },
     build(put, at, A) {
     for (const x of [3, 7, 13, 17]) put('shelf', x, 3.2);
