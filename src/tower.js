@@ -58,7 +58,7 @@ class Gargoyle extends Bat { // gargouille : une statue qui s'éveille quand on 
     super.update(dt, G);
   }
   draw() {
-    if (IMG.mob_gargoyle) { if (!this.awake) { ell(this.x, this.y, 9, 3, 'rgba(0,0,0,.4)'); drawCell('mob_gargoyle', 0, 0, 48, 48, this.x, this.y, 1 / 1.4, { foot: MOB_SPR.gargoyle.foot, alpha: 0.85 }); return; } drawMob(this, 'gargoyle', { anim: true, fps: 12, alt: this.alt + Math.sin(this.t * 10), sh: 6 }); return; } // endormie : une statue figée
+    if (IMG.mob_gargoyle) { if (!this.awake) { ell(this.x, this.y, 9, 3, 'rgba(0,0,0,.4)'); drawCell('mob_gargoyle', 0, 0, MOB_SPR.gargoyle.c, MOB_SPR.gargoyle.c, this.x, this.y, (this.isMini ? 1 : MOB_K) / 1.4, { foot: MOB_SPR.gargoyle.foot, alpha: 0.85 }); return; } drawMob(this, 'gargoyle', { anim: true, fps: 12, alt: this.alt + Math.sin(this.t * 10), sh: 6 }); return; } // endormie : une statue figée
     if (!this.awake) {
       ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.4)');
       hi(this.x, this.y, false, () => { D(-12, -8, 24, 8, '#3a3448'); D(-10, -24, 20, 16, '#5a5468'); D(-16, -22, 6, 10, '#4a4458'); D(10, -22, 6, 10, '#4a4458'); D(-6, -32, 12, 10, '#6a6478'); D(-4, -28, 2, 2, '#1a1428'); D(2, -28, 2, 2, '#1a1428'); D(-6, -36, 3, 4, '#6a6478'); D(3, -36, 3, 4, '#6a6478'); });
