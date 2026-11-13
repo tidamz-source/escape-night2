@@ -148,8 +148,7 @@ class Player {
     if (this.hooking) { this.glide(dt, G, 0, 0, 14); return; }
     // chute dans le vide (Mines) : un demi-cœur, et retour au dernier bord
     if (this.fallT > 0) { this.fallT -= dt; if (this.fallT <= 0) this.afterFall(G); return; }
-    // au bord du vide : le héros vacille un instant (on peut se rattraper) avant de tomber
-    if (area.fallVoid && this.roll <= 0 && area.tileAt(this.x, this.y - 3) === 'v') { if ((this.edgeT = (this.edgeT || 0) + dt) > 0.35) { this.edgeT = 0; this.fallT = 0.55; this.vx = this.vy = 0; this.kb.t = 0; this.atk = 0; this.grab = null; SFX.fall(); return; } } else this.edgeT = 0;
+    if (area.fallVoid && this.roll <= 0 && area.tileAt(this.x, this.y - 3) === 'v') { { this.edgeT = 0; this.fallT = 0.55; this.vx = this.vy = 0; this.kb.t = 0; this.atk = 0; this.grab = null; SFX.fall(); return; } }
     if (this.bump > 0) this.bump -= dt;
     if (this.shootCd > 0) this.shootCd -= dt;
     if (this.shootT > 0) this.shootT -= dt;
@@ -215,7 +214,13 @@ class Player {
     }
     const SPEED = 76 * this.perk.speed * (Inventory.has('bottes') ? 1.15 : 1) * (this.holding ? 0.55 : 1); // Rox : +10 % ; bottes de l'ermite : +15 %
     // accélération vive au démarrage, freinage plus doux à l'arrêt
+    const ox = this.x, oy = this.y;
     const hit = this.glide(dt, G, input ? dx * SPEED : 0, input ? dy * SPEED : 0, input ? 20 : 9, input ? { x: dx, y: dy } : null);
+    // bord du vide : on s'y arrête comme contre un muret ; il faut forcer un moment vers le vide pour tomber
+    if (area.fallVoid && this.roll <= 0 && area.tileAt(ox, oy - 3) !== 'v' && area.tileAt(this.x, this.y - 3) === 'v') {
+      if (input && (this.edgeT = (this.edgeT || 0) + dt) > 0.45) this.edgeT = 0; // il a insisté : le pas passe, et il tombe
+      else { if (area.tileAt(this.x, oy - 3) === 'v') { this.x = ox; this.vx = 0; } if (area.tileAt(this.x, this.y - 3) === 'v') { this.y = oy; this.vy = 0; } }
+    } else if (!input || area.tileAt(this.x + dx * 6, this.y - 3 + dy * 6) !== 'v') this.edgeT = 0;
     const speed = Math.hypot(this.vx, this.vy);
     this.moving = input || speed > 18;
     if (this.moving) this.anim += dt * (input ? 1 : clamp(speed / SPEED, 0.4, 1)); else this.anim = 0;
@@ -295,7 +300,7 @@ class Player {
   draw() {
     if (this.fallT > 0) { const k = this.fallT / 0.55; ctx.save(); ctx.translate(this.x, this.y); ctx.rotate((1 - k) * 3); ctx.scale(k, k); ctx.translate(-this.x, -this.y); drawHero(SAVE.hero, this.x, this.y, this.dir, false, G.t); ctx.restore(); return; }
     if (this.inv > 0 && Math.floor(this.inv * 20) % 2) return;
-    if (this.edgeT > 0) { ctx.save(); ctx.translate(Math.sin(G.t * 40) * 1.2, 0); this.edgeT = -this.edgeT; this.draw(); this.edgeT = -this.edgeT; ctx.restore(); text('!', this.x, this.y - 40, { size: 9, align: 'center', color: PAL.warm, bold: true }); return; } // il vacille au bord du vide
+    if (this.edgeT > 0) { ctx.save(); ctx.translate(Math.sin(G.t * 40) * 1.2, 0); this.edgeT = -this.edgeT; this.draw(); this.edgeT = -this.edgeT; ctx.restore(); return; } // il vacille quand il force au bord du vide
     if (this.swimming && !this.pull) { const lk = this.look && this.look.split('_').includes(this.dir) && heroHasDir(SAVE.hero, this.look) ? this.look : this.dir; drawSwimmer(SAVE.hero, this.x, this.y, lk, this.anim, this.dive > 0, this.moving); return; }
     if (this.riding) { drawHero(SAVE.hero, this.x, this.y - 6, 'down', false, G.t); return; }
     ell(this.x, this.y - 0.5, 7, 2.6, 'rgba(0,0,0,.42)');

@@ -26,8 +26,8 @@ Object.assign(INTERIORS, {
     lights: [[10.0, 4.47, 48], [7.91, 2.33, 24], [12.33, 2.33, 24], [7.63, 3.81, 18], [12.56, 3.81, 18], [1.86, 3.44, 16]],
     shelves: [[3.95, 5.1, 1.9], [15.35, 6.1, 1.4]],
     people(put, at, A) {
-      const sage = npc(A, 10.47, 5.53, { look: 'sage', fn: sageTalk });
-      A.ents.push(new TalkSpot(10.47 * TS, 7.6 * TS, 4.2 * TS, sage)); // devant le bureau : on lui parle par-dessus
+      const sage = npc(A, 10, 6.2, { look: 'sage', fn: sageTalk }); // derrière le bureau : le bureau (OVERHEAD.biblio) lui cache les jambes
+      A.ents.push(new TalkSpot(10 * TS, 7.7 * TS, 4.2 * TS, sage)); // devant le bureau : on lui parle par-dessus
       npc(A, 5.35, 6.4, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4&!boss6' });
     },
     build(put, at, A) {
