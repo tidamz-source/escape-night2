@@ -69,7 +69,7 @@ const PICKUPS = {
   coin1:  { draw: (x, y, t) => pickImg('ecu1', x, y - 4, 7, t) || drawCoin(x, y - 4, '#c8a060', '#8a6a3a', t), take: () => { Wallet.add(1); SFX.coin(); } },
   coin5:  { draw: (x, y, t) => pickImg('ecu5', x, y - 5, 9) || drawCoin(x, y - 4, '#d8dce8', '#8a90a8', t), take: () => { Wallet.add(5); SFX.coin(); } },
   coin20: { draw: (x, y, t) => pickImg('ecu20', x, y - 4, 11) || drawCoin(x, y - 4, '#ffd23a', '#c08a10', t), take: () => { Wallet.add(20); SFX.coin(); } },
-  mushroom: { draw: (x, y) => { if (pickImg('champignons', x, y - 5, 9)) return; R(x - 1, y - 4, 2, 4, '#e8dcc8'); R(x - 4, y - 7, 8, 3, '#d8504a'); R(x - 3, y - 8, 6, 1, '#e86a5a'); R(x - 2, y - 7, 1, 1, '#fff'); R(x + 1, y - 6, 1, 1, '#fff'); }, take: () => { Inventory.addIngredient('champignons', 1); SFX.pickup(); } },
+  mushroom: { draw: (x, y, t, e) => { if (pickImg(e && IMG['item_champignons_v' + e.v] ? 'champignons_v' + e.v : 'champignons', x, y - 5, 9)) return; R(x - 1, y - 4, 2, 4, '#e8dcc8'); R(x - 4, y - 7, 8, 3, '#d8504a'); R(x - 3, y - 8, 6, 1, '#e86a5a'); R(x - 2, y - 7, 1, 1, '#fff'); R(x + 1, y - 6, 1, 1, '#fff'); }, take: () => { Inventory.addIngredient('champignons', 1); SFX.pickup(); } },
   petards: { draw: (x, y) => pickImg('petards5', x, y - 5, 10) || drawPetardIcon(x, y - 4, 0.7), take: () => { Inventory.addAmmo('petards', 3); SFX.pickup(); } },
   stones: { draw: (x, y) => { if (pickImg('cailloux', x, y - 3, 9)) return; R(x - 4, y - 4, 3, 3, '#8a8698'); R(x - 1, y - 5, 3, 3, '#a8a4b8'); R(x + 1, y - 3, 3, 3, '#7a7688'); R(x - 1, y - 5, 1, 1, '#e0dcf0'); }, take: () => { Inventory.addAmmo('cailloux', 5); SFX.pickup(); } },
 };
@@ -84,7 +84,7 @@ function drawCoin(x, y, c, d, t) {
   R(half(x - w), half(y - 3), w * 2, 6, d); R(half(x - w + 0.5), half(y - 3), Math.max(1, w * 2 - 1), 5, c); R(half(x - 0.5), half(y - 2), 1, 1, '#fff');
 }
 class Pickup {
-  constructor(x, y, kind) { this.x = x; this.y = y; this.kind = kind; this.t = 0; this.w = 8; this.h = 6; this.vy = -60; this.z = 0; this.isPickup = true; this.fetchable = true; }
+  constructor(x, y, kind) { this.x = x; this.y = y; this.kind = kind; this.v = Math.floor(Math.random() * 8); this.t = 0; this.w = 8; this.h = 6; this.vy = -60; this.z = 0; this.isPickup = true; this.fetchable = true; }
   // tombée sur un mur ou dans le vide : on la pose sur la case libre la plus proche, pour qu'elle reste attrapable
   settle(A, maxR = 48) {
     this.settled = true; const bad = (x, y) => { const t = A.tileAt(x, y); return SOLID.has(t) || t === 'v' || t === 'T' || blocked(A, { x: x - 4, y: y - 6, w: 8, h: 6 }, this); };
@@ -101,7 +101,7 @@ class Pickup {
       G.parts.burst(this.x, this.y - 4, 6, { c: this.kind === 'heart' ? ['#ff8ab0', '#fff'] : ['#ffe27a', '#fff'], life: 0.3, r: 1 });
     }
   }
-  draw() { if (this.t > 7 && Math.floor(this.t * 10) % 2) return; ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.3)'); PICKUPS[this.kind].draw(this.x, this.y + this.z + Math.sin(this.t * 4) * 0.6, this.t); }
+  draw() { if (this.t > 7 && Math.floor(this.t * 10) % 2) return; ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.3)'); PICKUPS[this.kind].draw(this.x, this.y + this.z + Math.sin(this.t * 4) * 0.6, this.t, this); }
 }
 const HeartPickup = Pickup; // ancien nom
 // matériau magique laissé par un boss, là où il est tombé ; ne disparaît pas
