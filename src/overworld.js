@@ -496,5 +496,5 @@ class Sheep {
     if (this.st <= 0) { this.st = rand(1, 3); const a = rand(0, 6.28), s = Math.random() < 0.5 ? 0 : 14; this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s; if (this.vx) this.face = Math.sign(this.vx); if (Math.random() < 0.15) SFX.baa(); }
     moveEnt(G.area, this, this.vx * dt, 0, { noExit: true }); moveEnt(G.area, this, 0, this.vy * dt, { noExit: true });
   }
-  draw() { ell(this.x, this.y, 8, 2.5, 'rgba(0,0,0,.3)'); hi(this.x, this.y, this.face > 0, () => DECOR.sheep.draw(this.t)); }
+  draw() { if (drawMob(this, this.gerard ? 'ram' : 'sheep', { fps: 7 })) return; ell(this.x, this.y, 8, 2.5, 'rgba(0,0,0,.3)'); hi(this.x, this.y, this.face > 0, () => DECOR.sheep.draw(this.t)); }
 }
