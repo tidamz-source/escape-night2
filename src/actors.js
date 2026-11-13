@@ -46,7 +46,7 @@ function drawPerson(x, y, L, t) {
 }
 
 // PNJ PixelLab : 48 × 48, 8 directions, même échelle que les héros (÷ 1,4) ; les enfants un peu plus petits
-const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 1, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 2, anim: 8 }, pierrette: { foot: 1 }, fossoyeur: { foot: 1 }, coquillages: { foot: 1 }, hugo: { foot: 2 }, herboriste: { foot: 3 }, bucheron: { foot: 1 }, gnome: { foot: 2, child: 0.6 }, firmin: { foot: 1 }, gaelle: { foot: 1 }, artificiere: { foot: 1 }, gardien: { foot: 2 }, ermite: { foot: 1 }, vagabond: { foot: 0 }, pauline: { foot: 1, child: 0.78 }, odette: { foot: 2 } };
+const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: { foot: 1, child: 0.84 }, lila: { foot: 3, child: 0.84 }, fantome: { foot: 2 }, epiciere: { foot: 2 }, sage: { foot: 2, anim: 8 }, pierrette: { foot: 1 }, fossoyeur: { foot: 1 }, coquillages: { foot: 1 }, hugo: { foot: 2 }, herboriste: { foot: 3 }, bucheron: { foot: 1 }, gnome: { foot: 2, child: 0.6 }, firmin: { foot: 1 }, gaelle: { foot: 1 }, artificiere: { foot: 1 }, gardien: { foot: 2 }, ermite: { foot: 1 }, vagabond: { foot: 0 }, pauline: { foot: 1, child: 0.78 }, odette: { foot: 2 }, lavandiere: { foot: 1 }, crieur: { foot: 1 } };
 const plDir = (dx, dy) => (Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) + 8) % 8; // 0 face, 2 droite, 4 dos, 6 gauche
 function drawPL(key, x, y, di, t, alpha = 1, scale = 1) {
   const im = IMG['pl_' + key], m = PL_NPCS[key]; if (!im || !m) return false;
