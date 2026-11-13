@@ -115,7 +115,7 @@ class Player {
   }
   frontBox() { const [vx, vy] = DV[this.dir]; return { x: this.x - 5 + vx * 10, y: this.y - 8 + vy * 10, w: 10, h: 10 }; }
   hurt(dmg, fx, fy, G) {
-    if (this.inv > 0 || this.roll > 0 || this.dive > 0 || this.riding || G.state !== 'play') return;
+    if (this.inv > 0 || this.roll > 0 || this.dive > 0 || this.riding || G.state !== 'play' || G.debug) return; // menu debug : invincible
     if (Effects.on('def')) dmg = dmg > 1 ? Math.ceil(dmg / 2) : (Math.random() < 0.5 ? 0 : 1); // bouillon de pierre
     if (this.bonusHp > 0) { const a = Math.min(this.bonusHp, dmg); this.bonusHp -= a; dmg -= a; } // cœur doré
     this.hp -= dmg; this.inv = 1.1; SFX.hurt(); G.shake = 0.25; G.hitstop = 0.06; LumiFx.onHurt(G); Soupe.onHurt();

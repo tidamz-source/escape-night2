@@ -368,7 +368,7 @@ const UIMixin = {
   },
 
   // ---------- titre, parties, choix du héros ----------
-  titleItems() { const items = ['Jouer']; if (!PWA.installed()) items.push('Installer l\'appli'); return items; },
+  titleItems() { const items = ['Jouer']; if (Debug.on()) items.push('Combats (debug)'); if (!PWA.installed()) items.push('Installer l\'appli'); return items; },
   menuTap(items, y0, x0 = W / 2, half = 90) {
     const tap = Input.lastTap; Input.lastTap = null;
     if (!tap || performance.now() - tap.time > 250) return -1;
@@ -378,12 +378,26 @@ const UIMixin = {
     const items = this.titleItems(); if (this.menu >= items.length) this.menu = 0;
     if (this.installHelp) { if (Input.anyPressed() || Input.pressed('b')) { this.installHelp = false; SFX.menu(); } return; }
     this.menuNav(items.length);
+    const tp = Input.lastTap; if (tp && performance.now() - tp.time < 250 && tp.x > W - 70 && tp.y > H - 24) { Input.lastTap = null; Debug.tapVersion(); return; } // 5 tapes sur le numéro de version : menu debug
     const ti = this.menuTap(items, 112); let go = Input.anyPressed(); if (ti >= 0) { this.menu = ti; go = true; }
     if (go) {
       audioUnlock(); SFX.menu();
       if (items[this.menu].startsWith('Installer')) { PWA.install().then(ok => { if (!ok) this.installHelp = true; }); return; }
+      if (items[this.menu].startsWith('Combats')) { this.state = 'debug'; this.menu = 0; return; }
       this.state = 'slots'; this.slotSel = 0; this.erasing = false;
     }
+  },
+  updateDebug() {
+    const items = Debug.items(); this.menuNav(items.length);
+    const ti = this.menuTap(items, 44); let go = Input.pressed('a') || Input.pressed('start'); if (ti >= 0) { this.menu = ti; go = true; }
+    if (Input.pressed('b')) { SFX.menu(); this.state = 'title'; this.menu = 0; return; }
+    if (go) { SFX.menu(); if (this.menu === items.length - 1) { this.state = 'title'; this.menu = 0; return; } const f = Debug.FIGHTS[this.menu]; this.fadeTo(() => Debug.start(f)); }
+  },
+  drawDebug() {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#070d1f'); g.addColorStop(1, '#1a1030'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    text('COMBATS · DEBUG', W / 2, 14, { size: 14, align: 'center', bold: true, color: PAL.glow });
+    text('Sacha, invincible · rien n\'est sauvegardé', W / 2, 30, { size: 7, align: 'center', color: '#8a94c0' });
+    this.drawMenu(Debug.items(), W / 2, 44);
   },
   drawTitle() {
     const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#070d1f'); g.addColorStop(1, '#14244c'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -587,3 +601,48 @@ function drawTrocIcon(id, x, y, s = 1) {
   else if (id === 'longue_vue') { ctx.save(); ctx.translate(x, y); ctx.rotate(-0.5); R(-8 * u, -2 * u, 6 * u, 4 * u, '#c8a040'); R(-2 * u, -2.5 * u, 6 * u, 5 * u, '#8a5a34'); R(4 * u, -3 * u, 4 * u, 6 * u, '#c8a040'); ctx.restore(); }
   else if (id === 'boussole') { ell(x, y, 6 * s, 6 * s, '#c8a040'); ell(x, y, 4.5 * s, 4.5 * s, '#e8dcc8'); B(-0.5, -4, 1, 4, '#d84a5a'); B(-0.5, 0, 1, 4, '#3a3448'); }
 }
+
+// ---------- menu debug : accès direct à chaque combat de boss et de mini-boss ----------
+// Il s'ouvre avec ?debug dans l'adresse, ou en touchant 5 fois le numéro de version sur l'écran titre (mémorisé).
+// La partie lancée n'est jamais sauvegardée et Sacha est invincible.
+const Debug = {
+  taps: 0, tapT: 0,
+  on() { try { return /[?&]debug/.test(location.search) || localStorage.getItem('en2-debug') === '1'; } catch (_) { return false; } },
+  tapVersion() {
+    const now = performance.now(); this.taps = now - this.tapT < 800 ? this.taps + 1 : 1; this.tapT = now;
+    if (this.taps >= 5) { this.taps = 0; const v = !this.on(); try { localStorage.setItem('en2-debug', v ? '1' : '0'); } catch (_) {} SFX.secret(); Input.toast = { msg: v ? 'Menu debug activé' : 'Menu debug désactivé', t: 1.6 }; }
+  },
+  // area : donjon, room : salle, at : case où poser Sacha, off : drapeaux à effacer pour que le combat ait lieu, set : drapeaux à poser
+  FIGHTS: [
+    { name: 'Grand feu follet', area: 'cave', room: 'bigkey', at: [15, 12], off: ['caveBigArena', 'caveBigKey'] },
+    { name: 'La Grande Ombre', area: 'cave', room: 'boss', at: [15, 12], off: ['boss'] },
+    { name: 'Corbeau géant', area: 'bois', room: 'bigkey', at: [15, 12], off: ['arenaBK', 'boisBigKey'] },
+    { name: 'Le Grand-Duc', area: 'bois', room: 'boss', at: [15, 12], off: ['boss2'] },
+    { name: 'Chauve-souris de cristal', area: 'mines', room: 'posts', at: [20, 12], off: ['arenaMBK', 'minesBigKey'] },
+    { name: 'La Taupe de fer', area: 'mines', room: 'boss', at: [15, 12], off: ['boss3'] },
+    { name: 'Crabe géant', area: 'temple', room: 'cascade', at: [14, 12], off: ['arenaTBK', 'templeBigKey'] },
+    { name: 'La Reine des remous', area: 'temple', room: 'boss', at: [5, 10], off: ['boss4'] },
+    { name: 'Grande Gargouille', area: 'tower', room: 'bigkey', at: [15, 12], off: ['arenaRBK', 'towerBigKey'] },
+    { name: 'Le Chevalier de fer', area: 'tower', room: 'boss', at: [15, 12], off: ['boss5'] },
+    { name: 'Garde noir', area: 'castle', room: 'bigkey', at: [10, 12], off: ['arenaCBK', 'castleBigKey'], set: { papaFight: true, papaFreed: true } },
+    { name: 'Le Chevalier Minuit', area: 'castle', room: 'papa', at: [15, 12], off: ['papaFight', 'papaFreed'] },
+    { name: 'Le Roi Minuit', area: 'castle', room: 'king', at: [15, 12], off: ['boss6'], set: { papaFight: true, papaFreed: true } },
+  ],
+  items() { return [...this.FIGHTS.map(f => f.name), 'Retour']; },
+  start(f) {
+    SLOT = -1; SAVE = defaultSave('sacha'); SAVE.started = true; // pas d'emplacement : rien n'est écrit
+    Object.assign(SAVE, { got_branche: true, met_lumi: true, crossed_rift: true, quest1: true, caveIntro: true, boisIntro: true, minesIntro: true, minesOpen: true, minesKey: true, drawbridge: true,
+      lacCrossed: true, lacIntro: true, templeIntro: true, towerIntro: true, castleIntro: true, castleOpen: true, rubble1: true, rubble2: true,
+      boss: true, boss2: true, boss3: true, boss4: true, boss5: true, freed1: true, freed2: true, freed3: true, freed4: true, freed5: true,
+      v1done: true, v2done: true, v3done: true, v4done: true, v5done: true, maxHp: 16, fragments: 5, money: 99 });
+    for (const k of ['epee_bois', 'lance_pierre', 'frisbee', 'grappin', 'palmes', 'petards']) Inventory.give(k);
+    Inventory.addAmmo('cailloux', 30); Inventory.addAmmo('petards', 10);
+    for (const k of f.off) delete SAVE[k]; Object.assign(SAVE, f.set || {});
+    G.debug = true; G.view = 'world';
+    G.enter(f.area, G.areas[f.area].start, true);
+    const A = G.area, i = A.h.R[f.room]; G.room = i; const rr = G.roomRect(i), P = G.player;
+    P.x = rr.x + f.at[0] * TS + 8; P.y = rr.y + f.at[1] * TS + 14; P.hp = SAVE.maxHp; P.dir = 'up'; G.updateCam(true);
+    G.banner = { text: f.name + ' · debug', t: 1.6 };
+  },
+};
+Bus.on('save:loaded', () => { G.debug = false; }); // une vraie partie : plus d'invincibilité

@@ -304,6 +304,7 @@ const G = {
     if (this.moneyFlash > 0) this.moneyFlash -= dt;
     switch (this.state) {
       case 'title': return this.updateTitle();
+      case 'debug': return this.updateDebug();
       case 'slots': return this.updateSlots();
       case 'heroes': return this.updateHeroes();
       case 'fade': return this.updateFade(dt);
@@ -408,7 +409,7 @@ const G = {
   draw() {
     resetT(); R(0, 0, W, H, '#000');
     if (this.view === 'title') {
-      if (this.state === 'slots') this.drawSlots(); else if (this.state === 'heroes') this.drawHeroes(); else this.drawTitle();
+      if (this.state === 'slots') this.drawSlots(); else if (this.state === 'heroes') this.drawHeroes(); else if (this.state === 'debug') this.drawDebug(); else this.drawTitle();
       this.drawFade(); return; // menus du titre : on touche directement l'écran, pas de pad virtuel
     }
     if (this.view === 'end') { this.drawEnd(); this.drawFade(); return; }

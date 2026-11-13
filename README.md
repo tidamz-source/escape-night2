@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.7.4** : menu debug « Combats » (écran titre ; s'ouvre avec ?debug ou 5 tapes sur le numéro de version) : accès direct aux 13 combats de boss et mini-boss, Sacha invincible, rien n'est sauvegardé.
 - **8.7.3** : les monstres ordinaires passent à 75 % de leur taille (les mini-boss et les boss ne changent pas) ; la gargouille endormie s'affiche entière.
 - **8.7.2** : animations PixelLab entières (elles étaient rognées à droite : chauves-souris, crieur, sage, monstres, taupe, sanglier) ; les corbeaux restent de face.
 - **8.7.1** : les 12 monstres en PixelLab (raton laveur, chauve-souris, ombre, feu follet, écureuil, corbeau, gnome mineur, araignée de cristal, crabe, anguille, chevalier squelette, gargouille) : 8 directions, animations de marche ou de vol, pose d'attaque pour le gnome, l'anguille et le chevalier ; leurs versions géantes suivent. Le crieur agite sa cloche.
