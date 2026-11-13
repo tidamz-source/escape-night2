@@ -185,7 +185,7 @@ class FireflyShrine {
   }
   update(dt, G) { this.t += dt; if (Math.random() < dt * 8) G.parts.add({ x: this.x + rand(-40, 40), y: this.y - rand(10, 70), vy: -8, vx: rand(-6, 6), life: 1.5, c: pick(FLY_COLORS)[0], r: 1 }); }
   draw() {
-    ell(this.x, this.y + 2, 40, 7, 'rgba(0,0,0,.4)');
+    if (!IMG.deco_shrine) ell(this.x, this.y + 2, 40, 7, 'rgba(0,0,0,.4)'); else ell(this.x, this.y - 3, 34, 5, 'rgba(0,0,0,.35)'); // l'arche a son propre socle : juste une ombre de contact sous le disque
     if (decoImg('shrine', this.x, this.y, SHRINE_K, 2)) { // l'arche PixelLab : la Mère des lucioles flotte au milieu, les 6 alvéoles s'allument une à une
       const im = IMG.deco_shrine, k = SHRINE_K, ox = this.x - im.width * k / 2, oy = this.y + 2 - im.height * k, P = (u, v) => [ox + u * k, oy + v * k];
       SHRINE_SLOTS.forEach(([u, v], i) => {
