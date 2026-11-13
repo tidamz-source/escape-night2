@@ -184,6 +184,11 @@ class FireflyShrine {
   update(dt, G) { this.t += dt; if (Math.random() < dt * 8) G.parts.add({ x: this.x + rand(-40, 40), y: this.y - rand(10, 70), vy: -8, vx: rand(-6, 6), life: 1.5, c: pick(FLY_COLORS)[0], r: 1 }); }
   draw() {
     ell(this.x, this.y + 2, 40, 7, 'rgba(0,0,0,.4)');
+    if (decoImg('shrine', this.x, this.y, 0.57, 3)) { // la Mère des lucioles et les dons déjà reçus
+      const g = 0.35 + 0.25 * Math.sin(this.t * 2); ctx.globalAlpha = g; ell(this.x, this.y - 40, 9, 9, '#e6c8ff'); ctx.globalAlpha = 1;
+      for (let i = 0; i < 6; i++) { const a = -Math.PI + (i + 0.5) * Math.PI / 6; R(half(this.x + Math.cos(a) * 26 - 1.5), half(this.y - 52 + Math.sin(a) * 14 - 1.5), 3, 3, i < Flies.pow() ? FLY_COLORS[i % FLY_COLORS.length][0] : 'rgba(40,40,60,.6)'); }
+      return;
+    }
     hi(this.x, this.y, false, () => {
       D(-70, -16, 140, 16, '#5a6a72'); D(-70, -16, 140, 3, '#8aa0a8'); D(-60, -24, 120, 8, '#6a7a82'); // le socle
       for (const sx of [-56, 40]) { D(sx, -120, 16, 104, '#7a8a92'); D(sx, -120, 4, 104, '#9aaab2'); D(sx - 4, -128, 24, 8, '#5a6a72'); } // colonnes
@@ -209,6 +214,7 @@ class SecretRock {
     if (G.state === 'play' && P.dir === 'up' && Input.dy < -0.3 && Math.abs(P.x - this.x) < 9 && P.y > this.y - 4 && P.y < this.y + 10) { SFX.door(); const from = G.area.id, back = { x: this.x, y: this.y + 12, dir: 'down' }; G.areas[this.cave].back = { area: from, pos: back }; G.fadeTo(() => G.enter(this.cave, G.areas[this.cave].start)); }
   }
   draw() {
+    if (!this.open && decoImg('secretrock', this.x, this.y, 1.3, 2)) { if (Flies.pow() >= 2 && Math.floor(this.t * 2) % 2) R(half(this.x - 2), half(this.y - 18), 2, 2, '#ffe27a'); return; }
     hi(this.x, this.y, false, () => {
       D(-34, -40, 68, 40, '#5a5468'); D(-30, -46, 60, 8, '#6a6478'); D(-34, -40, 68, 4, '#7a7488'); D(-34, -4, 68, 4, '#3a3448');
       for (const [x, y, w] of [[-26, -30, 10], [10, -24, 14], [-8, -14, 12]]) D(x, y, w, 3, '#4a4458');

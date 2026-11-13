@@ -270,6 +270,7 @@ class FrisbeeSwitch { // lanterne à allumer ; reste allumée 4 s
   draw() {
     ell(this.x, this.y, 6, 2, 'rgba(0,0,0,.4)');
     const lit = this.lit, f = Math.floor(this.t * 8) % 2;
+    if (decoImg(lit ? 'fswitch_on' : 'fswitch_off', this.x, this.y, 0.74, 2)) return;
     hi(this.x, this.y, false, () => {
       D(-3, -36, 6, 36, '#4a3424'); D(-3, -36, 2, 36, '#6a4a34'); D(-8, -4, 16, 4, '#3a2418');
       D(-9, -54, 18, 18, '#3a3d48'); D(-7, -52, 14, 14, lit ? (f ? '#ffe27a' : '#ffcf3a') : '#2a2438'); D(-10, -58, 20, 4, '#5a5e6a'); D(-2, -62, 4, 4, '#5a5e6a');
@@ -295,6 +296,7 @@ class Glowshroom { // champignons lumineux (décor)
   get light() { return { r: 34, c: 'rgba(120,240,220,' }; }
   update(dt) { this.t += dt; }
   draw() {
+    if (decoImg('glowshroom', this.x, this.y, 0.45, 1)) return;
     const g = Math.sin(this.t * 2) > 0 ? '#8ff3ea' : '#6fe0d0';
     hi(this.x, this.y, false, () => { D(-8, -6, 3, 6, '#d8e8e0'); D(-11, -10, 9, 5, g); D(2, -8, 3, 8, '#d8e8e0'); D(-1, -13, 9, 6, g); D(-5, -4, 2, 4, '#d8e8e0'); D(-7, -7, 6, 4, g); });
   }

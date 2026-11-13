@@ -44,6 +44,8 @@ class Decor {
   interact(G) { G.say(this.o.say); }
   draw() {
     if (this.kind === 'sheep' && IMG.mob_sheep) { ell(this.x, this.y, 9, 2.5, 'rgba(0,0,0,.35)'); drawCell('mob_sheep', this.o.flip ? 7 : 1, 0, 64, 64, this.x, this.y - (Math.abs(Math.sin(this.t * 2)) > 0.9 ? 1 : 0), MOB_K / 1.4, { foot: 'auto' }); return; } // mouton PixelLab
+    const dk = { dead: 0.55, grave: 0.6, windmill: 0.6, lighthouse: 1 }[this.kind]; // décor PixelLab
+    if (dk && IMG['deco_' + this.kind]) { if (!this.ground) ell(this.x, this.y, this.w / 2 + 2, 2.5, 'rgba(0,0,0,.35)'); if (this.o.flip) { ctx.save(); ctx.translate(this.x * 2, 0); ctx.scale(-1, 1); decoImg(this.kind, this.x, this.y, dk, 2); ctx.restore(); } else decoImg(this.kind, this.x, this.y, dk, 2); return; }
     if (!this.ground) ell(this.x, this.y, this.w / 2 + 2, 2.5, 'rgba(0,0,0,.35)'); hi(this.x, this.y, !!this.o.flip, () => DECOR[this.kind].draw(this.t, this.o)); }
 }
 const DECOR = {

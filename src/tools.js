@@ -171,6 +171,7 @@ class CrackedWall {
     G.parts.burst(this.x, this.y - 16, 30, { c: ['#6a6478', '#8a8498', '#4a4458', '#2a2438'], life: 0.9, smin: 30, smax: 120, r: 3, g: 160, up: 40 });
   }
   draw() {
+    if (!G.area.rooms && decoImg('cracked', this.x, this.y, 1.07, 1)) return;
     const p = STONE[G.area.theme] || STONE.cave;
     hi(this.x, this.y, false, () => {
       D(-32, -64, 64, 64, p.face); for (let yy = -60; yy < 0; yy += 10) { D(-32, yy, 64, 2, p.fl2); for (let xx = -32 + ((yy / 10) & 1) * 10; xx < 32; xx += 20) D(xx, yy - 8, 2, 8, p.fl2); }
@@ -434,6 +435,7 @@ class Relay {
   update(dt, G) { this.t += dt; if (this.on && dist(G.player.x, G.player.y, this.x, this.y) < 30) { SAVE.relays = SAVE.relays || {}; if (!SAVE.relays[this.id]) { SAVE.relays[this.id] = true; persist(); Input.toast = { msg: 'Luciole-relais activée !', t: 2 }; SFX.crystal(); } } }
   draw() {
     ell(this.x, this.y, 8, 2.5, 'rgba(0,0,0,.4)');
+    if (decoImg(this.on ? 'relay_on' : 'relay_off', this.x, this.y, 0.75, 2)) { if (this.on) drawLumi(this.x, this.y - 34 + Math.sin(this.t * 3), this.t); return; }
     hi(this.x, this.y, false, () => { D(-6, -34, 12, 34, '#6a6478'); D(-6, -34, 3, 34, '#8a8498'); D(-10, -4, 20, 4, '#4a4458'); D(-12, -50, 24, 16, '#8a8498'); D(-10, -48, 20, 12, this.on ? '#2a1d38' : '#1a1428'); D(-14, -54, 28, 4, '#6a6478'); });
     if (this.on) drawLumi(this.x, this.y - 42 + Math.sin(this.t * 3), this.t);
   }

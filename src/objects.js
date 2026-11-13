@@ -73,6 +73,11 @@ const PICKUPS = {
   petards: { draw: (x, y) => pickImg('petards5', x, y - 5, 10) || drawPetardIcon(x, y - 4, 0.7), take: () => { Inventory.addAmmo('petards', 3); SFX.pickup(); } },
   stones: { draw: (x, y) => { if (pickImg('cailloux', x, y - 3, 9)) return; R(x - 4, y - 4, 3, 3, '#8a8698'); R(x - 1, y - 5, 3, 3, '#a8a4b8'); R(x + 1, y - 3, 3, 3, '#7a7688'); R(x - 1, y - 5, 1, 1, '#e0dcf0'); }, take: () => { Inventory.addAmmo('cailloux', 5); SFX.pickup(); } },
 };
+// sprite PixelLab de décor : centré en x, posé sur y (sc = taille en px logiques par px de l'image)
+function decoImg(k, x, y, sc = 0.5, oy = 0) {
+  const im = IMG['deco_' + k]; if (!im) return false;
+  const w = im.width * sc, h = im.height * sc; ctx.drawImage(im, Math.round((x - w / 2) * 2) / 2, Math.round((y - h + oy) * 2) / 2, w, h); return true;
+}
 // sprite PixelLab d'un ramassable (taille max en px logiques) ; t = rotation de la pièce
 function pickImg(k, x, y, max, t) {
   const im = IMG['item_' + k]; if (!im) return false;
@@ -125,7 +130,7 @@ class Bush {
     G.parts.burst(this.x, this.y - 6, 14, { c: ['#3a7a50', '#5aa060', '#2a5a3a', '#8ad080'], life: 0.6, smin: 20, smax: 70, up: 30, g: 120, r: 2, drag: 2 });
     dropLoot(G, this.loot || 'bush', this.x, this.y);
   }
-  draw() { const im = IMG.bush; if (im) ctx.drawImage(im, half(this.x - im.width / 4), half(this.y - im.height / 2 + 2), im.width / 2, im.height / 2); }
+  draw() { if (decoImg('bush', this.x, this.y, 0.65, 2)) return; const im = IMG.bush; if (im) ctx.drawImage(im, half(this.x - im.width / 4), half(this.y - im.height / 2 + 2), im.width / 2, im.height / 2); }
 }
 
 class Pot extends Bush {
@@ -328,6 +333,7 @@ class Block {
     if (this.mv.d >= 16) { this.x = Math.round(this.x); this.y = Math.round(this.y); this.mv = null; G.blockMoved(this); }
   }
   draw() {
+    if (decoImg('block', this.x, this.y, 1.14, 1)) return;
     hi(this.x, this.y, false, () => {
       D(-16, -32, 32, 32, '#3a3354'); D(-16, -32, 32, 11, '#5a5280'); D(-16, -32, 32, 2, '#6a6290'); D(-16, -21, 32, 2, '#2b2540');
       D(-16, -32, 2, 32, '#4a4266'); D(14, -21, 2, 21, '#262036'); D(-16, -2, 32, 2, '#1a1528');
@@ -343,6 +349,7 @@ class Plate {
   static held(flag) { const p = G.area && G.area.ents.find(e => e instanceof Plate && e.flag === flag); return p ? p.on : !!SAVE[flag]; }
   update() { if (!this.hold) return; const on = this.on; if (this.was !== null && on !== this.was) { SFX.push(); if (on) SFX.secret(); } this.was = on; }
   draw() {
+    if (decoImg(this.on ? 'plate_on' : 'plate_off', this.x, this.y, 0.6, 0.5)) return;
     hi(this.x, this.y, false, () => {
       D(-15, -31, 30, 30, '#111019');
       const d = this.on ? 4 : 0;
