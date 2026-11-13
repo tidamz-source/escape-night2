@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.7.9** : les lucioles ont chacune leur couleur (cyan, rose, menthe, lilas, orange, bleu ciel, corail, turquoise) ; Lumi reste jaune pâle. La Mère des lucioles du sanctuaire devient lilas.
 - **8.7.8** : PNJ PixelLab du forgeron.
 - **8.7.7** : les monstres au sol ont les pieds posés sur leur ombre (le bas de chaque image est calculé au chargement).
 - **8.7.6** : l'ombre et le chevalier squelette reprennent leur pleine taille (100 %).

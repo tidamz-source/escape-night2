@@ -91,32 +91,36 @@ const FIREFLIES = [
   ['f_g1', 'grotte_collines', 6, 8], ['f_g2', 'grotte_montagne', 6, 8], ['f_g3', 'grotte_col', 6, 8], ['f_g4', 'grotte_lande', 6, 8],
   ['f_i1', 'pres', 31, 11, 'exact'], ['f_i2', 'dunes', 31, 21, 'exact'], ['f_i3', 'lac', 50, 40],
 ];
+// les sœurs de Lumi : chacune a sa couleur (Lumi, elle, reste jaune pâle) ; [halo, cœur, lumière]
+const FLY_COLORS = [['#6fe8ff', '#d8faff', '111,232,255'], ['#ff8ad0', '#ffe0f2', '255,138,208'], ['#7dffb0', '#dcffea', '125,255,176'], ['#c39bff', '#efe4ff', '195,155,255'],
+  ['#ffa35c', '#ffe6d0', '255,163,92'], ['#7ab8ff', '#e0eeff', '122,184,255'], ['#ff7a7a', '#ffe0e0', '255,122,122'], ['#5effe0', '#d6fff8', '94,255,224']];
+const flyColor = id => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return FLY_COLORS[h % FLY_COLORS.length]; };
 const Flies = {
   n: () => Object.keys(SAVE.flies || {}).length,
   has: id => !!(SAVE.flies || {})[id],
   pow: () => SAVE.lumiPow || 0,
 };
 class LostFirefly {
-  constructor(x, y, id, exact) { this.x = x; this.y = y; this.id = id; this.t = rand(0, 9); this.w = 8; this.h = 6; this.exact = exact; this.light = { r: 40, c: 'rgba(255,230,140,' }; this.isPickup = true; }
+  constructor(x, y, id, exact) { this.x = x; this.y = y; this.id = id; this.t = rand(0, 9); this.w = 8; this.h = 6; this.exact = exact; this.col = flyColor(id); this.light = { r: 40, c: 'rgba(' + this.col[2] + ',' }; this.isPickup = true; }
   get dead() { return Flies.has(this.id); }
   update(dt, G) {
     if (!this.exact && !this.settled) Pickup.prototype.settle.call(this, G.area);
     this.t += dt; const P = G.player;
     if (G.state === 'play' && dist(P.x, P.y - 10, this.x, this.y - 14) < 14) this.take(G);
-    if (Math.random() < dt * 3) G.parts.add({ x: this.x + rand(-4, 4), y: this.y - 14 + rand(-4, 4), vy: -6, life: 0.6, c: '#fff6c0', r: 0.8 });
+    if (Math.random() < dt * 3) G.parts.add({ x: this.x + rand(-4, 4), y: this.y - 14 + rand(-4, 4), vy: -6, life: 0.6, c: this.col[1], r: 0.8 });
   }
   take(G) {
     SAVE.flies = SAVE.flies || {}; SAVE.flies[this.id] = 1; persist(); const n = Flies.n();
-    SFX.chime(); G.parts.burst(this.x, this.y - 14, 18, { c: ['#ffe27a', '#fff6c0', '#fff'], life: 0.8, r: 1.5, up: 20 });
+    SFX.chime(); G.parts.burst(this.x, this.y - 14, 18, { c: [this.col[0], this.col[1], '#fff'], life: 0.8, r: 1.5, up: 20 });
     Input.toast = { msg: `Luciole perdue : ${n} / 30`, t: 2.4 };
     if (!SAVE.fliesIntro) { SAVE.fliesIntro = true; persist(); G.say([{ who: 'Lumi', text: 'Une de mes sœurs ! On s\'était perdues quand la nuit est tombée. Il y en a trente, éparpillées dans tout le royaume, jusque dans les donjons.' }, { who: 'Lumi', text: 'Elle reste avec moi. Si tu m\'en ramènes, emmène-moi au Sanctuaire des lucioles, à l\'ouest des Collines : toutes les cinq sœurs, je deviendrai plus forte !' }]); }
     else if (n % 5 === 0 && Flies.pow() < n / 5) G.say([{ who: 'Lumi', text: `${n} sœurs ! Allons au Sanctuaire des lucioles : je sens un nouveau pouvoir qui m'attend.` }]);
   }
   draw() {
     const y = this.y - 14 + Math.sin(this.t * 2.5) * 3, x = this.x + Math.sin(this.t * 1.3) * 3;
-    ctx.globalAlpha = 0.3 + 0.15 * Math.sin(this.t * 6); ell(x, y, 7, 7, '#ffe27a'); ctx.globalAlpha = 1;
+    ctx.globalAlpha = 0.3 + 0.15 * Math.sin(this.t * 6); ell(x, y, 7, 7, this.col[0]); ctx.globalAlpha = 1;
     const w = Math.abs(Math.sin(this.t * 18)) * 2.5 + 0.5; ell(x - 2.5, y - 1.5, w, 1.6, 'rgba(244,247,255,.8)'); ell(x + 2.5, y - 1.5, w, 1.6, 'rgba(244,247,255,.8)');
-    ell(x, y, 1.8, 1.8, '#fff6c0'); ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.2)');
+    ell(x, y, 1.8, 1.8, this.col[1]); ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.2)');
   }
 }
 
@@ -170,14 +174,14 @@ class FireflyShrine {
   ceremony(G, k) {
     const P = G.player; let t = 0; SFX.chime();
     G.cut = { t: 0,
-      update: dt => { const c = G.cut; c.t += dt; this.t += dt; G.parts.update(dt); if (Math.random() < dt * 30) G.parts.add({ x: this.x + rand(-60, 60), y: this.y - rand(0, 60), vy: -rand(10, 30), vx: (Lumi.x - this.x) * 0.3, life: 1.2, c: pick(['#ffe27a', '#fff6c0']), r: 1.2 });
+      update: dt => { const c = G.cut; c.t += dt; this.t += dt; G.parts.update(dt); if (Math.random() < dt * 30) G.parts.add({ x: this.x + rand(-60, 60), y: this.y - rand(0, 60), vy: -rand(10, 30), vx: (Lumi.x - this.x) * 0.3, life: 1.2, c: pick(FLY_COLORS)[0], r: 1.2 });
         Lumi.x = lerp(Lumi.x, this.x, dt * 2); Lumi.y = lerp(Lumi.y, this.y - 50 - Math.sin(c.t * 2) * 6, dt * 2);
         if (c.t > 2.2 && !c.done) { c.done = true; SAVE.lumiPow = k; persist(); SFX.bigheart(); G.flashT = 0.25; G.parts.burst(Lumi.x, Lumi.y, 50, { c: ['#ffe27a', '#fff', '#fff6c0'], life: 1.2, smin: 30, smax: 140, r: 2 }); }
         if (c.t > 3.2) { G.cut = null; G.state = 'play'; const p = LUMI_POWERS[k - 1]; G.say([{ who: 'La Mère des lucioles', text: `Mes filles te rendent ta lumière, Lumi. Voici le don « ${p.name} ».` }, { text: `Lumi grandit ! ${p.name} : ${p.desc}` }, { who: 'Lumi', text: pick(['Je me sens toute neuve ! Merci, {hero} !', 'Waouh… je brille jusqu\'au bout des ailes !', 'On fait une équipe du tonnerre, toi et moi.']) }], () => { if (Math.min(6, Math.floor(Flies.n() / 5)) > Flies.pow()) this.ceremony(G, Flies.pow() + 1); }); } },
       draw: () => {} };
     G.state = 'cut';
   }
-  update(dt, G) { this.t += dt; if (Math.random() < dt * 8) G.parts.add({ x: this.x + rand(-40, 40), y: this.y - rand(10, 70), vy: -8, vx: rand(-6, 6), life: 1.5, c: pick(['#ffe27a', '#fff6c0', '#8ff3ea']), r: 1 }); }
+  update(dt, G) { this.t += dt; if (Math.random() < dt * 8) G.parts.add({ x: this.x + rand(-40, 40), y: this.y - rand(10, 70), vy: -8, vx: rand(-6, 6), life: 1.5, c: pick(FLY_COLORS)[0], r: 1 }); }
   draw() {
     ell(this.x, this.y + 2, 40, 7, 'rgba(0,0,0,.4)');
     hi(this.x, this.y, false, () => {
@@ -185,8 +189,8 @@ class FireflyShrine {
       for (const sx of [-56, 40]) { D(sx, -120, 16, 104, '#7a8a92'); D(sx, -120, 4, 104, '#9aaab2'); D(sx - 4, -128, 24, 8, '#5a6a72'); } // colonnes
       D(-64, -140, 128, 14, '#4a5a62'); D(-64, -140, 128, 3, '#7a8a92'); D(-40, -158, 80, 18, '#4a5a62'); D(-16, -170, 32, 12, '#5a6a72'); // fronton
       D(-14, -60, 28, 36, '#3a4a52'); D(-10, -56, 20, 28, '#2a3a42'); // l'autel
-      const g = 0.6 + 0.4 * Math.sin(this.t * 2); ctx.globalAlpha = g; ell(0, -78, 14, 14, '#ffe27a'); ctx.globalAlpha = 1; ell(0, -78, 6, 6, '#fff6c0'); // la Mère des lucioles
-      for (let i = 0; i < 6; i++) { const on = i < Flies.pow(), a = -Math.PI + (i + 0.5) * Math.PI / 6; D(Math.round(Math.cos(a) * 46) - 3, Math.round(-100 + Math.sin(a) * 26) - 3, 6, 6, on ? '#ffe27a' : '#2a3a42'); } // six lumières
+      const g = 0.6 + 0.4 * Math.sin(this.t * 2); ctx.globalAlpha = g; ell(0, -78, 14, 14, '#e6c8ff'); ctx.globalAlpha = 1; ell(0, -78, 6, 6, '#fbf4ff'); // la Mère des lucioles
+      for (let i = 0; i < 6; i++) { const on = i < Flies.pow(), a = -Math.PI + (i + 0.5) * Math.PI / 6; D(Math.round(Math.cos(a) * 46) - 3, Math.round(-100 + Math.sin(a) * 26) - 3, 6, 6, on ? FLY_COLORS[i][0] : '#2a3a42'); } // six lumières
     });
   }
 }

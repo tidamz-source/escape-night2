@@ -477,7 +477,7 @@ const G = {
       for (const f of this.flies) {
         const fx = (f.x + cx * 0.3) % A.w, x = fx + Math.sin(this.t * f.s + f.p) * 20, y = (f.y + cy * 0.6) % A.h + Math.cos(this.t * f.s * 0.7 + f.p) * 14, a = 0.5 + 0.5 * Math.sin(this.t * 3 * f.s + f.p);
         if (x < cx - 4 || x > cx + W + 4 || y < cy - 4 || y > cy + H + 4) continue;
-        ctx.globalAlpha = a * 0.35; ell(x, y, 3, 3, '#ffe27a'); ctx.globalAlpha = a; R(half(x), half(y), 1, 1, '#fff6c0');
+        const fc = FLY_COLORS[f.c != null ? f.c : (f.c = Math.floor(Math.random() * FLY_COLORS.length))]; ctx.globalAlpha = a * 0.35; ell(x, y, 3, 3, fc[0]); ctx.globalAlpha = a; R(half(x), half(y), 1, 1, fc[1]);
       }
       ctx.globalAlpha = 1; ctx.restore();
     }
