@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.9.1** : 21 icônes d'objets PixelLab (armes, outils, bourses, sacoches, bouteille, appât, clés).
 - **8.9.0** : tous les menus passent en bois et parchemin (cadres en bois, coins en laiton, banderoles rouges, boutons biseautés) ; nouvel onglet Objets (équipé A/B, objets, bouteilles, fiche détaillée, jauges de la sacoche).
 - **8.8.1** : le marchand de lampions et le Grand-Duc en PixelLab.
 - **8.8.0** : 18 nouveaux sprites PixelLab : PNJ (aubergiste qui essuie un verre, Gaspard, Mahaut, berger, pêcheur, Margot, Bastien, Mme Pervenche), la famille (Amandine, Mamie Claudine, Papa, Goyave le chien), les animaux (moutons, Gérard, poules) et trois boss (Chevalier de fer, Chevalier Minuit, Roi Minuit).
