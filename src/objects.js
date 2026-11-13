@@ -69,7 +69,7 @@ const PICKUPS = {
   coin1:  { draw: (x, y, t) => pickImg('ecu1', x, y - 4, 7, t) || drawCoin(x, y - 4, '#c8a060', '#8a6a3a', t), take: () => { Wallet.add(1); SFX.coin(); } },
   coin5:  { draw: (x, y, t) => pickImg('ecu5', x, y - 5, 9) || drawCoin(x, y - 4, '#d8dce8', '#8a90a8', t), take: () => { Wallet.add(5); SFX.coin(); } },
   coin20: { draw: (x, y, t) => pickImg('ecu20', x, y - 4, 11) || drawCoin(x, y - 4, '#ffd23a', '#c08a10', t), take: () => { Wallet.add(20); SFX.coin(); } },
-  mushroom: { draw: (x, y) => { R(x - 1, y - 4, 2, 4, '#e8dcc8'); R(x - 4, y - 7, 8, 3, '#d8504a'); R(x - 3, y - 8, 6, 1, '#e86a5a'); R(x - 2, y - 7, 1, 1, '#fff'); R(x + 1, y - 6, 1, 1, '#fff'); }, take: () => { Inventory.addIngredient('champignons', 1); SFX.pickup(); } },
+  mushroom: { draw: (x, y) => { if (pickImg('champignons', x, y - 5, 9)) return; R(x - 1, y - 4, 2, 4, '#e8dcc8'); R(x - 4, y - 7, 8, 3, '#d8504a'); R(x - 3, y - 8, 6, 1, '#e86a5a'); R(x - 2, y - 7, 1, 1, '#fff'); R(x + 1, y - 6, 1, 1, '#fff'); }, take: () => { Inventory.addIngredient('champignons', 1); SFX.pickup(); } },
   petards: { draw: (x, y) => pickImg('petards5', x, y - 5, 10) || drawPetardIcon(x, y - 4, 0.7), take: () => { Inventory.addAmmo('petards', 3); SFX.pickup(); } },
   stones: { draw: (x, y) => { if (pickImg('cailloux', x, y - 3, 9)) return; R(x - 4, y - 4, 3, 3, '#8a8698'); R(x - 1, y - 5, 3, 3, '#a8a4b8'); R(x + 1, y - 3, 3, 3, '#7a7688'); R(x - 1, y - 5, 1, 1, '#e0dcf0'); }, take: () => { Inventory.addAmmo('cailloux', 5); SFX.pickup(); } },
 };
@@ -210,8 +210,10 @@ class Chest {
       ctx.fillStyle = g2; ctx.fillRect(this.x - hw * 0.35, top + 10, hw * 0.7, base - top - 10);
       ctx.restore();
     }
+    const gc = IMG.item_grand_coffre;
+    if (this.big && !this.open && gc) { const w = gc.width * 0.62, h = gc.height * 0.62; ctx.drawImage(gc, this.x + (this.jx || 0) - w / 2, by + (this.jy || 0) - h + 2, w, h); if (Math.floor(this.t * 2) % 3 === 0) R(this.x + 6, by - h + 6, 1, 1, '#fff'); return; }
     hi(this.x + (this.jx || 0), by + (this.jy || 0), false, () => {
-      const gold = this.give.startsWith('bigkey'), g1 = gold ? '#c08a10' : this.big ? '#4a6ab0' : '#7a4a24', g2 = gold ? '#ffd23a' : this.big ? '#6a8ad0' : '#a06a34', g3 = gold ? '#8a5a10' : this.big ? '#2a3a70' : '#4a2a14', l1 = gold ? '#e0a820' : this.big ? '#5a7ac0' : '#8a5a2c', l2 = gold ? '#fff2a0' : this.big ? '#8aaae0' : '#b07a3c', l3 = gold ? '#6a4a10' : this.big ? '#1a2a5a' : '#5a3418';
+      const gold = this.give.startsWith('bigkey') && !(this.big && gc), g1 = gold ? '#c08a10' : this.big ? (gc ? '#6b3e75' : '#4a6ab0') : '#7a4a24', g2 = gold ? '#ffd23a' : this.big ? (gc ? '#8a5a98' : '#6a8ad0') : '#a06a34', g3 = gold ? '#8a5a10' : this.big ? (gc ? '#45293f' : '#2a3a70') : '#4a2a14', l1 = gold ? '#e0a820' : this.big ? (gc ? '#6b3e75' : '#5a7ac0') : '#8a5a2c', l2 = gold ? '#fff2a0' : this.big ? (gc ? '#8a5a98' : '#8aaae0') : '#b07a3c', l3 = gold ? '#6a4a10' : this.big ? (gc ? '#2e222f' : '#1a2a5a') : '#5a3418';
       D(-15, -18, 30, 18, g1); D(-15, -18, 30, 2, g2); D(-15, -2, 30, 2, g3);
       D(-15, -18, 3, 18, '#c8a040'); D(12, -18, 3, 18, '#c8a040');
       if (!this.open) {

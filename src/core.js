@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.9.3';
+const VERSION = 'v8.9.4';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -54,7 +54,7 @@ const PL_KEYS = ['garde', 'arthur', 'jules', 'lila', 'fantome', 'epiciere', 'sag
 // boss et monstres PixelLab (planches : 8 directions sur une ligne, animations en dessous)
 const BOSS_IMGS = [['boss_shadow', 'boss/shadow'], ['boss_queen', 'boss/queen'], ['boss_mole', 'boss/mole'], ['mob_boar', 'mobs/boar'], ['mob_raccoon', 'mobs/raccoon'], ['mob_bat', 'mobs/bat'], ['mob_shadow', 'mobs/shadow'], ['mob_wisp', 'mobs/wisp'], ['mob_squirrel', 'mobs/squirrel'], ['mob_crow', 'mobs/crow'], ['mob_gnome', 'mobs/gnome'], ['mob_spider', 'mobs/spider'], ['mob_crab', 'mobs/crab'], ['mob_eel', 'mobs/eel'], ['mob_skeleton', 'mobs/skeleton'], ['mob_gargoyle', 'mobs/gargoyle'], ['mob_dog', 'mobs/dog'], ['mob_sheep', 'mobs/sheep'], ['mob_ram', 'mobs/ram'], ['mob_chicken', 'mobs/chicken'], ['boss_king', 'boss/king'], ['boss_mknight', 'boss/mknight'], ['boss_iknight', 'boss/iknight'], ['boss_owl', 'boss/owl']];
 // icônes d'objets PixelLab (assets/items/<id>.png, recadrées)
-const ITEM_ICONS = ['appat', 'bigkey', 'bottes', 'bouclier', 'bourse', 'bourse_geante', 'bouteille', 'branche', 'canne', 'carquois', 'cle', 'epee_bois', 'epee_fer', 'frisbee', 'grande_bourse', 'grappin', 'harpe', 'lance_pierre', 'palmes', 'petards', 'sacoche_voyage', 'cailloux', 'cle_tour', 'coeur', 'coupe', 'ecu1', 'ecu20', 'ecu5', 'feuille', 'fragment', 'grimoire', 'huile', 'lettre', 'petards5', 'seal', 'troc_boussole', 'troc_carte_marine', 'troc_laine', 'troc_longue_vue', 'troc_manche', 'troc_oeuf', 'troc_pioche', 'acier_gnome', 'cristal', 'ecaille', 'ecaille_reine', 'eclat_ombre', 'minerai', 'pierre_lune', 'plume', 'plume_duc', 'poisson_dore', 'poisson_grand', 'poisson_petit', 'poudre', 'quart_coeur'];
+const ITEM_ICONS = ['appat', 'bigkey', 'bottes', 'bouclier', 'bourse', 'bourse_geante', 'bouteille', 'branche', 'canne', 'carquois', 'cle', 'epee_bois', 'epee_fer', 'frisbee', 'grande_bourse', 'grappin', 'harpe', 'lance_pierre', 'palmes', 'petards', 'sacoche_voyage', 'cailloux', 'cle_tour', 'coeur', 'coupe', 'ecu1', 'ecu20', 'ecu5', 'feuille', 'fragment', 'grimoire', 'huile', 'lettre', 'petards5', 'seal', 'troc_boussole', 'troc_carte_marine', 'troc_laine', 'troc_longue_vue', 'troc_manche', 'troc_oeuf', 'troc_pioche', 'acier_gnome', 'cristal', 'ecaille', 'ecaille_reine', 'eclat_ombre', 'minerai', 'pierre_lune', 'plume', 'plume_duc', 'poisson_dore', 'poisson_grand', 'poisson_petit', 'poudre', 'quart_coeur', 'champignons', 'elixir', 'herbe_rare', 'herbe', 'sirop', 'soupe', 'soupe_jardin', 'soupe_pecheur', 'bouillon', 'soupe_doree', 'veloute', 'soupe_berger', 'grand_coffre'];
 const NPC_SPRITES = ['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'];
 const SWIMMERS = ['sacha', 'cam', 'rox', 'papa'];
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
