@@ -65,8 +65,8 @@ function drawCell(key, col, row, cw, ch, x, y, k, o = {}) {
   if (o.flash) { ctx.globalAlpha = 0.85; ctx.drawImage(whiteOf(key), col * cw, row * ch, cw, ch, -w / 2, dy, w, h); }
   ctx.restore(); return true;
 }
-// il se tourne vers le héros quand il s'approche
-function plFace(e) { const P = G.player; if (P && dist(P.x, P.y, e.x, e.y) < 110) { e.di = plDir(P.x - e.x, P.y - e.y); e.diT = 0; } else if (e.di == null || (e.diT = (e.diT || 0) + 1) > 360) { e.di = e.o && e.o.face != null ? e.o.face : 0; e.diT = 0; } return e.di; }
+// les PNJ regardent toujours vers le sud (face à l'écran)
+function plFace(e) { return e.o && e.o.face != null ? e.o.face : 0; }
 
 // personnage dessiné depuis un sprite d'Escape Night (densité ×2)
 function drawSprite(key, x, y) { const im = IMG['npc_' + key]; if (im) ctx.drawImage(im, half(x - im.width / 4), half(y - im.height / 2), im.width / 2, im.height / 2); }
