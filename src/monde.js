@@ -86,7 +86,7 @@ class HeartPiece {
 const FIREFLIES = [
   ['f_vil', 'royaume', 13, 32], ['f_col', 'collines', 67, 8], ['f_for', 'foret', 6, 10], ['f_mon', 'montagne', 58, 44], ['f_lac', 'lac', 4, 30], ['f_cot', 'cote', 6, 6], ['f_ter', 'terres', 58, 8],
   ['f_d1', 'cave', 'treasure', 400, 200], ['f_d2', 'bois', 'treasure', 80, 200], ['f_d3', 'mines', 'shaft', 400, 80], ['f_d4', 'temple', 'gallery', 240, 130], ['f_d5', 'tower', 'secret', 240, 200], ['f_d6', 'castle', 'armory', 400, 200],
-  ['f_rn1', 'route_nord', 20, 10], ['f_rn2', 'route_nord', 50, 28], ['f_col1', 'col', 6, 24], ['f_col2', 'col', 34, 6], ['f_or1', 'oree', 6, 6], ['f_or2', 'oree', 34, 26],
+  ['f_rn1', 'route_nord', 10, 5], ['f_rn2', 'route_nord', 25, 14], ['f_col1', 'col', 6, 24], ['f_col2', 'col', 34, 6], ['f_or1', 'oree', 6, 6], ['f_or2', 'oree', 34, 26],
   ['f_pr1', 'pres', 6, 24], ['f_du1', 'dunes', 20, 6], ['f_la1', 'lande', 34, 24], ['f_la2', 'lande', 6, 24],
   ['f_g1', 'grotte_collines', 6, 8], ['f_g2', 'grotte_montagne', 6, 8], ['f_g3', 'grotte_col', 6, 8], ['f_g4', 'grotte_lande', 6, 8],
   ['f_i1', 'pres', 31, 11, 'exact'], ['f_i2', 'dunes', 31, 21, 'exact'], ['f_i3', 'lac', 50, 40],
@@ -317,9 +317,9 @@ const PASSAGES = [
     npcs: [['vagabond', 16, 19], ['pauline', 25, 22]],
     spawn(A) { A.ents.push(new HeartPiece(30 * TS + 8, 20 * TS + 12, 'hp_ruisseau')); A.ents.push(new Sign(22 * TS, 13 * TS, [{ text: '« Route des Bergers. Au nord : les Collines. Au sud : Bourg-Luciole. »' }])); },
     // carte peinte (assets/maps/route_nord.png) : le ruisseau et son pont, l'étang et son îlot
-    paint: 'route_nord', arrive: { S: { x: 37.5 * TS, y: 51 * TS, dir: 'up' }, N: { x: 37.5 * TS, y: 6 * TS, dir: 'down' } },
-    paintNpcs: [['vagabond', 22, 30], ['pauline', 30, 36]],
-    paintSpawn(A) { A.ents.push(new HeartPiece(56 * TS + 8, 44 * TS + 12, 'hp_ruisseau')); A.ents.push(Object.assign(new Sign(41 * TS, 23 * TS, [{ text: '« Route des Bergers. Au nord : les Collines. Au sud : Bourg-Luciole. »' }]), { ghost: true })); } },
+    paint: 'route_nord', arrive: { S: { x: 18.75 * TS, y: 25.5 * TS, dir: 'up' }, N: { x: 18.5 * TS, y: 3.5 * TS, dir: 'down' } },
+    paintNpcs: [['vagabond', 11, 15], ['pauline', 15, 18]],
+    paintSpawn(A) { A.ents.push(new HeartPiece(28 * TS + 8, 22 * TS + 12, 'hp_ruisseau')); A.ents.push(Object.assign(new Sign(20.5 * TS, 11.5 * TS, [{ text: '« Route des Bergers. Au nord : les Collines. Au sud : Bourg-Luciole. »' }]), { ghost: true })); } },
   { id: 'col', name: 'Le Col des Sapins', seed: 131, themes: ['collines', 'montagne'], axis: 'x', dark: 0.45,
     sides: { W: ['1', 'collines', 'collines_from_montagne'], E: ['2', 'montagne', 'montagne_from_collines'] },
     build(T) { T.rect(2, 2, 36, 5, '#'); },

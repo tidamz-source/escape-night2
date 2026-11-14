@@ -34,8 +34,8 @@ function scatter(A, seed, keep, n) {
 
 // ---------- le camping : le prologue ----------
 // carte peinte (assets/maps/camping.png) ; la grille PAINTED.camping ne sert qu'aux collisions
-const CAMP_RIFT = { x: 58 * TS, y: 22 * TS };
-const CAMP_FIRE = { x: 20.5 * TS, y: 15.6 * TS }; // entre les deux bûches peintes
+const CAMP_RIFT = { x: 29 * TS, y: 11 * TS };
+const CAMP_FIRE = { x: 10.25 * TS, y: 7.8 * TS }; // entre les deux bûches peintes
 function buildCamp() {
   const A = new Area('camp', PAINTED.camping.map(r => r.split('')), 'camp');
   A.paint = 'map_camping'; A.bushSpots = [];
@@ -44,21 +44,21 @@ function buildCamp() {
   // les mobile-homes peints : celui de la famille s'ouvre, les autres sont fermés (vides depuis la faille)
   const shut = [{ text: 'Fermé à clé. Les vacanciers sont partis… ou ont disparu.' }];
   const H = (tx, ty, o) => new House(tx * TS + 8, ty * TS, Object.assign({ w: 3, d: 1, painted: true }, o));
-  A.home = H(12.5, 14, { interior: 'bungalow' });
-  A.bungalows = [A.home, H(27.6, 13, { locked: () => shut }), H(10.56, 26, { locked: () => shut }), H(31.56, 45, { locked: () => shut })];
-  const lamps = [[34.8, 10.5], [40.2, 19.1], [11.7, 29.7], [27.3, 29.7], [50.8, 29.7], [63.7, 29.7]]; // les réverbères peints
+  A.home = H(6, 7, { w: 2, interior: 'bungalow' });
+  A.bungalows = [A.home, H(13.55, 7, { w: 2, locked: () => shut }), H(5.03, 13, { w: 2, locked: () => shut }), H(15.53, 23, { w: 2, locked: () => shut })];
+  const lamps = [[17.4, 5.25], [20.1, 9.55], [5.85, 14.85], [13.65, 14.85], [25.4, 14.85], [31.85, 14.85]]; // les réverbères peints
   A.spawn = function () {
     this.ents = [];
     this.ents.push(...this.bungalows);
     for (const o of OVERHEAD.camping) this.ents.push(new Overhead('map_camping_dessus', o));
-    for (const [x, y] of lamps) this.ents.push(new LightSpot(x * TS, y * TS, { r: 46, c: 'rgba(255,220,150,', oy: -22 }));
-    this.ents.push(new BranchPickup(CAMP_FIRE.x - 30, CAMP_FIRE.y + 22));
-    this.ents.push(Object.assign(new Sign(33.8 * TS, 6.4 * TS, [{ text: '« Camping des Lucioles — Baignade interdite la nuit. »' }, { who: '{hero}', text: 'Personne ne se baigne, de toute façon. Il n\'y a plus personne.', face: 'o' }]), { ghost: true }));
+    for (const [x, y] of lamps) this.ents.push(new LightSpot(x * TS, y * TS, { r: 40, c: 'rgba(255,220,150,', oy: -11 }));
+    this.ents.push(new BranchPickup(CAMP_FIRE.x - 20, CAMP_FIRE.y + 16));
+    this.ents.push(Object.assign(new Sign(16.9 * TS, 3.2 * TS, [{ text: '« Camping des Lucioles — Baignade interdite la nuit. »' }, { who: '{hero}', text: 'Personne ne se baigne, de toute façon. Il n\'y a plus personne.', face: 'o' }]), { ghost: true }));
     const F = CAMP_FIRE;
     if (SAVE.boss6) { // au lever du soleil : toute la famille autour du feu
       this.ents.push(new NPC(F.x - 32, F.y + 36, { hero: () => Heroes.captive(1), talk: 'enfant1' }), new NPC(F.x + 36, F.y + 36, { hero: () => Heroes.captive(2), talk: 'enfant2' }));
       this.ents.push(new NPC(F.x - 58, F.y + 16, { sprite: 'claudine', fn: mamieTalk }), new NPC(F.x + 62, F.y + 18, { sprite: 'amandine', fn: amandineCampTalk }), Object.assign(new PapaNPC(F.x, F.y - 30), { talkId: 'papa' }));
-    } else this.ents.push(new Raccoon(52 * TS, 34 * TS), new Raccoon(20 * TS, 40 * TS), new Bat(14 * TS, 33 * TS));
+    } else this.ents.push(new Raccoon(26 * TS, 17 * TS), new Raccoon(10 * TS, 20 * TS), new Bat(7 * TS, 16.5 * TS));
     this.ents.push(new Rift(CAMP_RIFT.x, CAMP_RIFT.y, {
       lumi: true,
       active: () => true,
@@ -72,8 +72,8 @@ function buildCamp() {
       },
     }));
   };
-  A.start = { x: 13 * TS, y: 14.6 * TS, dir: 'down' };
-  A.dawn = { x: CAMP_FIRE.x, y: CAMP_FIRE.y + 50, dir: 'up' };
+  A.start = { x: 6.5 * TS, y: 7.4 * TS, dir: 'down' };
+  A.dawn = { x: CAMP_FIRE.x, y: CAMP_FIRE.y + 40, dir: 'up' };
   A.roomDark = () => SAVE.boss6 ? 0.04 : null;
   A.sky = G => { if (SAVE.boss6) { ctx.globalAlpha = 0.16; R(0, 0, W, H, '#ffb070'); ctx.globalAlpha = 1; } };
   A.name = 'Le camping';

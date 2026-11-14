@@ -172,7 +172,7 @@ const Pages = {
 
 // ===== 4. le mouton fugueur =====
 const GERARD_ZONES = { collines: 'les Collines', route_nord: 'la Route des Bergers', col: 'le Col des Sapins', sanctuaire: 'le Sanctuaire des lucioles' };
-const GERARD_SPOTS = { collines: [52, 34], route_nord: [28, 32], col: [30, 17], sanctuaire: [30, 17] };
+const GERARD_SPOTS = { collines: [52, 34], route_nord: [14, 16], col: [30, 17], sanctuaire: [30, 17] };
 const PEN = { x: 24, y: 44, w: 7, h: 4 }; // l'enclos, à côté de la bergerie (tuiles)
 const Gerard = {
   talk(G) {
