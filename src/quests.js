@@ -89,10 +89,24 @@ const Quests = {
 };
 // objets de quête qui n'apparaissent que pendant la quête
 function questSpawns(A) {
-  if (A.id === 'foret' && Quests.st('hache') === 1 && !Quests.complete('hache')) A.ents.push(new QuestItem(6 * TS, 11 * TS, 'hache', 'Tu as retrouvé la hache du bûcheron !'));
+  if (A.id === 'foret' && IMG.deco_stump_axe) A.ents.push(new AxeStump(6 * TS, 11 * TS)); // la souche : la hache y est plantée tant qu'on ne l'a pas rapportée
+  if (A.id === 'foret' && !IMG.deco_stump_axe && Quests.st('hache') === 1 && !Quests.complete('hache')) A.ents.push(new QuestItem(6 * TS, 11 * TS, 'hache', 'Tu as retrouvé la hache du bûcheron !'));
   if (A.id === 'lac' && Quests.st('filet') === 1 && !Quests.complete('filet')) A.ents.push(Object.assign(new DiveSpot(17 * TS, 34 * TS, 'qfilet', 'flag:qfiletOk', [{ text: 'Au fond de l\'eau, le filet du pêcheur ! Il y a quelque chose dedans…' }]), { onGet: () => Quests.add('filet') }));
   if (A.id === 'cote') for (const [i, x, y] of [[0, 8, 8], [1, 30, 6], [2, 24, 44]]) A.ents.push(new Beacon(x * TS, y * TS, i));
-  A.respawnQuest = () => { if (A.id === 'royaume' || A.id === G.area.id) { const keep = A.ents.filter(e => !(e instanceof QuestItem) && !(e instanceof Chicken) && !(e instanceof Beacon)); A.ents = keep; if (A.id === 'royaume') { if (SAVE.q.poules === 1) for (const [i, x, y] of [[0, 8 * TS, 8 * TS], [1, 58 * TS, 15 * TS], [2, 20 * TS, 44 * TS]]) if (!SAVE['poule' + i]) A.ents.push(new Chicken(x, y, i)); } else questSpawns(A); } };
+  A.respawnQuest = () => { if (A.id === 'royaume' || A.id === G.area.id) { const keep = A.ents.filter(e => !(e instanceof QuestItem) && !(e instanceof AxeStump) && !(e instanceof Chicken) && !(e instanceof Beacon)); A.ents = keep; if (A.id === 'royaume') { if (SAVE.q.poules === 1) for (const [i, x, y] of [[0, 8 * TS, 8 * TS], [1, 58 * TS, 15 * TS], [2, 20 * TS, 44 * TS]]) if (!SAVE['poule' + i]) A.ents.push(new Chicken(x, y, i)); } else questSpawns(A); } };
+}
+// la souche du bûcheron (PixelLab, deux états) : on y arrache la hache pendant la quête
+class AxeStump {
+  constructor(x, y) { this.x = x; this.y = y; this.w = 18; this.h = 8; this.solid = true; this.t = 0; }
+  get has() { return Quests.st('hache') < 2 && !Quests.complete('hache'); }
+  get light() { return this.has && Quests.st('hache') === 1 ? { r: 26, c: 'rgba(255,230,140,' } : null; }
+  canInteract() { return this.has; }
+  interact(G) {
+    if (Quests.st('hache') !== 1) { G.say([{ text: 'Une hache plantée dans une souche. Elle doit bien appartenir à quelqu\'un…' }]); return; }
+    Quests.add('hache'); SFX.chest(); G.parts.burst(this.x, this.y - 18, 10, { c: ['#c8a070', '#fff'], life: 0.5, r: 1.5 }); G.say([{ text: 'Tu arraches la hache de la souche. C\'est celle du bûcheron !' }]);
+  }
+  update(dt) { this.t += dt; }
+  draw() { decoImg(this.has ? 'stump_axe' : 'stump', this.x, this.y, 0.5, 3); if (this.has && Quests.st('hache') === 1 && Math.floor(this.t * 2) % 2) R(half(this.x + 4), half(this.y - 22), 1, 1, '#fff'); }
 }
 class QuestItem {
   constructor(x, y, id, msg) { this.x = x; this.y = y; this.id = id; this.msg = msg; this.w = 10; this.h = 6; this.t = 0; this.fetchable = true; }

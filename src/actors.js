@@ -119,7 +119,7 @@ class NPC {
     else if (this.o.sprite === 'papa_down') { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, 'down', false, this.t); }
     else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }
     else if (this.o.draw) this.o.draw(this);
-    else if (IMG['pl_' + this.o.look] && PL_NPCS[this.o.look]) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); const noAxe = this.o.look === 'bucheron' && IMG.pl_bucheron_noaxe && !(Quests.complete('hache') || Quests.st('hache') >= 2); drawPL(noAxe ? 'bucheron_noaxe' : this.o.look, this.x, this.y, plFace(this), this.t); } // le bûcheron n'a sa hache qu'une fois retrouvée
+    else if (IMG['pl_' + this.o.look] && PL_NPCS[this.o.look]) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); const noAxe = this.o.look === 'bucheron' && IMG.pl_bucheron_noaxe && Quests.st('hache') < 2; drawPL(noAxe ? 'bucheron_noaxe' : this.o.look, this.x, this.y, plFace(this), this.t); } // le bûcheron n'a sa hache qu'une fois retrouvée
     else drawPerson(this.x, this.y, LOOKS[this.o.look], this.t);
     if (G.state === 'play' && sideOffer(this)) { const b = Math.round(Math.sin(this.t * 5)); R(this.x - 3, this.y - 46 + b, 6, 9, '#ffd23a'); text('!', this.x, this.y - 46 + b, { size: 8, align: 'center', bold: true, color: '#3a2410', shadow: false }); return; } // une quête à proposer
     if (G.player && dist(G.player.x, G.player.y, this.x, this.y) < 34 && G.state === 'play') { // bulle « parler »
