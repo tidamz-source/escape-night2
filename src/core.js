@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.12.8';
+const VERSION = 'v8.12.9';
 const W = 480, H = 270, SC = 2, TS = 16;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -58,7 +58,7 @@ const ITEM_ICONS = ['appat', 'bigkey', 'bottes', 'bouclier', 'bourse', 'bourse_g
 // cueillettes : 8 vues PixelLab, une tirée au hasard par plant pour varier
 const ITEM_VARIANTS = ['champignons', 'herbe', 'herbe_rare'];
 // décor PixelLab (assets/deco/<k>.png, recadré)
-const DECO_IMGS = ['block', 'bush', 'cracked', 'dead', 'fswitch_off', 'fswitch_on', 'glowshroom', 'grave', 'lamp', 'lighthouse', 'plate_off', 'plate_on', 'relay_off', 'relay_on', 'secretrock', 'shrine', 'target', 'windmill'];
+const DECO_IMGS = ['block', 'bush', 'chest_closed', 'chest_open', 'pot', 'cracked', 'dead', 'fswitch_off', 'fswitch_on', 'glowshroom', 'grave', 'lamp', 'lighthouse', 'plate_off', 'plate_on', 'relay_off', 'relay_on', 'secretrock', 'shrine', 'target', 'windmill'];
 const NPC_SPRITES = ['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'];
 const SWIMMERS = ['sacha', 'cam', 'rox', 'papa'];
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];

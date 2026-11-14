@@ -142,6 +142,7 @@ class Pot extends Bush {
   }
   draw() {
     ell(this.x, this.y, 6, 2, 'rgba(0,0,0,.4)');
+    if (decoImg('pot', this.x, this.y, 0.55, 1)) return;
     hi(this.x, this.y, false, () => {
       D(-9, -16, 18, 14, '#9a5a32'); D(-11, -13, 22, 9, '#9a5a32'); D(-7, -3, 14, 3, '#7a4024');
       D(-6, -20, 12, 4, '#6a3a20'); D(-8, -22, 16, 3, '#b07a4a'); D(-8, -22, 16, 1, '#d09a6a');
@@ -217,6 +218,8 @@ class Chest {
     }
     const gc = IMG.item_grand_coffre;
     const gi = this.open ? IMG.item_grand_coffre_open : gc;
+    const si = IMG[this.open ? 'deco_chest_open' : 'deco_chest_closed'];
+    if (!this.big && si) { const w = si.width * 0.67, h = si.height * 0.67; ctx.drawImage(si, Math.round((this.x + (this.jx || 0) - w / 2) * 2) / 2, Math.round((by + (this.jy || 0) - h + 2) * 2) / 2, w, h); if (!this.open && Math.floor(this.t * 2) % 3 === 0) R(this.x + 4, by - h + 5, 1, 1, '#fff'); return; }
     if (this.big && gi) { const w = gi.width * 0.62, h = gi.height * 0.62; ctx.drawImage(gi, this.x + (this.jx || 0) - w / 2, by + (this.jy || 0) - h + 2, w, h); if (!this.open && Math.floor(this.t * 2) % 3 === 0) R(this.x + 6, by - h + 6, 1, 1, '#fff'); return; }
     hi(this.x + (this.jx || 0), by + (this.jy || 0), false, () => {
       const gold = this.give.startsWith('bigkey') && !(this.big && gc), g1 = gold ? '#c08a10' : this.big ? (gc ? '#6b3e75' : '#4a6ab0') : '#7a4a24', g2 = gold ? '#ffd23a' : this.big ? (gc ? '#8a5a98' : '#6a8ad0') : '#a06a34', g3 = gold ? '#8a5a10' : this.big ? (gc ? '#45293f' : '#2a3a70') : '#4a2a14', l1 = gold ? '#e0a820' : this.big ? (gc ? '#6b3e75' : '#5a7ac0') : '#8a5a2c', l2 = gold ? '#fff2a0' : this.big ? (gc ? '#8a5a98' : '#8aaae0') : '#b07a3c', l3 = gold ? '#6a4a10' : this.big ? (gc ? '#2e222f' : '#1a2a5a') : '#5a3418';

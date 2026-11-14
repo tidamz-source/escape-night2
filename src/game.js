@@ -463,7 +463,7 @@ const G = {
     if (this.raised) {
       const at = this.raised.at, x = at ? at.x : P.x, y = at ? at.y - 30 * (this.raised.rise || 0) + Math.sin(this.t * 4) : P.y - 44 + Math.sin(this.t * 4), k = this.raised.kind;
       ctx.globalAlpha = 0.35; ell(x, y, 12, 12, '#ffe27a'); ctx.globalAlpha = 1;
-      if (k === 'key') drawKey(x, y, 2); else if (k === 'heart') drawHeartShape(x, y, 2, '#ffcf3a', '#e09a20'); else drawItemIcon(k, x, y, 1.5);
+      if (k === 'key') drawKey(x, y, 2); else if (k === 'heart') drawHeartShape(x, y, 2, '#ffcf3a', '#e09a20'); else drawItemIcon(k, x, y, k === 'money' ? 0.9 : 1.5); // la pièce sortie d'un coffre reste petite
     }
     if (SAVE.met_lumi && !this.isMontage) { Lumi.draw(); LumiFx.draw(this); }
     this.parts.draw();
