@@ -44,14 +44,31 @@ function drawItemIcon(id, x, y, s = 1) {
     if (id === 'money') { D(-3 * u, -4 * u, 6 * u, 8 * u, '#ffd23a'); D(-2 * u, -3 * u, 4 * u, 6 * u, '#ffe27a'); D(-1 * u, -2 * u, 1 * u, 1 * u, '#fff'); }
   }, s);
 }
+// portrait d'une bête du bestiaire : on dessine une vraie instance, figée, dans la fiche
+const PORTRAITS = {}, PORTRAIT_FIX = { Eel: { state: 'rise', up: 1, pk: 1.3 }, IronMole: { state: 'walk', rise: 1 }, WhirlQueen: { state: 'flop' } }; // ceux qui vivent sous l'eau ou sous terre : on les montre sortis
+function beastPortrait(b, x, y, t) {
+  let e = PORTRAITS[b.k];
+  if (e === undefined) {
+    try { const C = Function('return ' + b.k)(); e = new C(0, 0); e.room = -1; e.state = e.state === 'sleep' ? 'idle' : e.state; e.flash = 0; e.hp = e.maxHp || e.hp; Object.assign(e, PORTRAIT_FIX[b.k] || {}); } catch (_) { e = null; }
+    PORTRAITS[b.k] = e;
+  }
+  if (!e) return;
+  const k = e.pk || (b.boss ? 0.6 : b.mini ? 0.9 : 1.6);
+  ctx.save(); ctx.beginPath(); ctx.rect(x - 90, y - 48, 180, 54); ctx.clip();
+  ctx.globalAlpha = 0.25; ell(x, y + 1, 22, 5, UIC.woodD); ctx.globalAlpha = 1;
+  ctx.translate(x, y); ctx.scale(k, k);
+  try { e.x = 0; e.y = 0; e.t = t; e._px = 0; e._py = 0; e._di = 0; e._diT = 1; e.draw(); } catch (_) {}
+  ctx.restore();
+}
 // ---------- habillage des menus : bois, parchemin, laiton ----------
 const UIC = { ink: '#4a2c17', soft: '#7a5a3a', mute: '#a08462', title: '#7a3a1e', red: '#b8282a', redL: '#d33a36', gold: '#e0a743', goldL: '#f6d27a', rivet: '#5a3410',
   parch: '#f4e4c1', parchL: '#fff3d8', parchD: '#e3c996', cell: '#e7d0a2', cellE: '#ecdcb8', sel: '#fff1cf', edge: '#6b4325',
   wood: '#9a6638', woodD: '#7a4a26', woodL: '#c08850', plank: '#5b3920', plankD: '#4a2e19', dark: '#24130a', cream: '#f6e7c8' };
 // texte sur parchemin (brun, sans ombre) ; o.font = 't' pour les titres en capitales pixel
-function ptext(str, x, y, o = {}) { text(str, x, y, Object.assign({ color: UIC.ink, shadow: false }, o)); }
+const UI_TXT = 1.2; // agrandit tous les textes des menus
+function ptext(str, x, y, o = {}) { text(str, x, y, Object.assign({ color: UIC.ink, shadow: false }, o, { size: (o.size || 8) * UI_TXT })); }
 // texte crème sur le bois (avec ombre portée brune)
-function wtext(str, x, y, o = {}) { text(str, x, y, Object.assign({ color: UIC.cream, shadowColor: UIC.dark }, o)); }
+function wtext(str, x, y, o = {}) { text(str, x, y, Object.assign({ color: UIC.cream, shadowColor: UIC.dark }, o, { size: (o.size || 8) * UI_TXT })); }
 // fond de planches (écrans de menu plein écran)
 function woodBg() {
   R(0, 0, W, H, UIC.plank);
@@ -81,7 +98,7 @@ function woodBtn(x, y, w, h, label, on, size = 6.5) {
 }
 // banderole rouge à queues découpées, centrée sur cx
 function ribbon(cx, y, txt, size = 7.5, font) {
-  const w = textW(txt, size, font) + 24, x = Math.round(cx - w / 2), h = 15;
+  size *= UI_TXT; const w = textW(txt, size, font) + 24, x = Math.round(cx - w / 2), h = Math.round(size + 8);
   for (const s of [-1, 1]) { const tx = s < 0 ? x - 9 : x + w + 1; R(tx - 1, y + 3, 9, 13, UIC.dark); R(tx, y + 4, 8, 11, '#8a1a20'); R(s < 0 ? tx : tx + 5, y + 8, 3, 3, UIC.plank); }
   R(x - 1, y - 1, w + 2, h + 2, UIC.dark); R(x, y, w, h, '#f08060'); R(x + 1, y + 1, w - 2, h - 2, UIC.redL); R(x + 1, y + 8, w - 2, h - 9, '#a8232a');
   text(txt, cx, y + (h - size) / 2, { size, align: 'center', color: '#fff6e0', shadowColor: '#5a0f12', font });
@@ -153,19 +170,19 @@ const UIMixin = {
     }
     if (line.who) { const nw = textW(line.who, 8) + 12; R(bx + 6, by - 11, nw + 2, 15, UIC.dark); R(bx + 7, by - 10, nw, 13, lumi ? UIC.goldL : UIC.woodL); R(bx + 8, by - 9, nw - 2, 11, lumi ? UIC.gold : UIC.wood); R(bx + 8, by - 3, nw - 2, 5, lumi ? '#c88a20' : UIC.woodD); text(line.who, bx + 13, by - 9, { color: lumi ? UIC.ink : UIC.cream, shadow: !lumi, shadowColor: UIC.dark, bold: true }); }
     const maxW = bx + bw - 14 - tx, shown = line.text.slice(0, Math.floor(d.c));
-    let fs = 8, lh = 12, lines = wrap(line.text, maxW, fs);
-    if (lines.length * lh > bh - 8) { fs = 7; lh = 10; lines = wrap(line.text, maxW, fs); } // texte long dans la boîte étroite : un cran plus petit
+    let fs = 10, lh = 13, lines = wrap(line.text, maxW, fs);
+    for (const [f2, l2] of [[9, 12], [8, 11], [7, 10]]) if (lines.length * lh > bh - 10) { fs = f2; lh = l2; lines = wrap(line.text, maxW, fs); } // texte long : un cran plus petit, tant qu'il le faut
     let count = 0, ty = by + (lines.length * lh > bh - 16 ? 6 : 12);
-    for (const ln of lines) { ptext(shown.slice(count, count + ln.length), tx, ty, { size: fs }); count += ln.length + 1; ty += lh; }
+    for (const ln of lines) { text(shown.slice(count, count + ln.length), tx, ty, { size: fs, color: UIC.ink, shadow: false }); count += ln.length + 1; ty += lh; }
     if (d.choices && d.i === d.lines.length - 1 && d.c >= line.text.length) {
-      const cw = Math.max(...d.choices.map(c => textW(c, 8))) + 30, cx = clamp(bx + bw - cw - 6, 4, W - cw - 4), cy = by - d.choices.length * 14 - 10;
+      const cw = Math.max(...d.choices.map(c => textW(c, 8 * UI_TXT))) + 30, cx = clamp(bx + bw - cw - 6, 4, W - cw - 4), cy = by - d.choices.length * 14 - 10;
       box(cx, cy, cw, d.choices.length * 14 + 6); d.cx = cx; d.cy = cy + 4;
       d.choices.forEach((c, k) => { const on = k === d.pick; if (on) R(cx + 2, cy + 3 + k * 14, cw - 4, 12, UIC.sel); ptext((on ? '▸ ' : '  ') + c, cx + 8, cy + 4 + k * 14, { size: 8, color: on ? UIC.red : UIC.soft, bold: on }); });
     } else if (d.c >= line.text.length && Math.floor(this.t * 3) % 2) { ctx.fillStyle = UIC.red; ctx.beginPath(); ctx.moveTo(bx + bw - 16, by + bh - 12); ctx.lineTo(bx + bw - 10, by + bh - 12); ctx.lineTo(bx + bw - 13, by + bh - 8); ctx.fill(); }
   },
 
   drawMenu(items, x, y, sel = this.menu) {
-    const bw = Math.max(110, ...items.map(it => textW(it, 6.5, 't') + 24));
+    const bw = Math.max(110, ...items.map(it => textW(it, 6.5 * UI_TXT, 't') + 24));
     items.forEach((it, i) => woodBtn(Math.round(x - bw / 2), y + i * 16 - 2, bw, 13, it, i === sel));
   },
 
@@ -252,7 +269,7 @@ const UIMixin = {
     woodBtn(W - 26, 6, 20, 17, '', false);
     ctx.strokeStyle = UIC.cream; ctx.lineWidth = 2; ctx.lineCap = 'square'; ctx.beginPath(); ctx.moveTo(W - 20, 10); ctx.lineTo(W - 12, 18); ctx.moveTo(W - 12, 10); ctx.lineTo(W - 20, 18); ctx.stroke();
     const obj = Story.objective();
-    if (obj) { const t = 'Objectif : ' + obj, fs = textW(t, 6.5) > W - 70 ? 5.5 : 6.5; ribbon(W / 2, 30, t, fs); }
+    if (obj) { const t = 'Objectif : ' + obj, fs = textW(t, 6.5 * UI_TXT) > W - 50 ? (textW(t, 5.5 * UI_TXT) > W - 50 ? 4.8 : 5.5) : 6.5; ribbon(W / 2, 30, t, fs); }
     if (this.ptab === 0) this.drawInventory();
     if (this.ptab === 1) this.drawSac();
     if (this.ptab === 2) this.drawSouvenirs();
@@ -276,7 +293,7 @@ const UIMixin = {
     panel(22, 54, 196, g.by + g.cs + 6 - 54);
     // équipé : arme sur A, outil sur B
     this.label('Équipé', 30, 59);
-    const eq = (x, k, c, tint, id, extra) => { cellBox(x, 68, 30, 30, false, !id, tint); if (id) drawItemIcon(id, x + 15, 81, 1.1); keyCap(x + 35, 71, k, c); if (id) { ptext(Inventory.item(id).name, x + 35, 83, { size: 6.5 }); if (extra) ptext(extra, x + 35 + textW(Inventory.item(id).name, 6.5) + 3, 83, { size: 6.5, color: UIC.mute }); } };
+    const eq = (x, k, c, tint, id, extra) => { cellBox(x, 68, 30, 30, false, !id, tint); if (id) drawItemIcon(id, x + 15, 81, 1.1); keyCap(x + 35, 71, k, c); if (id) { ptext(Inventory.item(id).name, x + 35, 83, { size: 6.5 }); if (extra) ptext(extra, x + 35 + textW(Inventory.item(id).name, 6.5 * UI_TXT) + 3, 83, { size: 6.5, color: UIC.mute }); } };
     eq(30, 'A', UIC.red, '#f3d6c4', g.weapon && g.weapon.id);
     const ti = tool && Inventory.item(tool); eq(118, 'B', '#6a4fb0', '#e2d6ee', tool, ti && ti.ammo ? String(Inventory.ammo(ti.ammo)) : '');
     R(30, 104, 180, 1, UIC.parchD);
@@ -300,9 +317,9 @@ const UIMixin = {
       const tags = [{ tool: 'Outil', gear: 'Équipement', bottle: sel.id === 'vide' ? 'Bouteille' : 'Boisson', key: 'Clé' }[sel.kind] || 'Objet'];
       if (sel.kind === 'tool' && tool === sel.id) tags.push('Sur B');
       let tx = rx + 58; tags.forEach((t, i) => { const w = textW(t, 5, 't') + 8; R(tx, 71, w, 8, i ? UIC.gold : UIC.woodD); text(t, tx + 4, 72.5, { size: 5, font: 't', color: i ? UIC.ink : UIC.cream, shadow: false }); tx += w + 4; });
-      wrap(it.desc, rw - 66, 6.5).slice(0, 3).forEach((l, i) => ptext(l, rx + 58, 83 + i * 8.5, { size: 6.5, color: UIC.soft }));
+      wrap(it.desc, rw - 66, 6.5 * UI_TXT).slice(0, 4).forEach((l, i) => ptext(l, rx + 58, 82 + i * 8.5, { size: 6.5, color: UIC.soft }));
       const act = sel.kind === 'tool' ? 'Équiper sur B' : sel.kind === 'bottle' && sel.id !== 'vide' ? 'Boire' : '';
-      let ax = rx + 8; if (act) { keyCap(ax, 125, 'A', UIC.red); ptext(act, ax + 12, 125, { size: 6.5 }); ax += 22 + textW(act, 6.5); }
+      let ax = rx + 8; if (act) { keyCap(ax, 125, 'A', UIC.red); ptext(act, ax + 12, 125, { size: 6.5 }); ax += 22 + textW(act, 6.5 * UI_TXT); }
       keyCap(ax, 125, 'B', '#9a7a5a'); ptext('Fermer', ax + 12, 125, { size: 6.5, color: UIC.mute });
     } else ptext('Aucun objet pour l\'instant.', rx + 10, 64, { size: 7, color: UIC.mute });
     // la sacoche : écus, munitions, compteurs
@@ -312,7 +329,7 @@ const UIMixin = {
     const bag = best(['sacoche_voyage', 'carquois'], 'Sacoche');
     if (Inventory.has('lance_pierre')) rows.push(['cailloux', `${Inventory.ammo('cailloux')} / ${Inventory.ammoMax('cailloux')} cailloux`, Inventory.ammo('cailloux') / Inventory.ammoMax('cailloux'), '#8c8a94', bag]);
     if (Inventory.has('petards')) rows.push(['petards', `${Inventory.ammo('petards')} / ${Inventory.ammoMax('petards')} pétards`, Inventory.ammo('petards') / Math.max(1, Inventory.ammoMax('petards')), '#c8302e', bag]);
-    rows.forEach(([ic, t, v, c, up], i) => { const y = sy + 15 + i * 13; drawItemIcon(ic, rx + 14, y + 4, 0.8); ptext(t, rx + 24, y, { size: 6.5 }); gauge(rx + 98, y + 1, 54, v, c); ptext(up, rx + rw - 8, y + 1.5, { size: 4.5, font: 't', align: 'right', color: UIC.mute }); });
+    rows.forEach(([ic, t, v, c, up], i) => { const y = sy + 15 + i * 13; drawItemIcon(ic, rx + 14, y + 4, 0.8); ptext(t, rx + 24, y, { size: 6.5 }); gauge(rx + 116, y + 1, 44, v, c); ptext(up, rx + rw - 8, y + 2, { size: 3.8, font: 't', align: 'right', color: UIC.mute }); });
     const C = [['fragment', `${SAVE.fragments || 0} / 6`], ['star', `${Progress.pct()} %`]];
     if (SAVE.hpieces) C.splice(1, 0, ['piece_coeur', `${SAVE.hpieces % 4} / 4`]);
     if (SAVE.fliesIntro) C.splice(C.length - 1, 0, ['luciole', `${Flies.n()} / 30` + (Flies.pow() ? ` ★${Flies.pow()}` : '')]);
@@ -335,8 +352,8 @@ const UIMixin = {
     const e = L[this.psel], rx = 258;
     if (e) {
       const name = e.troc ? TROC_ITEMS[e.troc] : MATS[e.id].name, desc = e.troc ? 'Un objet à échanger. Quelqu\'un, quelque part, en a sûrement besoin.' : MATS[e.id].desc + (MATS[e.id].rare ? ' Matériau rare : Bertrand s\'en sert à la forge.' : ' Ça pourrait intéresser un marchand.');
-      ptext(name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title }); wrap(desc, 190, 7.5).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.soft }));
-    } else wrap('Ton sac est vide. Cueille, pêche, casse des rochers : tout se revend chez Amandine ou se cuisine chez Mamie.', 190, 7.5).forEach((l, i) => ptext(l, rx, 64 + i * 11, { size: 7.5, color: UIC.mute }));
+      ptext(name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title }); wrap(desc, 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.soft }));
+    } else wrap('Ton sac est vide. Cueille, pêche, casse des rochers : tout se revend chez Amandine ou se cuisine chez Mamie.', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 64 + i * 11, { size: 7.5, color: UIC.mute }));
     const up = Object.keys(UPGRADES).filter(id => Upg.lv(id)); if (up.length) wrap('Forge : ' + up.map(id => UPGRADES[id].name + ' ' + '★'.repeat(Upg.lv(id))).join(' · '), 190, 6.5).forEach((l, i, a) => ptext(l, rx, 232 - (a.length - i) * 9, { size: 6.5, color: UIC.title }));
   },
   drawBestiary() {
@@ -350,13 +367,14 @@ const UIMixin = {
       if (b.boss) R(x + 2, y + 2, 4, 4, UIC.gold); else if (b.mini) R(x + 2, y + 2, 4, 4, '#8a7a6a');
     });
     const b = BEASTS[this.psel], kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k], rx = 258;
-    wrap('Récompenses chez Arthur, au village : 5, 12 et ' + BEASTS.length + ' fiches complètes.', 190, 6.5).forEach((l, i, a) => ptext(l, rx, 232 - (a.length - i) * 9, { size: 6.5, color: UIC.mute }));
-    if (!seen) { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); ptext('Une créature que tu n\'as pas encore croisée.', rx, 80, { size: 7.5, color: UIC.mute }); return; }
-    if (!kills) { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); ptext('Tu l\'as croisée. Bats-la pour en savoir plus.', rx, 80, { size: 7.5, color: UIC.mute }); return; }
+    wrap('Récompenses chez Arthur, au village : 5, 12 et ' + BEASTS.length + ' fiches complètes.', 190, 6.5 * UI_TXT).forEach((l, i, a) => ptext(l, rx, 232 - (a.length - i) * 9, { size: 6.5, color: UIC.mute }));
+    if (!seen) { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); wrap('Une créature que tu n\'as pas encore croisée.', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.mute })); return; }
+    if (!kills) { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); wrap('Tu l\'as croisée. Bats-la pour en savoir plus.', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.mute })); return; }
+    beastPortrait(b, 353, 204, this.t);
     ptext(b.name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title });
     ptext((b.boss ? 'Gardien · ' : b.mini ? 'Mini-boss · ' : '') + b.zone, rx, 76, { size: 7, color: UIC.mute });
     ptext(`Vaincu${b.boss || b.mini ? '' : 's'} : ${kills}` + (b.boss || b.mini ? '' : ` / 10`), rx, 90, { size: 7.5 });
-    if (Bestiary.full(b)) { ptext('Points faibles : ' + b.weak, rx, 104, { size: 7.5, color: UIC.red }); wrap('« ' + b.note + ' »', 190, 7.5).forEach((l, i) => ptext(l, rx, 122 + i * 11, { size: 7.5, color: UIC.soft })); }
+    if (Bestiary.full(b)) { const wl = wrap('Points faibles : ' + b.weak, 190, 7.5 * UI_TXT); wl.forEach((l, i) => ptext(l, rx, 104 + i * 11, { size: 7.5, color: UIC.red })); wrap('« ' + b.note + ' »', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 110 + wl.length * 11 + i * 11, { size: 7.5, color: UIC.soft })); }
     else ptext('Fiche complète à 10 victoires.', rx, 104, { size: 7.5, color: UIC.mute });
   },
   // le journal des quêtes : principales (souvenirs) et secondaires
@@ -365,7 +383,7 @@ const UIMixin = {
     const done = L.filter(q => q.st === 'done').length;
     this.pauseFrames(186, L.length ? 186 : 0);
     this.label(`Quêtes : ${done} terminée${done > 1 ? 's' : ''}`, 30, 60);
-    if (!L.length) { wrap('Aucune quête pour l\'instant. Les « ! » montrent qui a besoin d\'aide.', 190, 7.5).forEach((l, i) => ptext(l, 30, 78 + i * 11, { size: 7.5, color: UIC.mute })); return; }
+    if (!L.length) { wrap('Aucune quête pour l\'instant. Les « ! » montrent qui a besoin d\'aide.', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, 30, 78 + i * 11, { size: 7.5, color: UIC.mute })); return; }
     const per = 10, top = clamp(this.psel - 4, 0, Math.max(0, L.length - per));
     L.slice(top, top + per).forEach((q, k) => {
       const i = top + k, y = 74 + k * 15, on = i === this.psel;
@@ -375,9 +393,9 @@ const UIMixin = {
     });
     if (L.length > per) ptext(`${this.psel + 1} / ${L.length}`, 126, 226, { size: 6.5, align: 'center', color: UIC.mute });
     const q = L[this.psel], rx = 258;
-    wrap(q.name, 190, 8).slice(0, 2).forEach((l, i) => ptext(l, rx, 62 + i * 11, { size: 8, bold: true, color: UIC.title }));
+    wrap(q.name, 190, 8 * UI_TXT).slice(0, 2).forEach((l, i) => ptext(l, rx, 62 + i * 11, { size: 8, bold: true, color: UIC.title }));
     ptext(q.giver, rx, 86, { size: 7, color: UIC.mute });
-    wrap(q.hint, 190, 7.5).forEach((l, i) => ptext(l, rx, 102 + i * 11, { size: 7.5, color: q.st === 'done' ? UIC.mute : UIC.soft }));
+    wrap(q.hint, 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 102 + i * 11, { size: 7.5, color: q.st === 'done' ? UIC.mute : UIC.soft }));
     ptext(q.main ? 'Quête de souvenir' : 'Quête secondaire', rx, 226, { size: 5, font: 't', color: UIC.mute });
   },
   drawSouvenirs() {
@@ -390,9 +408,9 @@ const UIMixin = {
       if (has) drawSouvenir(id, x + g.cw / 2 - 2, y + g.ch / 2 - 2, 1.2); else ptext('?', x + g.cw / 2 - 2, y + g.ch / 2 - 9, { size: 12, align: 'center', color: UIC.mute, bold: true });
     });
     const id = ids[this.psel], S = SOUVENIRS[id], has = SAVE.souv && SAVE.souv[id], rx = 258;
-    if (has) { ptext(S.name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title }); wrap(S.desc, 190, 7.5).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.soft })); }
-    else { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); wrap('Un objet de ton monde, perdu quelque part dans le royaume. Les habitants qui ont besoin d\'aide le savent peut-être.', 190, 7.5).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.mute })); }
-    if (n === 7) wrap('Collection complète ! Une surprise t\'attend à la fin.', 190, 7.5).forEach((l, i) => ptext(l, rx, 214 + i * 11, { size: 7.5, color: UIC.red }));
+    if (has) { ptext(S.name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title }); wrap(S.desc, 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.soft })); }
+    else { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); wrap('Un objet de ton monde, perdu quelque part dans le royaume. Les habitants qui ont besoin d\'aide le savent peut-être.', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.mute })); }
+    if (n === 7) wrap('Collection complète ! Une surprise t\'attend à la fin.', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 214 + i * 11, { size: 7.5, color: UIC.red }));
   },
   drawMapTab() {
     const A = this.area;
@@ -459,7 +477,7 @@ const UIMixin = {
     });
     const e = def.items[sh.sel], desc = sh.msgT > 0 ? sh.msg : Inventory.item(e.id).desc;
     R(bx + 10, by + bh - 38, bw - 20, 1, UIC.parchD);
-    wrap(desc, bw - 28, 7.5).slice(0, 2).forEach((l, i) => ptext(l, bx + 14, by + bh - 32 + i * 11, { size: 7.5, color: sh.msgT > 0 ? UIC.red : UIC.soft, bold: sh.msgT > 0 }));
+    wrap(desc, bw - 28, 7.5 * UI_TXT).slice(0, 2).forEach((l, i) => ptext(l, bx + 14, by + bh - 32 + i * 11, { size: 7.5, color: sh.msgT > 0 ? UIC.red : UIC.soft, bold: sh.msgT > 0 }));
     wtext('A : acheter   ·   B : sortir', W / 2, by + bh + 9, { size: 7, align: 'center' });
   },
 
@@ -548,7 +566,7 @@ const UIMixin = {
       ptext(info.name, bx + 66, y + 5, { size: 8, bold: true, font: 't' });
       for (let h = 0; h < info.hearts; h++) drawHeartShape(bx + 70 + h * 9, y + 23, 1.5, PAL.heart, '#c02848');
       drawItemIcon('money', bx + 70 + info.hearts * 9 + 8, y + 23, 0.8); ptext(String(info.money), bx + 70 + info.hearts * 9 + 15, y + 18, { size: 8, bold: true, color: UIC.title });
-      ptext(info.obj.length > 70 ? info.obj.slice(0, 68) + '…' : info.obj, bx + 66, y + 31, { size: 6, color: UIC.soft });
+      ptext(info.obj.length > 56 ? info.obj.slice(0, 54) + '…' : info.obj, bx + 66, y + 31, { size: 5.5, color: UIC.soft });
       ptext(`${info.pct} %`, bx + 306, y + 4, { size: 10, align: 'right', bold: true, color: UIC.red }); ptext(`${info.frags}/6 · ${info.time} min`, bx + 306, y + 19, { size: 7, align: 'right', color: UIC.mute });
     }
     const on = this.slotSel === 3; woodBtn(W / 2 - 60, 46 + 3 * 52 + 1, 120, 15, this.erasing ? 'Annuler' : 'Effacer une partie', on, 6);
@@ -572,8 +590,8 @@ const UIMixin = {
       ctx.globalAlpha = on ? 0.35 : 0.2; ell(x, 140, 34, 8, UIC.woodD); ctx.globalAlpha = 1;
       drawHero(id, x, 140, 'down', on, this.t, 74 / heroHeight(id));
       ptext(d.name, x, 152, { size: 10, align: 'center', bold: true, font: 't', color: on ? UIC.red : UIC.ink });
-      wrap(d.desc, 112, 7.5).forEach((l, k) => ptext(l, x, 172 + k * 10, { size: 7.5, align: 'center', color: UIC.soft }));
-      wrap(d.perk, 112, 7.5).forEach((l, k) => ptext(l, x, 198 + k * 10, { size: 7.5, align: 'center', color: UIC.title, bold: true }));
+      const dl = wrap(d.desc, 112, 7.5 * UI_TXT); dl.forEach((l, k) => ptext(l, x, 170 + k * 10, { size: 7.5, align: 'center', color: UIC.soft }));
+      wrap(d.perk, 112, 7.5 * UI_TXT).forEach((l, k) => ptext(l, x, 174 + dl.length * 10 + k * 10, { size: 7.5, align: 'center', color: UIC.title, bold: true }));
     });
     if (Input.padVisible) woodBtn(8, 8, 58, 16, '◂ Retour', false, 6);
     text(Input.padVisible ? 'Touche un personnage pour le choisir, puis touche-le encore pour partir' : '◂ ▸ : choisir   ·   A : partir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#8a94c0' });

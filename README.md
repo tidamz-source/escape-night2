@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.13.0** : textes plus grands dans les dialogues et les menus ; le bestiaire montre la bête ; les faisceaux sortent bien de l'ouverture des coffres ; Amandine situe correctement son comptoir.
 - **8.12.9** : petit coffre (fermé et ouvert) et pot en PixelLab ; la pièce qui sort d'un coffre est plus petite.
 - **8.12.8** : collisions fines (demi-cases de 8 px) pour les petites pièces peintes ; le mobile-home utilise la grille 16 px faite dans l'atelier.
 - **8.12.7** : le mobile-home réduit à 70 % (Sacha à la bonne taille), collisions, réveil, lumières et objets recalés.

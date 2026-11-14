@@ -192,6 +192,16 @@ class Chest {
     this.t += dt;
     if (!this.shown && !this.hidden) { this.shown = true; G.parts.burst(this.x, this.y - 8, 24, { c: ['#fff', '#ffe27a', '#8ff3ea'], life: 0.7, smin: 20, smax: 90, r: 2, drag: 2 }); }
   }
+  drawBeam(by) { // faisceau de lumière qui sort de l'ouverture du coffre (dessiné par-dessus)
+    if (!this.beam) return;
+      const s = this.big ? 1.4 : 1, top = by - 90, base = by - (this.big ? 13 : 8), hw = 9 * s, a = 0.55 + Math.sin(G.t * 9) * 0.08;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createLinearGradient(0, base, 0, top); g.addColorStop(0, `rgba(255,236,160,${a})`); g.addColorStop(1, 'rgba(255,236,160,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(this.x - hw, base); ctx.lineTo(this.x + hw, base); ctx.lineTo(this.x + hw * 2.2, top); ctx.lineTo(this.x - hw * 2.2, top); ctx.closePath(); ctx.fill();
+      const g2 = ctx.createLinearGradient(0, base, 0, top + 10); g2.addColorStop(0, `rgba(255,255,255,${a * 0.6})`); g2.addColorStop(0.5, `rgba(255,255,255,${a * 0.3})`); g2.addColorStop(1, 'rgba(255,255,255,0)'); // le bandeau central s'efface vers le haut
+      ctx.fillStyle = g2; ctx.fillRect(this.x - hw * 0.35, top + 10, hw * 0.7, base - top - 10);
+      ctx.restore();
+    }
   drawPedestal() {
     ell(this.x, this.y + 2, 22, 5, 'rgba(0,0,0,.4)');
     hi(this.x, this.y, false, () => {
@@ -207,15 +217,9 @@ class Chest {
     if (this.hidden) return;
     const by = this.y - this.lift;
     ell(this.x, by, this.big ? 14 : 10, this.big ? 4 : 3, 'rgba(0,0,0,.4)');
-    if (this.beam) { // faisceau de lumière qui sort du coffre
-      const s = this.big ? 1.4 : 1, top = by - 90, base = by - 12 * s, hw = 9 * s, a = 0.55 + Math.sin(G.t * 9) * 0.08;
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      const g = ctx.createLinearGradient(0, base, 0, top); g.addColorStop(0, `rgba(255,236,160,${a})`); g.addColorStop(1, 'rgba(255,236,160,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(this.x - hw, base); ctx.lineTo(this.x + hw, base); ctx.lineTo(this.x + hw * 2.2, top); ctx.lineTo(this.x - hw * 2.2, top); ctx.closePath(); ctx.fill();
-      const g2 = ctx.createLinearGradient(0, base, 0, top + 10); g2.addColorStop(0, `rgba(255,255,255,${a * 0.6})`); g2.addColorStop(0.5, `rgba(255,255,255,${a * 0.3})`); g2.addColorStop(1, 'rgba(255,255,255,0)'); // le bandeau central s'efface vers le haut
-      ctx.fillStyle = g2; ctx.fillRect(this.x - hw * 0.35, top + 10, hw * 0.7, base - top - 10);
-      ctx.restore();
-    }
+    this.drawChest(by); this.drawBeam(by);
+  }
+  drawChest(by) {
     const gc = IMG.item_grand_coffre;
     const gi = this.open ? IMG.item_grand_coffre_open : gc;
     const si = IMG[this.open ? 'deco_chest_open' : 'deco_chest_closed'];
