@@ -212,13 +212,14 @@ function paintedInterior(id, def, house, fromArea) {
   const door = []; g.forEach((r, y) => r.forEach((c, x) => { if (c === '1') door.push([x, y]); }));
   const top = Math.min(...door.map(d => d[1])), xs = door.filter(d => d[1] === top).map(d => d[0]);
   A.start = def.start ? { x: def.start[0] * TS, y: def.start[1] * TS, dir: 'up' } : { x: ((Math.min(...xs) + Math.max(...xs) + 1) / 2) * TS, y: top * TS - 4, dir: 'up' };
-  A.wake = A.start;
+  A.wake = def.paintWake ? { x: def.paintWake[0] * TS, y: def.paintWake[1] * TS, dir: 'down' } : A.start;
   A.exits = { 1: G => { G.enter(fromArea, { x: house.x, y: house.y + 12, dir: 'down' }); } };
   A.spawn = function () {
     this.ents = [];
     for (const o of OVERHEAD[k] || []) this.ents.push(new Overhead('map_' + k + '_dessus', o));
     for (const [x, y, r] of def.lights || []) this.ents.push(new LightSpot(x * TS, y * TS, { r, c: 'rgba(255,200,120,' }));
     for (const [x, y, w] of def.shelves || []) this.ents.push(new ShelfSpot(x * TS, y * TS, w * TS));
+    for (const [x, y, w, lines] of def.spots || []) this.ents.push(new LookSpot(x * TS, y * TS, w * TS, lines));
     const put = (kind, tx, ty, o) => { const f = new Furniture(tx * TS, ty * TS, kind, o); this.ents.push(f); return f; };
     if (def.people) def.people.call(this, put, null, this);
   };
@@ -226,6 +227,8 @@ function paintedInterior(id, def, house, fromArea) {
 }
 // les rayonnages peints : on y lit les mêmes livres que dans les bibliothèques dessinées
 class ShelfSpot { constructor(x, y, w) { this.x = x; this.y = y; this.w = w; this.h = 10; this.solid = false; } canInteract() { return true; } interact(G) { readShelf(G); } update() {} draw() {} }
+// un objet peint qu'on examine
+class LookSpot { constructor(x, y, w, lines) { this.x = x; this.y = y; this.w = w; this.h = 10; this.solid = false; this.lines = lines; } canInteract() { return true; } interact(G) { G.say(this.lines); } update() {} draw() {} }
 // parler à quelqu'un par-dessus un grand meuble peint (le bureau du sage)
 class TalkSpot { constructor(x, y, w, who) { this.x = x; this.y = y; this.w = w; this.h = 10; this.solid = false; this.who = who; } canInteract() { return !this.who.dead; } interact(G) { this.who.interact(G); } update() {} draw() {} }
 // étals d'une boutique alignés sur une rangée

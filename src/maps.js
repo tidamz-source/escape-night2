@@ -3,6 +3,20 @@
 // '.' sol libre · '#' obstacle (troncs, murs, rochers…) · '~' eau · '1' '2' '3' sorties
 // Les toits et les feuillages (OVERHEAD) sont redessinés par-dessus le héros quand il passe derrière.
 const PAINTED = {
+  mobil_home: [ // le mobile-home de la famille (intérieur peint, 640×357)
+    '####################',
+    '####################',
+    '####################',
+    '####################',
+    '####################',
+    '####################',
+    '####...#####...#####',
+    '##............######',
+    '##...........#######',
+    '##..#####..#.#######',
+    '#########11#########',
+    '####################',
+  ],
   route_nord: [ // la Route des Bergers : carte peinte (assets/maps/route_nord.png), 38×28 cases (réduite à 50 %)
     '################22222#################',
     '################22222#################',
@@ -189,6 +203,7 @@ const PAINTED = {
 };
 // découpes de assets/maps/<zone>_dessus.png : sy, w, h dans l'atlas (px ×2) ; x, y, base en px de jeu
 const OVERHEAD = {
+  mobil_home: [],
   route_nord: [],
   camping: [{"sy":0,"w":147,"h":74,"x":218,"y":305,"base":358},{"sy":74,"w":138,"h":69,"x":54,"y":150,"base":200},{"sy":143,"w":133,"h":74,"x":72,"y":58,"base":108},{"sy":217,"w":134,"h":78,"x":196,"y":50,"base":100}],
   collines: [{"sy":0,"w":286,"h":158,"x":210,"y":528,"base":659},{"sy":158,"w":222,"h":248,"x":848,"y":513,"base":672},{"sy":406,"w":152,"h":124,"x":738,"y":418,"base":496},{"sy":530,"w":124,"h":90,"x":1089,"y":562,"base":640},{"sy":620,"w":130,"h":94,"x":994,"y":257,"base":336},{"sy":714,"w":158,"h":96,"x":674,"y":208,"base":288},{"sy":810,"w":124,"h":90,"x":131,"y":643,"base":720},{"sy":900,"w":124,"h":64,"x":98,"y":721,"base":786},{"sy":964,"w":52,"h":86,"x":555,"y":597,"base":848},{"sy":1050,"w":130,"h":92,"x":959,"y":737,"base":815},{"sy":1142,"w":54,"h":64,"x":625,"y":336,"base":384}],
