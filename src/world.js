@@ -5,7 +5,7 @@
 //          'v' gouffre  'b' pont  'E' sortie  'G' entrée de la grotte
 //          'c' pavés  'P' palissade  'g' porte de la palissade (les ennemis ne la franchissent pas)
 //          'r' rails (au sol)  'T' tréteau de rails au-dessus du gouffre  'J' 'K' 'M' 'N' 'O' sorties (mines, lac, temple, tour, château)
-const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P', 'T', 'h']); // bloque la marche ('h' : obstacle bas, les tirs passent au-dessus)
+const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P', 'T', 'h', 'q']); // 'q' : rebord d'un bassin vidé ; 'Y' fond du bassin et 'Z' marches se marchent // bloque la marche ('h' : obstacle bas, les tirs passent au-dessus)
 const WALLS = new Set(['#', 'W', 's', 'k', 'P']);           // bloque les projectiles (ils passent au-dessus de l'eau et du gouffre)
 const EXITS = new Set(['F', 'E', 'G', 'H', 'J', 'K', 'M', 'N', 'O', 'D', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
 const DOORWAYS = new Set(['F', 'E', 'G', 'H', 'J', 'K', 'M', 'N', 'O', 'D']); // sorties dessinées comme des passages sombres
@@ -229,6 +229,39 @@ function renderLayer(g, theme) {
     if (nw(at(tx, ty + 1))) { F(px, py + TP - 3, TP, 3, bank2); }
     if (nw(at(tx - 1, ty))) { F(px, py, 3, TP, bank); F(px + 3, py, 1, TP, '#6b94ff'); }
     if (nw(at(tx + 1, ty))) { F(px + TP - 3, py, 3, TP, bank); F(px + TP - 4, py, 1, TP, '#6b94ff'); }
+  });
+
+  // passe 2b : bassins vidés (fond 'Y', rebord 'q', marches 'Z')
+  const bas = t => t === 'Y' || t === 'Z';
+  each(9, (t, tx, ty, px, py) => {
+    if (t !== 'Y' && t !== 'q' && t !== 'Z') return;
+    if (t === 'Y') { // le fond : dalles mouillées, flaques, un peu d'algues
+      F(px, py, TP, TP, '#1d343c'); F(px, py, TP, 1, '#16282e'); F(px, py, 1, TP, '#16282e');
+      if (r() < 0.35) { const wx = px + 4 + Math.floor(r() * 16), wy = py + 6 + Math.floor(r() * 16); F(wx, wy, 10, 4, '#2a5a6a'); F(wx + 2, wy + 1, 5, 1, '#4a8a9a'); }
+      if (r() < 0.25) F(px + Math.floor(r() * 26), py + Math.floor(r() * 26), 4, 3, '#2f5a3a');
+      if (!bas(at(tx, ty - 1))) F(px, py, TP, 8, 'rgba(0,0,0,.35)'); // l'ombre portée du rebord
+      if (!bas(at(tx - 1, ty))) F(px, py, 6, TP, 'rgba(0,0,0,.25)');
+      return;
+    }
+    const fy = (x, y) => at(x, y) === 'Y', fl = { up: fy(tx, ty - 1), dn: fy(tx, ty + 1), lf: fy(tx - 1, ty), rt: fy(tx + 1, ty) };
+    if (t === 'q') { // le rebord : margelle de pierre, et la paroi qui descend vers le fond
+      F(px, py, TP, TP, '#4e8a90'); F(px, py, TP, 3, '#7ab8be'); F(px, py + TP - 2, TP, 2, '#3a6a72');
+      for (let i = 0; i < 2; i++) F(px + 3 + Math.floor(r() * 22), py + 8 + Math.floor(r() * 16), 6, 1, '#3f767c');
+      if (fl.dn) { F(px, py + TP - 12, TP, 12, '#24464e'); F(px, py + TP - 12, TP, 2, '#5a9aa0'); }
+      if (fl.up) F(px, py, TP, 4, '#24464e');
+      if (fl.rt) { F(px + TP - 8, py, 8, TP, '#24464e'); F(px + TP - 8, py, 2, TP, '#5a9aa0'); }
+      if (fl.lf) { F(px, py, 8, TP, '#24464e'); F(px + 6, py, 2, TP, '#5a9aa0'); }
+      return;
+    }
+    // les marches : quatre degrés qui descendent vers le fond
+    F(px, py, TP, TP, '#2c5058');
+    const vert = fl.dn || fl.up;
+    for (let k = 0; k < 4; k++) {
+      const d = fl.dn || fl.rt ? k : 3 - k, sh = ['#9ad4d8', '#6aaab0', '#4a868e', '#2e5a62'][d];
+      if (vert) { F(px + 2, py + k * 8, TP - 4, 7, sh); F(px + 2, py + k * 8 + 6, TP - 4, 2, '#12242a'); }
+      else { F(px + k * 8, py + 2, 7, TP - 4, sh); F(px + k * 8 + 6, py + 2, 2, TP - 4, '#12242a'); }
+    }
+    if (vert) { F(px, py, 2, TP, '#4e8a90'); F(px + TP - 2, py, 2, TP, '#4e8a90'); } else { F(px, py, TP, 2, '#4e8a90'); F(px, py + TP - 2, TP, 2, '#4e8a90'); }
   });
 
   // passe 3 : gouffre et pont

@@ -214,7 +214,7 @@ class Wave { // anneau de remous : fait mal à qui nage sans plonger
 
 
 // ---------- la zone : le Temple englouti (Lac) — 11 salles ----------
-// 'w' : bassin peu profond (eau haute → eau, eau basse → sol) ; 'y' : grand bassin (eau haute → eau, eau basse → gouffre)
+// 'w' / 'y' : bassins (eau haute → eau ; eau basse → bassin vide : fond, rebord et petits escaliers)
 //            .          .        [BOSS]          .
 //            .     [GALERIE]   [GRANDE CLÉ]   [CASCADE]
 //            .     [PLONGÉE]   [GRAND BASSIN] [BASSIN EST]
@@ -247,11 +247,21 @@ function buildTempleArea() {
       const bo = room('boss'); bo.rect(8, 5, 14, 8, '~'); for (const [x, y] of [[4, 4], [25, 4], [4, 12], [25, 12]]) bo.set(x, y, 'k');
     },
     after(A, h) {
-      A.basins = [];
-      for (let y = 0; y < A.rows; y++) for (let x = 0; x < A.cols; x++) { const c = A.g[y][x]; if (c === 'w' || c === 'y') A.basins.push([x, y, c]); }
+      // eau basse : chaque bassin se vide ; on voit son fond ('Y'), son rebord ('q') et des marches ('Z') au milieu de chaque côté
+      A.basins = []; const isB = (x, y) => A.g[y] && (A.g[y][x] === 'w' || A.g[y][x] === 'y'), seen = new Set();
+      for (let y = 0; y < A.rows; y++) for (let x = 0; x < A.cols; x++) {
+        if (!isB(x, y) || seen.has(y * A.cols + x)) continue;
+        const comp = [], st = [[x, y]]; seen.add(y * A.cols + x);
+        while (st.length) { const [cx, cy] = st.pop(); comp.push([cx, cy]); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = cx + dx, ny = cy + dy; if (isB(nx, ny) && !seen.has(ny * A.cols + nx)) { seen.add(ny * A.cols + nx); st.push([nx, ny]); } } }
+        const x0 = Math.min(...comp.map(p => p[0])), x1 = Math.max(...comp.map(p => p[0])), y0 = Math.min(...comp.map(p => p[1])), y1 = Math.max(...comp.map(p => p[1]));
+        const walk = (tx, ty) => { const t = A.g[ty] && A.g[ty][tx]; return t === '_' || t === '.'; };
+        const stairs = new Set(), mx = Math.floor((x0 + x1) / 2), my = Math.floor((y0 + y1) / 2);
+        for (const [sx, sy, ox, oy] of [[mx, y0, 0, -1], [mx + 1, y0, 0, -1], [mx, y1, 0, 1], [mx + 1, y1, 0, 1], [x0, my, -1, 0], [x0, my + 1, -1, 0], [x1, my, 1, 0], [x1, my + 1, 1, 0]]) if (isB(sx, sy) && walk(sx + ox, sy + oy)) stairs.add(sy * A.cols + sx);
+        for (const [cx, cy] of comp) { const rim = cx === x0 || cx === x1 || cy === y0 || cy === y1; A.basins.push([cx, cy, rim ? (stairs.has(cy * A.cols + cx) ? 'Z' : 'q') : 'Y']); }
+      }
       A.syncTiles = function () {
         const low = !!SAVE.waterLow; let changed = false;
-        for (const [x, y, c] of this.basins) { const want = low ? (c === 'w' ? '_' : 'v') : '~'; if (this.g[y][x] !== want) { this.g[y][x] = want; changed = true; } }
+        for (const [x, y, c] of this.basins) { const want = low ? c : '~'; if (this.g[y][x] !== want) { this.g[y][x] = want; changed = true; } }
         if (changed) this.rerender();
       };
       A.syncTiles();
@@ -282,7 +292,7 @@ function buildTempleArea() {
         ['fountain', mk(HealSpring, 'fountain', 14, 8)],
         ['palmes', new Chest(pc.x, pc.y, { flag: 'palmesChest', give: 'palmes', big: true, msg: [{ text: 'Tu as trouvé les palmes et le tuba !' }, { text: 'Tu peux nager en eau profonde. Dans l\'eau, A ou B : plonger. On esquive tout et on ramasse ce qui brille au fond.' }] })],
         ['hub', mk(Valve, 'hub', 5, 13)],
-        ['hub', mk(Sign, 'hub', 24, 13, [{ text: '« Grand bassin. Eau basse : gouffre. Eau haute : on nage. »' }])],
+        ['hub', mk(Sign, 'hub', 24, 13, [{ text: '« Grand bassin. Eau basse : on descend par les marches. Eau haute : on nage. »' }])],
         ['dive', new DiveSpot(pos('dive', 120, 200).x, pos('dive', 120, 200).y, 'templeDiveKey', 'key', [{ text: 'Au fond de l\'eau, une petite clé !' }])],
         ['dive', new DiveSpot(pos('dive', 300, 90).x, pos('dive', 300, 90).y, 'templeDiveCoins', 'money:40', [{ text: 'Une bourse engloutie : 40 écus !' }])],
         ['east', mk(Valve, 'east', 4, 6)],
