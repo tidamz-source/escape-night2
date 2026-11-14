@@ -194,7 +194,7 @@ class Chest {
   }
   drawBeam(by) { // faisceau de lumière qui sort de l'ouverture du coffre (dessiné par-dessus)
     if (!this.beam) return;
-      const s = this.big ? 1.4 : 1, top = by - 90, base = by - (this.big ? 13 : 8), hw = 9 * s, a = 0.55 + Math.sin(G.t * 9) * 0.08;
+      const s = this.big ? 1.4 : 1, gi = IMG.item_grand_coffre_open, top = by - 90, base = by - (this.big ? 8 : 8), hw = this.big && gi ? gi.width * 0.62 / 2 - 1 : 9 * s, /* grand coffre : le cône part de toute la largeur du coffre */ a = 0.55 + Math.sin(G.t * 9) * 0.08;
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       const g = ctx.createLinearGradient(0, base, 0, top); g.addColorStop(0, `rgba(255,236,160,${a})`); g.addColorStop(1, 'rgba(255,236,160,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(this.x - hw, base); ctx.lineTo(this.x + hw, base); ctx.lineTo(this.x + hw * 2.2, top); ctx.lineTo(this.x - hw * 2.2, top); ctx.closePath(); ctx.fill();

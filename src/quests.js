@@ -12,6 +12,7 @@ const SOUVENIRS = {
   ballon:     { name: 'Ballon de foot', desc: 'L\'ermite l\'appelait « la lune qui rebondit ».', bonus: 'piece_coeur' },
 };
 function drawSouvenir(id, x, y, s = 1) {
+  if (IMG['item_souv_' + id]) return drawItemIcon('souv_' + id, x, y, s * 1.1);
   hi(x, y, false, () => {
     const u = 2 * s;
     if (id === 'rubik') { const c = ['#e83a3a', '#3a8ae8', '#e8c83a', '#3ac85a', '#f4f4f4', '#ff8a2a']; for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) D((-5 + i * 3.4) * u, (-5 + j * 3.4) * u, 3 * u, 3 * u, c[(i + j * 2) % 6]); }
