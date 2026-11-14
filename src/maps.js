@@ -3,19 +3,15 @@
 // '.' sol libre · '#' obstacle (troncs, murs, rochers…) · '~' eau · '1' '2' '3' sorties
 // Les toits et les feuillages (OVERHEAD) sont redessinés par-dessus le héros quand il passe derrière.
 const PAINTED = {
-  mobil_home: [ // le mobile-home de la famille (intérieur peint, 640×357)
-    '####################',
-    '####################',
-    '####################',
-    '####################',
-    '####################',
-    '####################',
-    '####...#####...#####',
-    '##............######',
-    '##...........#######',
-    '##..#####..#.#######',
-    '#########11#########',
-    '####################',
+  mobil_home: [ // le mobile-home de la famille (intérieur peint, 448×250)
+    '##############',
+    '##############',
+    '##############',
+    '##############',
+    '###..###...###',
+    '#.........####',
+    '#..###...#####',
+    '######11######',
   ],
   route_nord: [ // la Route des Bergers : carte peinte (assets/maps/route_nord.png), 38×28 cases (réduite à 50 %)
     '################22222#################',

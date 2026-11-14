@@ -6,9 +6,9 @@ const shopNPC = (shop) => G => { const sh = Shop.def(shop); G.say([{ who: sh.kee
 
 Object.assign(INTERIORS, {
   // ----- le camping -----
-  bungalow: { name: 'Le mobile-home', w: 16, h: 10, dark: 0.32, wake: [8.5, 7.2], paint: 'mobil_home', paintWake: [8, 8.6],
-    lights: [[6.5, 3.4, 30], [16.7, 8.2, 22], [8.6, 4, 40]], // le lampadaire, la lampe de la table, la fenêtre
-    spots: [[11.6, 9.95, 1.4, [{ text: 'Le sac à dos de Papa. Il est ouvert, et vide.' }]], [5.6, 9.95, 1.6, [{ text: 'Le panier à linge. Il sent encore la crème solaire.' }]]],
+  bungalow: { name: 'Le mobile-home', w: 16, h: 10, dark: 0.32, wake: [8.5, 7.2], paint: 'mobil_home', paintWake: [5.6, 6],
+    lights: [[4.55, 2.4, 24], [11.7, 5.7, 18], [6, 2.8, 30]], // le lampadaire, la lampe de la table, la fenêtre
+    spots: [[8.5, 6.95, 1.2, [{ text: 'Le sac à dos de Papa. Il est ouvert, et vide.' }]], [3.9, 6.6, 1.4, [{ text: 'Le panier à linge. Il sent encore la crème solaire.' }]]],
     build(put, at, A) {
     put('window', 4, 2); put('window', 12, 2);
     put('bed', 3, 4.6, { empty: true, blanket: '#c83a4a' }); put('bed', 6, 4.6, { empty: true, blanket: '#3a8a5a' }); put('bed', 10, 4.6, { empty: true, blanket: '#4a6ab0' }); put('bed', 13, 4.6, { empty: true, blanket: '#c8a040' });

@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.12.7** : le mobile-home réduit à 70 % (Sacha à la bonne taille), collisions, réveil, lumières et objets recalés.
 - **8.12.6** : le bouton pause tactile disparaît quand le menu pause est ouvert (la croix suffit).
 - **8.12.5** : l'intérieur du mobile-home de la famille est peint (cuisine, salon, coin repas) ; on s'y réveille au début du jeu ; le sac de Papa et le panier à linge s'examinent.
 - **8.12.4** : bibliothèque : seules les deux tables passent devant le héros (plus de découpe sur le bureau du sage).
