@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.12.1** : la Route des Bergers devient une carte peinte (ruisseau et pont, étang et son îlot au quart de cœur) ; les coins de forêt hors d'atteinte sont fermés.
 - **8.12.0** : le camping devient une carte peinte (75×56 cases) : quatre mobile-homes (celui de la famille s'ouvre), feu de camp entre les bûches, réverbères, étang ; la faille, la branche et la famille de l'épilogue sont replacées.
 - **8.11.1** : Collines repeintes : vraie sortie à l'ouest vers le Sanctuaire, et 11 découpes (bergerie, moulin, arbres, lanternes) derrière lesquelles Sacha passe.
 - **8.11.0** : les Collines deviennent une carte peinte (75×56 cases) : grotte des lucioles au nord, bergerie, moulin, étang ; tout ce qui s'y trouvait (moutons, ratons, relais, quêtes, luciole perdue, rocher secret) est replacé.

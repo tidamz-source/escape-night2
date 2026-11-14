@@ -86,7 +86,7 @@ class HeartPiece {
 const FIREFLIES = [
   ['f_vil', 'royaume', 13, 32], ['f_col', 'collines', 67, 8], ['f_for', 'foret', 6, 10], ['f_mon', 'montagne', 58, 44], ['f_lac', 'lac', 4, 30], ['f_cot', 'cote', 6, 6], ['f_ter', 'terres', 58, 8],
   ['f_d1', 'cave', 'treasure', 400, 200], ['f_d2', 'bois', 'treasure', 80, 200], ['f_d3', 'mines', 'shaft', 400, 80], ['f_d4', 'temple', 'gallery', 240, 130], ['f_d5', 'tower', 'secret', 240, 200], ['f_d6', 'castle', 'armory', 400, 200],
-  ['f_rn1', 'route_nord', 6, 6], ['f_rn2', 'route_nord', 34, 24], ['f_col1', 'col', 6, 24], ['f_col2', 'col', 34, 6], ['f_or1', 'oree', 6, 6], ['f_or2', 'oree', 34, 26],
+  ['f_rn1', 'route_nord', 20, 10], ['f_rn2', 'route_nord', 50, 28], ['f_col1', 'col', 6, 24], ['f_col2', 'col', 34, 6], ['f_or1', 'oree', 6, 6], ['f_or2', 'oree', 34, 26],
   ['f_pr1', 'pres', 6, 24], ['f_du1', 'dunes', 20, 6], ['f_la1', 'lande', 34, 24], ['f_la2', 'lande', 6, 24],
   ['f_g1', 'grotte_collines', 6, 8], ['f_g2', 'grotte_montagne', 6, 8], ['f_g3', 'grotte_col', 6, 8], ['f_g4', 'grotte_lande', 6, 8],
   ['f_i1', 'pres', 31, 11, 'exact'], ['f_i2', 'dunes', 31, 21, 'exact'], ['f_i3', 'lac', 50, 40],
@@ -253,6 +253,7 @@ function buildSecretCave(id, name, fill) {
 // def : { id, name, w, h, seed, themes: [a, b], axis, sides: { N|S|E|W: [chiffre, zone, clé d'arrivée] }, build(T, r, A?), npcs: [[id, x, y]], spawn(A) }
 const PASSAGE_ARRIVE = {};
 function buildPassage(def) {
+  if (def.paint && PAINTED[def.paint]) return buildPaintedPassage(def);
   const w = def.w || 40, h = def.h || 30, cx = Math.floor(w / 2), cy = Math.floor(h / 2), g = makeGrid(w, h, '.'), T = gridTools(g), r = seeded(def.seed);
   T.rect(0, 0, w, 2, '#'); T.rect(0, h - 2, w, 2, '#'); T.rect(0, 0, 2, h, '#'); T.rect(w - 2, 0, 2, h, '#');
   for (let x = 2; x < w - 2; x++) { if (r() < 0.5) T.set(x, 2, '#'); if (r() < 0.45) T.set(x, h - 3, '#'); }
@@ -289,6 +290,24 @@ function buildPassage(def) {
   };
   return A;
 }
+// chemin peint : la grille PAINTED[def.paint] ne sert qu'aux collisions, l'image fait le décor
+function buildPaintedPassage(def) {
+  const g = PAINTED[def.paint].map(r => r.split(''));
+  const A = zoneArea(def.id, g, def.themes[0], { name: def.name, dark: def.dark != null ? def.dark : 0.4 });
+  A.passage = true; A.paint = 'map_' + def.paint; A.bushSpots = [];
+  const arrive = def.arrive;
+  for (const [side, [, to]] of Object.entries(def.sides)) PASSAGE_ARRIVE[def.id + '_from_' + to] = arrive[side];
+  A.exits = {}; A.exitTo = {}; for (const [, [d, to, key]] of Object.entries(def.sides)) { A.exits[d] = goZone(to, key); A.exitTo[d] = [to, key]; }
+  A.start = Object.values(arrive)[0];
+  A.spawn = function () {
+    this.ents = [];
+    for (const o of OVERHEAD[def.paint] || []) this.ents.push(new Overhead('map_' + def.paint + '_dessus', o));
+    for (const [id, x, y] of def.paintNpcs || def.npcs || []) this.ents.push(villager(id, x * TS + 8, y * TS));
+    if (def.paintSpawn) def.paintSpawn(this); else if (def.spawn) def.spawn(this);
+    questSpawns(this);
+  };
+  return A;
+}
 // les chemins
 const PASSAGES = [
   { id: 'route_nord', name: 'La Route des Bergers', seed: 101, themes: ['collines', 'camp'], axis: 'y',
@@ -296,7 +315,11 @@ const PASSAGES = [
     build(T, r, ell) { T.rect(2, 9, 36, 2, '~'); ell(30, 20, 4, 3, '~'); T.set(30, 20, '.'); },          // le ruisseau, et la mare au cœur
     after(T) { T.rect(19, 9, 2, 2, 'b'); },                                                             // le petit pont
     npcs: [['vagabond', 16, 19], ['pauline', 25, 22]],
-    spawn(A) { A.ents.push(new HeartPiece(30 * TS + 8, 20 * TS + 12, 'hp_ruisseau')); A.ents.push(new Sign(22 * TS, 13 * TS, [{ text: '« Route des Bergers. Au nord : les Collines. Au sud : Bourg-Luciole. »' }])); } },
+    spawn(A) { A.ents.push(new HeartPiece(30 * TS + 8, 20 * TS + 12, 'hp_ruisseau')); A.ents.push(new Sign(22 * TS, 13 * TS, [{ text: '« Route des Bergers. Au nord : les Collines. Au sud : Bourg-Luciole. »' }])); },
+    // carte peinte (assets/maps/route_nord.png) : le ruisseau et son pont, l'étang et son îlot
+    paint: 'route_nord', arrive: { S: { x: 37.5 * TS, y: 51 * TS, dir: 'up' }, N: { x: 37.5 * TS, y: 6 * TS, dir: 'down' } },
+    paintNpcs: [['vagabond', 22, 30], ['pauline', 30, 36]],
+    paintSpawn(A) { A.ents.push(new HeartPiece(56 * TS + 8, 44 * TS + 12, 'hp_ruisseau')); A.ents.push(Object.assign(new Sign(41 * TS, 23 * TS, [{ text: '« Route des Bergers. Au nord : les Collines. Au sud : Bourg-Luciole. »' }]), { ghost: true })); } },
   { id: 'col', name: 'Le Col des Sapins', seed: 131, themes: ['collines', 'montagne'], axis: 'x', dark: 0.45,
     sides: { W: ['1', 'collines', 'collines_from_montagne'], E: ['2', 'montagne', 'montagne_from_collines'] },
     build(T) { T.rect(2, 2, 36, 5, '#'); },
