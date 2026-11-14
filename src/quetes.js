@@ -20,7 +20,7 @@ const SIDE = {
   gerard:  { name: 'Le mouton fugueur', giver: 'Le berger (Collines)', minFrag: 1, done: s => s === 2,
              hint: () => `Pousse Gérard jusqu'à l'enclos, à côté de la bergerie. On l'a vu vers ${GERARD_ZONES[(SAVE.gerard || {}).zone] || '?'}.` },
   peche:   { name: 'Le concours de pêche', giver: 'Le pêcheur (Lac)', minFrag: 3, req: () => Inventory.has('canne'), done: s => s === 2,
-             hint: () => 'Ramène le plus gros poisson en 1 min 30, trois manches. Parle au pêcheur pour lancer le concours.' },
+             hint: () => 'Une manche de 30 secondes au bassin des Prés du Lac : sors un plus gros poisson que Firmin et Gaëlle. Parle au pêcheur pour lancer le concours.' },
   phare:   { name: 'Le phare éteint', giver: 'Le gardien du phare (Côte)', minFrag: 4, done: s => s === 4,
              hint: s => s === 1 ? 'Fais préparer l\'huile du phare chez Mamie (un poisson doré et une herbe d\'aube).' : s === 2 ? 'Rapporte l\'huile au gardien du phare.' : s === 3 ? 'Monte en haut du phare et verse l\'huile dans la lanterne.' : 'Le phare brille.' },
   dette:   { name: 'Le colporteur endetté', giver: 'Le colporteur (partout)', minFrag: 2, done: s => s === 3,
@@ -266,35 +266,85 @@ class PenFence { // l'enclos de Gérard (décor)
 }
 
 // ===== 5. le concours de pêche =====
+// Une seule manche de 30 secondes, autour du petit bassin des Prés du Lac (pas d'ennemis) : le joueur au nord,
+// Firmin à l'ouest, Gaëlle à l'est ; tous les deux pêchent et sortent des poissons. Le pêcheur arbitre.
+const CONTEST = { at: { x: 29 * TS + 8, y: 5 * TS + 12 }, t: 30, ref: [33.5, 4.6],
+  rivals: [{ who: 'Firmin', look: 'firmin', x: 21.5, y: 10.6, dir: 1, face: 2, lo: 12, hi: 40 }, { who: 'Gaëlle', look: 'gaelle', x: 36.5, y: 10.6, dir: -1, face: 6, lo: 14, hi: 43 }] };
 const Peche = {
   talk(G) {
     const s = SQ.st('peche');
     if (s !== 0 && s !== 1) return false; if (!SQ.open('peche')) return false;
     if (G.contest) return false;
-    G.ask([say('Le pêcheur', 'Grand concours de pêche ! Contre Firmin et Gaëlle, mes deux rivaux de toujours. Trois manches d\'une minute trente : le plus gros poisson gagne la manche.'), say('Le pêcheur', 'Gagne deux manches, et la coupe du champion est à toi. Prêt ?')], ['C\'est parti !', 'Plus tard'], i => {
+    G.ask([say('Le pêcheur', 'Grand concours de pêche ! Contre Firmin et Gaëlle, mes deux rivaux de toujours. Ça se passe au petit bassin des Prés, juste au nord.'), say('Le pêcheur', 'Une seule manche de trente secondes : le plus gros poisson gagne. Le vainqueur repart avec la coupe du champion. Prêt ?')], ['C\'est parti !', 'Plus tard'], i => {
       if (i !== 0) return; if (s === 0) SQ.start('peche', G);
-      G.fadeTo(() => { G.contest = { round: 1, t: 90, best: 0, wins: 0 }; G.enter('lac', { x: 30 * TS + 8, y: 17 * TS + 8, dir: 'down' }, false); Inventory.equip('canne'); Input.toast = { msg: 'Manche 1 : lance ta ligne (B) !', t: 2.5 }; });
+      G.fadeTo(() => this.begin(G));
     });
     return true;
   },
-  catch(cm) { if (G.contest) { G.contest.best = Math.max(G.contest.best, cm); Input.toast = { msg: `Meilleure prise : ${G.contest.best} cm`, t: 1.6 }; } },
+  // pose tout le monde autour du bassin ; le chrono part à la fin du discours du pêcheur
+  begin(G) {
+    G.contest = { t: CONTEST.t, best: 0, run: false, rivals: CONTEST.rivals.map(r => ({ ...r, best: 0, next: rand(1.5, 3.5), phase: 'wait', pt: 0, cm: 0 })) };
+    G.enter('pres', { x: CONTEST.at.x, y: CONTEST.at.y, dir: 'down' }, false); Inventory.equip('canne');
+    G.say([say('Le pêcheur', 'Tout le monde en place ! Toi au nord, Firmin à l\'ouest, Gaëlle à l\'est.'), say('Le pêcheur', 'Trente secondes, le plus gros poisson gagne. Lance ta ligne avec B… Trois, deux, un… Pêchez !')], () => { if (G.contest) { G.contest.run = true; G.banner = { text: 'Pêchez !', t: 1.2 }; } });
+  },
+  catch(cm) { if (G.contest) { G.contest.best = Math.max(G.contest.best, cm); Input.toast = { msg: `${cm} cm ! Ta meilleure prise : ${G.contest.best} cm`, t: 1.6 }; } },
+  // appelé en jeu et pendant que la ligne est à l'eau : le chrono ne s'arrête pas quand on pêche
   update(dt, G) {
     const c = G.contest; if (!c) return;
-    if (G.area.id !== 'lac') { G.contest = null; Input.toast = { msg: 'Tu as quitté le lac : concours annulé.', t: 2.2 }; return; }
-    if (G.state !== 'play') return; c.t -= dt; if (c.t > 0) return;
-    const r1 = Math.round(rand(18, 40 + c.round * 6)), r2 = Math.round(rand(22, 44 + c.round * 6)), win = c.best > r1 && c.best > r2; if (win) c.wins++;
-    const lines = [{ text: `Fin de la manche ${c.round} ! Firmin : ${r1} cm. Gaëlle : ${r2} cm. Toi : ${c.best} cm.` }, say('Le pêcheur', win ? 'Manche gagnée ! Bravo !' : 'Manche perdue… Courage !')];
-    if (c.round >= 3 || c.wins >= 2 || (c.round - c.wins) >= 2) {
-      G.contest = null;
-      if (c.wins >= 2) { SQ.set('peche', 2); SAVE.coupe = true; Inventory.give('coupe'); persist(); SFX.bigheart(); G.raise('coupe'); lines.push(say('Le pêcheur', 'Tu as gagné le concours ! Voici la coupe du champion. Montre-la à Amandine : elle te paiera tes poissons le double !')); }
-      else lines.push(say('Le pêcheur', 'Firmin et Gaëlle ont gagné cette fois. Reviens me voir pour une revanche !'));
-      return G.say(lines);
+    if (G.area.id !== 'pres') { G.contest = null; Input.toast = { msg: 'Tu as quitté le bassin : concours annulé.', t: 2.2 }; return; }
+    if (!c.run || (G.state !== 'play' && G.state !== 'fish')) return;
+    for (const r of c.rivals) { // les rivaux pêchent aussi
+      r.pt += dt;
+      if (r.phase === 'wait' && (r.next -= dt) <= 0) { r.phase = 'bite'; r.pt = 0; }
+      else if (r.phase === 'bite' && r.pt > 0.7) { r.phase = 'catch'; r.pt = 0; r.cm = Math.round(rand(r.lo, r.hi)); r.best = Math.max(r.best, r.cm); SFX.splash(); }
+      else if (r.phase === 'catch' && r.pt > 1.6) { r.phase = 'wait'; r.pt = 0; r.next = rand(3, 5.5); }
     }
-    c.round++; c.t = 90; c.best = 0; lines.push({ text: `Manche ${c.round} : c'est reparti !` }); G.say(lines);
+    c.t -= dt; if (c.t > 0) return;
+    if (G.state === 'fish') { G.fish = null; G.state = 'play'; }
+    G.contest = null;
+    const [f, g] = c.rivals, win = c.best > f.best && c.best > g.best;
+    const lines = [say('Le pêcheur', 'Temps écoulé ! Posez vos cannes.'), say('Le pêcheur', `Firmin : ${f.best} cm. Gaëlle : ${g.best} cm. Et toi : ${c.best ? c.best + ' cm' : 'rien du tout'}.`)];
+    if (win) { SQ.set('peche', 2); SAVE.coupe = true; Inventory.give('coupe'); persist(); SFX.bigheart(); G.raise('coupe'); lines.push(say('Le pêcheur', 'Le plus gros poisson, c\'est le tien : tu gagnes le concours ! Voici la coupe du champion. Montre-la à Amandine : elle te paiera tes poissons le double !')); }
+    else lines.push(say('Le pêcheur', `${f.best >= g.best ? 'Firmin' : 'Gaëlle'} l'emporte cette fois. Parle-moi quand tu veux ta revanche !`));
+    G.say(lines);
   },
-  spawn(A) { if (A.id === 'lac' && G.contest) A.ents.push(new NPC(26 * TS + 8, 17 * TS + 8, { look: 'firmin', sq: 'firmin' }), new NPC(35 * TS + 8, 17 * TS + 8, { look: 'gaelle', sq: 'gaelle' })); },
-  draw() { const c = G.contest; if (!c) return; R(W - 158, 22, 154, 24, 'rgba(7,13,31,.8)'); text(`Manche ${c.round} / 3 · ${Math.ceil(Math.max(0, c.t))} s`, W - 81, 24, { size: 7.5, align: 'center', color: PAL.warm }); text(`Meilleure prise : ${c.best} cm · ${c.wins} manche${c.wins > 1 ? 's' : ''} gagnée${c.wins > 1 ? 's' : ''}`, W - 81, 35, { size: 6.5, align: 'center', color: '#c8d0f0' }); },
+  spawn(A) {
+    const c = G.contest; if (A.id !== 'pres' || !c) return;
+    for (const r of c.rivals) { const n = new NPC(r.x * TS, r.y * TS, { look: r.look, sq: r.look, face: r.face }); A.ents.push(n, new RivalLine(n, r)); }
+    A.ents.push(new NPC(CONTEST.ref[0] * TS, CONTEST.ref[1] * TS, { look: 'pecheur', face: 7, fn: G2 => {
+      if (G2.contest) return G2.say([say('Le pêcheur', G2.contest.run ? 'Ne me regarde pas, regarde ton bouchon ! Le temps file.' : 'Prends ta place au bord de l\'eau.')]);
+      if (!Peche.talk(G2)) G2.say([say('Le pêcheur', SQ.st('peche') === 2 ? 'Quel concours ! Firmin et Gaëlle n\'en reviennent pas.' : 'Je retourne à ma cabane, au bord du lac.')]);
+    } }));
+  },
+  draw() {
+    const c = G.contest; if (!c) return;
+    const [f, g] = c.rivals; R(W - 150, 22, 146, 24, 'rgba(7,13,31,.8)');
+    text(`Concours de pêche · ${Math.ceil(Math.max(0, c.t))} s`, W - 77, 24, { size: 7.5, align: 'center', color: PAL.warm });
+    text(`Toi ${c.best} · Firmin ${f.best} · Gaëlle ${g.best} cm`, W - 77, 35, { size: 6.5, align: 'center', color: '#c8d0f0' });
+  },
 };
+// la ligne d'un rival : canne, bouchon qui s'agite, poisson qui sort de l'eau et sa taille
+class RivalLine {
+  constructor(n, r) { this.n = n; this.r = r; this.x = n.x; this.y = n.y + 0.5; this.ground = false; }
+  draw() {
+    if (!G.contest) return; const r = this.r, n = this.n, d = r.dir;
+    const hx = n.x + d * 5, hy = n.y - 15, tx = n.x + d * 19, ty = n.y - 27;
+    let bx = n.x + d * 36, by = n.y - 3 + Math.sin(G.t * 3 + d) * 0.6;
+    if (r.phase === 'bite') by += 1.5 + Math.sin(r.pt * 40) * 1.2;
+    ctx.strokeStyle = '#7a4a24'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(tx, ty); ctx.stroke();
+    if (r.phase === 'catch' && r.pt < 0.7) { // le poisson file de l'eau vers le pêcheur, en cloche
+      const k = r.pt / 0.7, fx = bx + (n.x + d * 6 - bx) * k, fy = by + (n.y - 30 - by) * k - Math.sin(k * Math.PI) * 18;
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.save(); ctx.translate(fx, fy); ctx.scale(-d, 1); ctx.rotate(Math.sin(r.pt * 30) * 0.5); ell(0, 0, 5, 2.4, r.cm >= 30 ? '#8ab0d0' : '#b8c8d8'); ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(-8, -3); ctx.lineTo(-8, 3); ctx.fill(); R(2, -1, 1, 1, '#14244c'); ctx.restore();
+      if (r.pt < 0.15) { ctx.globalAlpha = 0.6; ell(bx, by, 6, 2, '#cfe0ff'); ctx.globalAlpha = 1; }
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(bx, by - 2); ctx.stroke();
+      R(bx - 1.5, by - 3, 3, 3, '#e84a5a'); R(bx - 1.5, by - 3, 3, 1, '#fff');
+      if (r.phase === 'bite') text('!', n.x, n.y - 46, { size: 11, align: 'center', color: PAL.warm, bold: true });
+    }
+    if (r.phase === 'catch') { const k = Math.min(1, r.pt / 1.6); ctx.globalAlpha = 1 - k * k; text(`${r.cm} cm`, n.x, n.y - 44 - k * 8, { size: 7.5, align: 'center', color: r.cm >= r.best ? '#ffe27a' : '#f4f7ff', bold: true }); ctx.globalAlpha = 1; }
+  }
+}
 
 // ===== 6. le phare éteint =====
 const Phare = {

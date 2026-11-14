@@ -334,9 +334,10 @@ const PASSAGES = [
     spawn(A) { for (const [x, y] of [[8, 8], [30, 22], [12, 24]]) A.ents.push(new Forage(x * TS + 8, y * TS + 12, 'champignons')); } },
   { id: 'pres', name: 'Les Prés du Lac', seed: 171, themes: ['camp', 'lac'], axis: 'y',
     sides: { N: ['1', 'royaume', 'village_from_lac'], S: ['2', 'lac', 'lac_from_village'] },
-    build(T, r, ell) { ell(30, 11, 7, 5, '~'); ell(30, 11, 2.4, 1.9, '.'); },                                // le bassin et son îlot
+    build(T, r, ell) { ell(29, 11, 6, 5, '~'); ell(29, 11, 2.4, 1.9, '.'); },                                // le bassin et son îlot (le concours de pêche s'y tient)
+    keep: [{ x: 20 * TS, y: 3 * TS, w: 19 * TS, h: 15 * TS }], // berges dégagées pour le concours de pêche
     npcs: [['hugo', 24, 17]],
-    spawn(A) { A.ents.push(new Post(30 * TS + 8, 12 * TS + 12), new Post(22 * TS + 8, 12 * TS)); A.ents.push(new Chest(30 * TS, 11 * TS, { flag: 'hp_ilot_pres', give: 'piece_coeur', msg: null })); } }, // le coffre de l'îlot
+    spawn(A) { A.ents.push(new Post(29 * TS + 8, 12 * TS + 12), new Post(21 * TS + 8, 13 * TS)); A.ents.push(new Chest(29 * TS, 11 * TS, { flag: 'hp_ilot_pres', give: 'piece_coeur', msg: null })); } }, // le coffre de l'îlot
   { id: 'dunes', name: 'Les Dunes', seed: 191, themes: ['lac', 'cote'], axis: 'x', dark: 0.42,
     sides: { W: ['1', 'lac', 'lac_from_cote'], E: ['2', 'cote', 'cote_from_lac'] },
     build(T, r, ell) { ell(30, 21, 6, 4, '~'); ell(30, 21, 2.4, 1.9, '.'); },
@@ -401,5 +402,11 @@ function buildMonde(areas) {
 // ===== icônes =====
 const EXTRA_ICONS = {
   piece_coeur: (x, y, s) => drawHeartPiece(x, y, s),
+  filet: (x, y, s) => { // le filet du pêcheur : mailles de corde et flotteurs de liège
+    const u = s; ctx.save(); ctx.beginPath(); ctx.ellipse(x, y, 7 * u, 6 * u, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(60,40,20,.25)'; ctx.fill(); ctx.clip();
+    ctx.strokeStyle = '#d8c08a'; ctx.lineWidth = 0.7 * u; ctx.beginPath(); for (let i = -14; i <= 14; i += 3) { ctx.moveTo(x + i * u - 8 * u, y - 8 * u); ctx.lineTo(x + i * u + 8 * u, y + 8 * u); ctx.moveTo(x + i * u + 8 * u, y - 8 * u); ctx.lineTo(x + i * u - 8 * u, y + 8 * u); } ctx.stroke(); ctx.restore();
+    ctx.strokeStyle = '#8a5a2a'; ctx.lineWidth = 1.2 * u; ctx.beginPath(); ctx.ellipse(x, y, 7 * u, 6 * u, 0, 0, Math.PI * 2); ctx.stroke();
+    for (const [fx, fy] of [[-6, -3], [0, -6], [6, -3]]) { R(x + (fx - 1.5) * u, y + (fy - 1.2) * u, 3 * u, 2.4 * u, '#e85a3a'); R(x + (fx - 1.5) * u, y + (fy - 1.2) * u, 3 * u, 0.8 * u, '#ffb08a'); }
+  },
   luciole: (x, y, s) => { ctx.globalAlpha = 0.4; ell(x, y, 5 * s, 5 * s, '#ffe27a'); ctx.globalAlpha = 1; ell(x, y, 2 * s, 2 * s, '#fff6c0'); },
 };

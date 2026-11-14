@@ -313,7 +313,7 @@ const G = {
       case 'shop': return this.updateShop(dt);
       case 'travel': return this.updateTravel();
       case 'cut': if (this.cut) this.cut.update(dt); this.updateCam(); if (this.shake > 0) this.shake -= dt; return;
-      case 'fish': if (this.fish) Fishing.update(dt, this); else this.state = 'play'; this.player.anim = 0; return;
+      case 'fish': if (this.fish) Fishing.update(dt, this); else this.state = 'play'; this.player.anim = 0; Peche.update(dt, this); return;
       case 'credits': this.endT += dt; return this.updateCredits(dt);
       case 'over': this.overT += dt; return this.updateOver();
       case 'end': this.endT += dt; if (this.endT > 1 && Input.anyPressed()) { SFX.menu(); this.state = 'play'; this.view = 'world'; } return;

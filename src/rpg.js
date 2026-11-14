@@ -403,7 +403,7 @@ const Fishing = {
         if (Math.abs(f.cur - f.zc) <= f.zone / 2) {
           const cm = Math.round({ poisson_petit: rand(12, 25), poisson_grand: rand(30, 60), poisson_dore: rand(40, 80) }[f.kind]);
           Mats.add(f.kind, 1); SAVE.fishRec = Math.max(SAVE.fishRec || 0, cm); persist(); SFX.secret(); G.raise('mat_' + f.kind); Peche.catch(cm);
-          G.say([{ text: `${MATS[f.kind].name} : ${cm} cm !` + (cm >= (SAVE.fishRec || 0) ? ' Nouveau record !' : '') }]);
+          if (!G.contest) G.say([{ text: `${MATS[f.kind].name} : ${cm} cm !` + (cm >= (SAVE.fishRec || 0) ? ' Nouveau record !' : '') }]);
         } else { SFX.nope(); Input.toast = { msg: 'La ligne a cassé… raté !', t: 1.6 }; }
       }
     }

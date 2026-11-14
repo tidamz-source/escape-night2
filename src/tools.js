@@ -251,7 +251,7 @@ class DiveSpot {
     if (P.dive > 0 && dist(P.x, P.y, this.x, this.y) < 16) {
       SAVE[this.flag] = true;
       if (this.give === 'key') Keys.add(1); else if (this.give.startsWith('money:')) Wallet.add(Number(this.give.slice(6))); else if (this.give.startsWith('flag:')) SAVE[this.give.slice(5)] = true; else Inventory.give(this.give);
-      persist(); if (this.onGet) this.onGet(); SFX.chest(); P.dive = 0; G.raise(this.give.startsWith('flag:') ? 'seal' : this.give.startsWith('money') ? 'money' : this.give);
+      persist(); if (this.onGet) this.onGet(); SFX.chest(); P.dive = 0; G.raise(this.raiseAs || this.give.startsWith('flag:') ? this.raiseAs || 'seal' : this.give.startsWith('money') ? 'money' : this.give);
       G.say(this.msg || [{ text: 'Au fond de l\'eau, une petite clé !' }]);
     }
   }

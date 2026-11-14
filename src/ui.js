@@ -482,7 +482,7 @@ const UIMixin = {
   },
 
   // ---------- titre, parties, choix du héros ----------
-  titleItems() { const items = ['Jouer']; if (Debug.on()) items.push('Combats (debug)'); if (!PWA.installed()) items.push('Installer l\'appli'); return items; },
+  titleItems() { const items = ['Jouer']; if (Debug.on()) items.push('Menu debug'); if (!PWA.installed()) items.push('Installer l\'appli'); return items; },
   menuTap(items, y0, x0 = W / 2, half = 90) {
     const tap = Input.lastTap; Input.lastTap = null;
     if (!tap || performance.now() - tap.time > 250) return -1;
@@ -497,19 +497,20 @@ const UIMixin = {
     if (go) {
       audioUnlock(); SFX.menu();
       if (items[this.menu].startsWith('Installer')) { PWA.install().then(ok => { if (!ok) this.installHelp = true; }); return; }
-      if (items[this.menu].startsWith('Combats')) { this.state = 'debug'; this.menu = 0; return; }
+      if (items[this.menu] === 'Menu debug') { this.state = 'debug'; this.menu = 0; Debug.page = null; return; }
       this.state = 'slots'; this.slotSel = 0; this.erasing = false;
     }
   },
   updateDebug() {
     const items = Debug.items(); this.menuNav(items.length);
     const ti = this.menuTap(items, 44); let go = Input.pressed('a') || Input.pressed('start'); if (ti >= 0) { this.menu = ti; go = true; }
-    if (Input.pressed('b')) { SFX.menu(); this.state = 'title'; this.menu = 0; return; }
-    if (go) { SFX.menu(); if (this.menu === items.length - 1) { this.state = 'title'; this.menu = 0; return; } const f = Debug.FIGHTS[this.menu]; this.fadeTo(() => Debug.start(f)); }
+    if (Input.pressed('b')) { SFX.menu(); if (Debug.page) { Debug.page = null; this.menu = 0; } else { this.state = 'title'; this.menu = 0; } return; }
+    const back = () => { if (Debug.page) { Debug.page = null; this.menu = 0; } else { this.state = 'title'; this.menu = 0; } };
+    if (go) { SFX.menu(); Debug.pick(this.menu, this, back); }
   },
   drawDebug() {
     woodBg();
-    ribbon(W / 2, 8, 'Combats · debug', 8, 't');
+    ribbon(W / 2, 8, { donjons: 'Donjons · debug', combats: 'Combats · debug' }[Debug.page] || 'Menu debug', 8, 't');
     wtext('Sacha, invincible · rien n\'est sauvegardé', W / 2, 29, { size: 7, align: 'center', color: '#d9bf8c' });
     this.drawMenu(Debug.items(), W / 2, 44);
   },
@@ -716,7 +717,7 @@ function drawTrocIcon(id, x, y, s = 1) {
   else if (id === 'boussole') { ell(x, y, 6 * s, 6 * s, '#c8a040'); ell(x, y, 4.5 * s, 4.5 * s, '#e8dcc8'); B(-0.5, -4, 1, 4, '#d84a5a'); B(-0.5, 0, 1, 4, '#3a3448'); }
 }
 
-// ---------- menu debug : accès direct à chaque combat de boss et de mini-boss ----------
+// ---------- menu debug : accès direct à chaque donjon, à chaque combat de boss et au concours de pêche ----------
 // Il s'ouvre avec ?debug dans l'adresse, ou en touchant 5 fois le numéro de version sur l'écran titre (mémorisé).
 // La partie lancée n'est jamais sauvegardée et Sacha est invincible.
 const Debug = {
@@ -742,8 +743,32 @@ const Debug = {
     { name: 'Le Chevalier Minuit', area: 'castle', room: 'papa', at: [15, 12], off: ['papaFight', 'papaFreed'] },
     { name: 'Le Roi Minuit', area: 'castle', room: 'king', at: [15, 12], off: ['boss6'], set: { papaFight: true, papaFreed: true } },
   ],
-  items() { return [...this.FIGHTS.map(f => f.name), 'Retour']; },
-  start(f) {
+  // les donjons, dans l'ordre de l'aventure : on arrive à l'entrée, ce donjon et les suivants pas encore faits
+  DUNGEONS: ['cave', 'bois', 'mines', 'temple', 'tower', 'castle'],
+  page: null,
+  items() {
+    if (this.page === 'donjons') return [...this.DUNGEONS.map(k => G.areas[k].name), 'Retour'];
+    if (this.page === 'combats') return [...this.FIGHTS.map(f => f.name), 'Retour'];
+    return ['Donjons', 'Combats de boss', 'Concours de pêche', 'Retour'];
+  },
+  pick(i, G, back) {
+    const n = this.items().length; if (i === n - 1) return back();
+    if (this.page === 'donjons') { const k = this.DUNGEONS[i]; return G.fadeTo(() => this.dungeon(i, k)); }
+    if (this.page === 'combats') { const f = this.FIGHTS[i]; return G.fadeTo(() => this.start(f)); }
+    if (i === 0) { this.page = 'donjons'; G.menu = 0; } else if (i === 1) { this.page = 'combats'; G.menu = 0; } else G.fadeTo(() => this.contest());
+  },
+  dungeon(i, k) {
+    this.base();
+    for (let j = i; j < 6; j++) { delete SAVE[['boss', 'boss2', 'boss3', 'boss4', 'boss5', 'boss6'][j]]; delete SAVE['freed' + (j + 1)]; delete SAVE['v' + (j + 1) + 'done']; }
+    SAVE.fragments = i; G.debug = true; G.view = 'world';
+    G.enter(k, G.areas[k].start, true); G.updateCam(true);
+    G.banner = { text: G.areas[k].name + ' · debug', t: 1.6 };
+  },
+  contest() {
+    this.base(); Inventory.give('canne'); SAVE.q = SAVE.q || {}; SAVE.q.filet = 2; SAVE.sq = SAVE.sq || {}; SAVE.sq.peche = 1;
+    G.debug = true; G.view = 'world'; Peche.begin(G);
+  },
+  base() {
     SLOT = -1; SAVE = defaultSave('sacha'); SAVE.started = true; // pas d'emplacement : rien n'est écrit
     Object.assign(SAVE, { got_branche: true, met_lumi: true, crossed_rift: true, quest1: true, caveIntro: true, boisIntro: true, minesIntro: true, minesOpen: true, minesKey: true, drawbridge: true,
       lacCrossed: true, lacIntro: true, templeIntro: true, towerIntro: true, castleIntro: true, castleOpen: true, rubble1: true, rubble2: true,
@@ -751,6 +776,9 @@ const Debug = {
       v1done: true, v2done: true, v3done: true, v4done: true, v5done: true, maxHp: 16, fragments: 5, money: 99 });
     for (const k of ['epee_bois', 'lance_pierre', 'frisbee', 'grappin', 'palmes', 'petards']) Inventory.give(k);
     Inventory.addAmmo('cailloux', 30); Inventory.addAmmo('petards', 10);
+  },
+  start(f) {
+    this.base();
     for (const k of f.off) delete SAVE[k]; Object.assign(SAVE, f.set || {});
     G.debug = true; G.view = 'world';
     G.enter(f.area, G.areas[f.area].start, true);
