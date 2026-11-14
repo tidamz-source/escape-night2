@@ -178,8 +178,8 @@ function drawVirtualPad() {
     ell(bt.x, bt.y + (on ? 1 : 0), bt.r, bt.r, on ? PAL.glow : (key === 'a' ? '#ff8a9a' : key === 'b' ? '#c3b3ff' : '#ffcf7a'));
     ctx.globalAlpha = 0.9; text(bt.label, bt.x, bt.y - (key === 'a' ? 6 : 5) + (on ? 1 : 0), { size: key === 'a' ? 12 : 10, align: 'center', color: PAL.ink, shadow: false, bold: true });
   }
-  // pause
-  ctx.globalAlpha = 0.6; ell(BTN.start.x, BTN.start.y, BTN.start.r, BTN.start.r, 'rgba(7,13,31,.6)');
-  R(BTN.start.x - 4, BTN.start.y - 5, 3, 10, PAL.white); R(BTN.start.x + 1, BTN.start.y - 5, 3, 10, PAL.white);
+  // pause (caché dans le menu pause : la croix suffit pour fermer)
+  if (G.state !== 'pause') { ctx.globalAlpha = 0.6; ell(BTN.start.x, BTN.start.y, BTN.start.r, BTN.start.r, 'rgba(7,13,31,.6)');
+  R(BTN.start.x - 4, BTN.start.y - 5, 3, 10, PAL.white); R(BTN.start.x + 1, BTN.start.y - 5, 3, 10, PAL.white); }
   ctx.restore();
 }
