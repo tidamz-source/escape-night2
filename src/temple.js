@@ -236,7 +236,7 @@ function buildTempleArea() {
     tiles(room) {
       room('entry').rect(9, 3, 12, 4, 'w');
       const p = room('palmes'); p.rect(5, 3, 20, 11, 'w'); p.rect(13, 7, 4, 3, '_');
-      const h = room('hub'); h.rect(3, 2, 24, 2, '_'); h.rect(3, 13, 24, 2, '_'); h.rect(3, 4, 24, 9, 'y');
+      const h = room('hub'); h.rect(3, 2, 24, 2, '_'); h.rect(3, 13, 24, 2, '_'); h.rect(3, 4, 24, 9, 'y'); h.rect(2, 2, 1, 13, '_'); h.rect(27, 2, 1, 13, '_'); // deux chemins de bord : eau basse, on contourne le gouffre à pied
       const d = room('dive'); d.rect(3, 3, 23, 11, 'y'); d.rect(26, 6, 1, 4, '_');
       const s = room('east'); s.rect(6, 3, 20, 11, 'w'); s.rect(3, 6, 3, 4, '_');
       const b = room('bigkey'); b.rect(5, 4, 20, 7, 'w'); b.rect(13, 6, 4, 3, '_');
