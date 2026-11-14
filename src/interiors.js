@@ -209,6 +209,7 @@ function paintedInterior(id, def, house, fromArea) {
   const k = def.paint, g = PAINTED[k].map(r => r.split(''));
   const A = new Area('in_' + id, g, 'house');
   A.interior = true; A.name = def.name; A.dark = def.dark != null ? def.dark : 0.22; A.paint = 'map_' + k;
+  if (typeof PAINTED_FINE !== 'undefined' && PAINTED_FINE[k]) { A.fine = PAINTED_FINE[k]; A.fineTS = TS / 2; }
   const door = []; g.forEach((r, y) => r.forEach((c, x) => { if (c === '1') door.push([x, y]); }));
   const top = Math.min(...door.map(d => d[1])), xs = door.filter(d => d[1] === top).map(d => d[0]);
   A.start = def.start ? { x: def.start[0] * TS, y: def.start[1] * TS, dir: 'up' } : { x: ((Math.min(...xs) + Math.max(...xs) + 1) / 2) * TS, y: top * TS - 4, dir: 'up' };

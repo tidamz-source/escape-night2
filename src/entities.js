@@ -22,6 +22,14 @@ class Area {
 const boxOf = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
 
 function blocked(area, b, self, opts = {}) {
+  if (area.fine) { // petite pièce peinte : collisions au demi-carreau
+    const F = area.fine, s = area.fineTS, fx0 = Math.floor(b.x / s), fx1 = Math.floor((b.x + b.w - 0.01) / s), fy0 = Math.floor(b.y / s), fy1 = Math.floor((b.y + b.h - 0.01) / s);
+    for (let ty = fy0; ty <= fy1; ty++) for (let tx = fx0; tx <= fx1; tx++) { const t = (F[ty] && F[ty][tx]) || '#'; if (SOLID.has(t) && !(opts.swim && t === '~')) return true; }
+    if (opts.noExit) for (let ty = Math.floor(b.y / TS); ty <= Math.floor((b.y + b.h - 0.01) / TS); ty++) for (let tx = Math.floor(b.x / TS); tx <= Math.floor((b.x + b.w - 0.01) / TS); tx++) { const t = area.tile(tx, ty); if (EXITS.has(t) || t === 'g') return true; }
+    for (const p of area.props) if (p.solid && rectHit(b, { x: p.x - p.fw / 2, y: p.y - p.fh, w: p.fw, h: p.fh })) return true;
+    for (const e of area.ents) if (e !== self && e.solid && !e.dead && rectHit(b, boxOf(e))) return true;
+    return false;
+  }
   const x0 = Math.floor(b.x / TS), x1 = Math.floor((b.x + b.w - 0.01) / TS), y0 = Math.floor(b.y / TS), y1 = Math.floor((b.y + b.h - 0.01) / TS);
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
     const t = area.tile(tx, ty);

@@ -3,15 +3,15 @@
 // '.' sol libre · '#' obstacle (troncs, murs, rochers…) · '~' eau · '1' '2' '3' sorties
 // Les toits et les feuillages (OVERHEAD) sont redessinés par-dessus le héros quand il passe derrière.
 const PAINTED = {
-  mobil_home: [ // le mobile-home de la famille (intérieur peint, 448×250)
+  mobil_home: [ // le mobile-home de la famille (intérieur peint, 448×250) ; collisions fines dans PAINTED_FINE
     '##############',
     '##############',
     '##############',
     '##############',
-    '###..###...###',
+    '##...###...###',
     '#.........####',
-    '#..###...#####',
-    '######11######',
+    '#..#.#....####',
+    '#..###11######',
   ],
   route_nord: [ // la Route des Bergers : carte peinte (assets/maps/route_nord.png), 38×28 cases (réduite à 50 %)
     '################22222#################',
@@ -196,6 +196,26 @@ const PAINTED = {
     '#########11#########',
     '####################',
   ]
+};
+// collisions fines (cases de 8 px de jeu) pour les petites pièces : elles remplacent la grille pour bloquer la marche
+const PAINTED_FINE = {
+  mobil_home: [
+    '############################',
+    '############################',
+    '############################',
+    '############################',
+    '############################',
+    '############################',
+    '############################',
+    '############################',
+    '#################.....######',
+    '#####.....#######.....######',
+    '####................########',
+    '###...............##########',
+    '##....###.##......##########',
+    '##....######........########',
+    '##....######1111############',
+  ],
 };
 // découpes de assets/maps/<zone>_dessus.png : sy, w, h dans l'atlas (px ×2) ; x, y, base en px de jeu
 const OVERHEAD = {
