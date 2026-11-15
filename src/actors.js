@@ -50,7 +50,7 @@ const PL_NPCS = { garde: { foot: 1 }, arthur: { foot: 0, child: 0.84 }, jules: {
 const plDir = (dx, dy) => (Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) + 8) % 8; // 0 face, 2 droite, 4 dos, 6 gauche
 function drawPL(key, x, y, di, t, alpha = 1, scale = 1) {
   const im = IMG['pl_' + key], m = PL_NPCS[key]; if (!im || !m) return false;
-  const c = m.c || 48, k = scale * (m.child || 1) / 1.4, s = c * k; let sx = di * c, sy = 0;
+  const c = m.c || 48, k = scale * (m.child || 1) * CHAR_SC, s = c * k; let sx = di * c, sy = 0;
   if (m.anim && di === 0) { sx = (Math.floor(t * (m.fps || 6)) % m.anim) * c; sy = c; }
   ctx.globalAlpha = alpha; ctx.drawImage(im, sx, sy, c, c, half(x - s / 2), half(y - s + m.foot * k), s, s); ctx.globalAlpha = 1; return true;
 }
@@ -87,7 +87,7 @@ function drawMob(e, key, o = {}) {
   let col = e._di, row = 0;
   if (o.pose && m.pose) row = 9; else if (m.n && (mv || o.anim)) { row = 1 + e._di; col = Math.floor((e.t || 0) * (o.fps || 10)) % m.n; }
   if (o.sh !== 0) ell(e.x, e.y, o.sh || 6, 2, 'rgba(0,0,0,.3)');
-  drawCell('mob_' + key, col, row, m.c, m.c, e.x, e.y - (o.alt || 0), (o.scale || 1) * (e.isMini ? 1 : m.k || MOB_K) / 1.4, { foot: o.alt ? m.foot : 'auto', flash: e.flash > 0, alpha: o.alpha }); // au sol : les pieds pile sur l'ombre
+  drawCell('mob_' + key, col, row, m.c, m.c, e.x, e.y - (o.alt || 0), (o.scale || 1) * (e.isMini ? 1 : m.k || MOB_K) * CHAR_SC, { foot: o.alt ? m.foot : 'auto', flash: e.flash > 0, alpha: o.alpha }); // au sol : les pieds pile sur l'ombre
   if (e.stunT > 0) for (let i = 0; i < 3; i++) { const a = (e.t || 0) * 5 + i * 2.1; R(half(e.x + Math.cos(a) * 7), half(e.y - (o.alt || 0) - (e.isMini ? 34 : 26) + Math.sin(a) * 2), 2, 2, i % 2 ? '#ffe27a' : '#fff'); }
   return true;
 }

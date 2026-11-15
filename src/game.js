@@ -489,9 +489,9 @@ const G = {
     for (const p of A.props) if (p.light) L.push({ x: p.x, y: p.y + (p.light.oy || -8), r: p.light.r, c: p.light.c, flick: p.light.flick, warm: p.light.warm });
     for (const e of A.ents) {
       if (e.dead || (!this.slide && !this.inRoom(e))) continue;
+      if (e.isEnemy && !e.isBoss) continue; // pas de halo sur les monstres
       const li = e.light; if (li) { const lp = e.lightPos; L.push({ x: lp ? lp[0] : e.x, y: lp ? lp[1] - 6 : e.y - (e.alt || 6) - 6, r: li.r, c: li.c, flick: li.flick, warm: li.warm }); }
       if (e.lights) for (const l of e.lights) L.push({ x: e.x + l.dx, y: e.y + l.dy, r: l.r, c: l.c });
-      if (e.isEnemy && !li && !e.isBoss) L.push({ x: e.x, y: e.y - (e.alt || 0) - 8, r: 30, c: 'rgba(255,150,170,' }); // halo : on repère les ennemis dans le noir
     }
     return L.filter(l => l.x + l.r > cx && l.x - l.r < cx + W && l.y + l.r > cy && l.y - l.r < cy + H);
   },
