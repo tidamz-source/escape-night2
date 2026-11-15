@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **Démo 100 %** (dossier `demo100/`, à l'adresse …/escape-night2/demo100/) : personnages à 100 %, décor réduit de 30 %, salles de donjon centrées sur fond noir. Sauvegardes séparées du vrai jeu, menu debug sur l'écran titre. Les fichiers du jeu ne sont pas modifiés.
 - **8.13.6** : le filet du pêcheur a sa propre icône ; concours de pêche refait (une manche de 30 s au bassin des Prés du Lac, Firmin et Gaëlle pêchent pour de vrai, le pêcheur arbitre) ; menu debug : accès direct à chaque donjon et au concours de pêche.
 - **8.13.5** : Temple englouti : quand l'eau est basse, les bassins se vident vraiment (fond mouillé, margelle, petits escaliers au milieu de chaque côté pour descendre et remonter) au lieu de devenir des gouffres.
 - **8.13.4** : Temple englouti : deux chemins de bord dans la salle du grand bassin, pour contourner le gouffre à pied quand l'eau est basse.
