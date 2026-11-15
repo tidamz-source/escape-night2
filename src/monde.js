@@ -46,7 +46,7 @@ const VILLAGERS = {
   jules: { name: 'Jules', lines: () => [pick(['Tu veux jouer à chat ? Non ? Tant pis, Lila est trop rapide de toute façon.', 'Arthur a une carte de chauve-souris en double. Il ne veut pas me l\'échanger.', 'Moi plus tard, je serai forgeron, comme Bertrand. Ou chevalier. Ou pêcheur.'])] },
   lila: { name: 'Lila', lines: () => [pick(['Chat ! C\'est toi le chat !', 'Tu as vu ? Il y a de petites lumières perdues partout dans le royaume. Ce sont des lucioles égarées !', 'Ma maman dit que derrière certains rochers fendus, il y a des grottes pleines de trésors.'])] },
   lampions: { name: 'Le marchand de lampions', lines: () => [SAVE.boss6 ? 'Des lampions en plein jour ? Bon… je vais me mettre aux ombrelles.' : 'Un lampion ? Non ? Il fait pourtant nuit noire. Vous les jeunes, vous avez de bons yeux.'] },
-  vagabond: { name: 'Le vagabond', lines: () => ['La Route des Bergers… je la parcours depuis tant de nuits que je connais chaque caillou.', 'Tu vois ce cœur qui brille au milieu de la mare ? Impossible à atteindre à pied. Il faudrait un objet qui vole… et qui revient.'] },
+  vagabond: { name: 'Le vagabond', lines: () => SAVE.hp_ruisseau ? ['Le cœur de la mare… tu l\'as eu ! Un objet qui vole et qui revient, hein ? Je n\'y aurais jamais pensé.', 'Moi, je reste sur ma route. Il y a encore des cailloux que je ne connais pas.'] : ['La Route des Bergers… je la parcours depuis tant de nuits que je connais chaque caillou.', 'Tu vois ce cœur qui brille au milieu de la mare ? Impossible à atteindre à pied. Il faudrait un objet qui vole… et qui revient.'] },
   pauline: { name: 'Pauline', lines: () => ['Je cherche le vent pour faire voler mon cerf-volant. Le vent du moulin souffle dans la Forêt, mais ici, rien !'] },
   odette: { name: 'Odette', lines: () => ['Je grimpe ce col depuis quarante ans. Plus haut, c\'est la Montagne et ses gnomes. Gentils, mais bavards.', 'La paroi, là-haut, sonne creux. Les gnomes y cachaient leurs économies, paraît-il. Il faudrait la faire sauter.'] },
   margot: { name: 'Margot', lines: () => ['Je cueille des herbes à l\'orée du bois. L\'herboriste me les rachète un bon prix, tu devrais essayer !', 'Fais attention dans la Forêt : les sangliers foncent d\'abord, et réfléchissent jamais.'] },
@@ -54,7 +54,8 @@ const VILLAGERS = {
   coquillages: { name: 'Le ramasseur de coquillages', lines: () => ['Les dunes avancent un peu chaque nuit. Un jour, elles mangeront la Côte.', 'Le phare est éteint depuis que le temps s\'est arrêté. Le gardien n\'a plus de mèche, le pauvre.'] },
   fossoyeur: { name: 'Le fossoyeur', lines: () => ['Ici reposent ceux qui ont essayé de réveiller le Roi Minuit. Enfin… ils dorment, surtout. Profondément.', 'Le rocher fendu, au nord de la lande ? N\'y touche pas. Ou alors avec un gros pétard.'] },
 };
-function villager(id, x, y) { const v = VILLAGERS[id]; return new NPC(x, y, { look: id, fn: G => G.say(v.lines().map(text => ({ who: v.name, text }))) }); }
+const WANDER = { vagabond: 4 * TS, lampions: 0 }; // rayon de promenade (3 cases par défaut) ; 0 : reste à sa place (le marchand de lampions tient son étal)
+function villager(id, x, y) { const v = VILLAGERS[id]; return new NPC(x, y, { look: id, wander: WANDER[id], speed: id === 'pauline' ? 24 : id === 'vagabond' ? 15 : undefined, fn: G => G.say(v.lines().map(text => ({ who: v.name, text }))) }); }
 
 // ===== les quarts de cœur =====
 // item 'piece_coeur' : quatre quarts font un cœur entier

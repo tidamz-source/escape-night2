@@ -248,7 +248,7 @@ function buildVillageArea() {
     for (const [x, y] of lamps) this.ents.push(new LightSpot(x * TS + 8, y * TS + 4, { r: 46, c: 'rgba(255,220,150,', oy: -22 }));
     this.ents.push(new ClockTower(32 * TS, 26 * TS, true));
     this.ents.push(new GateBlock(32 * TS, 4 * TS, 64));
-    this.ents.push(new NPC(27 * TS + 8, 5 * TS, { look: 'garde', talk: 'garde' }));
+    this.ents.push(new NPC(27 * TS + 8, 5 * TS, { look: 'garde', talk: 'garde', still: true }));
     this.ents.push(new NPC(42 * TS + 8, 25 * TS, { look: 'arthur', fn: arthurTalk })); // Arthur, le collectionneur du bestiaire
     this.ents.push(Object.assign(new Relay(26 * TS, 29 * TS, 'village'), { ghost: true }));
     this.ents.push(new Rift(55 * TS, 29 * TS + 8, { active: () => !!SAVE.boss6, closed: 'La faille par laquelle tu es arrivé{e} s\'est refermée. Lumi dit qu\'elle se rouvrira quand le jour se lèvera.', enter: G => G.fadeTo(() => G.enter('camp', G.areas.camp.dawn, false), '#c8a8ff') }));

@@ -92,7 +92,9 @@ function drawMob(e, key, o = {}) {
   return true;
 }
 // les PNJ regardent toujours vers le sud (face à l'écran)
-function plFace(e) { return e.o && e.o.face != null ? e.o.face : 0; }
+function plFace(e) { return e.face != null ? e.face : e.o && e.o.face != null ? e.o.face : 0; }
+// direction (vx, vy) → colonne d'une planche PixelLab à 8 vues (0 face, 2 droite, 4 dos, 6 gauche)
+function dir8(vx, vy) { const k = Math.round(Math.atan2(vy, vx) / (Math.PI / 4)); return ((2 - k) % 8 + 8) % 8; }
 
 // personnage dessiné depuis un sprite d'Escape Night (densité ×2)
 function drawSprite(key, x, y) { if (IMG['pl_' + key] && PL_NPCS[key]) { drawPL(key, x, y, 0, G.t || 0); return; } const im = IMG['npc_' + key]; if (im) ctx.drawImage(im, half(x - im.width / 4), half(y - im.height / 2), im.width / 2, im.height / 2); }
@@ -110,16 +112,38 @@ class NPC {
     if (this.o.shop) { const sh = Shop.def(this.o.shop); G.say([{ who: sh.keeper, text: sh.hello }], () => G.openShop(this.o.shop)); }
     else G.say(Story.talk(this.o.talk));
   }
-  update(dt) { this.t += dt; }
+  update(dt) { this.t += dt; if (this.roamOK === undefined) this.roamOK = this.canRoam(); if (this.roamOK) this.roam(dt); }
+  get plKey() { const k = this.o.look || this.o.sprite; return k && IMG['pl_' + k] && PL_NPCS[k] ? k : null; }
+  // dehors, tous les PNJ à planche 8 directions se promènent ; sauf postes fixes (o.still), regard imposé (o.face), danse, intérieurs et donjons
+  canRoam() {
+    if (this.o.wander === 0) return false; const A = G.area;
+    return !!this.plKey && !A.rooms && !(A.id || '').startsWith('in_') && this.o.face == null && !this.o.still && !this.dance && !this.o.hero && !this.o.draw && !this.o.gnome;
+  }
+  // o.wander : rayon (px) de promenade autour du point de départ (3 cases par défaut) ; pauses et petites marches au hasard
+  roam(dt) {
+    if (!this.home) { this.home = { x: this.x, y: this.y }; this.wt = rand(0.5, 3); }
+    this.walking = false; if (G.state !== 'play' || G.area.ents.indexOf(this) < 0) return;
+    const P = G.player;
+    if (P && dist(P.x, P.y, this.x, this.y) < 32) { this.face = dir8(P.x - this.x, P.y - this.y); this.tgt = null; this.wt = Math.max(this.wt, 1.2); return; } // on s'arrête pour parler
+    this.wt -= dt;
+    if (!this.tgt) { if (this.wt > 0) return; const a = rand(0, Math.PI * 2), r = rand(14, this.o.wander || 3 * TS); this.tgt = { x: this.home.x + Math.cos(a) * r, y: this.home.y + Math.sin(a) * r * 0.7 }; this.wt = rand(2.5, 5); return; }
+    const dx = this.tgt.x - this.x, dy = this.tgt.y - this.y, d = Math.hypot(dx, dy), sp = (this.o.speed || 18) * dt;
+    if (d < 2 || this.wt <= 0) { this.tgt = null; this.wt = rand(1.5, 4.5); return; }
+    this.face = dir8(dx, dy); this.walking = true;
+    const hit = moveEnt(G.area, this, dx / d * sp, dy / d * sp);
+    if (hit) { this.tgt = null; this.wt = rand(1, 3); }
+  }
+  bob() { return this.walking ? Math.round(Math.abs(Math.sin(this.t * 9)) * 1.5) : 0; } // petit sautillement de marche (les planches n'ont pas de cycle de marche)
   draw() {
     if (this.o.hero) { ell(this.x, this.y, 6, 2.5, 'rgba(0,0,0,.35)'); drawHero(this.o.hero(), this.x, this.y, 'down', false, this.t); }
     else if (this.o.gnome) { if (IMG.pl_gnome) { ell(this.x, this.y, 5, 2, 'rgba(0,0,0,.35)'); drawPL('gnome', this.x, this.y, plFace(this), this.t); } else drawGnomeNPC(this.x, this.y, this.t); }
     else if (this.o.sprite === 'dog' && IMG.mob_dog) drawMob(this, 'dog', { sh: 6 }); // Goyave
     else if (this.o.sprite === 'dog') { const im = IMG.npc_dog_down; ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); if (im) { const w = im.width / 2.6, h = im.height / 2.6; ctx.drawImage(im, half(this.x - w / 2), half(this.y - h + Math.abs(Math.sin(this.t * 3))), w, h); } }
     else if (this.o.sprite === 'papa_down') { ell(this.x, this.y, 8, 3, 'rgba(0,0,0,.35)'); drawPapa(this.x, this.y, 'down', false, this.t); }
+    else if (this.o.sprite && this.plKey) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawPL(this.o.sprite, this.x, this.y - this.bob(), plFace(this), this.t); }
     else if (this.o.sprite) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); drawSprite(this.o.sprite, this.x, this.y); }
     else if (this.o.draw) this.o.draw(this);
-    else if (IMG['pl_' + this.o.look] && PL_NPCS[this.o.look]) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); const noAxe = this.o.look === 'bucheron' && IMG.pl_bucheron_noaxe && Quests.st('hache') < 2; drawPL(noAxe ? 'bucheron_noaxe' : this.o.look, this.x, this.y, plFace(this), this.t); } // le bûcheron n'a sa hache qu'une fois retrouvée
+    else if (IMG['pl_' + this.o.look] && PL_NPCS[this.o.look]) { ell(this.x, this.y, 7, 2.5, 'rgba(0,0,0,.35)'); const noAxe = this.o.look === 'bucheron' && IMG.pl_bucheron_noaxe && Quests.st('hache') < 2; drawPL(noAxe ? 'bucheron_noaxe' : this.o.look, this.x, this.y - this.bob(), plFace(this), this.t); } // le bûcheron n'a sa hache qu'une fois retrouvée
     else drawPerson(this.x, this.y, LOOKS[this.o.look], this.t);
     if (G.state === 'play' && sideOffer(this)) { const b = Math.round(Math.sin(this.t * 5)); R(this.x - 3, this.y - 46 + b, 6, 9, '#ffd23a'); text('!', this.x, this.y - 46 + b, { size: 8, align: 'center', bold: true, color: '#3a2410', shadow: false }); return; } // une quête à proposer
     if (G.player && dist(G.player.x, G.player.y, this.x, this.y) < 34 && G.state === 'play') { // bulle « parler »

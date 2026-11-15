@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.13.8** : les PNJ d'extérieur se promènent (pauses et petites marches, tournés dans le sens de la marche grâce à leurs 8 directions, ils s'arrêtent et se tournent vers le joueur quand il approche) ; le garde et le marchand de lampions restent à leur poste ; nouveau dialogue du vagabond une fois le cœur de la mare récupéré.
 - **8.13.7** : tous les personnages (héros, PNJ, monstres, boss) passent à 150 % (au lieu de 143 %) ; plus aucun halo lumineux sur les monstres.
 - **8.13.6** : le filet du pêcheur a sa propre icône ; concours de pêche refait (une manche de 30 s au bassin des Prés du Lac, Firmin et Gaëlle pêchent pour de vrai, le pêcheur arbitre) ; menu debug : accès direct à chaque donjon et au concours de pêche.
 - **8.13.5** : Temple englouti : quand l'eau est basse, les bassins se vident vraiment (fond mouillé, margelle, petits escaliers au milieu de chaque côté pour descendre et remonter) au lieu de devenir des gouffres.
