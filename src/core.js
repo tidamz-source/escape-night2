@@ -83,7 +83,7 @@ function loadAssets() {
   for (const k of NPC_SPRITES) jobs.push(loadImage('npc_' + k, `assets/npc/${k}.png?v=${VERSION}`));
   for (const k of SWIMMERS) for (const i of [0, 1]) jobs.push(loadImage('swim_' + k + i, `assets/swim/${k}${i}.png?v=${VERSION}`));
   for (const k of ['royaume', 'biblio', 'collines', 'camping', 'route_nord', 'mobil_home', 'cote']) { jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); jobs.push(loadImage('map_' + k + '_dessus', `assets/maps/${k}_dessus.png?v=${VERSION}`)); }
-  for (const k of ['grotte_entree']) jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); // salles de donjon peintes
+  for (const k of ['entry', 'arena', 'hub', 'block', 'sling', 'chasm', 'chasm_pont', 'twin', 'bigkey', 'treasure', 'boss', 'prison'].map(n => 'grotte_' + n)) jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); // salles de donjon peintes
   for (const [k, f] of Object.entries(WANG_FILES)) jobs.push(loadImage('wang_' + k, `assets/tiles/${f}.png?v=${VERSION}`));
   jobs.push(loadData());
   return Promise.all(jobs).then(() => { if (IMG.deco_lamp) IMG.lamp = IMG.deco_lamp; }); // réverbère PixelLab du camping
