@@ -53,9 +53,10 @@ function makeDungeon(spec) {
     decorate(room, g) { if (spec.tiles) spec.tiles(n => { const [rx, ry] = spec.rooms[n]; return room(rx, ry); }, g); },
   });
   const A = new Area(spec.id, grid, spec.theme);
-  // salles peintes : { salle: 'clé' } → l'image assets/maps/<clé>.png (960 × 544) recouvre le décor tuilé de la salle ; la grille garde les collisions
+  // salles peintes : { salle: 'clé' ou () => 'clé' } → l'image assets/maps/<clé>.png (960 × 544) recouvre le décor tuilé de la salle ; la grille garde les collisions
+  // (une fonction choisit la variante selon la sauvegarde, ex. le pont abaissé ; l'image est remise à chaque rerender)
   if (spec.paintRooms) {
-    const paint = a => { const x2 = a.layer.getContext('2d'); for (const [n, k] of Object.entries(spec.paintRooms)) { const im = IMG['map_' + k], at = spec.rooms[n]; if (im && at) x2.drawImage(im, at[0] * RW * TP, at[1] * RH * TP, RW * TP, RH * TP); } };
+    const paint = a => { const x2 = a.layer.getContext('2d'); for (const [n, v] of Object.entries(spec.paintRooms)) { const k = typeof v === 'function' ? v() : v, im = IMG['map_' + k], at = spec.rooms[n]; if (im && at) x2.drawImage(im, at[0] * RW * TP, at[1] * RH * TP, RW * TP, RH * TP); } };
     paint(A); const r0 = A.rerender; A.rerender = function () { r0.call(this); paint(this); };
   }
   A.dungeon = spec.id;
