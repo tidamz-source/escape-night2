@@ -92,7 +92,7 @@ function questSpawns(A) {
   if (A.id === 'foret' && IMG.deco_stump_axe) A.ents.push(new AxeStump(6 * TS, 11 * TS)); // la souche : la hache y est plantée tant qu'on ne l'a pas rapportée
   if (A.id === 'foret' && !IMG.deco_stump_axe && Quests.st('hache') === 1 && !Quests.complete('hache')) A.ents.push(new QuestItem(6 * TS, 11 * TS, 'hache', 'Tu as retrouvé la hache du bûcheron !'));
   if (A.id === 'lac' && Quests.st('filet') === 1 && !Quests.complete('filet')) A.ents.push(Object.assign(new DiveSpot(17 * TS, 34 * TS, 'qfilet', 'flag:qfiletOk', [{ text: 'Au fond de l\'eau, le filet du pêcheur ! Il y a quelque chose dedans…' }]), { onGet: () => Quests.add('filet'), raiseAs: 'filet' }));
-  if (A.id === 'cote') for (const [i, x, y] of [[0, 8, 8], [1, 30, 6], [2, 24, 44]]) A.ents.push(new Beacon(x * TS, y * TS, i));
+  if (A.id === 'cote') for (const [i, x, y] of [[0, 551, 60], [1, 115, 664], [2, 543, 712]]) A.ents.push(new Beacon(x, y, i)); // sur les trois socles de la carte peinte
   A.respawnQuest = () => { if (A.id === 'royaume' || A.id === G.area.id) { const keep = A.ents.filter(e => !(e instanceof QuestItem) && !(e instanceof AxeStump) && !(e instanceof Chicken) && !(e instanceof Beacon)); A.ents = keep; if (A.id === 'royaume') { if (SAVE.q.poules === 1) for (const [i, x, y] of [[0, 8 * TS, 8 * TS], [1, 58 * TS, 15 * TS], [2, 20 * TS, 44 * TS]]) if (!SAVE['poule' + i]) A.ents.push(new Chicken(x, y, i)); } else questSpawns(A); } };
 }
 // la souche du bûcheron (PixelLab, deux états) : on y arrache la hache pendant la quête

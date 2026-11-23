@@ -389,7 +389,7 @@ function buildPhareFloor(n) {
   if (n < 5) for (let i = 0; i < n; i++) T.set(6 + i * 2, 6 + (i % 2) * 2, '#'); // des caisses de plus en plus nombreuses
   const A = new Area('phare' + n, g, 'tower'); A.name = `Le phare · étage ${n}`; A.dark = 0.45;
   A.start = { x: (down + 1) * TS, y: (h - 2) * TS + 8, dir: 'up' }; A.top = { x: (up + 1) * TS, y: 3 * TS, dir: 'down' };
-  A.exits = { 1: Gm => n === 1 ? Gm.enter('cote', { x: 30 * TS, y: 45 * TS + 8, dir: 'down' }) : Gm.enter('phare' + (n - 1), Gm.areas['phare' + (n - 1)].top), 2: Gm => Gm.enter('phare' + (n + 1), Gm.areas['phare' + (n + 1)].start) };
+  A.exits = { 1: Gm => n === 1 ? Gm.enter('cote', { x: 612, y: 42 * TS + 12, dir: 'down' }) : Gm.enter('phare' + (n - 1), Gm.areas['phare' + (n - 1)].top), 2: Gm => Gm.enter('phare' + (n + 1), Gm.areas['phare' + (n + 1)].start) };
   A.spawn = function () {
     this.ents = [new Brazier(3 * TS, 3 * TS), new Brazier(17 * TS, 3 * TS)];
     if (SQ.st('phare') < 4) for (let i = 0; i < Math.min(4, n); i++) this.ents.push(new Crab((5 + i * 3.5) * TS, (6 + (i % 2) * 3) * TS));
@@ -596,8 +596,8 @@ function sqSpawn(A) {
     if (SAVE.ermiteMoved) { A.ents.push(new NPC(20 * TS + 8, 13 * TS, { look: 'ermite', quest: 'ombres' })); A.ents.push(new Furniture(23 * TS, 14 * TS, 'table', { candle: true }), new Furniture(21.4 * TS, 14.6 * TS, 'stool'), new Furniture(24.6 * TS, 14.6 * TS, 'stool')); }
   }
   if (A.id === 'cote') {
-    A.ents.push(new LighthouseDoor(30 * TS, 44 * TS)); A.ents.push(new SeaPassage(44 * TS, 34 * TS));
-    const lh = A.ents.find(e => e instanceof Decor && e.kind === 'lighthouse'); if (lh) lh.light = SAVE.phareOn ? { r: 160, c: 'rgba(255,230,150,', warm: true } : null;
+    A.ents.push(new LighthouseDoor(612, 668)); A.ents.push(new SeaPassage(44 * TS, 34 * TS)); // le phare est peint : sa porte, au pied des rochers
+    if (SAVE.phareOn) A.ents.push(new LightSpot(613, 640, { r: 160, c: 'rgba(255,230,150,', warm: true, oy: -122 })); // la lanterne rallumée
   }
 }
 function sqBuild(areas) {

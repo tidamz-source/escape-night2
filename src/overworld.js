@@ -194,7 +194,7 @@ const ZONE_ARRIVE = {
   foret_from_village: { x: 60 * TS, y: 24 * TS + 4, dir: 'left' },
   montagne_from_collines: { x: 3 * TS, y: 22 * TS, dir: 'right' },
   lac_from_village: { x: 32 * TS, y: 4 * TS, dir: 'down' }, lac_from_cote: { x: 60 * TS, y: 32 * TS, dir: 'left' }, lac_from_terres: { x: 3 * TS, y: 38 * TS, dir: 'right' },
-  cote_from_lac: { x: 3 * TS, y: 32 * TS, dir: 'right' },
+  cote_from_lac: { x: 3 * TS, y: 24 * TS + 4, dir: 'right' },
   terres_from_lac: { x: 60 * TS, y: 38 * TS, dir: 'left' },
 };
 const goZone = (area, key) => G => G.enter(area, ZONE_ARRIVE[key]);
@@ -421,35 +421,28 @@ function buildLacArea() {
   return A;
 }
 
-// ----- La Côte (est du lac) : plages, mer, phare, village d'artificiers, l'île de la tour -----
+// ----- La Côte (est du lac) : plage, mer, phare, atelier de l'artificière, l'île de la tour -----
+// carte peinte (assets/maps/cote.png) ; la grille PAINTED.cote ne sert qu'aux collisions
+// l'île n'est abordable (à la nage) que par sa plage sud : le reste de son pourtour est en falaise
 function buildCoteArea() {
-  const Z = zoneGrid(53), { rect, set } = Z, r = Z.r;
-  rect(0, 30, 2, 4, '1');
-  for (let y = 2; y < ZH - 2; y++) { const sx = 38 + Math.round(Math.sin(y * 0.35) * 2 + r() * 1.5); rect(sx, y, ZW - 2 - sx, 1, '~'); rect(sx - 4, y, 4, 1, 'S'); }
-  Z.ell(51, 21, 6, 5, '.', 0.1); rect(46, 15, 11, 1, '~');
-  rect(49, 16, 6, 2, '#'); rect(51, 17, 2, 1, 'N');
-  rect(2, 31, 30, 2, '='); rect(16, 16, 2, 15, '='); rect(16, 16, 10, 2, '=');
-  Z.flowers(60);
-  const A = zoneArea('cote', Z.g, 'cote', { name: 'La Côte', dark: 0.42 });
-  A.houses = [
-    { id: 'artificiere', x: 22 * TS + 8, y: 15 * TS, o: { w: 6, d: 4, roof: '#c83a3a', sign: 'fire', chimney: true } },
-    { id: 'phare', x: 12 * TS + 8, y: 41 * TS, o: { w: 4, d: 3, style: 'hut', roof: '#3a5a8a', wall: '#d8d0c8' } },
+  const g = PAINTED.cote.map(r => r.split(''));
+  const A = zoneArea('cote', g, 'cote', { name: 'La Côte', dark: 0.42 });
+  A.paint = 'map_cote'; A.bushSpots = [];
+  A.houses = [ // maisons peintes : on entre par la porte, en montant
+    { id: 'artificiere', x: 370, y: 14 * TS, o: { w: 3, d: 1, painted: true } },
+    { id: 'phare', x: 467, y: 42 * TS, o: { w: 3, d: 1, painted: true } },
   ];
-  scatter(A, 57, [{ x: 30 * TS, y: 0, w: 34 * TS, h: ZH * TS }, { x: 14 * TS, y: 8 * TS, w: 16 * TS, h: 12 * TS }, { x: 6 * TS, y: 36 * TS, w: 12 * TS, h: 10 * TS }], { trees: 20, rocks: 10, flowers: 20, bushes: 18, kinds: ['oak1', 'oak2'] });
   A.spawn = function () {
     this.ents = [];
-    for (const [x, y] of this.bushSpots) this.ents.push(new Bush(x, y));
     for (const h of this.houses) this.ents.push(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)));
-    this.ents.push(new Facade(52 * TS, 18 * TS, 'tower'));
-    this.ents.push(new Decor(30 * TS, 44 * TS, 'lighthouse'));
-    for (const [x, y] of [[34, 10], [33, 26], [34, 38], [28, 20]]) this.ents.push(new Decor(x * TS, y * TS, 'palm'));
-    this.ents.push(new Relay(10 * TS, 27 * TS, 'cote'));
-    this.ents.push(new Sign(35 * TS, 31 * TS, [{ text: '« Tour des artificiers, sur l\'île. Danger : poudre ! »' }]));
-    this.ents.push(new Crab(30 * TS, 14 * TS), new Crab(32 * TS, 34 * TS), new Crab(26 * TS, 40 * TS), new Crow(20 * TS, 24 * TS), new Crow(10 * TS, 12 * TS), new Eel(44 * TS, 34 * TS));
+    for (const o of OVERHEAD.cote) this.ents.push(new Overhead('map_cote_dessus', o)); // toits, feuillages, phare, tour : le héros passe derrière
+    this.ents.push(new Relay(124, 473, 'cote'));
+    this.ents.push(Object.assign(new Sign(27 * TS, 24 * TS, [{ text: '« Tour des artificiers, sur l\'île. On n\'y accoste que par la plage du sud. Danger : poudre ! »' }]), { ghost: true })); // panneau peint
+    this.ents.push(new Crab(33 * TS, 8 * TS), new Crab(34 * TS, 36 * TS), new Crab(48 * TS, 28 * TS), new Crow(20 * TS, 24 * TS), new Crow(10 * TS, 12 * TS), new Eel(44 * TS, 34 * TS));
     questSpawns(this);
   };
   A.start = ZONE_ARRIVE.cote_from_lac;
-  A.fromDungeon = { x: 52 * TS, y: 19 * TS + 4, dir: 'down' };
+  A.fromDungeon = { x: 51 * TS + 8, y: 20 * TS + 4, dir: 'down' };
   A.exits = { 1: goZone('lac', 'lac_from_cote'), N: G => G.enter('tower', G.areas.tower.start) };
   return A;
 }
