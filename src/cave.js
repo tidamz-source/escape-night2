@@ -7,7 +7,7 @@
 function buildCaveArea() {
   return makeDungeon({
     id: 'cave', zone: 'collines', name: 'La Grotte des lucioles', theme: 'cave', seed: 21, rough: 0.2, moss: 360, dark: 0.26,
-    bossFlag: 'boss', heartFlag: 'heart2', potLoot: 'pot',
+    bossFlag: 'boss', heartFlag: 'heart2', potLoot: 'pot', paintRooms: { entry: 'grotte_entree' },
     rooms: { entry: [1, 3], arena: [2, 3], hub: [1, 2], block: [0, 2], sling: [0, 1], chasm: [1, 1], twin: [2, 2], bigkey: [2, 1], treasure: [3, 2], boss: [1, 0] },
     entry: 'entry', boss: 'boss',
     links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'hub', { key: 'caveK1' }], ['hub', 'block'], ['block', 'sling', { shut: () => !Plate.held('plateE') }], ['sling', 'chasm'], ['hub', 'chasm'], ['hub', 'twin'], ['twin', 'bigkey', { key: 'caveK2' }], ['twin', 'treasure'], ['chasm', 'boss', { big: true }]],
