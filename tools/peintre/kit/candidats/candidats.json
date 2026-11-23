@@ -1,0 +1,1172 @@
+[
+{
+"n": 1,
+"file": "001_royaume_pin.png",
+"name": "pin",
+"cat": "arbre",
+"src": "royaume",
+"signature": false,
+"w": 98,
+"h": 144
+},
+{
+"n": 2,
+"file": "002_royaume_arbre_roux.png",
+"name": "arbre_roux",
+"cat": "arbre",
+"src": "royaume",
+"signature": false,
+"w": 93,
+"h": 136
+},
+{
+"n": 3,
+"file": "003_royaume_rondin.png",
+"name": "rondin",
+"cat": "bois",
+"src": "royaume",
+"signature": false,
+"w": 105,
+"h": 73
+},
+{
+"n": 4,
+"file": "004_royaume_puits.png",
+"name": "puits",
+"cat": "objet",
+"src": "royaume",
+"signature": false,
+"w": 62,
+"h": 83
+},
+{
+"n": 5,
+"file": "005_royaume_lampadaire.png",
+"name": "lampadaire",
+"cat": "objet",
+"src": "royaume",
+"signature": false,
+"w": 21,
+"h": 67
+},
+{
+"n": 6,
+"file": "006_royaume_panneau.png",
+"name": "panneau",
+"cat": "objet",
+"src": "royaume",
+"signature": false,
+"w": 38,
+"h": 56
+},
+{
+"n": 7,
+"file": "007_royaume_bouleau.png",
+"name": "bouleau",
+"cat": "arbre",
+"src": "royaume",
+"signature": false,
+"w": 131,
+"h": 210
+},
+{
+"n": 8,
+"file": "008_royaume_rondin2.png",
+"name": "rondin2",
+"cat": "bois",
+"src": "royaume",
+"signature": false,
+"w": 101,
+"h": 94
+},
+{
+"n": 9,
+"file": "009_royaume_arbre_rond.png",
+"name": "arbre_rond",
+"cat": "arbre",
+"src": "royaume",
+"signature": false,
+"w": 95,
+"h": 122
+},
+{
+"n": 10,
+"file": "010_royaume_rocher.png",
+"name": "rocher",
+"cat": "rocher",
+"src": "royaume",
+"signature": false,
+"w": 81,
+"h": 52
+},
+{
+"n": 11,
+"file": "011_royaume_arbre_rouge.png",
+"name": "arbre_rouge",
+"cat": "arbre",
+"src": "royaume",
+"signature": false,
+"w": 93,
+"h": 89
+},
+{
+"n": 12,
+"file": "012_royaume_arbre_rouge2.png",
+"name": "arbre_rouge2",
+"cat": "arbre",
+"src": "royaume",
+"signature": false,
+"w": 93,
+"h": 90
+},
+{
+"n": 13,
+"file": "013_royaume_cible.png",
+"name": "cible",
+"cat": "objet",
+"src": "royaume",
+"signature": false,
+"w": 30,
+"h": 30
+},
+{
+"n": 14,
+"file": "014_royaume_maison_a.png",
+"name": "maison_a",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 244,
+"h": 145
+},
+{
+"n": 15,
+"file": "015_royaume_maison_b.png",
+"name": "maison_b",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 268,
+"h": 228
+},
+{
+"n": 16,
+"file": "016_royaume_maison_c.png",
+"name": "maison_c",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 184,
+"h": 146
+},
+{
+"n": 17,
+"file": "017_royaume_maison_d.png",
+"name": "maison_d",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 282,
+"h": 242
+},
+{
+"n": 18,
+"file": "018_royaume_auberge.png",
+"name": "auberge",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 296,
+"h": 256
+},
+{
+"n": 19,
+"file": "019_royaume_beffroi.png",
+"name": "beffroi",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 255,
+"h": 447
+},
+{
+"n": 20,
+"file": "020_royaume_forge.png",
+"name": "forge",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 410,
+"h": 279
+},
+{
+"n": 21,
+"file": "021_royaume_maisons_rang.png",
+"name": "maisons_rang",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 479,
+"h": 247
+},
+{
+"n": 22,
+"file": "022_royaume_chaumiere.png",
+"name": "chaumiere",
+"cat": "batiment",
+"src": "royaume",
+"signature": true,
+"w": 183,
+"h": 163
+},
+{
+"n": 23,
+"file": "023_collines_moulin.png",
+"name": "moulin",
+"cat": "batiment",
+"src": "collines",
+"signature": true,
+"w": 213,
+"h": 365
+},
+{
+"n": 24,
+"file": "024_collines_ferme.png",
+"name": "ferme",
+"cat": "batiment",
+"src": "collines",
+"signature": true,
+"w": 294,
+"h": 277
+},
+{
+"n": 25,
+"file": "025_collines_rondin3.png",
+"name": "rondin3",
+"cat": "bois",
+"src": "collines",
+"signature": false,
+"w": 124,
+"h": 97
+},
+{
+"n": 26,
+"file": "026_collines_rondin4.png",
+"name": "rondin4",
+"cat": "bois",
+"src": "collines",
+"signature": false,
+"w": 101,
+"h": 81
+},
+{
+"n": 27,
+"file": "027_collines_panneau2.png",
+"name": "panneau2",
+"cat": "objet",
+"src": "collines",
+"signature": false,
+"w": 36,
+"h": 23
+},
+{
+"n": 28,
+"file": "028_collines_lampadaire2.png",
+"name": "lampadaire2",
+"cat": "objet",
+"src": "collines",
+"signature": false,
+"w": 35,
+"h": 91
+},
+{
+"n": 29,
+"file": "029_collines_lanterne.png",
+"name": "lanterne",
+"cat": "objet",
+"src": "collines",
+"signature": false,
+"w": 48,
+"h": 90
+},
+{
+"n": 30,
+"file": "030_collines_rochers.png",
+"name": "rochers",
+"cat": "rocher",
+"src": "collines",
+"signature": false,
+"w": 138,
+"h": 126
+},
+{
+"n": 31,
+"file": "031_collines_bouleau_jaune.png",
+"name": "bouleau_jaune",
+"cat": "arbre",
+"src": "collines",
+"signature": false,
+"w": 123,
+"h": 198
+},
+{
+"n": 32,
+"file": "032_collines_arbre_roux2.png",
+"name": "arbre_roux2",
+"cat": "arbre",
+"src": "collines",
+"signature": false,
+"w": 112,
+"h": 113
+},
+{
+"n": 33,
+"file": "033_collines_pins.png",
+"name": "pins",
+"cat": "arbre",
+"src": "collines",
+"signature": false,
+"w": 110,
+"h": 183
+},
+{
+"n": 34,
+"file": "034_camping_mobilhome_a.png",
+"name": "mobilhome_a",
+"cat": "batiment",
+"src": "camping",
+"signature": true,
+"w": 137,
+"h": 102
+},
+{
+"n": 35,
+"file": "035_camping_mobilhome_b.png",
+"name": "mobilhome_b",
+"cat": "batiment",
+"src": "camping",
+"signature": true,
+"w": 141,
+"h": 107
+},
+{
+"n": 36,
+"file": "036_camping_rondin5.png",
+"name": "rondin5",
+"cat": "bois",
+"src": "camping",
+"signature": false,
+"w": 40,
+"h": 19
+},
+{
+"n": 37,
+"file": "037_camping_rondin6.png",
+"name": "rondin6",
+"cat": "bois",
+"src": "camping",
+"signature": false,
+"w": 40,
+"h": 23
+},
+{
+"n": 38,
+"file": "038_camping_banc.png",
+"name": "banc",
+"cat": "objet",
+"src": "camping",
+"signature": false,
+"w": 50,
+"h": 32
+},
+{
+"n": 39,
+"file": "039_camping_borne.png",
+"name": "borne",
+"cat": "objet",
+"src": "camping",
+"signature": false,
+"w": 16,
+"h": 40
+},
+{
+"n": 40,
+"file": "040_camping_rocher2.png",
+"name": "rocher2",
+"cat": "rocher",
+"src": "camping",
+"signature": false,
+"w": 21,
+"h": 16
+},
+{
+"n": 41,
+"file": "041_camping_bouleau2.png",
+"name": "bouleau2",
+"cat": "arbre",
+"src": "camping",
+"signature": false,
+"w": 80,
+"h": 131
+},
+{
+"n": 42,
+"file": "042_camping_rochers2.png",
+"name": "rochers2",
+"cat": "rocher",
+"src": "camping",
+"signature": false,
+"w": 42,
+"h": 33
+},
+{
+"n": 43,
+"file": "043_camping_rochers3.png",
+"name": "rochers3",
+"cat": "rocher",
+"src": "camping",
+"signature": false,
+"w": 42,
+"h": 30
+},
+{
+"n": 44,
+"file": "044_route_nord_pont.png",
+"name": "pont",
+"cat": "batiment",
+"src": "route_nord",
+"signature": true,
+"w": 77,
+"h": 71
+},
+{
+"n": 45,
+"file": "045_route_nord_panneau3.png",
+"name": "panneau3",
+"cat": "objet",
+"src": "route_nord",
+"signature": false,
+"w": 37,
+"h": 54
+},
+{
+"n": 46,
+"file": "046_route_nord_caisse.png",
+"name": "caisse",
+"cat": "objet",
+"src": "route_nord",
+"signature": false,
+"w": 30,
+"h": 35
+},
+{
+"n": 47,
+"file": "047_route_nord_caisse2.png",
+"name": "caisse2",
+"cat": "objet",
+"src": "route_nord",
+"signature": false,
+"w": 25,
+"h": 29
+},
+{
+"n": 48,
+"file": "048_route_nord_foin.png",
+"name": "foin",
+"cat": "objet",
+"src": "route_nord",
+"signature": false,
+"w": 33,
+"h": 41
+},
+{
+"n": 49,
+"file": "049_route_nord_bois_coupe.png",
+"name": "bois_coupe",
+"cat": "bois",
+"src": "route_nord",
+"signature": false,
+"w": 48,
+"h": 32
+},
+{
+"n": 50,
+"file": "050_route_nord_tronc_couche.png",
+"name": "tronc_couche",
+"cat": "bois",
+"src": "route_nord",
+"signature": false,
+"w": 62,
+"h": 33
+},
+{
+"n": 51,
+"file": "051_route_nord_tronc_couche2.png",
+"name": "tronc_couche2",
+"cat": "bois",
+"src": "route_nord",
+"signature": false,
+"w": 67,
+"h": 60
+},
+{
+"n": 52,
+"file": "052_route_nord_tronc_couche3.png",
+"name": "tronc_couche3",
+"cat": "bois",
+"src": "route_nord",
+"signature": false,
+"w": 53,
+"h": 44
+},
+{
+"n": 53,
+"file": "053_route_nord_cloture.png",
+"name": "cloture",
+"cat": "objet",
+"src": "route_nord",
+"signature": false,
+"w": 39,
+"h": 27
+},
+{
+"n": 54,
+"file": "054_route_nord_cloture2.png",
+"name": "cloture2",
+"cat": "objet",
+"src": "route_nord",
+"signature": false,
+"w": 77,
+"h": 28
+},
+{
+"n": 55,
+"file": "055_route_nord_rocher3.png",
+"name": "rocher3",
+"cat": "rocher",
+"src": "route_nord",
+"signature": false,
+"w": 24,
+"h": 16
+},
+{
+"n": 56,
+"file": "056_route_nord_rocher4.png",
+"name": "rocher4",
+"cat": "rocher",
+"src": "route_nord",
+"signature": false,
+"w": 22,
+"h": 14
+},
+{
+"n": 57,
+"file": "057_route_nord_arbuste.png",
+"name": "arbuste",
+"cat": "arbre",
+"src": "route_nord",
+"signature": false,
+"w": 63,
+"h": 61
+},
+{
+"n": 58,
+"file": "058_route_nord_caisses.png",
+"name": "caisses",
+"cat": "objet",
+"src": "route_nord",
+"signature": false,
+"w": 45,
+"h": 45
+},
+{
+"n": 59,
+"file": "059_collines_gros_rocher.png",
+"name": "gros_rocher",
+"cat": "rocher",
+"src": "collines",
+"signature": false,
+"w": 39,
+"h": 31
+},
+{
+"n": 60,
+"file": "060_collines_gros_rocher.png",
+"name": "gros_rocher",
+"cat": "rocher",
+"src": "collines",
+"signature": false,
+"w": 42,
+"h": 31
+},
+{
+"n": 61,
+"file": "061_collines_feuilles.png",
+"name": "feuilles",
+"cat": "sol",
+"src": "collines",
+"signature": false,
+"w": 18,
+"h": 16
+},
+{
+"n": 62,
+"file": "062_collines_feuilles.png",
+"name": "feuilles",
+"cat": "sol",
+"src": "collines",
+"signature": false,
+"w": 20,
+"h": 16
+},
+{
+"n": 63,
+"file": "063_collines_feuilles.png",
+"name": "feuilles",
+"cat": "sol",
+"src": "collines",
+"signature": false,
+"w": 16,
+"h": 16
+},
+{
+"n": 64,
+"file": "064_collines_feuilles.png",
+"name": "feuilles",
+"cat": "sol",
+"src": "collines",
+"signature": false,
+"w": 17,
+"h": 14
+},
+{
+"n": 65,
+"file": "065_collines_feuilles.png",
+"name": "feuilles",
+"cat": "sol",
+"src": "collines",
+"signature": false,
+"w": 21,
+"h": 15
+},
+{
+"n": 66,
+"file": "066_collines_feuilles.png",
+"name": "feuilles",
+"cat": "sol",
+"src": "collines",
+"signature": false,
+"w": 20,
+"h": 17
+},
+{
+"n": 67,
+"file": "067_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 18,
+"h": 24
+},
+{
+"n": 68,
+"file": "068_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 20,
+"h": 14
+},
+{
+"n": 69,
+"file": "069_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 12,
+"h": 18
+},
+{
+"n": 70,
+"file": "070_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 20,
+"h": 19
+},
+{
+"n": 71,
+"file": "071_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 16,
+"h": 26
+},
+{
+"n": 72,
+"file": "072_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 10,
+"h": 22
+},
+{
+"n": 73,
+"file": "073_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 24,
+"h": 16
+},
+{
+"n": 74,
+"file": "074_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 11,
+"h": 12
+},
+{
+"n": 75,
+"file": "075_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 17,
+"h": 11
+},
+{
+"n": 76,
+"file": "076_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 18,
+"h": 18
+},
+{
+"n": 77,
+"file": "077_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 10,
+"h": 10
+},
+{
+"n": 78,
+"file": "078_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 27,
+"h": 17
+},
+{
+"n": 79,
+"file": "079_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 14,
+"h": 19
+},
+{
+"n": 80,
+"file": "080_collines_fleurs.png",
+"name": "fleurs",
+"cat": "fleurs",
+"src": "collines",
+"signature": false,
+"w": 22,
+"h": 15
+},
+{
+"n": 81,
+"file": "081_collines_cloture.png",
+"name": "cloture",
+"cat": "objet",
+"src": "collines",
+"signature": false,
+"w": 77,
+"h": 31
+},
+{
+"n": 82,
+"file": "082_collines_cloture.png",
+"name": "cloture",
+"cat": "objet",
+"src": "collines",
+"signature": false,
+"w": 74,
+"h": 25
+},
+{
+"n": 83,
+"file": "083_royaume_feuilles.png",
+"name": "feuilles",
+"cat": "sol",
+"src": "royaume",
+"signature": false,
+"w": 24,
+"h": 22
+},
+{
+"n": 84,
+"file": "084_royaume_panneau.png",
+"name": "panneau",
+"cat": "objet",
+"src": "royaume",
+"signature": false,
+"w": 38,
+"h": 57
+},
+{
+"n": 85,
+"file": "085_royaume_rocher.png",
+"name": "rocher",
+"cat": "rocher",
+"src": "royaume",
+"signature": false,
+"w": 21,
+"h": 18
+},
+{
+"n": 86,
+"file": "086_cote_buisson.png",
+"name": "buisson",
+"cat": "vegetation",
+"src": "cote",
+"signature": false,
+"w": 54,
+"h": 42
+},
+{
+"n": 87,
+"file": "087_cote_buisson_fleuri.png",
+"name": "buisson_fleuri",
+"cat": "vegetation",
+"src": "cote",
+"signature": false,
+"w": 40,
+"h": 34
+},
+{
+"n": 88,
+"file": "088_cote_buissons.png",
+"name": "buissons",
+"cat": "vegetation",
+"src": "cote",
+"signature": false,
+"w": 100,
+"h": 84
+},
+{
+"n": 89,
+"file": "089_cote_buisson_fleuri.png",
+"name": "buisson_fleuri",
+"cat": "vegetation",
+"src": "cote",
+"signature": false,
+"w": 32,
+"h": 30
+},
+{
+"n": 90,
+"file": "090_cote_rocher.png",
+"name": "rocher",
+"cat": "rocher",
+"src": "cote",
+"signature": false,
+"w": 60,
+"h": 48
+},
+{
+"n": 91,
+"file": "091_cote_buisson.png",
+"name": "buisson",
+"cat": "vegetation",
+"src": "cote",
+"signature": false,
+"w": 58,
+"h": 50
+},
+{
+"n": 92,
+"file": "092_cote_buisson.png",
+"name": "buisson",
+"cat": "vegetation",
+"src": "cote",
+"signature": false,
+"w": 54,
+"h": 48
+},
+{
+"n": 93,
+"file": "093_cote_buisson.png",
+"name": "buisson",
+"cat": "vegetation",
+"src": "cote",
+"signature": false,
+"w": 50,
+"h": 40
+},
+{
+"n": 94,
+"file": "094_cote_buisson_fleuri.png",
+"name": "buisson_fleuri",
+"cat": "vegetation",
+"src": "cote",
+"signature": false,
+"w": 38,
+"h": 38
+},
+{
+"n": 95,
+"file": "095_pixellab_block.png",
+"name": "block",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 28,
+"h": 38
+},
+{
+"n": 96,
+"file": "096_pixellab_bush.png",
+"name": "bush",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 52,
+"h": 50
+},
+{
+"n": 97,
+"file": "097_pixellab_chest_closed.png",
+"name": "chest_closed",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 48,
+"h": 54
+},
+{
+"n": 98,
+"file": "098_pixellab_chest_open.png",
+"name": "chest_open",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 48,
+"h": 54
+},
+{
+"n": 99,
+"file": "099_pixellab_cracked.png",
+"name": "cracked",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 60,
+"h": 56
+},
+{
+"n": 100,
+"file": "100_pixellab_dead.png",
+"name": "dead",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 74,
+"h": 110
+},
+{
+"n": 101,
+"file": "101_pixellab_fswitch_off.png",
+"name": "fswitch_off",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 44,
+"h": 84
+},
+{
+"n": 102,
+"file": "102_pixellab_fswitch_on.png",
+"name": "fswitch_on",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 44,
+"h": 84
+},
+{
+"n": 103,
+"file": "103_pixellab_glowshroom.png",
+"name": "glowshroom",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 52,
+"h": 52
+},
+{
+"n": 104,
+"file": "104_pixellab_grave.png",
+"name": "grave",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 44,
+"h": 50
+},
+{
+"n": 105,
+"file": "105_pixellab_lamp.png",
+"name": "lamp",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 28,
+"h": 90
+},
+{
+"n": 106,
+"file": "106_pixellab_lighthouse.png",
+"name": "lighthouse",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": true,
+"w": 76,
+"h": 162
+},
+{
+"n": 107,
+"file": "107_pixellab_plate_off.png",
+"name": "plate_off",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 52,
+"h": 52
+},
+{
+"n": 108,
+"file": "108_pixellab_plate_on.png",
+"name": "plate_on",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 52,
+"h": 52
+},
+{
+"n": 109,
+"file": "109_pixellab_pot.png",
+"name": "pot",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 40,
+"h": 52
+},
+{
+"n": 110,
+"file": "110_pixellab_relay_off.png",
+"name": "relay_off",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 46,
+"h": 76
+},
+{
+"n": 111,
+"file": "111_pixellab_relay_on.png",
+"name": "relay_on",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 46,
+"h": 76
+},
+{
+"n": 112,
+"file": "112_pixellab_secretrock.png",
+"name": "secretrock",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 52,
+"h": 50
+},
+{
+"n": 113,
+"file": "113_pixellab_shrine.png",
+"name": "shrine",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": true,
+"w": 230,
+"h": 286
+},
+{
+"n": 114,
+"file": "114_pixellab_stump.png",
+"name": "stump",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 94,
+"h": 98
+},
+{
+"n": 115,
+"file": "115_pixellab_stump_axe.png",
+"name": "stump_axe",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 94,
+"h": 98
+},
+{
+"n": 116,
+"file": "116_pixellab_target.png",
+"name": "target",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": false,
+"w": 40,
+"h": 88
+},
+{
+"n": 117,
+"file": "117_pixellab_windmill.png",
+"name": "windmill",
+"cat": "pixellab",
+"src": "pixellab",
+"signature": true,
+"w": 136,
+"h": 192
+}
+]
