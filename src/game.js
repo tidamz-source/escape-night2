@@ -428,7 +428,7 @@ const G = {
     if (this.state === 'over') this.drawOver();
     this.drawFade();
     if (this.state !== 'cut') drawVirtualPad();
-    if (Input.toast.t > 0) { const w = textW(Input.toast.msg, 8) + 16; R(W / 2 - w / 2, H - 30, w, 16, 'rgba(7,13,31,.85)'); text(Input.toast.msg, W / 2, H - 26, { align: 'center', color: PAL.glow }); }
+    if (Input.toast.t > 0) { const w = textW(Input.toast.msg, 8) + 20; plaque(Math.round(W / 2 - w / 2), H - 31, Math.round(w), 17); text(Input.toast.msg, W / 2, H - 27, { align: 'center', color: UIC.goldS, shadowColor: UIC.dark }); }
   },
   drawWorld() {
     const A = this.area, P = this.player;
@@ -539,7 +539,7 @@ function frame(now) {
 }
 (async function boot() {
   resetT(); R(0, 0, W, H, PAL.ink); text('Chargement…', W / 2, H / 2 - 4, { align: 'center', color: PAL.glow });
-  try { await Promise.all([document.fonts.load(`10px ${FONT}`), document.fonts.load(`10px ${FONT_T}`)]); } catch (_) {}
+  try { await Promise.all([document.fonts.load(`10px ${FONT}`), document.fonts.load(`10px ${FONT_T}`), document.fonts.load(`24px ${FONT_G}`)]); } catch (_) {}
   await loadAssets();
   G.init();
   requestAnimationFrame(frame);

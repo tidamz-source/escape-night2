@@ -60,130 +60,193 @@ function beastPortrait(b, x, y, t) {
   try { e.x = 0; e.y = 0; e.t = t; e._px = 0; e._py = 0; e._di = 0; e._diT = 1; e.draw(); } catch (_) {}
   ctx.restore();
 }
-// ---------- habillage des menus : bois, parchemin, laiton ----------
-const UIC = { ink: '#4a2c17', soft: '#7a5a3a', mute: '#a08462', title: '#7a3a1e', red: '#b8282a', redL: '#d33a36', gold: '#e0a743', goldL: '#f6d27a', rivet: '#5a3410',
-  parch: '#f4e4c1', parchL: '#fff3d8', parchD: '#e3c996', cell: '#e7d0a2', cellE: '#ecdcb8', sel: '#fff1cf', edge: '#6b4325',
-  wood: '#9a6638', woodD: '#7a4a26', woodL: '#c08850', plank: '#5b3920', plankD: '#4a2e19', dark: '#24130a', cream: '#f6e7c8' };
-// texte sur parchemin (brun, sans ombre) ; o.font = 't' pour les titres en capitales pixel
+// ---------- habillage des menus : héroïque fantasy (fer, or, parchemin, rubis) ----------
+// pièces dessinées avec pxl : tools/ui/ui.px.js → assets/ui (coins, gemmes, curseur épée, cœurs, pad…)
+const UIC = { ink: '#2a1a10', soft: '#5e4530', mute: '#94795a', title: '#8a1a2a', red: '#9a1c30', redL: '#d8384a', redD: '#4a0c1c',
+  gold: '#b8801e', goldL: '#eab84a', goldS: '#fff2a8', goldD: '#6a3e10', rivet: '#4a2a0a',
+  parch: '#f1e1ba', parchL: '#fff6dc', parchD: '#d9bf88', parchE: '#c9a96e', cell: '#e6d0a0', cellE: '#ebdcb6', sel: '#fff2cc', edge: '#6b4a28',
+  iron: '#3c3a5a', ironD: '#24223a', ironL: '#5e5f86', ironH: '#9a9cc2', night: '#18224a', nightD: '#0d1430',
+  wood: '#3c3a5a', woodD: '#24223a', woodL: '#5e5f86', plank: '#18224a', plankD: '#0d1430', dark: '#120c1a', cream: '#f6e7c8', sapph: '#3a6ae0' };
 const UI_TXT = 1.2; // agrandit tous les textes des menus
+// texte sur parchemin (encre brune, sans ombre) ; o.font = 't' pour les étiquettes en capitales pixel, 'g' pour les titres gothiques
 function ptext(str, x, y, o = {}) { text(str, x, y, Object.assign({ color: UIC.ink, shadow: false }, o, { size: (o.size || 8) * UI_TXT })); }
-// texte crème sur le bois (avec ombre portée brune)
+// texte clair sur le fer et la pierre (ombre portée sombre)
 function wtext(str, x, y, o = {}) { text(str, x, y, Object.assign({ color: UIC.cream, shadowColor: UIC.dark }, o, { size: (o.size || 8) * UI_TXT })); }
-// fond de planches (écrans de menu plein écran)
-function woodBg() {
-  R(0, 0, W, H, UIC.plank);
-  for (let y = 0, k = 0; y < H; y += 18, k++) { R(0, y + 16, W, 1, UIC.plankD); R(0, y + 17, W, 1, '#2e1a0d'); const j = (k * 157) % 360 + 40; R(j, y, 1, 16, '#3d2414'); R(j + 1, y, 1, 16, '#6b4628'); }
+// grand titre gothique doré, cerné de nuit
+function gtext(str, x, y, size, o = {}) {
+  ctx.font = `400 ${size}px ${FONT_G}`; ctx.textAlign = o.align || 'center'; ctx.textBaseline = 'top';
+  ctx.fillStyle = o.outline || UIC.dark;
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1], [0, 2], [1, 2], [-1, 2]]) ctx.fillText(str, x + dx, y + dy);
+  const c = o.colors || [UIC.goldS, UIC.goldL, UIC.gold], g = ctx.createLinearGradient(0, y + size * 0.15, 0, y + size * 0.95);
+  c.forEach((k, i) => { g.addColorStop(i / (c.length - 1), k); });
+  ctx.fillStyle = g; ctx.fillText(str, x, y);
 }
-// coin de laiton riveté
-function brass(x, y) { R(x, y, 6, 6, UIC.gold); R(x, y, 6, 1, UIC.goldL); R(x + 2, y + 2, 2, 2, UIC.rivet); }
-// cadre de bois + parchemin ; o.on : liseré doré (sélection)
+function uimg(k, x, y, a) { const im = IMG['ui_' + k]; if (!im) return; if (a !== undefined) ctx.globalAlpha = a; ctx.drawImage(im, Math.round(x), Math.round(y)); if (a !== undefined) ctx.globalAlpha = 1; }
+// fond des écrans de menu : pierre de nuit, bandeaux de fer, vignette
+let STONE_PAT = null;
+function woodBg() {
+  if (!STONE_PAT && IMG.ui_stone) STONE_PAT = ctx.createPattern(IMG.ui_stone, 'repeat');
+  R(0, 0, W, H, UIC.night); if (STONE_PAT) { ctx.fillStyle = STONE_PAT; ctx.fillRect(0, 0, W, H); }
+  const v = ctx.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, 300); v.addColorStop(0, 'rgba(13,20,48,0)'); v.addColorStop(1, 'rgba(6,4,14,.78)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  ironBand(0, 0, W, 27); // bandeau des onglets
+}
+// bande de fer horizontale à liseré d'or (bandeaux, socles)
+function ironBand(x, y, w, h) {
+  R(x, y, w, h, UIC.ironD); R(x, y + 1, w, 1, UIC.iron); R(x, y + h - 3, w, 1, UIC.goldD); R(x, y + h - 2, w, 1, UIC.goldL); R(x, y + h - 1, w, 1, UIC.dark);
+}
+function brass(x, y) { uimg('corner', x - 3, y - 3); }
+// cadre de fer liseré d'or, parchemin vieilli, coins en losange serti ; o.on : sélection (halo d'or, saphirs)
 function panel(x, y, w, h, o = {}) {
-  if (o.on) R(x - 6, y - 6, w + 12, h + 12, UIC.goldL);
-  R(x - 5, y - 5, w + 10, h + 10, UIC.dark); R(x - 4, y - 4, w + 8, h + 8, UIC.woodL); R(x - 3, y - 3, w + 6, h + 6, UIC.wood); R(x - 3, y + h / 2, w + 6, h / 2 + 3, UIC.woodD);
-  R(x - 1, y - 1, w + 2, h + 2, UIC.edge); R(x, y, w, h, o.fill || UIC.parch); R(x + 1, y + 1, w - 2, 1, o.fill ? 'rgba(255,255,255,.25)' : UIC.parchL); R(x + 1, y + h - 2, w - 2, 1, UIC.parchD);
-  brass(x - 5, y - 5); brass(x + w - 1, y - 5); brass(x - 5, y + h - 1); brass(x + w - 1, y + h - 1);
+  ctx.globalAlpha = 0.35; R(x - 4, y - 3, w + 12, h + 12, '#000'); ctx.globalAlpha = 1;
+  if (o.on) { R(x - 8, y - 8, w + 16, h + 16, UIC.goldS); R(x - 7, y - 7, w + 14, h + 14, UIC.goldL); }
+  R(x - 6, y - 6, w + 12, h + 12, UIC.dark);
+  R(x - 5, y - 5, w + 10, h + 10, UIC.iron); R(x - 5, y - 5, w + 10, 1, UIC.ironH); R(x - 5, y - 5, 1, h + 10, UIC.ironL); R(x - 5, y + h + 4, w + 10, 1, UIC.ironD); R(x + w + 4, y - 5, 1, h + 10, UIC.ironD);
+  R(x - 3, y - 3, w + 6, h + 6, UIC.gold); R(x - 3, y - 3, w + 6, 1, UIC.goldL); R(x - 3, y - 3, 1, h + 6, UIC.goldL); R(x - 3, y + h + 2, w + 6, 1, UIC.goldD); R(x + w + 2, y - 3, 1, h + 6, UIC.goldD);
+  R(x - 1, y - 1, w + 2, h + 2, UIC.dark);
+  const f = o.fill || UIC.parch;
+  if (o.fill) R(x, y, w, h, f);
+  else { R(x, y, w, h, UIC.parchE); R(x + 1, y + 1, w - 2, h - 2, UIC.parchD); R(x + 3, y + 3, w - 6, h - 6, f); R(x + 3, y + 3, w - 6, 1, UIC.parchL); } // bords roussis
+  const k = o.on ? 'corner_s' : 'corner';
+  uimg(k, x - 9, y - 9); uimg(k, x + w - 4, y - 9); uimg(k, x - 9, y + h - 4); uimg(k, x + w - 4, y + h - 4);
 }
 function box(x, y, w, h, o = {}) { panel(x, y, w, h, o); }
-// case d'objet : creusée dans le parchemin ; on = sélection dorée ; empty = case vide
+// case d'objet : gravée dans le parchemin ; on = sertie d'or ; empty = case vide
 function cellBox(x, y, w, h, on, empty, tint) {
-  if (on) { R(x - 2, y - 2, w + 4, h + 4, UIC.goldL); R(x - 1, y - 1, w + 2, h + 2, UIC.rivet); }
-  R(x, y, w, h, on ? UIC.gold : UIC.woodD); R(x + 1, y + 1, w - 2, h - 2, on ? UIC.sel : empty ? UIC.cellE : (tint || UIC.cell));
-  if (!empty && !on) R(x + 1, y + 1, w - 2, 1, '#c9a46c');
+  if (on) {
+    R(x - 2, y - 2, w + 4, h + 4, UIC.dark); R(x - 1, y - 1, w + 2, h + 2, UIC.goldL); R(x, y + h - 1, w + 1, 1, UIC.goldD); R(x + w, y, 1, h, UIC.goldD);
+    R(x + 1, y + 1, w - 2, h - 2, UIC.sel); R(x + 1, y + 1, w - 2, 1, '#fffbe8');
+    uimg('gem', x - 4, y - 4); return;
+  }
+  R(x, y, w, h, UIC.parchE); R(x, y, w, 1, UIC.edge); R(x, y, 1, h, UIC.edge);
+  R(x + 1, y + 1, w - 1, h - 1, UIC.parchL); R(x + 1, y + 1, w - 2, h - 2, empty ? UIC.cellE : (tint || UIC.cell));
+  if (!empty) R(x + 1, y + 1, w - 2, 1, '#c9a46c');
 }
-// bouton de bois biseauté ; on = rouge cerclé d'or
+// bouton-plaque : fer bleuté ; on = émail rubis cerclé d'or
 function woodBtn(x, y, w, h, label, on, size = 6.5) {
-  if (on) R(x - 2, y - 2, w + 4, h + 4, UIC.gold);
-  R(x - 1, y - 1, w + 2, h + 3, UIC.dark); R(x, y, w, h, on ? '#f08060' : UIC.woodL); R(x + 1, y + 1, w - 2, h - 2, on ? UIC.redL : UIC.wood); R(x + 1, y + (h >> 1), w - 2, h - 2 - (h >> 1), on ? '#a8232a' : UIC.woodD);
-  if (label) wtext(label, x + w / 2, y + (h - size) / 2 + 0.5, { size, align: 'center', font: 't', shadowColor: on ? '#5a0f12' : UIC.dark });
+  R(x - 1, y - 1, w + 2, h + 3, UIC.dark);
+  if (on) {
+    R(x - 2, y - 2, w + 4, h + 4, UIC.dark); R(x - 1, y - 1, w + 2, h + 2, UIC.goldL); R(x - 1, y + h, w + 2, 1, UIC.goldD);
+    R(x, y, w, h, UIC.redL); R(x, y + (h >> 1), w, h - (h >> 1), UIC.red); R(x, y, w, 1, '#ff8a88'); R(x, y + h - 1, w, 1, UIC.redD);
+  } else {
+    R(x, y, w, h, UIC.ironL); R(x, y + 1, w, h - 1, UIC.iron); R(x, y + (h >> 1) + 1, w, h - (h >> 1) - 1, UIC.ironD); R(x, y, w, 1, UIC.ironH);
+    R(x + 1, y + 1, 1, 1, UIC.gold); R(x + w - 2, y + 1, 1, 1, UIC.gold); R(x + 1, y + h - 2, 1, 1, UIC.goldD); R(x + w - 2, y + h - 2, 1, 1, UIC.goldD); // rivets
+  }
+  if (label) wtext(label, x + w / 2, y + (h - size * UI_TXT) / 2 + 0.5, { size, align: 'center', font: 't', color: on ? UIC.goldS : '#d8d4ec', shadowColor: on ? UIC.redD : UIC.dark });
 }
-// banderole rouge à queues découpées, centrée sur cx
+// petite épée-curseur qui pointe vers (x, y), avec un léger va-et-vient
+function swordCursor(x, y) { const t = typeof G !== 'undefined' ? G.t : 0; uimg('cursor', x - 17 + Math.round(Math.sin(t * 6) * 1.5), y - 4); }
+// bannière rubis à queues d'aronde, liserés d'or, centrée sur cx
 function ribbon(cx, y, txt, size = 7.5, font) {
-  size *= UI_TXT; const w = textW(txt, size, font) + 24, x = Math.round(cx - w / 2), h = Math.round(size + 8);
-  for (const s of [-1, 1]) { const tx = s < 0 ? x - 9 : x + w + 1; R(tx - 1, y + 3, 9, 13, UIC.dark); R(tx, y + 4, 8, 11, '#8a1a20'); R(s < 0 ? tx : tx + 5, y + 8, 3, 3, UIC.plank); }
-  R(x - 1, y - 1, w + 2, h + 2, UIC.dark); R(x, y, w, h, '#f08060'); R(x + 1, y + 1, w - 2, h - 2, UIC.redL); R(x + 1, y + 8, w - 2, h - 9, '#a8232a');
-  text(txt, cx, y + (h - size) / 2, { size, align: 'center', color: '#fff6e0', shadowColor: '#5a0f12', font });
+  size *= UI_TXT; const w = textW(txt, size, font) + 28, x = Math.round(cx - w / 2), h = Math.round(size + 9);
+  const tail = (s, c, g) => { const e = s < 0 ? x + 2 : x + w - 2, o = e + s * (14 + g), y0 = y + 4 - g, y1 = y + h + 3 + g; ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(e, y0); ctx.lineTo(o, y0); ctx.lineTo(o - s * (5 + g * 0.5), (y0 + y1) / 2); ctx.lineTo(o, y1); ctx.lineTo(e, y1); ctx.fill(); };
+  for (const s of [-1, 1]) { tail(s, UIC.dark, 1); tail(s, UIC.redD, 0); }
+  R(x - 1, y - 1, w + 2, h + 2, UIC.dark); R(x, y, w, h, UIC.goldL); R(x, y + h - 1, w, 1, UIC.goldD);
+  R(x + 1, y + 1, w - 2, h - 2, UIC.redL); R(x + 1, y + (h >> 1), w - 2, h - 1 - (h >> 1), UIC.red); R(x + 1, y + 1, w - 2, 1, '#ff8a88');
+  R(x + 2, y + 2, w - 4, 1, 'rgba(255,242,168,.35)'); R(x + 2, y + h - 3, w - 4, 1, 'rgba(255,242,168,.35)'); // fil d'or brodé
+  uimg('gem_gold', x + 3, y + (h >> 1) - 3); uimg('gem_gold', x + w - 10, y + (h >> 1) - 3);
+  text(txt, cx, y + (h - size) / 2 + 0.5, { size, align: 'center', color: UIC.goldS, shadowColor: UIC.redD, font });
 }
-// jauge brune remplie
-function gauge(x, y, w, v, c) { R(x, y, w, 6, UIC.edge); R(x + 1, y + 1, w - 2, 4, '#d9bf8c'); const f = Math.round((w - 2) * clamp(v, 0, 1)); if (f) { R(x + 1, y + 1, f, 4, c); R(x + 1, y + 4, f, 1, 'rgba(0,0,0,.2)'); } }
-// touche A / B
-function keyCap(x, y, k, c) { R(x - 1, y - 1, 10, 9, UIC.dark); R(x, y, 8, 7, c); text(k, x + 4, y + 0.5, { size: 5.5, align: 'center', color: '#fff6e0', shadow: false, font: 't', bold: true }); }
+// séparateur : filet d'or avec un fleuron au centre
+function flourish(x, y, w, gem = 'gem_gold') { R(x, y, w, 1, UIC.gold); R(x + 4, y + 1, w - 8, 1, UIC.goldD); uimg(gem, x + w / 2 - 3, y - 3); }
+// jauge sertie
+function gauge(x, y, w, v, c) { R(x - 1, y - 1, w + 2, 8, UIC.dark); R(x, y, w, 6, UIC.goldD); R(x + 1, y + 1, w - 2, 4, UIC.ironD); const f = Math.round((w - 2) * clamp(v, 0, 1)); if (f) { R(x + 1, y + 1, f, 4, c); R(x + 1, y + 1, f, 1, 'rgba(255,255,255,.35)'); R(x + 1, y + 4, f, 1, 'rgba(0,0,0,.3)'); } }
+// touche A / B : petite gemme
+function keyCap(x, y, k, c) { R(x - 1, y - 1, 10, 9, UIC.dark); R(x, y, 8, 7, c); R(x, y, 8, 1, 'rgba(255,255,255,.45)'); R(x, y + 6, 8, 1, 'rgba(0,0,0,.35)'); text(k, x + 4, y + 0.5, { size: 5.5, align: 'center', color: '#fff6e0', shadow: false, font: 't', bold: true }); }
+// plaque de fer du HUD (écus, clés, effets)
+function plaque(x, y, w, h) { R(x - 1, y - 1, w + 2, h + 2, UIC.dark); R(x, y, w, h, UIC.goldD); R(x, y, w, 1, UIC.goldL); R(x + 1, y + 1, w - 2, h - 2, 'rgba(18,12,26,.82)'); }
+// cœur du HUD : 0 vide, 1 moitié, 2 plein ; gold = cœur de la soupe dorée
+function hudHeart(x, y, v, gold) {
+  if (!IMG.ui_heart) { drawHeartShape(x + 5, y + 5, 2, v ? PAL.heart : '#3a2a48', '#c02848'); return; }
+  if (gold) return uimg('heart_gold', x, y);
+  uimg('heart_empty', x, y); if (!v) return;
+  if (v === 2) return uimg('heart', x, y);
+  ctx.save(); ctx.beginPath(); ctx.rect(x, y, 5.5, 10); ctx.clip(); uimg('heart', x, y); ctx.restore();
+}
 function heroHeight(id) { const sh = SHEETS[DATA.heroes[id].sheet]; return sh.meta.scale === '2' ? 37 : sh.meta.scale === '1.4' ? 32 : 31; }
 
 const UIMixin = {
   // ---------- HUD ----------
   drawHUD() {
-    const P = this.player, n = SAVE.maxHp / 2;
-    R(4, 4, n * 11 + 6, 14, 'rgba(7,13,31,.55)');
-    for (let i = 0; i < n; i++) {
-      const x = 12 + i * 11, y = 11, v = clamp(P.hp - i * 2, 0, 2);
-      drawHeartShape(x, y, 2, '#3a2a48', '#2a1d38');
-      if (v > 0) { ctx.save(); ctx.beginPath(); ctx.rect(x - 6, y - 6, v === 2 ? 12 : 6, 12); ctx.clip(); drawHeartShape(x, y, 2, PAL.heart, '#c02848'); ctx.restore(); }
-    }
+    const P = this.player, n = SAVE.maxHp / 2, per = 10;
+    // cœurs (rangées de 10, comme les Zelda)
+    for (let i = 0; i < n; i++) hudHeart(5 + (i % per) * 10, 4 + Math.floor(i / per) * 10, clamp(P.hp - i * 2, 0, 2));
+    if (P.bonusHp > 0) hudHeart(5 + (n % per) * 10, 4 + Math.floor(n / per) * 10, 2, true); // cœur doré (soupe dorée)
+    const top = 16 + Math.floor((n - 1) / per) * 10;
     let x = 4;
     const tool = Inventory.tool();
-    if (tool) { // case B : outil équipé + munitions
-      R(4, 21, 22, 22, 'rgba(7,13,31,.6)'); R(4, 21, 22, 1, PAL.lav); R(4, 42, 22, 1, PAL.lav); R(4, 21, 1, 22, PAL.lav); R(25, 21, 1, 22, PAL.lav);
-      drawItemIcon(tool, 15, 31, 1); text('B', 6, 22, { size: 6, color: PAL.lav, bold: true });
-      const it = Inventory.item(tool); if (it.ammo) text(String(Inventory.ammo(it.ammo)), 24, 35, { size: 6, align: 'right', color: Inventory.ammo(it.ammo) ? PAL.white : PAL.red, bold: true });
-      x = 30;
+    if (tool) { // médaillon B : outil équipé + munitions
+      uimg('medal', 4, top); drawItemIcon(tool, 17, top + 13, 1);
+      keyCap(2, top + 18, 'B', UIC.sapph);
+      const it = Inventory.item(tool); if (it.ammo) text(String(Inventory.ammo(it.ammo)), 31, top + 18, { size: 6.5, align: 'right', color: Inventory.ammo(it.ammo) ? UIC.goldS : PAL.red, bold: true, outline: UIC.dark, shadow: false });
+      x = 34;
     }
     // écus (+ clignote quand ça change)
-    const fl = this.moneyFlash > 0;
-    R(x, 24, 40, 14, 'rgba(7,13,31,.55)'); drawItemIcon('money', x + 8, 31, 0.8);
-    text(String(Wallet.get()).padStart(2, '0'), x + 15, 26, { size: 8, color: fl ? '#fff6c0' : PAL.warm, bold: fl });
-    // cœur doré (soupe dorée)
-    if (P.bonusHp > 0) drawHeartShape(12 + n * 11, 11, 2, '#ffd23a', '#c89010');
+    const fl = this.moneyFlash > 0, my = top + 7;
+    plaque(x, my, 38, 13); drawItemIcon('money', x + 7, my + 6.5, 0.8);
+    text(String(Wallet.get()).padStart(2, '0'), x + 34, my + 2.5, { size: 8, align: 'right', color: fl ? '#ffffff' : UIC.goldS, bold: true, shadowColor: UIC.dark });
     // effets des soupes, avec leur temps restant
-    let ex = W - 40; for (const [k, ic] of [['def', 'bouillon'], ['light', 'veloute'], ['swim', 'elixir']]) if (Effects.on(k)) { R(ex - 2, 34, 28, 14, 'rgba(7,13,31,.55)'); drawItemIcon(ic, ex + 5, 41, 0.6); text(String(Math.ceil(Effects.t[k])), ex + 24, 37, { size: 6, align: 'right', color: PAL.white }); ex -= 32; }
-    // boussole des secrets
+    let ex = W - 40; for (const [k, ic] of [['def', 'bouillon'], ['light', 'veloute'], ['swim', 'elixir']]) if (Effects.on(k)) { plaque(ex - 2, 34, 28, 14); drawItemIcon(ic, ex + 5, 41, 0.6); text(String(Math.ceil(Effects.t[k])), ex + 24, 37, { size: 6, align: 'right', color: UIC.goldS }); ex -= 32; }
     Soupe.draw(); Peche.draw(); // jauge de la soupe chaude, chrono du concours de pêche
-    const sec = compassTarget(this); if (sec) { const cx = W - 52, cy = 18, a = Math.atan2(sec.y - P.y, sec.x - P.x) + Math.sin(this.t * 20) * 0.08; ell(cx, cy, 8, 8, 'rgba(7,13,31,.7)'); ell(cx, cy, 6.5, 6.5, '#e8dcc8'); ctx.strokeStyle = '#d84a5a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * 5.5, cy + Math.sin(a) * 5.5); ctx.stroke(); }
-    if (this.area.rooms && this.area.dungeon && SAVE['bigkey_' + this.area.dungeon]) { R(x + 76, 24, 18, 14, 'rgba(7,13,31,.55)'); drawItemIcon('bigkey', x + 85, 31, 0.8); }
-    if (Keys.get() > 0 && this.area.rooms) { R(x + 44, 24, 28, 14, 'rgba(7,13,31,.55)'); drawKey(x + 52, 31, 1); text('×' + Keys.get(), x + 58, 26, { size: 8, color: PAL.warm }); }
-    // barre de vie du boss
+    // boussole des secrets : cadran de laiton
+    const sec = compassTarget(this); if (sec) { const cx = W - 52, cy = 18, a = Math.atan2(sec.y - P.y, sec.x - P.x) + Math.sin(this.t * 20) * 0.08; ell(cx, cy, 9, 9, UIC.dark); ell(cx, cy, 8, 8, UIC.gold); ell(cx - 0.5, cy - 0.5, 6.5, 6.5, UIC.goldL); ell(cx, cy, 6, 6, '#efe2c2'); ctx.strokeStyle = UIC.redL; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * 5.5, cy + Math.sin(a) * 5.5); ctx.stroke(); R(cx - 0.5, cy - 0.5, 1, 1, UIC.dark); }
+    if (Keys.get() > 0 && this.area.rooms) { plaque(x + 42, my, 28, 13); drawKey(x + 50, my + 6.5, 1); text('×' + Keys.get(), x + 56, my + 2.5, { size: 8, color: UIC.goldS, bold: true, shadowColor: UIC.dark }); }
+    if (this.area.rooms && this.area.dungeon && SAVE['bigkey_' + this.area.dungeon]) { plaque(x + 74, my, 18, 13); drawItemIcon('bigkey', x + 83, my + 6.5, 0.8); }
+    // barre de vie du boss : fer, or, crâne
     const boss = this.area.ents.find(e => e.isBoss && !e.dead && e.room === this.room && e.state !== 'sleep');
     if (boss && this.state !== 'slide') {
-      const bw = 160, bx = (W - bw) / 2, by = H - 16;
-      R(bx - 2, by - 12, bw + 4, 18, 'rgba(7,13,31,.75)');
-      text(boss.name || 'La Grande Ombre', W / 2, by - 11, { size: 7, align: 'center', color: PAL.lav });
-      R(bx, by, bw, 4, '#2a1d38'); R(bx, by, Math.round(bw * Math.max(0, boss.hp) / boss.maxHp), 4, boss.state === 'stun' ? PAL.warm : PAL.red); R(bx, by, bw, 1, 'rgba(255,255,255,.2)');
+      const bw = 170, bx = (W - bw) / 2, by = H - 14;
+      text(boss.name || 'La Grande Ombre', W / 2, by - 15, { size: 11, align: 'center', font: 'g', color: '#ffd0c8', outline: UIC.dark, shadow: false });
+      R(bx - 3, by - 3, bw + 6, 10, UIC.dark); R(bx - 2, by - 2, bw + 4, 8, UIC.gold); R(bx - 2, by - 2, bw + 4, 1, UIC.goldL); R(bx - 2, by + 5, bw + 4, 1, UIC.goldD);
+      R(bx, by, bw, 4, UIC.redD); const f = Math.round(bw * Math.max(0, boss.hp) / boss.maxHp);
+      R(bx, by, f, 4, boss.state === 'stun' ? UIC.goldL : UIC.redL); R(bx, by + 2, f, 2, boss.state === 'stun' ? UIC.gold : UIC.red); R(bx, by, f, 1, 'rgba(255,255,255,.4)');
+      uimg('skull', bx - 10, by - 4); uimg('gem', bx + bw + 2, by - 2);
     }
+    // nom du lieu : grand titre gothique sur un voile de nuit
     if (this.banner && this.state !== 'pause') {
       const a = clamp(Math.min(this.banner.t, 2.2 - this.banner.t) * 3, 0, 1); ctx.globalAlpha = a;
-      const w = textW(this.banner.text, 12) + 30; R(W / 2 - w / 2, 34, w, 20, 'rgba(7,13,31,.75)'); R(W / 2 - w / 2, 34, w, 1, PAL.glow); R(W / 2 - w / 2, 53, w, 1, PAL.glow);
-      text(this.banner.text, W / 2, 37, { size: 12, align: 'center', color: PAL.white }); ctx.globalAlpha = 1;
+      const w = Math.max(160, textW(this.banner.text, 20, 'g') + 60), g = ctx.createLinearGradient(W / 2 - w / 2, 0, W / 2 + w / 2, 0);
+      g.addColorStop(0, 'rgba(13,20,48,0)'); g.addColorStop(0.2, 'rgba(13,20,48,.75)'); g.addColorStop(0.8, 'rgba(13,20,48,.75)'); g.addColorStop(1, 'rgba(13,20,48,0)');
+      ctx.fillStyle = g; ctx.fillRect(W / 2 - w / 2, 30, w, 34);
+      gtext(this.banner.text, W / 2, 31, 20);
+      flourish(W / 2 - w / 2 + 30, 59, w - 60);
+      ctx.globalAlpha = 1;
     }
   },
 
   // ---------- dialogues (avec portrait) ----------
   drawDialog() {
     const d = this.dialog, line = d.lines[d.i], pad = Input.padVisible; // toujours en bas ; sur écran tactile, entre le stick et les boutons
-    const bw = pad ? 262 : 360, bx = pad ? 110 : (W - bw) / 2, bh = pad ? 72 : 64, by = pad ? H - bh - 4 : 192;
+    const bw = pad ? 262 : 360, bx = pad ? 110 : (W - bw) / 2, bh = pad ? 72 : 64, by = pad ? H - bh - 6 : 192;
     box(bx, by, bw, bh);
     const lumi = line.who === 'Lumi', face = line.face && IMG[`face_${line.face}_${line.mood}`] ? line.face : null;
     let tx = bx + 12;
     if (face || lumi) {
-      cellBox(bx + 8, by + 9, 46, 46, false, false, '#e9d3a6');
+      R(bx + 6, by + 7, 50, 50, UIC.dark); R(bx + 7, by + 8, 48, 48, UIC.goldL); R(bx + 8, by + 9, 47, 47, UIC.goldD); R(bx + 8, by + 9, 46, 46, lumi ? '#1a2450' : '#e9d3a6');
       if (face) drawFace(face, line.mood, bx + 12, by + 12, 1.5);
       else { ctx.globalAlpha = 0.5; ell(bx + 31, by + 32, 14, 14, '#ffe27a'); ctx.globalAlpha = 1; drawLumi(bx + 31, by + 32 + Math.sin(this.t * 3), this.t); }
       tx = bx + 64;
     }
-    if (line.who) { const nw = textW(line.who, 8) + 12; R(bx + 6, by - 11, nw + 2, 15, UIC.dark); R(bx + 7, by - 10, nw, 13, lumi ? UIC.goldL : UIC.woodL); R(bx + 8, by - 9, nw - 2, 11, lumi ? UIC.gold : UIC.wood); R(bx + 8, by - 3, nw - 2, 5, lumi ? '#c88a20' : UIC.woodD); text(line.who, bx + 13, by - 9, { color: lumi ? UIC.ink : UIC.cream, shadow: !lumi, shadowColor: UIC.dark, bold: true }); }
+    if (line.who) { // cartouche du nom : émail rubis cerclé d'or (or pour Lumi)
+      const nw = textW(line.who, 8, 'g') + 18, nx = bx + 4, ny = by - 14;
+      R(nx - 1, ny - 1, nw + 2, 16, UIC.dark); R(nx, ny, nw, 14, UIC.goldL); R(nx, ny + 13, nw, 1, UIC.goldD);
+      R(nx + 1, ny + 1, nw - 2, 12, lumi ? UIC.gold : UIC.redL); R(nx + 1, ny + 7, nw - 2, 6, lumi ? UIC.goldD : UIC.red);
+      text(line.who, nx + nw / 2, ny + 0.5, { size: 12, align: 'center', font: 'g', color: UIC.goldS, outline: lumi ? UIC.goldD : UIC.redD, shadow: false });
+    }
     const maxW = bx + bw - 14 - tx, shown = line.text.slice(0, Math.floor(d.c));
     let fs = 10, lh = 13, lines = wrap(line.text, maxW, fs);
     for (const [f2, l2] of [[9, 12], [8, 11], [7, 10]]) if (lines.length * lh > bh - 10) { fs = f2; lh = l2; lines = wrap(line.text, maxW, fs); } // texte long : un cran plus petit, tant qu'il le faut
     let count = 0, ty = by + (lines.length * lh > bh - 16 ? 6 : 12);
     for (const ln of lines) { text(shown.slice(count, count + ln.length), tx, ty, { size: fs, color: UIC.ink, shadow: false }); count += ln.length + 1; ty += lh; }
     if (d.choices && d.i === d.lines.length - 1 && d.c >= line.text.length) {
-      const cw = Math.max(...d.choices.map(c => textW(c, 8 * UI_TXT))) + 30, cx = clamp(bx + bw - cw - 6, 4, W - cw - 4), cy = by - d.choices.length * 14 - 10;
+      const cw = Math.max(...d.choices.map(c => textW(c, 8 * UI_TXT))) + 30, cx = clamp(bx + bw - cw - 6, 20, W - cw - 8), cy = by - d.choices.length * 14 - 16;
       box(cx, cy, cw, d.choices.length * 14 + 6); d.cx = cx; d.cy = cy + 4;
-      d.choices.forEach((c, k) => { const on = k === d.pick; if (on) R(cx + 2, cy + 3 + k * 14, cw - 4, 12, UIC.sel); ptext((on ? '▸ ' : '  ') + c, cx + 8, cy + 4 + k * 14, { size: 8, color: on ? UIC.red : UIC.soft, bold: on }); });
-    } else if (d.c >= line.text.length && Math.floor(this.t * 3) % 2) { ctx.fillStyle = UIC.red; ctx.beginPath(); ctx.moveTo(bx + bw - 16, by + bh - 12); ctx.lineTo(bx + bw - 10, by + bh - 12); ctx.lineTo(bx + bw - 13, by + bh - 8); ctx.fill(); }
+      d.choices.forEach((c, k) => { const on = k === d.pick; if (on) { R(cx + 3, cy + 3 + k * 14, cw - 6, 12, UIC.sel); swordCursor(cx + 6, cy + 9 + k * 14); } ptext(c, cx + 14, cy + 4 + k * 14, { size: 8, color: on ? UIC.title : UIC.soft, bold: on }); });
+    } else if (d.c >= line.text.length) uimg('gem', bx + bw - 15, by + bh - 13 + Math.round(Math.abs(Math.sin(this.t * 4)) * -2)); // la suite : un rubis qui sautille
   },
 
   drawMenu(items, x, y, sel = this.menu) {
     const bw = Math.max(110, ...items.map(it => textW(it, 6.5 * UI_TXT, 't') + 24));
-    items.forEach((it, i) => woodBtn(Math.round(x - bw / 2), y + i * 16 - 2, bw, 13, it, i === sel));
+    items.forEach((it, i) => { woodBtn(Math.round(x - bw / 2), y + i * 16 - 2, bw, 13, it, i === sel); if (i === sel) swordCursor(Math.round(x - bw / 2) - 3, y + i * 16 + 4); });
   },
 
   // ---------- pause : objets (grille), souvenirs, carte, options ----------
@@ -278,8 +341,8 @@ const UIMixin = {
     if (this.ptab === 5) this.drawMapTab();
     if (this.ptab === 6) {
       panel(150, 62, 180, 96);
-      ptext('Options', W / 2, 70, { size: 10, align: 'center', font: 't', bold: true, color: UIC.title });
-      ptext(`Progression du jeu : ${Progress.pct()} %`, W / 2, 90, { size: 8, align: 'center', color: UIC.soft });
+      gtext('Options', W / 2, 64, 20);
+      ptext(`Progression du jeu : ${Progress.pct()} %`, W / 2, 92, { size: 8, align: 'center', color: UIC.soft });
       this.drawMenu(['Son : ' + (PREFS.muted ? 'non' : 'oui'), 'Sauvegarder et quitter'], W / 2, 118);
     }
     if (!Input.padVisible) {
@@ -468,7 +531,7 @@ const UIMixin = {
     drawItemIcon('money', bx + bw - 62, by + 11, 0.9); ptext(`${Wallet.get()} écus`, bx + bw - 54, by + 6, { size: 7.5, bold: true, color: UIC.title });
     def.items.forEach((e, i) => {
       const it = Inventory.item(e.id), st = Shop.state(sh.id, e), on = i === sh.sel, y = by + 18 + i * 24;
-      if (on) { R(bx + 9, y - 1, bw - 18, 24, UIC.goldL); R(bx + 10, y, bw - 20, 22, UIC.sel); } else R(bx + 10, y + 22, bw - 20, 1, UIC.parchD);
+      if (on) { R(bx + 9, y - 1, bw - 18, 24, UIC.goldL); R(bx + 10, y, bw - 20, 22, UIC.sel); swordCursor(bx + 6, y + 11); } else R(bx + 10, y + 22, bw - 20, 1, UIC.parchD);
       cellBox(bx + 14, y + 2, 18, 18, false, false); drawItemIcon(e.id === 'cailloux10' ? 'cailloux' : e.id, bx + 23, y + 11, 0.85);
       ptext(it.name, bx + 40, y + 2, { size: 8.5, color: st.ok ? UIC.ink : UIC.mute, bold: on });
       if (!st.ok) ptext(st.why, bx + 40, y + 12, { size: 6.5, color: UIC.red });
@@ -515,25 +578,28 @@ const UIMixin = {
     this.drawMenu(Debug.items(), W / 2, 44);
   },
   drawTitle() {
-    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#070d1f'); g.addColorStop(1, '#14244c'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    this.drawStars(3);
-    ell(392, 52, 16, 16, '#f4f0d8'); ell(398, 48, 14, 14, '#070d1f');
+    this.drawTitleBackdrop(true);
     const pines = IMG.pine1, r = seeded(9);
     if (pines) for (let row = 0; row < 3; row++) {
       for (let i = -1; i < 18; i++) { const x = i * 30 + r() * 14 + row * 11, y = 170 + row * 22 + r() * 8, s = 0.55 + row * 0.15; ctx.drawImage(pines, x, y - 108 * s, 60 * s, 108 * s); }
-      R(0, 0, W, H, `rgba(7,13,31,${0.45 - row * 0.12})`);
+      const fog = ctx.createLinearGradient(0, 96, 0, 150); fog.addColorStop(0, 'rgba(7,13,31,0)'); fog.addColorStop(1, `rgba(7,13,31,${0.45 - row * 0.12})`); ctx.fillStyle = fog; ctx.fillRect(0, 96, W, H - 96); // brume : le château reste net
     }
     R(0, 240, W, 30, '#0a1420');
-    ctx.globalAlpha = 0.25 + 0.1 * Math.sin(this.t * 2); ell(W / 2, 238, 70, 10, '#c3b3ff'); ctx.globalAlpha = 1;
+    ctx.globalAlpha = 0.25 + 0.1 * Math.sin(this.t * 2); ell(W / 2, 238, 70, 10, '#ffcf7a'); ctx.globalAlpha = 1;
     // les trois enfants face à la forêt
     if (DATA.heroes) Heroes.order().forEach((id, i) => drawHero(id, W / 2 + (i - 1) * 34, 248, 'up', false, this.t, 48 / heroHeight(id)));
-    ctx.globalAlpha = 0.5; text('ESCAPE NIGHT 2', W / 2 + 1, 33, { size: 30, align: 'center', bold: true, color: PAL.teal, shadow: false }); ctx.globalAlpha = 1;
-    text('ESCAPE NIGHT 2', W / 2, 32, { size: 30, align: 'center', bold: true, color: PAL.glow, shadowColor: PAL.ink });
-    text('Le royaume d\'Aube-Figée', W / 2, 68, { size: 11, align: 'center', color: PAL.lav });
+    // logo : titre gothique doré, fleurons
+    const halo = ctx.createRadialGradient(W / 2, 40, 10, W / 2, 40, 130); halo.addColorStop(0, `rgba(70,90,180,${0.32 + 0.08 * Math.sin(this.t * 1.5)})`); halo.addColorStop(1, 'rgba(70,90,180,0)');
+    ctx.fillStyle = halo; ctx.fillRect(W / 2 - 140, 0, 280, 90);
+    const lw = textW('Escape Night ', 44, 'g'), l2 = textW('2', 44, 'g'), lx = W / 2 - (lw + l2) / 2;
+    gtext('Escape Night', lx, 14, 44, { align: 'left' });
+    gtext('2', lx + lw, 14, 44, { align: 'left', colors: ['#ffb0a8', UIC.redL, UIC.red] });
+    flourish(W / 2 - 110, 66, 220);
+    text('Le royaume d\'Aube-Figée', W / 2, 73, { size: 9, align: 'center', font: 't', color: '#e8dcc0', shadowColor: UIC.dark });
     this.drawMenu(this.titleItems(), W / 2, 112);
     if (this.installHelp) this.drawInstallHelp();
-    text(VERSION, W - 6, H - 11, { size: 7, align: 'right', color: '#5a6a9a' });
-    text(Input.gamepadName ? 'Manette prête' : 'Manette · clavier · tactile', 6, H - 11, { size: 7, color: '#5a6a9a' });
+    text(VERSION, W - 6, H - 11, { size: 7, align: 'right', color: '#7a7a9a' });
+    text(Input.gamepadName ? 'Manette prête' : 'Manette · clavier · tactile', 6, H - 11, { size: 7, color: '#7a7a9a' });
   },
   slotInfo(i) {
     const s = readSlot(i); if (!s) return null;
@@ -571,7 +637,7 @@ const UIMixin = {
       ptext(`${info.pct} %`, bx + 306, y + 4, { size: 10, align: 'right', bold: true, color: UIC.red }); ptext(`${info.frags}/6 · ${info.time} min`, bx + 306, y + 19, { size: 7, align: 'right', color: UIC.mute });
     }
     const on = this.slotSel === 3; woodBtn(W / 2 - 60, 46 + 3 * 52 + 1, 120, 15, this.erasing ? 'Annuler' : 'Effacer une partie', on, 6);
-    text('A : choisir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#8a94c0' });
+    text('A : choisir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#c8b48a', shadowColor: UIC.dark });
   },
   updateHeroes() {
     if (Input.pressed('b')) { this.state = 'slots'; SFX.menu(); return; }
@@ -595,11 +661,15 @@ const UIMixin = {
       wrap(d.perk, 112, 7.5 * UI_TXT).forEach((l, k) => ptext(l, x, 174 + dl.length * 10 + k * 10, { size: 7.5, align: 'center', color: UIC.title, bold: true }));
     });
     if (Input.padVisible) woodBtn(8, 8, 58, 16, '◂ Retour', false, 6);
-    text(Input.padVisible ? 'Touche un personnage pour le choisir, puis touche-le encore pour partir' : '◂ ▸ : choisir   ·   A : partir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#8a94c0' });
+    text(Input.padVisible ? 'Touche un personnage pour le choisir, puis touche-le encore pour partir' : '◂ ▸ : choisir   ·   A : partir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#c8b48a', shadowColor: UIC.dark });
   },
-  drawTitleBackdrop() {
-    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#070d1f'); g.addColorStop(1, '#14244c'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    this.drawStars(5);
+  drawTitleBackdrop(full) {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#070d1f'); g.addColorStop(0.7, '#14244c'); g.addColorStop(1, '#2a2a5a'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    this.drawStars(full ? 3 : 5);
+    // lune et château lointain sur sa colline
+    ell(392, 52, 16, 16, '#f4f0d8'); ell(398, 48, 14, 14, '#0a1226');
+    if (IMG.ui_castle) { ctx.globalAlpha = full ? 1 : 0.55; ctx.drawImage(IMG.ui_castle, 318, full ? 64 : 192); ctx.globalAlpha = 1; }
+    if (!full) { const m = ctx.createLinearGradient(0, 200, 0, H); m.addColorStop(0, 'rgba(42,42,90,0)'); m.addColorStop(1, 'rgba(42,42,90,.8)'); ctx.fillStyle = m; ctx.fillRect(0, 200, W, H - 200); }
   },
   drawInstallHelp() {
     R(0, 0, W, H, 'rgba(4,8,26,.88)');
@@ -615,9 +685,11 @@ const UIMixin = {
 
   // ---------- fin de partie, fin de la version 1 ----------
   drawOver() {
-    const a = clamp(this.overT, 0, 1); R(0, 0, W, H, `rgba(4,4,12,${0.85 * a})`);
+    const a = clamp(this.overT, 0, 1); R(0, 0, W, H, `rgba(10,2,8,${0.85 * a})`);
+    const v = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, 280); v.addColorStop(0, 'rgba(90,10,20,0)'); v.addColorStop(1, `rgba(90,10,20,${0.5 * a})`); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
     if (this.overT < 0.6) return;
-    text(Story.fmt('{hero} a eu trop peur…'), W / 2, 80, { size: 16, align: 'center', color: PAL.red, bold: true });
+    gtext(Story.fmt('{hero} a eu trop peur…'), W / 2, 66, 30, { colors: ['#ffb0a8', UIC.redL, UIC.red] });
+    flourish(W / 2 - 90, 104, 180, 'gem');
     if (this.overT >= 1.2) this.drawMenu(['Réessayer', 'Écran titre'], W / 2, 130);
   },
   drawEnd() {

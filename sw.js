@@ -1,5 +1,5 @@
 // À chaque déploiement : changer VERSION ici, VERSION dans src/core.js et les ?v= dans index.html.
-const VERSION = 'v8.15.1';
+const VERSION = 'v8.16.0';
 const CACHE = 'escape-night2-' + VERSION;
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
 const SCRIPTS = ['src/core.js', 'src/bus.js', 'src/input.js', 'src/systems/save.js', 'src/systems/heroes.js', 'src/systems/inventory.js', 'src/systems/wallet.js', 'src/systems/shop.js', 'src/systems/story.js', 'src/systems/loot.js', 'src/world.js', 'src/entities.js', 'src/objects.js', 'src/actors.js', 'src/interiors.js', 'src/bois.js', 'src/tools.js', 'src/mines.js', 'src/lac.js', 'src/temple.js', 'src/tower.js', 'src/castle.js', 'src/quests.js', 'src/rpg.js', 'src/dungeon.js', 'src/cave.js', 'src/maps.js', 'src/overworld.js', 'src/houses.js', 'src/areas.js', 'src/monde.js', 'src/quetes.js', 'src/ui.js', 'src/game.js'];
@@ -15,7 +15,10 @@ const FILES = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.pn
   ...['boss/shadow', 'boss/queen', 'boss/mole', 'mobs/boar', 'mobs/raccoon', 'mobs/bat', 'mobs/shadow', 'mobs/wisp', 'mobs/squirrel', 'mobs/crow', 'mobs/gnome', 'mobs/spider', 'mobs/crab', 'mobs/eel', 'mobs/skeleton', 'mobs/gargoyle', 'mobs/dog', 'mobs/sheep', 'mobs/ram', 'mobs/chicken', 'boss/king', 'boss/mknight', 'boss/iknight', 'boss/owl'].map(k => `assets/${k}.png?v=${VERSION}`),
   ...['sacha', 'cam', 'rox', 'papa'].flatMap(k => [0, 1].map(i => `assets/swim/${k}${i}.png?v=${VERSION}`)),
   ...['royaume_paves'].map(k => `assets/tiles/${k}.png?v=${VERSION}`),
-  ...['royaume', 'royaume_dessus', 'biblio', 'biblio_dessus'].map(k => `assets/maps/${k}.png?v=${VERSION}`)];
+  ...['royaume', 'royaume_dessus', 'biblio', 'biblio_dessus'].map(k => `assets/maps/${k}.png?v=${VERSION}`),
+  // interface héroïque fantasy (tools/ui/ui.px.js) et polices embarquées (le jeu marche hors ligne)
+  ...['corner', 'corner_s', 'gem', 'gem_gold', 'cursor', 'heart', 'heart_empty', 'heart_gold', 'skull', 'medal', 'btn_a', 'btn_b', 'btn_r', 'btn_a_on', 'btn_b_on', 'btn_r_on', 'btn_start', 'stick_ring', 'stick_knob', 'stick_knob_on', 'stone', 'castle'].map(k => `assets/ui/${k}.png?v=${VERSION}`),
+  `assets/fonts/fonts.css?v=${VERSION.slice(1)}`, ...['jacquard-24-latin-400-normal.woff2', 'jacquard-24-latin-ext-400-normal.woff2', 'pixelify-sans-latin-400-normal.woff2', 'pixelify-sans-latin-500-normal.woff2', 'pixelify-sans-latin-700-normal.woff2', 'pixelify-sans-latin-ext-400-normal.woff2', 'pixelify-sans-latin-ext-500-normal.woff2', 'pixelify-sans-latin-ext-700-normal.woff2', 'silkscreen-latin-400-normal.woff2', 'silkscreen-latin-700-normal.woff2', 'silkscreen-latin-ext-400-normal.woff2', 'silkscreen-latin-ext-700-normal.woff2'].map(f => 'assets/fonts/' + f)];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 // Réseau d'abord (toujours la dernière version en ligne), cache en secours hors ligne.

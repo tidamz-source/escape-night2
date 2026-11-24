@@ -159,27 +159,26 @@ window.addEventListener('mouseup', () => Input.keys.delete('Enter'));
 // ---------- rendu du pad virtuel ----------
 function drawVirtualPad() {
   if (!Input.padVisible) return;
-  const S = Input.stick;
+  const S = Input.stick, im = k => IMG['ui_' + k];
   ctx.save();
-  // stick rond : socle + bouton qui suit le doigt
-  ctx.globalAlpha = S.active ? 0.6 : 0.4;
-  ell(S.bx, S.by, PAD.r + 4, PAD.r + 4, 'rgba(7,13,31,.55)');
-  ctx.strokeStyle = S.active ? PAL.glow : '#c8d2f0'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(S.bx, S.by, PAD.r, 0, 7); ctx.stroke();
-  ctx.globalAlpha = S.active ? 0.25 : 0.12; ctx.strokeStyle = '#c8d2f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(S.bx, S.by, PAD.r * 0.55, 0, 7); ctx.stroke();
-  ctx.globalAlpha = S.active ? 0.85 : 0.55;
-  ell(S.kx, S.ky + 2, 17, 17, 'rgba(7,13,31,.6)');
-  ell(S.kx, S.ky, 17, 17, S.active ? '#d8f8f4' : '#c8d2f0');
-  ell(S.kx - 3, S.ky - 3, 10, 10, S.active ? '#ffffff' : '#e2e8f8');
-  ctx.globalAlpha = 1;
-  // boutons
+  // stick : anneau de fer clouté d'or + pommeau qui suit le doigt
+  const ring = im('stick_ring'), knob = im(S.active ? 'stick_knob_on' : 'stick_knob');
+  ctx.globalAlpha = S.active ? 0.85 : 0.6;
+  ell(S.bx, S.by + 3, PAD.r + 2, PAD.r + 2, 'rgba(7,13,31,.45)');
+  if (ring) ctx.drawImage(ring, Math.round(S.bx - 36), Math.round(S.by - 36));
+  ctx.globalAlpha = S.active ? 0.95 : 0.75;
+  ell(S.kx, S.ky + 3, 17, 17, 'rgba(7,13,31,.5)');
+  if (knob) ctx.drawImage(knob, Math.round(S.kx - 17), Math.round(S.ky - 17));
+  // boutons : gemmes serties d'or (A rubis, B saphir, R topaze)
   for (const key of hasRoll() ? ['a', 'b', 'r'] : ['a', 'b']) {
-    const bt = BTN[key], on = Input.held[key];
-    ctx.globalAlpha = 0.55; ell(bt.x, bt.y + 2, bt.r, bt.r, 'rgba(7,13,31,.6)');
-    ell(bt.x, bt.y + (on ? 1 : 0), bt.r, bt.r, on ? PAL.glow : (key === 'a' ? '#ff8a9a' : key === 'b' ? '#c3b3ff' : '#ffcf7a'));
-    ctx.globalAlpha = 0.9; text(bt.label, bt.x, bt.y - (key === 'a' ? 6 : 5) + (on ? 1 : 0), { size: key === 'a' ? 12 : 10, align: 'center', color: PAL.ink, shadow: false, bold: true });
+    const bt = BTN[key], on = Input.held[key], g = im('btn_' + key + (on ? '_on' : '')), d = g ? g.width : bt.r * 2;
+    ctx.globalAlpha = 0.6; ell(bt.x, bt.y + 3, bt.r, bt.r, 'rgba(7,13,31,.6)');
+    ctx.globalAlpha = on ? 1 : 0.85;
+    if (g) ctx.drawImage(g, Math.round(bt.x - d / 2), Math.round(bt.y - d / 2 + (on ? 1 : 0)));
+    text(bt.label, bt.x, bt.y - (key === 'a' ? 7 : 5) + (on ? 1 : 0), { size: key === 'a' ? 13 : 10, align: 'center', color: '#fff6e0', font: 't', bold: true, outline: 'rgba(18,12,26,.8)', shadow: false });
   }
-  // pause (caché dans le menu pause : la croix suffit pour fermer)
-  if (G.state !== 'pause') { ctx.globalAlpha = 0.6; ell(BTN.start.x, BTN.start.y, BTN.start.r, BTN.start.r, 'rgba(7,13,31,.6)');
-  R(BTN.start.x - 4, BTN.start.y - 5, 3, 10, PAL.white); R(BTN.start.x + 1, BTN.start.y - 5, 3, 10, PAL.white); }
+  // pause : petit bouclier rond (caché dans le menu pause : la croix suffit)
+  if (G.state !== 'pause') { const p = im('btn_start'); ctx.globalAlpha = 0.85; if (p) ctx.drawImage(p, BTN.start.x - 12, BTN.start.y - 12); else ell(BTN.start.x, BTN.start.y, BTN.start.r, BTN.start.r, 'rgba(7,13,31,.6)');
+  R(BTN.start.x - 4, BTN.start.y - 4, 3, 8, '#f6e7c8'); R(BTN.start.x + 1, BTN.start.y - 4, 3, 8, '#f6e7c8'); }
   ctx.restore();
 }

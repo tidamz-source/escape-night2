@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.15.1';
+const VERSION = 'v8.16.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
@@ -10,7 +10,8 @@ function resetT() { ctx.setTransform(SC, 0, 0, SC, 0, 0); ctx.imageSmoothingEnab
 resetT();
 
 const FONT = '"Pixelify Sans", "Courier New", monospace';
-const FONT_T = '"Silkscreen", "Pixelify Sans", "Courier New", monospace'; // titres et étiquettes des menus (bois et parchemin)
+const FONT_T = '"Silkscreen", "Pixelify Sans", "Courier New", monospace'; // étiquettes des menus (capitales pixel)
+const FONT_G = '"Jacquard 24", "Pixelify Sans", serif'; // grands titres gothiques (logo, lieux, fin de partie)
 const PAL = { ink: '#070d1f', night: '#0c1530', deep: '#14244c', teal: '#1d5c66', glow: '#8ff3ea', lav: '#c3b3ff', warm: '#ffcf7a', white: '#f4f7ff', red: '#ff6b7a', green: '#7be38f', heart: '#ff4d6a' };
 
 // ---------- utilitaires ----------
@@ -32,13 +33,14 @@ const D = R;
 
 function text(str, x, y, o = {}) {
   const size = o.size || 8;
-  ctx.font = o.font === 't' ? `${o.bold ? 700 : 400} ${size}px ${FONT_T}` : `${o.bold ? 700 : 500} ${size}px ${FONT}`;
+  ctx.font = o.font === 'g' ? `400 ${size}px ${FONT_G}` : o.font === 't' ? `${o.bold ? 700 : 400} ${size}px ${FONT_T}` : `${o.bold ? 700 : 500} ${size}px ${FONT}`;
   if (o.font === 't') str = String(str).toUpperCase();
   ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'top';
-  if (o.shadow !== false) { ctx.fillStyle = o.shadowColor || 'rgba(0,0,0,.75)'; ctx.fillText(str, x + 0.5, y + 0.5); }
+  if (o.outline) { ctx.fillStyle = o.outline; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillText(str, x + dx * (o.ow || 0.5), y + dy * (o.ow || 0.5)); }
+  if (o.shadow !== false) { ctx.fillStyle = o.shadowColor || 'rgba(0,0,0,.75)'; ctx.fillText(str, x + 0.5, y + (o.outline ? 1 : 0.5)); }
   ctx.fillStyle = o.color || PAL.white; ctx.fillText(str, x, y);
 }
-function textW(str, size = 8, font) { ctx.font = font === 't' ? `400 ${size}px ${FONT_T}` : `500 ${size}px ${FONT}`; return ctx.measureText(font === 't' ? String(str).toUpperCase() : str).width; }
+function textW(str, size = 8, font) { ctx.font = font === 'g' ? `400 ${size}px ${FONT_G}` : font === 't' ? `400 ${size}px ${FONT_T}` : `500 ${size}px ${FONT}`; return ctx.measureText(font === 't' ? String(str).toUpperCase() : str).width; }
 function wrap(str, maxW, size = 8) {
   const words = str.split(' '), lines = []; let cur = '';
   for (const w of words) { const t = cur ? cur + ' ' + w : w; if (textW(t, size) > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
@@ -63,6 +65,8 @@ const DECO_IMGS = ['stump', 'stump_axe', 'block', 'bush', 'chest_closed', 'chest
 const NPC_SPRITES = ['claudine', 'dog_down', 'dog_up', 'dog_left', 'dog_right', 'amandine', 'papa_down', 'papa_up', 'papa_left', 'papa_right'];
 const SWIMMERS = ['sacha', 'cam', 'rox', 'papa'];
 const PROPS = ['pine1', 'pine2', 'oak1', 'oak2', 'tent_r', 'tent_b', 'tent_y', 'campfire', 'campfire2', 'bush', 'log', 'rock', 'lamp', 'sign', 'fence', 'flowers', 'table'];
+// habillage de l'interface (pxl : tools/ui/ui.px.js → assets/ui)
+const UI_IMGS = ['corner', 'corner_s', 'gem', 'gem_gold', 'cursor', 'heart', 'heart_empty', 'heart_gold', 'skull', 'medal', 'btn_a', 'btn_b', 'btn_r', 'btn_a_on', 'btn_b_on', 'btn_r_on', 'btn_start', 'stick_ring', 'stick_knob', 'stick_knob_on', 'stone', 'castle'];
 // tilesets Wang par coins (32 × 32, 2 matières) : thème de zone → fichier dans assets/tiles
 const WANG_FILES = { royaume: 'royaume_paves' };
 function loadImage(key, src) {
@@ -85,6 +89,7 @@ function loadAssets() {
   for (const k of ['royaume', 'biblio', 'forge', 'epicerie', 'auberge', 'collines', 'camping', 'route_nord', 'mobil_home', 'cote', 'dunes']) { jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); jobs.push(loadImage('map_' + k + '_dessus', `assets/maps/${k}_dessus.png?v=${VERSION}`)); }
   for (const k of ['entry', 'arena', 'hub', 'block', 'sling', 'chasm', 'chasm_pont', 'twin', 'bigkey', 'treasure', 'boss', 'prison'].map(n => 'grotte_' + n).concat(['entry', 'arena', 'pond', 'wind', 'frisbee', 'switches', 'bigkey', 'upper', 'treasure', 'boss', 'prison'].map(n => 'bois_' + n)).concat(['entry', 'arena', 'crate', 'shaft', 'hub', 'grappin', 'spider', 'posts', 'hall', 'boss', 'prison'].map(n => 'mines_' + n)).concat(['entry', 'arena', 'fountain', 'palmes', 'hub', 'dive', 'east', 'bigkey', 'gallery', 'cascade', 'boss', 'prison'].map(n => 'temple_' + n), ['entry', 'palmes', 'hub', 'dive', 'east', 'bigkey', 'cascade'].map(n => 'temple_' + n + '_bas'), ['entry', 'arena', 'petards', 'hub', 'torches', 'balls', 'bigkey', 'gargoyle', 'secret', 'boss', 'prison'].map(n => 'tour_' + n), ['blast', 'entry', 'sling', 'gallery', 'hook', 'hall', 'swim', 'frisbee', 'armory', 'papa', 'bigkey', 'king', 'sling_pont'].map(n => 'chateau_' + n))) jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); // salles de donjon peintes
   for (const [k, f] of Object.entries(WANG_FILES)) jobs.push(loadImage('wang_' + k, `assets/tiles/${f}.png?v=${VERSION}`));
+  for (const k of UI_IMGS) jobs.push(loadImage('ui_' + k, `assets/ui/${k}.png?v=${VERSION}`));
   jobs.push(loadData());
   return Promise.all(jobs).then(() => { if (IMG.deco_lamp) IMG.lamp = IMG.deco_lamp; }); // réverbère PixelLab du camping
 }
