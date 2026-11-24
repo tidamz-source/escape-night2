@@ -11,8 +11,9 @@ const FILE=process.argv[2]||'cave.js', FN=process.argv[3]||'buildCaveArea', OUT=
 const dsrc=src(FILE); vm.runInContext((dsrc.match(/^const \w+_PAINTED = .*$/m)||[''])[0].replace('const ','var '), ctx); vm.runInContext(dsrc.slice(dsrc.indexOf('function '+FN), dsrc.indexOf('fixed(h)', dsrc.indexOf('function '+FN)))+'});}', ctx);
 vm.runInContext(FN+`();
 const spec=SPEC;
-for (const k of Object.keys(spec.rooms)) spec.rooms[k]=[spec.rooms[k][0],spec.rooms[k][1]+1];
-spec.rooms.prison=[spec.rooms[spec.boss][0],0]; spec.links=spec.links.concat([['prison',spec.boss]]);
+if (spec.prison !== false && !spec.rooms.prison) { // comme makeDungeon : salle de prison ajoutée au-dessus du boss, sauf prison: false
+ for (const k of Object.keys(spec.rooms)) spec.rooms[k]=[spec.rooms[k][0],spec.rooms[k][1]+1];
+ spec.rooms.prison=[spec.rooms[spec.boss][0],0]; spec.links=spec.links.concat([['prison',spec.boss]]); }
 const names=Object.keys(spec.rooms), links=[];
 for (const [a,b] of spec.links){const [ax,ay]=spec.rooms[a],[bx,by]=spec.rooms[b];
  if(ax===bx&&ay===by+1)links.push([ax,ay,'N']); else if(ax===bx&&ay===by-1)links.push([bx,by,'N']);
