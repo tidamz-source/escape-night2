@@ -154,7 +154,7 @@ class Pot extends Bush {
 // ---------- coffres et portes ----------
 class Chest {
   constructor(x, y, o = {}) {
-    this.x = x; this.y = y; this.flag = o.flag || 'chest'; this.give = o.give || 'key'; this.big = !!o.big;
+    this.x = x; this.y = y; this.flag = o.flag || 'chest'; this.give = o.give || 'key'; this.big = !!o.big; this.painted = !!o.painted; // painted : le coffre est déjà peint sur la carte, on ne dessine que le faisceau
     this.reveal = o.reveal || null; this.msg = o.msg; this.w = this.big ? 36 : 16; this.h = this.big ? 14 : 8; this.t = 0; this.shown = !this.hidden;
     this.lift = this.big ? 9 : 0; // les gros coffres trônent sur un piédestal à marches, visible même avant que le coffre apparaisse
   }
@@ -216,6 +216,7 @@ class Chest {
     if (this.big) this.drawPedestal();
     if (this.hidden) return;
     const by = this.y - this.lift;
+    if (this.painted) return this.drawBeam(by);
     ell(this.x, by, this.big ? 14 : 10, this.big ? 4 : 3, 'rgba(0,0,0,.4)');
     this.drawChest(by); this.drawBeam(by);
   }

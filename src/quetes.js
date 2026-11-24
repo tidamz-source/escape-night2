@@ -606,7 +606,13 @@ function sqBuild(areas) {
 }
 // l'intérieur de la tour-horloge (clé d'Anselme)
 Object.assign(INTERIORS, {
-  horloge: { name: 'Dans la tour-horloge', w: 16, h: 10, dark: 0.3, build(put, at, A) {
+  horloge: { name: 'Dans la tour-horloge', w: 16, h: 10, dark: 0.3, paint: 'horloge', // peinte (assets/maps/horloge.png) : l'atelier d'Anselme
+    lights: [[10, 3, 80], [3, 4.6, 22], [2.4, 6.2, 14]],
+    spots: [[4, 9.9, 2.4, [{ text: 'Les outils d\'Anselme, bien rangés. Une étiquette : « Pour réparer le temps, il faut d\'abord le comprendre. »' }]], [12, 7, 1.6, [{ text: 'Le journal d\'Anselme : « Le roi veut que j\'arrête l\'horloge. Je refuse. Le temps n\'appartient à personne. »' }]]],
+    people(put, at, A) {
+      A.ents.push(new Chest(17.1 * TS, 9.6 * TS, { painted: true, flag: 'horlogeCoffre', give: 'money:120', msg: [{ text: 'Les économies d\'Anselme : 120 écus. « Pour l\'enfant qui me rendra mon nom. »' }] }));
+    },
+    build(put, at, A) {
     put('window', 8, 2); put('table', 5, 5.6, { candle: true }); put('books', 4, 7); put('shelf', 12, 3.2);
     put('crate', 3, 8.4, { say: [{ text: 'Les outils d\'Anselme, bien rangés. Une étiquette : « Pour réparer le temps, il faut d\'abord le comprendre. »' }] });
     A.ents.push(Object.assign(new Chest(11 * TS, 7 * TS, { flag: 'horlogeCoffre', give: 'money:120', msg: [{ text: 'Les économies d\'Anselme : 120 écus. « Pour l\'enfant qui me rendra mon nom. »' }] })));

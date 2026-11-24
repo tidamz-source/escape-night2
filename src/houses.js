@@ -69,19 +69,45 @@ Object.assign(INTERIORS, {
     npc(A, 9, 4.4, { look: 'epiciere', fn: shopNPC('epicerie') });
     shopRow(A, 'epicerie', 5, 8, 3);
   } },
-  mamie: { name: 'La cuisine de Mamie', w: 16, h: 10, build(put, at, A) {
+  mamie: { name: 'La cuisine de Mamie', w: 16, h: 10, paint: 'mamie', // peinte (assets/maps/mamie.png)
+    lights: [[5.6, 5.2, 72], [8, 2.3, 24], [12, 2.3, 24], [1.9, 3.3, 16], [18.4, 5.8, 18], [18.3, 3, 26]],
+    spots: [[5.6, 6.8, 2, [{ text: 'Le chaudron de Mamie. Ça sent la soupe de champignons.' }]]],
+    people(put, at, A) {
+      npc(A, 9.6, 6.6, { sprite: 'claudine', fn: mamieTalk, when: 'freed2&!boss6' });
+      npc(A, 3.5, 7.6, { sprite: 'dog', talk: 'goyave', when: 'freed5&!boss6' });
+    },
+    build(put, at, A) {
     put('fireplace', 4, 3.2); put('cauldron', 8, 4.8); put('table', 12, 6.6, { food: true }); put('stool', 10.2, 7.4); put('window', 12, 2); put('rug', 6, 8.2, { color: '#a85a3a' });
     npc(A, 10, 4.6, { sprite: 'claudine', fn: mamieTalk, when: 'freed2&!boss6' });
     npc(A, 3.5, 7.6, { sprite: 'dog', talk: 'goyave', when: 'freed5&!boss6' });
   } },
-  comptoir: { name: 'Le comptoir d\'Amandine', w: 18, h: 11, build(put, at, A) {
+  comptoir: { name: 'Le comptoir d\'Amandine', w: 18, h: 11, paint: 'comptoir', // peint (assets/maps/comptoir.png) ; Amandine derrière son comptoir
+    lights: [[8, 2.3, 24], [12, 2.3, 24], [11.1, 3.2, 18], [1.9, 3.2, 16], [6.6, 2.6, 28], [13.4, 2.6, 28], [18.6, 3.6, 18]],
+    people(put, at, A) {
+      const am = npc(A, 16.4, 6.6, { sprite: 'amandine', fn: amandineTalk, when: '!boss6' }); // le comptoir (OVERHEAD.comptoir) lui cache les jambes
+      if (am) A.ents.push(new TalkSpot(16 * TS, 8.7 * TS, 5 * TS, am)); // on lui parle par-dessus le comptoir
+      shopRow(A, 'comptoir', 4.5, 7, 2.3);
+    },
+    build(put, at, A) {
     put('counter', 9, 5.4); put('shelf', 3, 3.2); put('shelf', 15, 3.2); put('plant', 2, 9.4); put('crate', 16, 9.4);
     npc(A, 9, 4.4, { sprite: 'amandine', fn: amandineTalk, when: '!boss6' });
     shopRow(A, 'comptoir', 4.5, 8, 3);
   } },
-  pierrette: { name: 'Chez Pierrette', w: 14, h: 9, build(put, at, A) { put('bed', 3, 4.6, { blanket: '#c86aa0' }); put('table', 9, 5.6); put('window', 10, 2); put('crate', 12, 7.4, { say: [{ text: 'Un panier plein de plumes. Pas une seule poule dedans.' }] }); npc(A, 7, 6.6, { look: 'pierrette', quest: 'poules' }); } },
-  gaspard: { name: 'Chez Gaspard', w: 14, h: 9, build(put, at, A) { put('bed', 11, 4.6, { blanket: '#3a8a5a' }); put('table', 5, 5.6, { candle: true }); put('barrel', 2, 7.4); npc(A, 7.5, 6.8, { look: 'gaspard', fn: G => { const g = Market.gossip(); G.say(g ? [{ who: 'Gaspard', text: g }, ...Story.talk('villageois2')] : Story.talk('villageois2')); } }); } },
-  mahaut: { name: 'Chez Mahaut', w: 14, h: 9, build(put, at, A) { put('shelf', 4, 3.2); put('wheel', 10, 5); put('plant', 12, 7.4); npc(A, 7, 6.6, { look: 'mahaut', talk: 'villageois3' }); } },
+  pierrette: { name: 'Chez Pierrette', w: 14, h: 9, paint: 'pierrette', // peinte (assets/maps/pierrette.png)
+    lights: [[6.6, 3.5, 18], [8, 2.3, 24], [12, 2.3, 24], [10.3, 2.6, 30], [2.6, 7.6, 30]],
+    spots: [[14.4, 9.6, 1.4, [{ text: 'Un panier d\'œufs. Les poules pondent de nouveau.' }]], [15.8, 7.1, 3, [{ text: 'Le coin des poules. De la paille partout, et pas une seule poule dedans.' }]], [4.5, 6.2, 2, [{ text: 'Un coin de lettre dépasse de l\'oreiller. Mieux vaut ne pas la lire.' }]]],
+    people(put, at, A) { npc(A, 10.5, 7.6, { look: 'pierrette', quest: 'poules' }); },
+    build(put, at, A) { put('bed', 3, 4.6, { blanket: '#c86aa0' }); put('table', 9, 5.6); put('window', 10, 2); put('crate', 12, 7.4, { say: [{ text: 'Un panier plein de plumes. Pas une seule poule dedans.' }] }); npc(A, 7, 6.6, { look: 'pierrette', quest: 'poules' }); } },
+  gaspard: { name: 'Chez Gaspard', w: 14, h: 9, paint: 'gaspard', dark: 0.2, // peinte (assets/maps/gaspard.png)
+    lights: [[2, 5.2, 22]],
+    spots: [[2.8, 6.8, 1.8, [{ text: 'Un dessin de chaussure avec des lacets. En dessous : « À fabriquer ! »' }]], [10.2, 4.6, 2.6, [{ text: 'Le mur des rumeurs de Gaspard : des papiers, des ficelles rouges, un gnome, et un grand point d\'interrogation.' }]]],
+    people(put, at, A) { npc(A, 9.5, 7.2, { look: 'gaspard', fn: G => { const g = Market.gossip(); G.say(g ? [{ who: 'Gaspard', text: g }, ...Story.talk('villageois2')] : Story.talk('villageois2')); } }); },
+    build(put, at, A) { put('bed', 11, 4.6, { blanket: '#3a8a5a' }); put('table', 5, 5.6, { candle: true }); put('barrel', 2, 7.4); npc(A, 7.5, 6.8, { look: 'gaspard', fn: G => { const g = Market.gossip(); G.say(g ? [{ who: 'Gaspard', text: g }, ...Story.talk('villageois2')] : Story.talk('villageois2')); } }); } },
+  mahaut: { name: 'Chez Mahaut', w: 14, h: 9, paint: 'mahaut', // peinte (assets/maps/mahaut.png)
+    lights: [[2, 5.4, 20], [1.7, 6.9, 18], [10.3, 2.6, 30]],
+    spots: [[11.6, 6.6, 1.2, [{ text: 'Le rouet-harpe de Mahaut. Il ne lui reste plus une corde.' }]]],
+    people(put, at, A) { npc(A, 7, 7.4, { look: 'mahaut', talk: 'villageois3' }); },
+    build(put, at, A) { put('shelf', 4, 3.2); put('wheel', 10, 5); put('plant', 12, 7.4); npc(A, 7, 6.6, { look: 'mahaut', talk: 'villageois3' }); } },
   // ----- les autres zones -----
   berger: { name: 'La bergerie', w: 14, h: 9, build(put, at, A) { put('fireplace', 4, 3.2); put('bed', 11, 4.6, { blanket: '#c8b898' }); put('bench', 7, 7.2); npc(A, 8, 5.6, { look: 'berger', quest: 'cloche' }); } },
   bucheron: { name: 'La cabane du bûcheron', w: 14, h: 9, build(put, at, A) { put('fireplace', 10, 3.2); put('crate', 3, 5, { say: [{ text: 'Une pile de bûches bien rangées.' }] }); put('table', 5, 7.2); npc(A, 9, 6.4, { look: 'bucheron', quest: 'hache' }); } },
