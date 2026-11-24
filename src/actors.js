@@ -252,12 +252,34 @@ class Cage {
   interact(G) { if (!SAVE[this.o.boss]) G.say(Story.script('captive_cage' + (this.o.n > 1 ? this.o.n : ''))); else G.freeCaptive(this.o.n); }
   update(dt) { this.t += dt; }
   draw() {
+    if (this.o.bind) return this.drawBound();
     ell(this.x, this.y, 18, 4, 'rgba(0,0,0,.45)');
     if (!this.open) this.o.drawCaptive(this.x, this.y - 3, this.t);
     hi(this.x, this.y, false, () => {
       D(-34, -6, 68, 6, '#3a3d48'); D(-34, -6, 68, 2, '#6a6e7a');
       if (!this.open) { for (let i = 0; i < 7; i++) D(-32 + i * 10, -76, 4, 72, '#5a5e6a'); D(-34, -80, 68, 6, '#3a3d48'); D(-34, -80, 68, 2, '#6a6e7a'); D(-6, -42, 12, 10, '#c8a040'); D(-2, -38, 4, 4, '#3a2410'); }
       else { for (let i = 0; i < 7; i++) D(-32 + i * 10, -14 - (i % 3) * 3, 4, 10, '#5a5e6a'); }
+    });
+  }
+  // o.bind : 'chains' (chaînes scellées à deux poteaux de pierre) ou 'vines' (lianes nouées à deux pieux de bois) au lieu d'une cage
+  drawBound() {
+    const ch = this.o.bind === 'chains', A = ch ? '#4a4e5a' : '#2f6a3a', B = ch ? '#8a8e9a' : '#5aa060', open = this.open;
+    const rope = (x0, y0, x1, y1, sag = 0) => { const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / (ch ? 5 : 4))); for (let i = 0; i <= n; i++) { const k = i / n, x = x0 + (x1 - x0) * k, y = y0 + (y1 - y0) * k + Math.sin(k * Math.PI) * sag; if (ch) D(Math.round(x) - 2, Math.round(y) - 1, 4, 3, i % 2 ? A : B); else { D(Math.round(x) - 1, Math.round(y) - 1, 3, 3, A); if (i % 3 === 1) D(Math.round(x) + 1, Math.round(y) - 3, 3, 2, B); } } };
+    const post = x => {
+      if (ch) { D(x - 5, -46, 10, 46, '#5a5468'); D(x - 5, -46, 2, 46, '#8a8498'); D(x + 3, -44, 2, 44, '#3a3448'); D(x - 6, -50, 12, 4, '#8a8498'); D(x - 2, -36, 4, 4, '#2a2a34'); }
+      else { D(x - 4, -48, 8, 48, '#4e3e34'); D(x - 4, -48, 2, 48, '#6a5444'); D(x + 2, -46, 2, 46, '#2a201c'); D(x - 3, -52, 6, 4, '#4e3e34'); D(x - 6, -2, 4, 2, '#4e3e34'); D(x + 2, -2, 4, 2, '#4e3e34'); rope(x, -44, x - 2, -8, 2); }
+    };
+    ell(this.x, this.y, 22, 4, 'rgba(0,0,0,.45)');
+    hi(this.x, this.y, false, () => { post(-32); post(32); });
+    if (!open) this.o.drawCaptive(this.x, this.y - 3, this.t);
+    hi(this.x, this.y, false, () => {
+      if (!open) {
+        rope(-30, -36, -9, -26, 6); rope(30, -36, 9, -26, 6);                          // aux poignets
+        rope(-10, -18, 10, -18); if (ch) { D(-3, -21, 6, 6, '#c8a040'); D(-1, -19, 2, 2, '#3a2410'); } // autour de la taille (cadenas pour les chaînes)
+      } else {
+        rope(-30, -36, -26, -4, 3); rope(30, -36, 26, -4, 3);                          // liens rompus, pendants
+        for (const [x, y] of [[-12, -3], [8, -2], [14, -4]]) D(x, y, 4, 3, A);         // morceaux tombés
+      }
     });
   }
 }

@@ -6,8 +6,10 @@ vm.runInContext(src('core.js').match(/function seeded[^\n]*/)[0], ctx);
 const w=src('world.js'); vm.runInContext(w.slice(w.indexOf('const RW'), w.indexOf('function railLine')).replace(/function buildForest[\s\S]*?\n}\n/,''), ctx);
 // capture spec
 vm.runInContext(`var SPEC; function arenaStd(){} function bossArena(){} function makeDungeon(s){ SPEC=s; return {}; }`, ctx);
-const cave=src('cave.js'); vm.runInContext(cave.slice(0, cave.indexOf('fixed(h)'))+'});}', ctx);
-vm.runInContext(`buildCaveArea();
+// usage : node extract.js [fichier du donjon] [fonction]   (par défaut : cave.js buildCaveArea)
+const FILE=process.argv[2]||'cave.js', FN=process.argv[3]||'buildCaveArea', OUT=process.argv[4]||'rooms.json';
+const dsrc=src(FILE); vm.runInContext((dsrc.match(/^const \w+_PAINTED = .*$/m)||[''])[0].replace('const ','var '), ctx); vm.runInContext(dsrc.slice(dsrc.indexOf('function '+FN), dsrc.indexOf('fixed(h)', dsrc.indexOf('function '+FN)))+'});}', ctx);
+vm.runInContext(FN+`();
 const spec=SPEC;
 for (const k of Object.keys(spec.rooms)) spec.rooms[k]=[spec.rooms[k][0],spec.rooms[k][1]+1];
 spec.rooms.prison=[spec.rooms[spec.boss][0],0]; spec.links=spec.links.concat([['prison',spec.boss]]);
@@ -21,5 +23,5 @@ var E=spec.rooms.entry;`, ctx);
 vm.runInContext("var ROOMS=spec.rooms;",ctx);
 const res={};
 for (const [n,[rx,ry]] of Object.entries(ctx.ROOMS)){const out=[];for(let y=0;y<17;y++) out.push(ctx.G[ry*17+y].slice(rx*30,rx*30+30).join(''));res[n]={at:[rx,ry],grid:out};}
-fs.writeFileSync('rooms.json',JSON.stringify(res,null,1));
-for(const [n,r] of Object.entries(res)) console.log(n, r.at.join(','), '\n'+r.grid.join('\n'));
+fs.writeFileSync(OUT,JSON.stringify(res,null,1));
+console.log(Object.entries(res).map(([n,r])=>n+' '+r.at).join(' | '));
