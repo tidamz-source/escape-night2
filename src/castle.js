@@ -162,7 +162,7 @@ class MidnightKing extends Enemy {
     if (this.state !== 'sleep' && this.state !== 'dying') { SFX.tink(); G.parts.burst(lerp(fx, this.x, 0.5), lerp(fy, this.y - 30, 0.5), 4, { c: ['#fff', '#c3b3ff'], life: 0.2, r: 1 }); }
   }
   update(dt, G) {
-    this.t += dt; this.st -= dt; if (this.flash > 0) this.flash -= dt;
+    this.t += dt; this.st -= dt; if (this.flash > 0) this.flash -= dt; if (this.atk > 0) this.atk -= dt;
     const P = G.player, rr = G.roomRect(), a = Math.atan2(P.y - this.y, P.x - this.x);
     // munitions : il y a toujours de quoi tirer
     this.aCd = (this.aCd || 0) - dt;
@@ -172,7 +172,7 @@ class MidnightKing extends Enemy {
       case 'float': {
         if (this.phase === 1) {
           const k = this.k; this.x = lerp(this.x, rr.x + 240 + Math.cos(this.t * 0.6 * k) * 90, dt * k); this.y = lerp(this.y, rr.y + 120 + Math.sin(this.t * 0.9 * k) * 20, dt * k);
-          this.cd = (this.cd || 2) - dt; if (this.cd <= 0) { this.cd = 2.6 / k; SFX.shoot(); for (let i = 0; i < 8; i++) { const o = new Orb(this.x, this.y - 40, i / 8 * Math.PI * 2 + this.t); o.room = this.room; G.area.ents.push(o); } }
+          this.cd = (this.cd || 2) - dt; if (this.cd <= 0) { this.cd = 2.6 / k; SFX.shoot(); this.atk = 0.7; for (let i = 0; i < 8; i++) { const o = new Orb(this.x, this.y - 40, i / 8 * Math.PI * 2 + this.t); o.room = this.room; G.area.ents.push(o); } }
           if (!G.area.ents.some(e => e instanceof KingCrystal && !e.dead)) { this.state = 'down'; this.wh = 0; this.st = 3.5 / Math.sqrt(this.k); this.alt = 0; G.shake = 0.3; SFX.stun(); }
         } else if (this.phase === 2) {
           if (this.st <= 0) { // téléportation
@@ -180,7 +180,7 @@ class MidnightKing extends Enemy {
             this.x = rr.x + rand(80, 400); this.y = rr.y + rand(110, 200); this.st = 3 / this.k; SFX.rift(); G.parts.burst(this.x, this.y - 30, 20, { c: this.poof, life: 0.6, r: 2 });
             if (Math.random() < 0.5) { const s = new Shadow(clamp(this.x + rand(-60, 60), rr.x + 60, rr.x + rr.w - 60), this.y, this.room); s.respawn = true; G.area.ents.push(s); }
           }
-          this.cd = (this.cd || 1.5) - dt; if (this.cd <= 0 && this.shield) { this.cd = 1.6 / this.k; SFX.shoot(); for (const o of [-0.2, 0.2]) { const b = new Orb(this.x, this.y - 40, a + o); b.room = this.room; G.area.ents.push(b); } }
+          this.cd = (this.cd || 1.5) - dt; if (this.cd <= 0 && this.shield) { this.cd = 1.6 / this.k; SFX.shoot(); this.atk = 0.7; for (const o of [-0.2, 0.2]) { const b = new Orb(this.x, this.y - 40, a + o); b.room = this.room; G.area.ents.push(b); } }
         }
         this.touch(G); return;
       }
@@ -188,7 +188,7 @@ class MidnightKing extends Enemy {
       case 'fly': {
         this.alt = lerp(this.alt, 46, dt * 2);
         const k = this.k; this.x = lerp(this.x, rr.x + 240 + Math.cos(this.t * 0.9 * k) * 150, dt * 1.5 * k); this.y = lerp(this.y, rr.y + 140 + Math.sin(this.t * 1.3 * k) * 50, dt * 1.5 * k);
-        this.cd = (this.cd || 1) - dt; if (this.cd <= 0) { this.cd = 0.9 / k; G.area.ents.push(Object.assign(new DarkBomb(P.x + rand(-20, 20), P.y + rand(-10, 10), this.room))); }
+        this.cd = (this.cd || 1) - dt; if (this.cd <= 0) { this.cd = 0.9 / k; this.atk = 0.7; G.area.ents.push(Object.assign(new DarkBomb(P.x + rand(-20, 20), P.y + rand(-10, 10), this.room))); }
         return;
       }
       case 'fall': this.alt = lerp(this.alt, 0, Math.min(1, dt * 10)); if (this.st <= 0) { this.alt = 0; this.state = 'held'; this.wh = 0; this.st = 3.6 / Math.sqrt(this.k); G.shake = 0.3; } return;
@@ -215,7 +215,9 @@ class MidnightKing extends Enemy {
     ell(this.x, this.y, 16, 5, 'rgba(0,0,0,.45)');
     const fl = this.flash > 0, held = this.state === 'held' || this.state === 'down', bob = held ? 0 : Math.sin(this.t * 2) * 2;
     if (IMG.boss_king) { // sprite PixelLab : tourné vers le héros ; bouclier d'ombre en phase 2
-      const P = G.player; drawCell('boss_king', held ? 0 : plDir(P.x - this.x, P.y - this.y), 0, 128, 128, this.x, this.y - this.alt + bob, 0.5, { foot: 5, flash: fl, rot: held ? Math.sin(this.t * 20) * 0.05 : 0 });
+      // planche 256 × 256 : ligne 0 au repos, 1-8 déplacement, 9-15 coup de sceptre (quand il lance ses sorts)
+      const P = G.player, row = held ? 0 : this.atk > 0 ? 9 + Math.min(6, Math.floor((0.7 - this.atk) / 0.1)) : (this.state === 'fly' || (this.state === 'float' && this.phase === 1)) ? 1 + Math.floor(this.t * 8) % 8 : 0;
+      drawCell('boss_king', held ? 0 : plDir(P.x - this.x, P.y - this.y), row, 256, 256, this.x, this.y - this.alt + bob, 0.5, { foot: 69, flash: fl, rot: held ? Math.sin(this.t * 20) * 0.05 : 0 });
       if (this.phase === 2 && this.shield && !held) { ctx.globalAlpha = 0.28 + 0.08 * Math.sin(this.t * 4); ell(this.x, this.y - this.alt - 30 + bob, 34, 38, '#2a1d4a'); ctx.globalAlpha = 0.6; ctx.strokeStyle = '#c3b3ff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(this.x, this.y - this.alt - 30 + bob, 34, 38, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
     } else
     hi(this.x, this.y - this.alt + bob, false, () => {
