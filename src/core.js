@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.14.6';
+const VERSION = 'v8.14.7';
 const W = 480, H = 270, SC = 2, TS = 16;
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
@@ -83,7 +83,7 @@ function loadAssets() {
   for (const k of NPC_SPRITES) jobs.push(loadImage('npc_' + k, `assets/npc/${k}.png?v=${VERSION}`));
   for (const k of SWIMMERS) for (const i of [0, 1]) jobs.push(loadImage('swim_' + k + i, `assets/swim/${k}${i}.png?v=${VERSION}`));
   for (const k of ['royaume', 'biblio', 'collines', 'camping', 'route_nord', 'mobil_home', 'cote', 'dunes']) { jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); jobs.push(loadImage('map_' + k + '_dessus', `assets/maps/${k}_dessus.png?v=${VERSION}`)); }
-  for (const k of ['entry', 'arena', 'hub', 'block', 'sling', 'chasm', 'chasm_pont', 'twin', 'bigkey', 'treasure', 'boss', 'prison'].map(n => 'grotte_' + n).concat(['entry', 'arena', 'pond', 'wind', 'frisbee', 'switches', 'bigkey', 'upper', 'treasure', 'boss', 'prison'].map(n => 'bois_' + n))) jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); // salles de donjon peintes
+  for (const k of ['entry', 'arena', 'hub', 'block', 'sling', 'chasm', 'chasm_pont', 'twin', 'bigkey', 'treasure', 'boss', 'prison'].map(n => 'grotte_' + n).concat(['entry', 'arena', 'pond', 'wind', 'frisbee', 'switches', 'bigkey', 'upper', 'treasure', 'boss', 'prison'].map(n => 'bois_' + n)).concat(['entry', 'arena', 'crate', 'shaft', 'hub', 'grappin', 'spider', 'posts', 'hall', 'boss', 'prison'].map(n => 'mines_' + n))) jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); // salles de donjon peintes
   for (const [k, f] of Object.entries(WANG_FILES)) jobs.push(loadImage('wang_' + k, `assets/tiles/${f}.png?v=${VERSION}`));
   jobs.push(loadData());
   return Promise.all(jobs).then(() => { if (IMG.deco_lamp) IMG.lamp = IMG.deco_lamp; }); // réverbère PixelLab du camping
