@@ -24,7 +24,7 @@ function plank(c, x0, y0, x1, y1) {                       // plancher : lames ho
   }
 }
 function shelf(c, x, y, w, h) {                           // bibliothèque pleine de livres
-  c.rect(x, y, w, h, "B"); c.rect(x + 3, y + 3, w - 6, h - 6, "K"); c.vline(x, y, h, "n"); c.vline(x + w - 1, y, h, "k"); c.hline(x, y, w, "N")
+  c.rect(x - 2, y - 2, w + 4, h + 4, "k"); c.rect(x, y - 6, w, 6, "N"); c.hline(x, y - 6, w, "L"); c.rect(x, y, w, h, "B"); c.rect(x + 3, y + 3, w - 6, h - 6, "K"); c.vline(x, y, h, "n"); c.vline(x + w - 1, y, h, "k"); c.hline(x, y, w, "N")
   const cols = "rgUyRmGv"
   for (let sy = y + 6; sy < y + h - 12; sy += 24) {
     c.rect(x + 3, sy + 18, w - 6, 3, "n"); c.hline(x + 3, sy + 18, w - 6, "L")
@@ -32,10 +32,28 @@ function shelf(c, x, y, w, h) {                           // bibliothèque plein
     while (bx < x + w - 8) { const bw = 4 + (i * 3) % 3, bh = 13 + (i * 5) % 5, k = cols[i % cols.length]; c.rect(bx, sy + 18 - bh, bw, bh, k); c.vline(bx, sy + 18 - bh, bh, "k"); c.hline(bx + 1, sy + 18 - bh + 3, bw - 1, "Y"); bx += bw + 1; i++ }
   }
 }
-function table(c, x, y, w, h, top = 16) { c.box(x - 1, y - 1, w + 2, top + 6, "k"); c.rect(x, y, w, top, "n"); c.hline(x, y, w, "L"); c.hline(x, y + 1, w, "N"); c.rect(x, y + top, w, 4, "B"); c.rect(x + 3, y + top + 4, 5, h - top - 4, "B"); c.rect(x + w - 8, y + top + 4, 5, h - top - 4, "B"); c.vline(x + 3, y + top + 4, h - top - 4, "b") }
+function table(c, x, y, w, h, top = 16) {
+  const fr = Math.max(6, top / 3 | 0), tp = top - fr                                     // dessus vu en plongée + bandeau avant
+  c.rect(x - 1, y - 1, w + 2, top + 2, "k")
+  c.rect(x, y, w, tp, "N"); for (let yy = y + 3; yy < y + tp; yy += 4) c.hline(x + 2, yy, w - 4, "n"); c.hline(x, y, w, "L"); c.vline(x, y, tp, "L")
+  for (let i = 0; i < w / 18; i++) c.hline(x + 4 + (i * 37) % (w - 12), y + 2 + (i * 5) % Math.max(1, tp - 3), 6, "b")   // veinage du plateau
+  c.rect(x, y + tp, w, fr, "b"); c.hline(x, y + tp, w, "n"); c.hline(x, y + top - 1, w, "B")
+  for (const lx of [x + 3, x + w - 9]) { c.rect(lx, y + top, 6, h - top, "b"); c.vline(lx, y + top, h - top, "n"); c.vline(lx + 5, y + top, h - top, "B"); c.hline(lx, y + h - 1, 6, "k") }
+  c.rect(x + 9, y + top, w - 18, 3, "B")
+}
 function candle(c, x, y) { c.rect(x - 4, y + 8, 9, 3, "y"); c.rect(x - 2, y, 5, 8, "E"); c.vline(x - 2, y, 8, "e"); c.vline(x, y - 2, 2, "k"); c.px(x, y - 5, "w"); c.rect(x - 1, y - 4, 3, 2, "O"); c.px(x, y - 6, "O") }
-function barrel(c, x, y, w, h) { c.ellipse(x + w / 2, y + h - 3, w / 2 - 2, 3, "B"); c.rect(x, y + 4, w, h - 8, "n"); c.ellipse(x + w / 2, y + 4, w / 2, 4, "N"); c.ellipse(x + w / 2, y + 4, w / 2 - 3, 2, "b"); for (const yy of [y + 10, y + h - 10]) c.rect(x, yy, w, 3, "s"); c.vline(x + 3, y + 6, h - 10, "N"); c.vline(x + w - 3, y + 6, h - 10, "B") }
-function crate(c, x, y, w, h) { c.rect(x, y, w, h, "n"); c.box(x, y, w, h, "B"); c.box(x + 2, y + 2, w - 4, h - 4, "N"); c.line(x + 3, y + 3, x + w - 4, y + h - 4, "b"); c.hline(x, y, w, "L") }
+function barrel(c, x, y, w, h) {
+  c.ellipse(x + w / 2, y + h - 3, w / 2 - 1, 3, "B")
+  for (let yy = y + 4; yy < y + h - 3; yy++) { const t = (yy - y) / h, bulge = Math.round(Math.sin(t * Math.PI) * 3); for (let xx = x - bulge; xx < x + w + bulge; xx++) { const u = (xx - x + bulge) / (w + 2 * bulge); c.px(xx, yy, u < 0.15 ? "B" : u < 0.35 ? "b" : u < 0.7 ? "n" : u < 0.85 ? "N" : "b"); if (((xx - x) % 6) === 0 && u > 0.1 && u < 0.9) c.px(xx, yy, "b") } }
+  for (const yy of [y + 9, y + h - 10]) { const bulge = Math.round(Math.sin(((yy - y) / h) * Math.PI) * 3); c.hline(x - bulge, yy, w + 2 * bulge, "s"); c.hline(x - bulge, yy + 1, w + 2 * bulge, "S") }
+  c.ellipse(x + w / 2, y + 4, w / 2, 4, "N"); c.ellipse(x + w / 2, y + 4, w / 2 - 3, 2, "n"); c.ellipse(x + w / 2, y + 4, w / 2, 4, "B", true)
+}
+function crate(c, x, y, w, h) {
+  const tp = Math.round(h * 0.3)
+  c.rect(x - 1, y - 1, w + 2, h + 2, "k")
+  c.rect(x, y, w, tp, "N"); c.hline(x, y, w, "L"); for (let yy = y + 3; yy < y + tp; yy += 4) c.hline(x + 2, yy, w - 4, "n")
+  c.rect(x, y + tp, w, h - tp, "n"); c.box(x, y + tp, w, h - tp, "B"); c.box(x + 2, y + tp + 2, w - 4, h - tp - 4, "b"); c.line(x + 3, y + tp + 3, x + w - 4, y + h - 4, "N"); c.line(x + 3, y + tp + 4, x + w - 4, y + h - 3, "b")
+}
 function scroll(c, x, y, len, dir = 1) { c.rect(x, y, len, 5, "c"); c.hline(x, y, len, "E"); c.rect(x - 2, y - 1, 3, 7, "P"); c.rect(x + len - 1, y - 1, 3, 7, "P") }
 function paper(c, x, y) { c.poly([x, y, x + 14, y - 3, x + 17, y + 6, x + 3, y + 9], "c"); c.line(x + 3, y + 2, x + 12, y, "P"); c.line(x + 4, y + 5, x + 13, y + 3, "P") }
 function book(c, x, y, k) { c.rect(x, y, 16, 11, k); c.hline(x, y, 16, "Y"); c.rect(x + 2, y + 8, 14, 3, "E") }
@@ -53,13 +71,24 @@ scene("biblio", { w: 640, h: 358, bg: "k" },
     // pans de mur latéraux en biais (plâtre dans l'ombre, soubassement de pierre)
     c.poly([22, 70, 78, 22, 78, 155, 22, 178], "t"); for (let y = 40; y < 150; y += 10) c.line(22, y + 40 - (y - 40) * 0, 78, y, "s"); c.poly([22, 128, 78, 112, 78, 155, 22, 178], "t"); c.line(22, 128, 78, 112, "s")
     c.poly([562, 22, 618, 70, 618, 178, 562, 155], "t"); for (let y = 40; y < 150; y += 10) c.line(562, y, 618, y + 40, "s"); c.poly([562, 112, 618, 128, 618, 178, 562, 155], "t"); c.line(562, 112, 618, 128, "s")
-    // plancher : longues lames, joints décalés
+    // plancher : chaque lame a sa teinte, son veinage, ses fissures et ses nœuds
+    const hsh = (x, y, z = 0) => { let n = (x * 374761393 + y * 668265263 + z * 974711) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0) / 4294967296 }
     for (let y = 155; y < 335; y++) for (let x = 22; x < 618; x++) {
-      const row = Math.floor((y - 155) / 14), off = (row * 53) % 140, seam = (x + off) % 140
-      let k = row % 2 ? "n" : "Q"; if ((y - 155) % 14 === 0) k = "N"; if ((y - 155) % 14 === 13 || seam === 0) k = "q"
-      if (seam === 70 && (y - 155) % 14 === 6) k = "q"
+      const row = Math.floor((y - 155) / 14), ly = (y - 155) % 14, off = (row * 53) % 140, board = Math.floor((x + off) / 140), bx = (x + off) % 140
+      const tone = hsh(board, row, 1), base = tone < 0.33 ? "Q" : tone < 0.75 ? "n" : "N"
+      let k = base
+      const grain = Math.sin((bx + hsh(board, row, 2) * 60) * 0.09 + ly * 0.7) > 0.93                       // veinage le long de la lame
+      if (grain) k = base === "N" ? "n" : "q"
+      if (ly === 0) k = base === "Q" ? "n" : "L"                                                           // arête éclairée
+      if (ly === 13 || bx === 0) k = "B"                                                                   // joint sombre
+      if (ly === 12) k = "q"
       c.px(x, y, k)
     }
+    for (let i = 0; i < 70; i++) {                                                                         // fissures du bois, dans le sens des lames
+      const row = Math.floor(hsh(i, 1, 3) * 12), y = 155 + row * 14 + 3 + Math.floor(hsh(i, 2, 3) * 8), x = 30 + Math.floor(hsh(i, 3, 3) * 570), len = 8 + Math.floor(hsh(i, 4, 3) * 22)
+      let yy = y; for (let d = 0; d < len; d++) { c.px(x + d, yy, "B"); if (hsh(i, d, 5) < 0.18) yy += hsh(i, d, 6) < 0.5 ? -1 : 1; if (yy < 155 + row * 14 + 2 || yy > 155 + row * 14 + 10) yy = y }
+    }
+    for (let i = 0; i < 26; i++) { const x = 30 + Math.floor(hsh(i, 9, 7) * 570), row = Math.floor(hsh(i, 8, 7) * 12), y = 155 + row * 14 + 6; c.ellipse(x, y, 3, 2, "q"); c.px(x, y, "B"); c.hline(x - 6, y - 1, 4, "q"); c.hline(x + 4, y + 1, 4, "q") }  // nœuds
     c.rect(22, 155, 596, 3, "q")
     // bord avant, sortie au milieu
     c.rect(22, 335, 264, 22, "B"); c.hline(22, 335, 264, "b"); c.rect(354, 335, 264, 22, "B"); c.hline(354, 335, 264, "b")
@@ -99,7 +128,7 @@ scene("biblio", { w: 640, h: 358, bg: "k" },
   layer("meubles", c => {
     barrel(c, 52, 130, 36, 44); barrel(c, 33, 238, 32, 40)
     c.rect(30, 172, 40, 56, "b"); c.hline(30, 172, 40, "L"); c.rect(33, 192, 34, 3, "B"); c.ellipse(48, 165, 11, 9, "n"); c.ellipse(48, 160, 7, 3, "N"); c.rect(37, 178, 6, 12, "y"); c.rect(39, 175, 2, 3, "B"); scroll(c, 52, 184, 10)
-    c.rect(80, 186, 22, 8, "n"); c.hline(80, 186, 22, "L"); c.rect(82, 194, 4, 20, "B"); c.rect(96, 194, 4, 20, "B")          // tabouret
+    c.rect(83, 194, 4, 20, "b"); c.rect(95, 194, 4, 20, "b"); c.ellipse(91, 191, 12, 6, "k"); c.ellipse(91, 190, 11, 5, "N"); c.ellipse(91, 189, 8, 3, "L")          // tabouret
     crate(c, 488, 156, 50, 38); c.rect(492, 160, 42, 8, "c")
     // escalier vers l'étage, jarre
     for (let i = 0; i < 6; i++) { const x = 566 + i * 7, y = 236 - i * 12; c.rect(x, y, 48 - i * 7, 12, i % 2 ? "b" : "n"); c.hline(x, y, 48 - i * 7, "L"); c.vline(x, y, 12, "B") }
@@ -128,7 +157,7 @@ scene("biblio", { w: 640, h: 358, bg: "k" },
     table(c, 482, 254, 88, 66, 36)
     c.ellipse(506, 270, 12, 5, "E"); c.ellipse(548, 262, 12, 5, "E"); c.ellipse(548, 259, 8, 4, "N"); c.ellipse(522, 280, 9, 4, "E"); c.rect(548, 274, 14, 14, "y"); c.rect(550, 276, 10, 8, "B")
     c.circ(500, 252, 6, "v"); c.px(498, 249, "E"); c.rect(495, 258, 10, 3, "y")
-    for (const [x, y] of [[452, 270], [452, 294], [574, 270], [574, 294]]) { c.rect(x, y, 26, 18, "n"); c.hline(x, y, 26, "L"); c.rect(x + 2, y + 18, 4, 8, "B"); c.rect(x + 20, y + 18, 4, 8, "B") }
+    for (const [x, y] of [[452, 268], [452, 296], [574, 268], [574, 296]]) { c.rect(x + 3, y + 8, 4, 16, "b"); c.rect(x + 19, y + 8, 4, 16, "b"); c.vline(x + 22, y + 8, 16, "B"); c.ellipse(x + 13, y + 7, 13, 6, "k"); c.ellipse(x + 13, y + 6, 12, 5, "N"); c.ellipse(x + 13, y + 5, 9, 3, "L"); c.ellipse(x + 13, y + 9, 12, 2, "b") }
     // papiers tombés (on lit beaucoup ici)
     paper(c, 146, 160); paper(c, 80, 222); paper(c, 436, 154); paper(c, 236, 306)
   }),
