@@ -48,7 +48,7 @@ function makeDungeon(spec) {
     else throw new Error('salles non voisines : ' + a + ' / ' + b);
   }
   const grid = buildDungeon({
-    cols: C, rows: Rw, seed: spec.seed, rough: spec.rough, moss: spec.moss,
+    cols: C, rows: Rw, seed: spec.seed, rough: spec.rough, clean: spec.clean, moss: spec.moss,
     rooms: names.map(n => spec.rooms[n]), links, exit: spec.rooms[spec.entry],
     decorate(room, g) { if (spec.tiles) spec.tiles(n => { const [rx, ry] = spec.rooms[n]; return room(rx, ry); }, g); },
   });

@@ -56,13 +56,13 @@ function buildForest() {
 }
 
 // ---------- générateur de donjon : salles 30 × 17 sur une grille, passages de 2 tuiles ----------
-// def : { cols, rows, rooms: [[rx, ry]], links: [[rx, ry, 'N'|'E']], exit: [rx, ry], seed, rough }
+// def : { cols, rows, rooms: [[rx, ry]], links: [[rx, ry, 'N'|'E']], exit: [rx, ry], seed, rough, clean }
 function buildDungeon(def) {
   const g = makeGrid(RW * def.cols, RH * def.rows, 'W'), { set, rect } = gridTools(g), r = seeded(def.seed || 1), rough = def.rough == null ? 0.25 : def.rough;
   for (const [rx, ry] of def.rooms) {
     const ox = rx * RW, oy = ry * RH;
     rect(ox + 2, oy + 2, 26, 13, '_');
-    for (const [cx, cy] of [[2, 2], [27, 2], [2, 14], [27, 14]]) set(ox + cx, oy + cy, 'W');
+    if (!def.clean) for (const [cx, cy] of [[2, 2], [27, 2], [2, 14], [27, 14]]) set(ox + cx, oy + cy, 'W'); // clean : murs droits, sans blocs d'angle
     for (let x = 3; x < 27; x++) { if (Math.abs(x - 14.5) > 2.5 && r() < rough) set(ox + x, oy + 2, 'W'); if (Math.abs(x - 14.5) > 2.5 && r() < rough) set(ox + x, oy + 14, 'W'); }
     for (let y = 3; y < 14; y++) { if (Math.abs(y - 7.5) > 2 && r() < rough) set(ox + 2, oy + y, 'W'); if (Math.abs(y - 7.5) > 2 && r() < rough) set(ox + 27, oy + y, 'W'); }
   }

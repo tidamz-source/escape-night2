@@ -1,16 +1,16 @@
 // Escape Night 2 — Donjon 1 « La Grotte des lucioles » en donjon médiéval. Grilles = collisions du jeu (cave.js, seed 21).
 pal({
-  k: "#0b0a14", w: "#191526", x: "#141022", t: "#201a32", T: "#2b2540",
-  F: "#1c1830", f: "#2b2540", h: "#3a3354", H: "#4a4266",
-  a: "#22253a", b: "#2c3048", c: "#343956", d: "#3e4466",
-  m: "#1f4a4a", M: "#2f6a62", g: "#6fe0d0",
+  k: "#120f16", w: "#2c2731", x: "#231f28", t: "#35303b", T: "#4c4554",
+  F: "#3d3743", f: "#5a5361", h: "#6e6676", H: "#8a8292",
+  a: "#4f4a55", b: "#6b6670", c: "#7a7580", d: "#8d8893", l: "#a8a2ae",
+  m: "#2f6a5e", M: "#3f8a76", g: "#7ff0d8",
   R: "#4a1626", r: "#7a2434", e: "#9a3a40", Y: "#9a7a34", y: "#e0c068", o: "#c89a48",
   i: "#34344a", I: "#62627e",
-  q: "#0c1424", Q: "#14223e", u: "#1f3a62", U: "#4a78a8",
+  q: "#14203a", Q: "#1e3358", u: "#2e5288", U: "#5a8ac0",
   B: "#3a261a", n: "#5e4028", N: "#86603a",
-  s: "#5a4c2a", S: "#86703e", p: "#3e3a40", P: "#4c4650", j: "#2c2a34", z: "#9ff6ff", Z: "#4ab8d0", v: "#c8c0a8", V: "#8a8270",
+  s: "#5a4c2a", S: "#86703e", p: "#857a66", P: "#968a74", j: "#6a604e", z: "#9ff6ff", Z: "#4ab8d0", v: "#c8c0a8", V: "#8a8270",
 })
-ramps("kxwtT", "kFfhH", "kabcd", "kmMg", "kRre", "kYoy", "kiI", "qQuU", "kBnN", "ksS", "jpP", "kZz", "kVv")
+ramps("kxwtT", "kFfhH", "kabcdl", "kmMg", "kRre", "kYoy", "kiI", "qQuU", "kBnN", "ksS", "jpP", "kZz", "kVv")
 const TS = 16, CW = 30, CH = 17
 const hash = (x, y, s = 0) => { let n = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0) / 4294967296 }
 const SOLIDISH = new Set(["W"])
@@ -63,7 +63,8 @@ function room(name, MAP, decorFloor, decorTop, opts = {}) {
     layer("murs", (c) => each((tx, ty) => {
       if (!isWall(tx, ty)) return
       const X0 = tx * TS, Y0 = ty * TS
-      if (isFloor(tx, ty + 1) && at(tx, ty + 1) !== "E" || isWater(tx, ty + 1)) {
+      const tallTop = ty === 0 && isWall(tx, 1) && isFloor(tx, 2)
+      if (isFloor(tx, ty + 1) && at(tx, ty + 1) !== "E" || isWater(tx, ty + 1) || tallTop) {
         for (let y = 0; y < TS; y++) for (let x = 0; x < TS; x++) {
           const X = X0 + x, Y = Y0 + y, course = Math.floor(Y / 4), bx = (X + (course % 2) * 4) % 8
           let k = hash(Math.floor((X + (course % 2) * 4) / 8), course, 5) < 0.25 ? "h" : "f"
@@ -71,8 +72,9 @@ function room(name, MAP, decorFloor, decorTop, opts = {}) {
           if (Y % 4 === 3 || bx === 7) k = "F"
           c.px(X, Y, k)
         }
-        if (!isFloor(tx, ty - 1)) { c.hline(X0, Y0, TS, "H"); c.hline(X0, Y0 + 1, TS, "T") }
-        c.hline(X0, Y0 + TS - 1, TS, "k")
+        const upperFace = ty === 1 && isWall(tx, 0) && isFloor(tx, 2)
+        if (!upperFace) { c.hline(X0, Y0, TS, "H"); c.hline(X0, Y0 + 1, TS, "T") }
+        if (!tallTop) c.hline(X0, Y0 + TS - 1, TS, "k")
         if (isFloor(tx - 1, ty)) c.vline(X0, Y0, TS, "H")
         if (isFloor(tx + 1, ty)) c.vline(X0 + TS - 1, Y0, TS, "F")
       } else {
@@ -105,6 +107,18 @@ function room(name, MAP, decorFloor, decorTop, opts = {}) {
       if (isWall(tx, ty) || at(tx, ty) === "E") return
       if (ty === 0 || ty === 16 || tx === 0 || tx === 29) c.rect(tx * TS, ty * TS, TS, TS, "k")
     })),
+    layer("seuils", (c) => {
+      const jamb = (x, y, w, h) => { c.rect(x, y, w, h, "h"); c.vline(x, y, h, "l"); c.vline(x + w - 1, y, h, "F"); c.hline(x, y, w, "l") }
+      const sill = (x, y, w, h) => { c.rect(x, y, w, h, "d"); c.box(x, y, w, h, "o"); c.box(x + 1, y + 1, w - 2, h - 2, "l") }
+      if (!isWall(14, 0)) {                                   // porte nord : arche dans le grand mur
+        jamb(214, 0, 10, 32); jamb(256, 0, 10, 32); c.rect(214, 0, 52, 5, "h"); c.hline(214, 0, 52, "l"); c.hline(214, 4, 52, "F")
+        for (const x of [236, 240, 244]) c.vline(x, 0, 5, "F")
+        sill(218, 30, 44, 6)
+      }
+      if (!isWall(14, 16)) { jamb(214, 240, 10, 18); jamb(256, 240, 10, 18); sill(218, 234, 44, 6) }   // porte sud
+      if (!isWall(29, 7)) { jamb(444, 98, 26, 10); jamb(444, 144, 26, 10); sill(440, 108, 6, 36) }       // porte est
+      if (!isWall(0, 7)) { jamb(10, 98, 26, 10); jamb(10, 144, 26, 10); sill(34, 108, 6, 36) }           // porte ouest
+    }),
     layer("escalier", (c) => {
       if (at(14, 15) !== "E") return
       const x0 = 224, y0 = 240
@@ -141,15 +155,15 @@ function pillarGilded(c, X, Y) {
 }
 function banner(c, bx, by, emblem = "luciole", torn = false) {
   c.hline(bx - 1, by, 18, "i"); c.px(bx - 2, by, "I"); c.px(bx + 17, by, "I")
-  c.rect(bx, by + 1, 16, 24, "r"); c.vline(bx, by + 1, 24, "R"); c.vline(bx + 15, by + 1, 24, "R")
-  c.vline(bx + 1, by + 1, 24, "Y"); c.vline(bx + 14, by + 1, 24, "Y")
-  c.poly([bx, by + 25, bx + 8, by + 31, bx + 16, by + 25], "r"); c.line(bx, by + 25, bx + 8, by + 31, "R"); c.line(bx + 8, by + 31, bx + 15, by + 25, "R")
+  c.rect(bx, by + 1, 16, 21, "r"); c.vline(bx, by + 1, 21, "R"); c.vline(bx + 15, by + 1, 21, "R")
+  c.vline(bx + 1, by + 1, 21, "Y"); c.vline(bx + 14, by + 1, 21, "Y")
+  c.poly([bx, by + 22, bx + 8, by + 27, bx + 16, by + 22], "r"); c.line(bx, by + 22, bx + 8, by + 27, "R"); c.line(bx + 8, by + 27, bx + 15, by + 22, "R")
   if (emblem === "luciole") { c.ellipse(bx + 5, by + 9, 3, 2, "e"); c.ellipse(bx + 10, by + 9, 3, 2, "e"); c.rect(bx + 7, by + 6, 2, 8, "Y"); c.px(bx + 7, by + 5, "y"); c.px(bx + 8, by + 5, "y"); c.rect(bx + 6, by + 13, 4, 4, "y"); c.px(bx + 5, by + 18, "y"); c.px(bx + 10, by + 18, "y"); c.px(bx + 7, by + 19, "y") }
   if (emblem === "oeil") { c.ellipse(bx + 8, by + 12, 5, 3, "y"); c.circ(bx + 8, by + 12, 2, "R"); c.px(bx + 8, by + 12, "y") }
   if (emblem === "cle") { c.ring(bx + 8, by + 8, 2, "y"); c.vline(bx + 8, by + 11, 9, "y"); c.hline(bx + 8, by + 17, 3, "y"); c.hline(bx + 8, by + 19, 2, "y") }
   if (emblem === "couronne") { c.rect(bx + 4, by + 12, 8, 3, "y"); c.px(bx + 4, by + 10, "y"); c.px(bx + 8, by + 9, "y"); c.px(bx + 11, by + 10, "y"); c.vline(bx + 4, by + 11, 1, "y"); c.vline(bx + 11, by + 11, 1, "y") }
   if (torn) { c.poly([bx + 9, by + 18, bx + 16, by + 14, bx + 16, by + 32, bx + 6, by + 32], "_"); c.line(bx + 9, by + 18, bx + 15, by + 15, "R") }
-  c.hline(bx + 2, by + 21, 12, "R")
+  c.hline(bx + 2, by + 19, 12, "R")
 }
 function ringIron(c, x, y) { c.ring(x, y + 3, 2, "i"); c.px(x, y, "I"); c.vline(x, y + 6, 3, "R") }
 function streaks(c, list) { for (const [x, y, len] of list) c.vline(x, y, len, "F") }
@@ -158,7 +172,9 @@ function inlayRing(c, cx, cy, r, k1, k2) { c.ring(cx, cy, r, k1); c.ring(cx, cy,
 
 // ---------- outils de placement ----------
 const faceY = (S, tx) => { for (let ty = 0; ty < 6; ty++) if (S.isWall(tx, ty) && S.isFloor(tx, ty + 1)) return ty * 16; return null }
-const bannerOn = (c, S, tx, emblem, torn) => { const y = Math.max(faceY(S, tx) ?? 0, faceY(S, tx + 1) ?? 0); if (y !== null) banner(c, tx * 16, y + 2, emblem, torn) }
+const bannerOn = (c, S, tx, emblem, torn) => banner(c, tx * 16, 6, emblem, torn)
+// les bannières vont toujours par paires symétriques autour de l'axe de la salle (x = 240)
+const bannerPair = (c, S, tx, emblem, torn) => { bannerOn(c, S, tx, emblem, torn); bannerOn(c, S, 28 - tx, emblem, torn) }
 const coin = (c, x, y) => { c.hline(x, y, 3, "y"); c.hline(x, y + 1, 3, "Y") }
 const bone = (c, x, y, flip) => { if (flip) { c.vline(x, y, 6, "v"); c.px(x - 1, y, "v"); c.px(x + 1, y, "v"); c.px(x - 1, y + 5, "v"); c.px(x + 1, y + 5, "v"); c.vline(x + 1, y + 1, 4, "V") } else { c.hline(x, y, 6, "v"); c.px(x, y - 1, "v"); c.px(x, y + 1, "v"); c.px(x + 5, y - 1, "v"); c.px(x + 5, y + 1, "v"); c.hline(x + 1, y + 1, 4, "V") } }
 const star = (c, cx, cy, r1, r2, n, k) => { const p = []; for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, r = i % 2 ? r2 : r1; p.push(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r)) } c.poly(p, k) }
@@ -167,7 +183,7 @@ const chevron = (c, x, y, dir, k) => { for (let i = 0; i < 4; i++) { if (dir ===
 const DECOR = {
   // Entrée : bannières de l'ordre des lucioles, anneaux de l'ancienne geôle
   entry: [(c) => cracks(c, [[[104, 196], [108, 200], [107, 205], [112, 209]], [[370, 70], [374, 74], [373, 79]], [[300, 172], [305, 176], [304, 181], [309, 186]], [[60, 120], [64, 125], [63, 130]]]),
-    (c, S) => { bannerOn(c, S, 6, "luciole"); bannerOn(c, S, 21, "luciole"); for (const [x, y] of [[40, 40], [424, 40]]) ringIron(c, x, y); streaks(c, [[73, 18, 9], [262, 18, 11], [392, 18, 7]]) }],
+    (c, S) => { bannerPair(c, S, 6, "luciole"); for (const [x, y] of [[40, 12], [440, 12]]) ringIron(c, x, y); streaks(c, [[73, 18, 9], [262, 18, 11], [392, 18, 7]]) }],
 
   // Arène : piste de sable cerclée de pierre, griffures, bannières déchirées
   arena: [(c) => {
@@ -176,7 +192,7 @@ const DECOR = {
       for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; c.line(Math.round(240 + Math.cos(a) * 70), Math.round(150 + Math.sin(a) * 70), Math.round(240 + Math.cos(a) * 82), Math.round(150 + Math.sin(a) * 82), "a") }
       for (const [x, y] of [[200, 120], [266, 176], [214, 182], [280, 118]]) for (let j = 0; j < 3; j++) c.line(x + j * 3, y, x + j * 3 + 6, y + 8, "j")
     },
-    (c, S) => { bannerOn(c, S, 9, null, true); bannerOn(c, S, 17, null, true); streaks(c, [[120, 18, 10], [360, 18, 8]]) }],
+    (c, S) => { bannerPair(c, S, 8, null, true); streaks(c, [[120, 18, 10], [360, 18, 8]]) }],
 
   // Carrefour : rosace de luciole au centre, chevrons vers les quatre sorties
   hub: [(c) => {
@@ -184,7 +200,7 @@ const DECOR = {
       star(c, 240, 136, 38, 14, 8, "Y"); star(c, 240, 136, 34, 12, 8, "o"); star(c, 240, 136, 18, 8, 4, "M"); c.circ(240, 136, 5, "Y"); c.circ(240, 136, 3, "y")
       chevron(c, 240, 64, "N", "Y"); chevron(c, 240, 222, "S", "Y"); chevron(c, 52, 128, "W", "Y"); chevron(c, 428, 128, "E", "Y")
     },
-    (c, S) => { bannerOn(c, S, 12, "luciole"); bannerOn(c, S, 16, "luciole"); ringIron(c, 56, 24); ringIron(c, 424, 24) }],
+    (c, S) => { bannerPair(c, S, 10, "luciole"); ringIron(c, 56, 24); ringIron(c, 424, 24) }],
 
   // Salle du bloc : sillons creusés par le bloc qu'on pousse, runes gravées
   block: [(c) => {
@@ -194,30 +210,29 @@ const DECOR = {
     },
     (c, S) => {
       const glyph = (x, y) => { c.vline(x, y, 7, "M"); c.line(x, y, x + 3, y + 3, "M"); c.line(x + 3, y + 3, x, y + 6, "m"); c.px(x + 4, y + 1, "g") }
-      for (let tx = 3; tx < 27; tx += 3) { const fy = faceY(S, tx); if (fy !== null) glyph(tx * 16 + 6, fy + 5) }
+      for (const tx of [3, 6, 9, 19, 22, 25]) glyph(tx * 16 + 6, 18)
     }],
 
   // Salle du lance-pierre : estrade circulaire et tapis royal jusqu'au grand coffre
   sling: [(c) => {
-      c.rect(222, 150, 36, 90, "r"); c.vline(222, 150, 90, "R"); c.vline(257, 150, 90, "R"); c.vline(224, 150, 90, "Y"); c.vline(255, 150, 90, "Y")
-      c.ellipse(240, 144, 40, 22, "a"); c.ellipse(240, 142, 38, 20, "c"); c.ellipse(240, 140, 32, 16, "d"); c.ellipse(240, 140, 32, 16, "a", true)
-      c.ellipse(240, 140, 26, 12, "c"); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; c.px(Math.round(240 + Math.cos(a) * 29), Math.round(140 + Math.sin(a) * 14), "Y") }
+      c.rect(222, 160, 36, 74, "r"); c.vline(222, 160, 74, "R"); c.vline(257, 160, 74, "R"); c.vline(224, 160, 74, "Y"); c.vline(255, 160, 74, "Y")
+      c.ellipse(240, 140, 50, 26, "a", true); for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6; c.px(Math.round(240 + Math.cos(an) * 50), Math.round(140 + Math.sin(an) * 26), "o") } // cercle de pavés autour du piédestal
     },
-    (c, S) => { bannerOn(c, S, 10, "couronne"); bannerOn(c, S, 18, "couronne"); streaks(c, [[150, 18, 9], [330, 18, 12]]) }],
+    (c, S) => { bannerPair(c, S, 9, "couronne"); streaks(c, [[150, 18, 9], [330, 18, 12]]) }],
 
   // Gouffre : canal noir, berges couvertes de mousse, chaînes rouillées au-dessus de l'eau
   chasm: [(c, S) => {
       for (let tx = 3; tx < 27; tx++) for (const ty of [3, 6]) if (S.isFloor(tx, ty) && hash(tx, ty, 11) < 0.45) { const y = ty === 3 ? 60 : 96; for (let i = 0; i < 6; i++) c.px(tx * 16 + Math.floor(hash(tx, i, 12) * 16), y + Math.floor(hash(i, tx, 13) * 3), i % 3 ? "m" : "M") }
       for (const x of [76, 140, 380]) c.px(x, 62, "g")
     },
-    (c, S) => { for (const x of [64, 168, 312, 410]) { for (let y = 34; y < 70; y += 3) { c.px(x, y, "i"); c.px(x, y + 1, "I") } c.ring(x, 72, 2, "I") } bannerOn(c, S, 12, "oeil") }],
+    (c, S) => { for (const x of [64, 176, 304, 416]) { for (let y = 6; y < 24; y += 3) { c.px(x, y, "i"); c.px(x, y + 1, "I") } c.ring(x, 26, 2, "I") } bannerPair(c, S, 10, "oeil") }],
 
   // Deux yeux : bassins à margelle sculptée, yeux peints au-dessus
   twin: [(c) => {
       for (const x0 of [96, 320]) { c.box(x0 - 2, 62, 68, 52, "d"); c.box(x0 - 1, 63, 66, 50, "a"); c.px(x0 - 2, 62, "Y"); c.px(x0 + 65, 62, "Y"); c.px(x0 - 2, 113, "Y"); c.px(x0 + 65, 113, "Y") }
       c.line(162, 88, 318, 88, "a"); for (let x = 166; x < 316; x += 10) c.px(x, 87, "M")
     },
-    (c, S) => { bannerOn(c, S, 6, "oeil"); bannerOn(c, S, 22, "oeil") }],
+    (c, S) => { bannerPair(c, S, 6, "oeil") }],
 
   // Grande clé : cercle runique luisant, socles de cristal
   bigkey: [(c) => {
@@ -227,7 +242,7 @@ const DECOR = {
       for (const [x, y] of pts) { c.circ(x, y, 3, "M"); c.px(x, y, "g") }
       for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8; c.px(Math.round(240 + Math.cos(a) * 55), Math.round(150 + Math.sin(a) * 55), "g") }
     },
-    (c, S) => { bannerOn(c, S, 9, "cle"); bannerOn(c, S, 14, "cle") }],
+    (c, S) => { bannerPair(c, S, 9, "cle") }],
 
   // Trésor oublié : liseré doré, pièces renversées, caisses éventrées
   treasure: [(c) => {
@@ -235,7 +250,7 @@ const DECOR = {
       for (const [cx, cy, n] of [[64, 70, 9], [412, 70, 7], [70, 214, 10], [404, 216, 6], [240, 112, 4]]) for (let i = 0; i < n; i++) coin(c, cx + Math.floor((hash(cx, i, 1) - 0.5) * 28), cy + Math.floor((hash(i, cy, 2) - 0.5) * 14))
       for (const [x, y, w] of [[54, 196, 14], [58, 202, 10], [418, 192, 12]]) { c.rect(x, y, w, 3, "n"); c.hline(x, y, w, "N"); c.px(x + 2, y + 1, "B") }
     },
-    (c, S) => { bannerOn(c, S, 11, "couronne"); bannerOn(c, S, 15, "couronne") }],
+    (c, S) => { bannerPair(c, S, 10, "couronne") }],
 
   // Salle du gardien : dalles fendues par les coups de la Grande Ombre, traînées sombres, ossements
   boss: [(c) => {
@@ -244,7 +259,7 @@ const DECOR = {
       for (let i = 0; i < 9; i++) { let x = 240, y = 140, a = i * 0.7 + 0.3; const pts = [[x, y]]; for (let s = 0; s < 6; s++) { a += (hash(i, s, 4) - 0.5) * 0.8; x += Math.cos(a) * 14; y += Math.sin(a) * 10; pts.push([Math.round(x), Math.round(y)]) } cracks(c, [pts]) }
       for (const [x, y, f] of [[60, 70, 0], [70, 74, 1], [400, 210, 0], [56, 214, 1], [410, 66, 0]]) bone(c, x, y, f)
     },
-    (c, S) => { bannerOn(c, S, 5, null, true); bannerOn(c, S, 23, null, true); for (const [x, y] of [[40, 40], [424, 40]]) ringIron(c, x, y) }],
+    (c, S) => { bannerPair(c, S, 5, null, true); for (const [x, y] of [[40, 12], [440, 12]]) ringIron(c, x, y) }],
 
   // Cellule du captif : paille, chaînes et marques des jours comptés
   prison: [(c) => {
@@ -256,7 +271,7 @@ const DECOR = {
     }],
 }
 
-const ROOMS = {"entry": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWW_W__W_WW______W_____W__WWW", "WW__________________________WW", "WW__m______m________________WW", "WWW__mk________________k____WW", "WW_______________________m__WW", "WW___________________m________", "WW___m________________________", "WW__________________________WW", "WWWm___m______m_____________WW", "WW____k________________k____WW", "WW__________________________WW", "WW_____________m_m_________WWW", "WWW_______WW________mW__W__WWW", "WWWWWWWWWWWWWWEEWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWEEWWWWWWWWWWWWWW"], "arena": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWm__W_____________W_____WWW", "WW_____________________m____WW", "WW_m________________________WW", "WW______________m__m_m___m__WW", "WW_______________________m__WW", "_____m______________________WW", "_________k__________k____m__WW", "WW____m_____________________WW", "WW__________________________WW", "WW______________________m___WW", "WW______________________m___WW", "WW________m_________________WW", "WWWW_______________WW_WW___WWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"], "hub": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWW_W_m_W_W_______W_W____WWWWW", "WW_________________________WWW", "WW_________m________________WW", "WW___________m_____________WWW", "WW_m________________________WW", "_______m______________________", "_____m________________________", "WW__________________________WW", "WW____m___m___________m____WWW", "WW______k____________k______WW", "WW_____________m____________WW", "WW__________________________WW", "WWW__W________________W___WWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "block": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWW____W_W_________________WWW", "WW_______________m__m______WWW", "WW_m________m_m____________WWW", "WWm_________________________WW", "WW___m_m____________________WW", "WW___________________m_______m", "WW_______________m____________", "WW__________________________WW", "WW___________m_____________WWW", "WW__m_____m_________________WW", "WW__________________________WW", "WW_______m__________________WW", "WWWWW___W__________________WWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"], "sling": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWW____WW________m____WWW__WWW", "WW__m_______________________WW", "WW________________________m_WW", "WW__________________________WW", "WW___m______________________WW", "WW____m____m_____________m____", "WW____________________________", "WW___________m______________WW", "WW___m____m__________m__m___WW", "WW______________________m___WW", "WW____m_________m____m__m___WW", "WW__________________________WW", "WWW_WW____W________W_______WWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "chasm": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWW______W_________W___WWWWWW", "WWW_____________m__________WWW", "WWW~~~~~~~~~~~~~~~~~~~~~~~~WWW", "WWW~~~~~~~~~~~~~~~~~~~~~~~~WWW", "WW__________________________WW", "__________________m______m__WW", "__________m___m_m___________WW", "WW_________m________________WW", "WW_________m________________WW", "WW______m________________m_WWW", "WW____________________m_____WW", "WW_______m__________m_______WW", "WWWW______________W_m______WWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "twin": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWW_WW__W__W______WW_______WWW", "WW________________m_________WW", "WW____~~~~__________~~~~m___WW", "WWW___~~~~__________~~~~____WW", "WW____~~~~________m_~~~~____WW", "______________________________", "________m_____________________", "WW__________________________WW", "WW_________m________________WW", "WWW________________________mWW", "WW__________________________WW", "WW__________________________WW", "WWW_____W_________W__W_W__WWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"], "bigkey": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWW___W___________W_W______WWW", "WW__________________________WW", "WW___k_m_______m___m____k___WW", "WW__________________________WW", "WW__________________________WW", "WW__________________________WW", "WW_________________________mWW", "WW_____________________m____WW", "WWW________________________WWW", "WW_________________________mWW", "WW___k________________m_k___WW", "WWW_________________________WW", "WWW__Wm_______________W___WWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "treasure": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWW__W_W_________WW__W____WWW", "WW_m________________________WW", "WW___k__________________k___WW", "WWW_________________________WW", "WW__________________________WW", "____________________________WW", "________________m___________WW", "WW_____________m____________WW", "WW__________________________WW", "WW__________________________WW", "WW___k__________________k___WW", "WW________________________m_WW", "WWWW____W_W________W_W_W__WWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"], "boss": ["WWWWWWWWWWWWWWm_WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWW_____WWm_________W______WWW", "WW_____m____________________WW", "WW_________________________WWW", "WW___________m___________mm_WW", "WW__________________________WW", "WW__________________________WW", "WW_____m__m___m_____________WW", "WW__________________________WW", "WWW____________________m____WW", "WW_______________m__________WW", "WW________________m_________WW", "WW__________________________WW", "WWW_W___________m____W____WWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "prison": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWW____W_WW___m____________WWW", "WW________________________m_WW", "WWW___________________m_____WW", "WW____m_m___________________WW", "WW__________________________WW", "WW__________m_______________WW", "WW____________m_____________WW", "WW__________________________WW", "WW__________________________WW", "WW__________________________WW", "WW_________________________WWW", "WW___________m_________m__m_WW", "WWW______W_W______W________WWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"]};
+const ROOMS = {"entry": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WW________m_________________WW", "WW__________________________WW", "WW__m______m________________WW", "WW___mk________________k____WW", "WW_______________________m__WW", "WW___________________m________", "WW___m________________________", "WW__________________________WW", "WW_m___m______m_____________WW", "WW____k________________k____WW", "WW__________________________WW", "WW_____________m_m__________WW", "WW__________________m_______WW", "WWWWWWWWWWWWWWEEWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWEEWWWWWWWWWWWWWW"], "arena": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WW__m_______________________WW", "WW_____________________m____WW", "WW_m________________________WW", "WW______________m__m_m___m__WW", "WW_______________________m__WW", "_____m______________________WW", "_________k__________k____m__WW", "WW____m_____________________WW", "WW__________________________WW", "WW______________________m___WW", "WW______________________m___WW", "WW________m_________________WW", "WW__________________________WW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"], "hub": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WW____m_____________________WW", "WW__________________________WW", "WW_________m________________WW", "WW___________m_____________mWW", "WW_m________________________WW", "_______m______________________", "_____m________________________", "WW__________________________WW", "WW____m___m___________m_____WW", "WW______k____________k______WW", "WW_____________m____________WW", "WW__________________________WW", "WW__________________________WW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "block": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WW__________________________WW", "WW_______________m__m_______WW", "WW_m________m_m_____________WW", "WWm_________________________WW", "WW___m_m____________________WW", "WW___________________m_______m", "WW_______________m____________", "WW__________________________WW", "WW___________m______________WW", "WW__m_____m_________________WW", "WW__________________________WW", "WW_______m__________________WW", "WW__________________________WW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"], "sling": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WW_____m_________m__________WW", "WW__m_______________________WW", "WW________________________m_WW", "WW__________________________WW", "WW___m______________________WW", "WW____m____m_____________m____", "WW____________________________", "WW___________m______________WW", "WW___m____m__________m__m___WW", "WW______________________m___WW", "WW____m_________m____m__m___WW", "WW__________________________WW", "WW__________________________WW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "chasm": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WW__________________________WW", "WW______________m___________WW", "WW~~~~~~~~~~~~~~~~~~~~~~~~~~WW", "WW~~~~~~~~~~~~~~~~~~~~~~~~~~WW", "WW__________________________WW", "__________________m______m__WW", "__________m___m_m___________WW", "WW_________m________________WW", "WW_________m________________WW", "WW______m________________m__WW", "WW____________________m_____WW", "WW_______m__________m_______WW", "WW__________________m_______WW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "twin": ["WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWm_________________________WW", "WW________________m_________WW", "WW____~~~~__________~~~~m___WW", "WW____~~~~__________~~~~____WW", "WW____~~~~________m_~~~~____WW", "______________________________", "________m_____________________", "WW__________________________WW", "WW_________m________________WW", "WW_________________________mWW", "WW__________________________WW", "WW__________________________WW", "WW__________________________WW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"], "bigkey": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WW__________________________WW", "WW__________________________WW", "WW___k_m_______m___m____k___WW", "WW__________________________WW", "WW__________________________WW", "WW__________________________WW", "WW_________________________mWW", "WW_____________________m____WW", "WW__________________________WW", "WW_________________________mWW", "WW___k________________m_k___WW", "WW__________________________WW", "WW____m_____________________WW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "treasure": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WW__________________________WW", "WW_m________________________WW", "WW___k__________________k___WW", "WW__________________________WW", "WW__________________________WW", "____________________________WW", "________________m___________WW", "WW_____________m____________WW", "WW__________________________WW", "WW__________________________WW", "WW___k__________________k___WW", "WW________________________m_WW", "WW__________________________WW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"], "boss": ["WWWWWWWWWWWWWWm_WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WW________m_________________WW", "WW_____m____________________WW", "WW__________________________WW", "WW___________m___________mm_WW", "WW__________________________WW", "WW__________________________WW", "WW_____m__m___m_____________WW", "WW__________________________WW", "WW_____________________m____WW", "WW_______________m__________WW", "WW________________m_________WW", "WW__________________________WW", "WW______________m___________WW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"], "prison": ["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", "WW_____m______m____________mWW", "WW________________________m_WW", "WW____________________m_____WW", "WW____m_m___________________WW", "WW__________________________WW", "WW__________m_______________WW", "WW____________m_____________WW", "WW__________________________WW", "WW__________________________WW", "WW__________________________WW", "WW__________________________WW", "WW___________m_________m__m_WW", "WW__________________________WW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW", "WWWWWWWWWWWWWW__WWWWWWWWWWWWWW"]};
 const PILLARS = { bigkey: pillarCrystal, treasure: pillarGilded }
 for (const [n, grid] of Object.entries(ROOMS)) room('grotte_' + n, grid, DECOR[n][0], DECOR[n][1], { pillar: PILLARS[n] })
 // gouffre avec le pont abaissé (le jeu change les cases 14-15 × 4-5 en 'b' quand la cible est touchée)

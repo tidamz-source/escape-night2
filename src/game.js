@@ -505,7 +505,7 @@ const G = {
     l.fillRect(0, 0, W * SC, H * SC);
     l.globalCompositeOperation = 'destination-out';
     for (const o of L) {
-      const r = (o.r + (o.flick ? Math.sin(this.t * 13) * 3 + Math.sin(this.t * 7.3) * 2 : 0)) * SC, x = (o.x - cx) * SC, y = (o.y - cy) * SC;
+      const ph = o.x * 0.37 + o.y * 0.61, r = (o.r + (o.flick ? Math.sin(this.t * 13 + ph) * 3 + Math.sin(this.t * 7.3 + ph * 1.7) * 2 : 0)) * SC, x = (o.x - cx) * SC, y = (o.y - cy) * SC;
       const g = l.createRadialGradient(x, y, 0, x, y, r);
       for (let i = 0; i <= 10; i++) { const t = i / 10, a = Math.pow(1 - t * t, 2); g.addColorStop(t, `rgba(0,0,0,${a.toFixed(3)})`); }
       l.fillStyle = g; l.beginPath(); l.arc(x, y, r, 0, 7); l.fill();
@@ -514,7 +514,7 @@ const G = {
     ctx.globalCompositeOperation = 'lighter';
     for (const o of L) {
       if (o.c.startsWith('rgba(200,220,255')) continue;
-      const r = o.r * SC * (o.warm ? 0.8 : 0.6), x = (o.x - cx) * SC, y = (o.y - cy) * SC, k = o.flick ? 0.16 + Math.sin(this.t * 11) * 0.03 : 0.12;
+      const r = o.r * SC * (o.warm ? 0.8 : 0.6), x = (o.x - cx) * SC, y = (o.y - cy) * SC, k = o.flick ? 0.16 + Math.sin(this.t * 11 + o.x * 0.29 + o.y * 0.43) * 0.03 : 0.12;
       const g = ctx.createRadialGradient(x, y, 0, x, y, r); for (let i = 0; i <= 8; i++) { const t = i / 8; g.addColorStop(t, o.c + (k * 1.3 * Math.pow(1 - t * t, 2)).toFixed(3) + ')'); }
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
     }

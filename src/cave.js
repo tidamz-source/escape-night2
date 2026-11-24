@@ -8,13 +8,13 @@
 const CAVE_PAINTED = ['entry', 'arena', 'hub', 'block', 'sling', 'chasm', 'twin', 'bigkey', 'treasure', 'boss', 'prison'];
 function buildCaveArea() {
   return makeDungeon({
-    id: 'cave', zone: 'collines', name: 'La Grotte des lucioles', theme: 'cave', seed: 21, rough: 0.2, moss: 360, dark: 0.26,
+    id: 'cave', zone: 'collines', name: 'La Grotte des lucioles', theme: 'cave', seed: 21, rough: 0, clean: true, moss: 360, dark: 0.18, // murs droits (salles peintes) ; moins sombre pour que l'Ombre et les spectres ressortent
     bossFlag: 'boss', heartFlag: 'heart2', potLoot: 'pot', paintRooms: Object.assign(Object.fromEntries(CAVE_PAINTED.map(n => [n, 'grotte_' + n])), { chasm: () => SAVE.bridge ? 'grotte_chasm_pont' : 'grotte_chasm' }),
     rooms: { entry: [1, 3], arena: [2, 3], hub: [1, 2], block: [0, 2], sling: [0, 1], chasm: [1, 1], twin: [2, 2], bigkey: [2, 1], treasure: [3, 2], boss: [1, 0] },
     entry: 'entry', boss: 'boss',
     links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'hub', { key: 'caveK1' }], ['hub', 'block'], ['block', 'sling', { shut: () => !Plate.held('plateE') }], ['sling', 'chasm'], ['hub', 'chasm'], ['hub', 'twin'], ['twin', 'bigkey', { key: 'caveK2' }], ['twin', 'treasure'], ['chasm', 'boss', { big: true }]],
     tiles(room) {
-      const c = room('chasm'); c.rect(2, 4, 26, 2, '~'); c.rect(2, 2, 1, 4, 'W'); c.rect(27, 2, 1, 4, 'W');
+      const c = room('chasm'); c.rect(2, 4, 26, 2, '~'); // le canal occupe toute la largeur : pas besoin de blocs de mur sur ses bords
       const t = room('twin'); t.rect(6, 4, 4, 3, '~'); t.rect(20, 4, 4, 3, '~');
       for (const [x, y] of [[6, 5], [23, 5], [6, 11], [23, 11]]) room('entry').set(x, y, 'k');
       for (const [x, y] of [[9, 8], [20, 8]]) room('arena').set(x, y, 'k');
@@ -22,7 +22,7 @@ function buildCaveArea() {
       for (const [x, y] of [[8, 11], [21, 11]]) room('hub').set(x, y, 'k');
     },
     syncTiles() { const p = this.h.pos('chasm', 14 * TS, 4 * TS), brA = { x: Math.round(p.x / TS), y: Math.round(p.y / TS) }; const want = SAVE.bridge ? 'b' : '~'; let ch = false; for (let y = brA.y; y < brA.y + 2; y++) for (let x = brA.x; x < brA.x + 2; x++) if (this.g[y][x] !== want) { this.g[y][x] = want; ch = true; } if (ch) this.rerender(); },
-    roomDark: (room, R) => room === R.bigkey ? 0.55 : null,
+    roomDark: (room, R) => room === R.bigkey ? 0.45 : null,
     arenas: { arena: arenaStd('arenaW'), bigkey: { flag: 'caveBigArena', onStart(G) { G.banner = { text: 'Le Grand feu follet', t: 2 }; } }, boss: bossArena('boss', 'La Grande Ombre') },
     migrate() { if (SAVE.caveBigKey) SAVE.caveBigArena = true; },
     make(n, L, h) {

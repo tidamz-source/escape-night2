@@ -15,7 +15,7 @@ const names=Object.keys(spec.rooms), links=[];
 for (const [a,b] of spec.links){const [ax,ay]=spec.rooms[a],[bx,by]=spec.rooms[b];
  if(ax===bx&&ay===by+1)links.push([ax,ay,'N']); else if(ax===bx&&ay===by-1)links.push([bx,by,'N']);
  else if(ay===by&&ax===bx-1)links.push([ax,ay,'E']); else links.push([bx,by,'E']);}
-var G=buildDungeon({cols:4,rows:5,seed:spec.seed,rough:spec.rough,moss:spec.moss,rooms:names.map(n=>spec.rooms[n]),links,exit:spec.rooms.entry,
+var G=buildDungeon({cols:4,rows:5,seed:spec.seed,rough:spec.rough,clean:spec.clean,moss:spec.moss,rooms:names.map(n=>spec.rooms[n]),links,exit:spec.rooms.entry,
  decorate(room){spec.tiles(n=>{const [rx,ry]=spec.rooms[n];return room(rx,ry);})}});
 var E=spec.rooms.entry;`, ctx);
 vm.runInContext("var ROOMS=spec.rooms;",ctx);
