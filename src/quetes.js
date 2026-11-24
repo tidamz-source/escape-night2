@@ -386,13 +386,17 @@ function buildPhareFloor(n) {
   for (const [x, y] of [[1, 2], [18, 2], [1, 10], [18, 10]]) T.set(x, y, '#');
   const up = n % 2 ? 15 : 4, down = n % 2 ? 4 : 15; // l'escalier tourne d'un étage à l'autre
   if (n < 5) T.rect(up, 0, 2, 2, '2'); T.rect(down, h - 1, 2, 1, '1');
-  if (n < 5) for (let i = 0; i < n; i++) T.set(6 + i * 2, 6 + (i % 2) * 2, '#'); // des caisses de plus en plus nombreuses
-  const A = new Area('phare' + n, g, 'tower'); A.name = `Le phare · étage ${n}`; A.dark = 0.45;
+  if (n > 1 && n < 5) for (let i = 0; i < n; i++) T.set(6 + i * 2, 6 + (i % 2) * 2, '#'); // des caisses de plus en plus nombreuses (le rez-de-chaussée est le logis du gardien)
+  const A = new Area('phare' + n, g, 'tower'); A.name = n === 1 ? 'Le phare · chez le gardien' : `Le phare · étage ${n}`; A.dark = 0.45;
   A.start = { x: (down + 1) * TS, y: (h - 2) * TS + 8, dir: 'up' }; A.top = { x: (up + 1) * TS, y: 3 * TS, dir: 'down' };
   A.exits = { 1: Gm => n === 1 ? Gm.enter('cote', { x: 612, y: 42 * TS + 12, dir: 'down' }) : Gm.enter('phare' + (n - 1), Gm.areas['phare' + (n - 1)].top), 2: Gm => Gm.enter('phare' + (n + 1), Gm.areas['phare' + (n + 1)].start) };
   A.spawn = function () {
     this.ents = [new Brazier(3 * TS, 3 * TS), new Brazier(17 * TS, 3 * TS)];
-    if (SQ.st('phare') < 4) for (let i = 0; i < Math.min(4, n); i++) this.ents.push(new Crab((5 + i * 3.5) * TS, (6 + (i % 2) * 3) * TS));
+    if (n === 1) { // le logis du gardien : on le traverse pour monter
+      const put = (kind, tx, ty, o) => this.ents.push(new Furniture(tx * TS, ty * TS, kind, o));
+      put('bed', 8, 3.6, { blanket: '#3a5a8a' }); put('table', 12, 6.6, { candle: true }); put('lamp', 10.5, 3); put('nets', 2.5, 5); put('barrel', 17, 8.4);
+    }
+    if (n > 1 && SQ.st('phare') < 4) for (let i = 0; i < Math.min(4, n); i++) this.ents.push(new Crab((5 + i * 3.5) * TS, (6 + (i % 2) * 3) * TS));
     if (n === 5) this.ents.push(new PhareLamp(10 * TS, 5 * TS));
     this.ents.push(new Sign((down + 3) * TS, (h - 2) * TS, [{ text: `« Étage ${n} sur 5. »` }]));
   };

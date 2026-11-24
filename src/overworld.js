@@ -430,13 +430,13 @@ function buildCoteArea() {
   A.paint = 'map_cote'; A.bushSpots = [];
   A.houses = [ // maisons peintes : on entre par la porte, en montant
     { id: 'artificiere', x: 370, y: 14 * TS, o: { w: 3, d: 1, painted: true } },
-    { id: 'phare', x: 467, y: 42 * TS, o: { w: 3, d: 1, painted: true } },
   ];
   A.spawn = function () {
     this.ents = [];
     for (const h of this.houses) this.ents.push(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)));
     for (const o of OVERHEAD.cote) this.ents.push(new Overhead('map_cote_dessus', o)); // toits, feuillages, phare, tour : le héros passe derrière
     this.ents.push(new Relay(124, 473, 'cote'));
+    this.ents.push(new NPC(34.5 * TS, 40.5 * TS, { look: 'gardien', talk: 'gardien' })); // le gardien du phare : il vit dans le phare, on le croise sur la plage à son pied (il s'y promène)
     this.ents.push(Object.assign(new Sign(27 * TS, 24 * TS, [{ text: '« Tour des artificiers, sur l\'île. On n\'y accoste que par la plage du sud. Danger : poudre ! »' }]), { ghost: true })); // panneau peint
     this.ents.push(new Crab(33 * TS, 8 * TS), new Crab(34 * TS, 36 * TS), new Crab(48 * TS, 28 * TS), new Crow(20 * TS, 24 * TS), new Crow(10 * TS, 12 * TS), new Eel(44 * TS, 34 * TS));
     questSpawns(this);

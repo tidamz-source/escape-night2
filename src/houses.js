@@ -115,7 +115,7 @@ Object.assign(INTERIORS, {
   gnome: { name: 'La hutte du gnome', w: 12, h: 9, build(put, at, A) { put('table', 6, 5, { candle: true }); put('crate', 2, 7.4); put('barrel', 10, 7.4); npc(A, 6, 6.8, { gnome: true, quest: 'lettre' }); } },
   pecheur: { name: 'La cabane du pêcheur', w: 14, h: 9, build(put, at, A) { put('nets', 4, 4); put('barrel', 11, 4.4); put('table', 9, 6.4, { food: true }); npc(A, 6, 6.6, { look: 'pecheur', fn: pecheurTalk }); } },
   artificiere: { name: 'L\'atelier de l\'artificière', w: 18, h: 11, build(put, at, A) { put('rockets', 4, 4); put('rockets', 14, 4); put('barrel', 2, 8); put('table', 9, 5.6); npc(A, 9, 7, { look: 'artificiere', quest: 'feux' }); shopRow(A, 'artifices', 13, 8.4, 3); } },
-  phare: { name: 'La maison du gardien du phare', w: 12, h: 9, build(put, at, A) { put('bed', 3, 4.6); put('lamp', 9, 4); put('table', 7, 6.6); npc(A, 9, 7, { look: 'gardien', talk: 'gardien' }); } },
+  // (le gardien du phare n'a plus de maison : il vit au rez-de-chaussée du phare, voir buildPhareFloor)
   ermite: { name: 'La cabane de l\'ermite', w: 12, h: 9, dark: 0.35, build(put, at, A) { put('cauldron', 3, 4.6); put('books', 9, 4); put('bed', 9.5, 7.6, { blanket: '#4a3a5a' }); npc(A, 6, 6, { look: 'ermite', quest: 'ombres' }); } },
 });
 // le pêcheur reçoit aussi la lettre du gnome
