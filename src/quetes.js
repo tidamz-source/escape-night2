@@ -595,6 +595,8 @@ class CrowNest {
   draw() {
     const y = this.gy - this.h0, x = this.x + (this.fall ? 0 : 6);
     if (this.fall && this.h0 > 4) { ctx.globalAlpha = 0.25; ell(x, this.gy, 9, 3, '#000'); ctx.globalAlpha = 1; }
+    if (IMG.deco_nid) { const im = IMG.deco_nid, w = im.width * 0.75, h = im.height * 0.75; smoothOn(); ctx.drawImage(im, x - w / 2, y - h + 4, w, h); smoothOff(); // nid en pixel art (assets/deco/nid.png)
+      if (!this.fall && Math.sin(this.t * 3) > 0.5) { R(half(x + 4), half(y - 13), 1, 3, '#fff'); R(half(x + 3), half(y - 12), 3, 1, '#fff'); } return; }
     ell(x, y - 2, 13, 6, '#2a1a0c'); ell(x, y - 2, 12, 5, '#5a3a1e'); ell(x, y - 4, 10, 3, '#2e1c0e'); // un nid rond : contour, brindilles, creux
     for (const [dx, dy, w] of [[-14, -3, 5], [10, -3, 5], [-11, 1, 4], [7, 1, 4], [-6, -6, 4], [3, -7, 4], [-2, 2, 4]]) R(half(x + dx), half(y + dy), w, 1, '#9a7038');
     R(half(x - 5), half(y - 10), 2, 5, '#1a1a22'); R(half(x - 2), half(y - 11), 2, 6, '#22222a'); R(half(x + 6), half(y - 9), 2, 4, '#1a1a22'); // plumes noires
