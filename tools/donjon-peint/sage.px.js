@@ -1,16 +1,16 @@
 // Escape Night 2 — maison du sage (bibliothèque), repeinte en pixel art.
 // Même disposition que l'ancienne image : 640 × 358 (2 px par pixel de jeu), grille de collision `biblio` (maps.js) inchangée.
 pal({
-  k: "#120c0a", K: "#1e1410",
-  B: "#3a2214", b: "#5a3620", n: "#7a4c2c", N: "#9a6a3e", L: "#b8884e",          // bois (sombre → clair)
-  q: "#5e4a3a", Q: "#7e6a54",                                                       // ombre du plancher
-  s: "#4e4a46", S: "#6e6862", t: "#8e877e", T: "#aaa294",                         // pierre
-  p: "#8a7a62", P: "#b0a080", c: "#d8c8a4",                                         // plâtre, parchemin
-  u: "#2a3462", U: "#3e4c8a", v: "#6a7ab8",                                         // tapis bleu
-  r: "#8a2a2a", R: "#b84a3a", g: "#2e5a3a", G: "#4a7a4a", y: "#c89a3a", Y: "#ecc65a", // reliures, or
-  o: "#ff9a2a", O: "#ffd46a", w: "#fff2c0",                                         // feu, lumière
-  m: "#6a3a6a", M: "#9a5a9a", e: "#c8c0b0", E: "#e8e0d0",                           // flacons, porcelaine
-  W: "#f0c860",                                                                     // fenêtres éclairées
+  k: "#1d0c16", K: "#2a1420",                                                       // noirs violacés de l'original
+  B: "#431e22", b: "#603532", n: "#824f42", N: "#9b5a45", L: "#b8785a",          // bois brun-rouge
+  q: "#533133", Q: "#73443d",                                                       // ombre du plancher
+  s: "#463034", S: "#6a5458", t: "#7e6155", T: "#957b68",                         // pierre gris-mauve
+  p: "#7c6458", P: "#a58569", c: "#deb883",                                         // plâtre, parchemin
+  u: "#353957", U: "#3b4165", v: "#61678a",                                         // tapis bleu nuit
+  r: "#8a2a2a", R: "#b84a3a", g: "#2e5a3a", G: "#4a7a4a", y: "#c88a3a", Y: "#ecc65a",
+  o: "#ff8020", O: "#fdcd58", w: "#fff2c0",
+  m: "#6a2a5a", M: "#9a4a8a", e: "#c8b8a0", E: "#ead8b8",
+  W: "#feec95",
 })
 ramps("kKBbnNL", "kqQ", "kstT", "kpPc", "kuUv", "krR", "kgG", "kyY", "koOw", "kmM", "keE")
 const H = (x, y, w, k) => [hline(x, y, w, k)]
@@ -32,34 +32,42 @@ function shelf(c, x, y, w, h) {                           // bibliothèque plein
     while (bx < x + w - 8) { const bw = 4 + (i * 3) % 3, bh = 13 + (i * 5) % 5, k = cols[i % cols.length]; c.rect(bx, sy + 18 - bh, bw, bh, k); c.vline(bx, sy + 18 - bh, bh, "k"); c.hline(bx + 1, sy + 18 - bh + 3, bw - 1, "Y"); bx += bw + 1; i++ }
   }
 }
-function table(c, x, y, w, h, top = 16) { c.rect(x, y, w, top, "n"); c.hline(x, y, w, "L"); c.hline(x, y + 1, w, "N"); c.rect(x, y + top, w, 4, "B"); c.rect(x + 3, y + top + 4, 5, h - top - 4, "B"); c.rect(x + w - 8, y + top + 4, 5, h - top - 4, "B"); c.vline(x + 3, y + top + 4, h - top - 4, "b") }
+function table(c, x, y, w, h, top = 16) { c.box(x - 1, y - 1, w + 2, top + 6, "k"); c.rect(x, y, w, top, "n"); c.hline(x, y, w, "L"); c.hline(x, y + 1, w, "N"); c.rect(x, y + top, w, 4, "B"); c.rect(x + 3, y + top + 4, 5, h - top - 4, "B"); c.rect(x + w - 8, y + top + 4, 5, h - top - 4, "B"); c.vline(x + 3, y + top + 4, h - top - 4, "b") }
 function candle(c, x, y) { c.rect(x - 4, y + 8, 9, 3, "y"); c.rect(x - 2, y, 5, 8, "E"); c.vline(x - 2, y, 8, "e"); c.vline(x, y - 2, 2, "k"); c.px(x, y - 5, "w"); c.rect(x - 1, y - 4, 3, 2, "O"); c.px(x, y - 6, "O") }
 function barrel(c, x, y, w, h) { c.ellipse(x + w / 2, y + h - 3, w / 2 - 2, 3, "B"); c.rect(x, y + 4, w, h - 8, "n"); c.ellipse(x + w / 2, y + 4, w / 2, 4, "N"); c.ellipse(x + w / 2, y + 4, w / 2 - 3, 2, "b"); for (const yy of [y + 10, y + h - 10]) c.rect(x, yy, w, 3, "s"); c.vline(x + 3, y + 6, h - 10, "N"); c.vline(x + w - 3, y + 6, h - 10, "B") }
 function crate(c, x, y, w, h) { c.rect(x, y, w, h, "n"); c.box(x, y, w, h, "B"); c.box(x + 2, y + 2, w - 4, h - 4, "N"); c.line(x + 3, y + 3, x + w - 4, y + h - 4, "b"); c.hline(x, y, w, "L") }
 function scroll(c, x, y, len, dir = 1) { c.rect(x, y, len, 5, "c"); c.hline(x, y, len, "E"); c.rect(x - 2, y - 1, 3, 7, "P"); c.rect(x + len - 1, y - 1, 3, 7, "P") }
 function paper(c, x, y) { c.poly([x, y, x + 14, y - 3, x + 17, y + 6, x + 3, y + 9], "c"); c.line(x + 3, y + 2, x + 12, y, "P"); c.line(x + 4, y + 5, x + 13, y + 3, "P") }
 function book(c, x, y, k) { c.rect(x, y, 16, 11, k); c.hline(x, y, 16, "Y"); c.rect(x + 2, y + 8, 14, 3, "E") }
-function windowW(c, x, y, w, h) { c.rect(x - 4, y - 4, w + 8, h + 8, "b"); c.box(x - 4, y - 4, w + 8, h + 8, "B"); c.rect(x, y, w, h, "W"); for (let i = 1; i < 4; i++) c.vline(x + (w * i / 4 | 0), y, h, "n"); c.hline(x, y + (h / 2 | 0), w, "n"); c.hline(x - 6, y + h + 4, w + 12, "N") }
+function windowW(c, x, y, w, h) { c.rect(x - 6, y - 6, w + 12, h + 12, "b"); c.box(x - 6, y - 6, w + 12, h + 12, "B"); c.hline(x - 6, y - 6, w + 12, "N"); c.rect(x, y, w, h, "W"); for (let i = 1; i < 4; i++) { c.rect(x + (w * i / 4 | 0) - 1, y, 3, h, "b"); c.rect(x, y + (h * i / 4 | 0) - 1, w, 3, "b") } c.rect(x - 8, y + h + 4, w + 16, 5, "n"); c.hline(x - 8, y + h + 4, w + 16, "L") }
 function lantern(c, x, y) { c.vline(x, y - 12, 12, "k"); c.rect(x - 6, y, 13, 3, "k"); c.rect(x - 5, y + 3, 11, 12, "K"); c.rect(x - 3, y + 5, 7, 8, "O"); c.px(x, y + 8, "w"); c.rect(x - 6, y + 15, 13, 3, "k") }
 
 scene("biblio", { w: 640, h: 358, bg: "k" },
   layer("pièce", c => {
-    // mur du fond : soubassement de pierre, plâtre entre les colombages
-    c.rect(40, 20, 560, 135, "p")
-    for (let y = 105; y < 155; y++) for (let x = 40; x < 600; x++) { const row = (y - 105) >> 3, sx = (x + (row % 2) * 12) % 24; c.px(x, y, (y - 105) % 8 === 7 || sx === 23 ? "s" : ((x >> 3) + row) % 5 ? "S" : "t") }
-    for (let y = 26; y < 105; y++) for (let x = 40; x < 600; x++) if (((x * 7 + y * 13) % 97) === 0) c.px(x, y, "P")
-    for (const x of [80, 168, 250, 380, 462, 550]) { c.rect(x, 20, 10, 135, "b"); c.vline(x, 20, 135, "N"); c.vline(x + 9, 20, 135, "B") }   // poteaux
-    c.rect(40, 18, 560, 10, "b"); c.hline(40, 18, 560, "N"); c.rect(40, 100, 560, 6, "b"); c.hline(40, 100, 560, "N")                    // sablières
-    c.line(90, 30, 160, 95, "b"); c.line(91, 30, 161, 95, "B"); c.line(472, 95, 545, 30, "b"); c.line(473, 95, 546, 30, "B")             // écharpes
-    // murs latéraux en biais
-    c.poly([20, 70, 40, 20, 40, 155, 20, 175], "q"); c.poly([600, 20, 620, 70, 620, 175, 600, 155], "q")
-    c.rect(20, 70, 6, 270, "B"); c.rect(614, 70, 6, 270, "B")
-    // plancher
-    plank(c, 26, 155, 614, 335)
-    c.rect(26, 155, 588, 3, "B")
-    // bord avant de la pièce (mur bas), sortie au milieu
-    c.rect(20, 335, 266, 23, "B"); c.hline(20, 335, 266, "n"); c.rect(354, 335, 266, 23, "B"); c.hline(354, 335, 266, "n")
-    plank(c, 286, 335, 354, 358)
+    // mur du fond : plâtre clair uni en haut, soubassement de pierre en bas, entre les poteaux
+    for (let y = 22; y < 106; y++) for (let x = 78; x < 562; x++) { const row = (y - 22) / 9 | 0, sx = (x + (row % 2) * 13) % 26; c.px(x, y, (y - 22) % 9 === 8 || sx === 25 ? "t" : ((x / 26 | 0) + row) % 5 === 0 ? "P" : "T") }   // pierre claire appareillée
+    for (let y = 106; y < 155; y++) for (let x = 78; x < 562; x++) { const row = (y - 106) >> 3, sx = (x + (row % 2) * 12) % 24; c.px(x, y, (y - 106) % 8 === 7 || sx === 23 ? "s" : ((x >> 3) + row) % 4 ? "T" : "t") }
+    for (const x of [78, 168, 250, 380, 462, 552]) { c.rect(x, 22, 10, 133, "b"); c.vline(x, 22, 133, "N"); c.vline(x + 9, 22, 133, "B") }
+    c.rect(78, 18, 484, 10, "b"); c.hline(78, 18, 484, "N"); c.rect(78, 100, 484, 6, "b"); c.hline(78, 100, 484, "N")
+    c.line(92, 30, 162, 96, "b"); c.line(93, 30, 163, 96, "B"); c.line(474, 96, 546, 30, "b"); c.line(475, 96, 547, 30, "B")
+    // pans de mur latéraux en biais (plâtre dans l'ombre, soubassement de pierre)
+    c.poly([22, 70, 78, 22, 78, 155, 22, 178], "t"); for (let y = 40; y < 150; y += 10) c.line(22, y + 40 - (y - 40) * 0, 78, y, "s"); c.poly([22, 128, 78, 112, 78, 155, 22, 178], "t"); c.line(22, 128, 78, 112, "s")
+    c.poly([562, 22, 618, 70, 618, 178, 562, 155], "t"); for (let y = 40; y < 150; y += 10) c.line(562, y, 618, y + 40, "s"); c.poly([562, 112, 618, 128, 618, 178, 562, 155], "t"); c.line(562, 112, 618, 128, "s")
+    // plancher : longues lames, joints décalés
+    for (let y = 155; y < 335; y++) for (let x = 22; x < 618; x++) {
+      const row = Math.floor((y - 155) / 14), off = (row * 53) % 140, seam = (x + off) % 140
+      let k = row % 2 ? "n" : "Q"; if ((y - 155) % 14 === 0) k = "N"; if ((y - 155) % 14 === 13 || seam === 0) k = "q"
+      if (seam === 70 && (y - 155) % 14 === 6) k = "q"
+      c.px(x, y, k)
+    }
+    c.rect(22, 155, 596, 3, "q")
+    // bord avant, sortie au milieu
+    c.rect(22, 335, 264, 22, "B"); c.hline(22, 335, 264, "b"); c.rect(354, 335, 264, 22, "B"); c.hline(354, 335, 264, "b")
+    for (let y = 335; y < 358; y++) for (let x = 286; x < 354; x++) c.px(x, y, (y - 335) % 14 === 13 ? "q" : "n")
+    // épais contour sombre de la pièce, comme dans l'original
+    for (const [x0, y0, x1, y1] of [[22, 70, 78, 22], [78, 22, 562, 22], [562, 22, 618, 70]]) for (let d = 0; d < 4; d++) c.line(x0, y0 - d, x1, y1 - d, d < 2 ? "B" : "K")
+    c.rect(18, 70, 5, 287, "B"); c.rect(617, 70, 5, 287, "B"); c.vline(18, 70, 287, "K"); c.vline(621, 70, 287, "K")
+    c.rect(282, 335, 4, 23, "B"); c.rect(354, 335, 4, 23, "B")
   }),
   layer("fond", c => {
     // cheminée de pierre et âtre
@@ -84,7 +92,7 @@ scene("biblio", { w: 640, h: 358, bg: "k" },
     c.ellipse(446, 140, 14, 12, "n"); c.rect(434, 128, 25, 6, "N"); for (let i = 0; i < 4; i++) c.rect(436 + i * 6, 106 + (i % 2) * 6, 5, 24, "c")
     // étagère murale à gauche : plante et bougie ; petite fenêtre du mur de gauche et du mur de droite
     c.rect(30, 112, 40, 4, "N"); c.ellipse(44, 104, 7, 6, "G"); c.px(42, 100, "Y"); c.px(46, 103, "Y"); c.rect(40, 106, 9, 6, "n"); candle(c, 60, 98)
-    c.rect(40, 56, 14, 26, "B"); c.rect(43, 59, 8, 20, "W"); c.rect(584, 98, 14, 26, "B"); c.rect(587, 101, 8, 20, "W")
+    c.poly([40, 62, 56, 50, 56, 80, 40, 92], "B"); c.poly([43, 64, 53, 56, 53, 78, 43, 86], "W"); c.rect(584, 98, 16, 28, "B"); c.rect(587, 101, 10, 22, "W")
     // porte du mur de droite
     c.rect(560, 112, 26, 78, "b"); c.box(560, 112, 26, 78, "B"); for (const x of [566, 573, 580]) c.vline(x, 114, 74, "B"); c.px(565, 150, "Y")
   }),
@@ -94,10 +102,13 @@ scene("biblio", { w: 640, h: 358, bg: "k" },
     c.rect(80, 186, 22, 8, "n"); c.hline(80, 186, 22, "L"); c.rect(82, 194, 4, 20, "B"); c.rect(96, 194, 4, 20, "B")          // tabouret
     crate(c, 488, 156, 50, 38); c.rect(492, 160, 42, 8, "c")
     // escalier vers l'étage, jarre
-    for (let i = 0; i < 6; i++) { c.rect(566 + i * 0, 174 + i * 12, 42, 12, i % 2 ? "b" : "n"); c.hline(566, 174 + i * 12, 42, "L") }
-    c.vline(566, 174, 72, "B"); c.ellipse(595, 244, 10, 11, "y"); c.rect(591, 230, 8, 5, "Y")
+    for (let i = 0; i < 6; i++) { const x = 566 + i * 7, y = 236 - i * 12; c.rect(x, y, 48 - i * 7, 12, i % 2 ? "b" : "n"); c.hline(x, y, 48 - i * 7, "L"); c.vline(x, y, 12, "B") }
+    c.line(562, 240, 604, 172, "B"); c.line(563, 240, 605, 172, "N"); c.vline(562, 230, 14, "B")
+    c.ellipse(595, 254, 10, 11, "y"); c.rect(591, 240, 8, 5, "Y")
     // tapis bleu à frange
     c.rect(230, 186, 184, 100, "U"); c.box(230, 186, 184, 100, "u"); c.box(236, 192, 172, 88, "v"); c.box(240, 196, 164, 80, "u")
+    for (let x = 244; x < 400; x += 8) { c.px(x, 193, "u"); c.px(x + 4, 193, "v"); c.px(x, 278, "u"); c.px(x + 4, 278, "v") }
+    for (const [x, y] of [[246, 202], [398, 202], [246, 270], [398, 270]]) { c.rect(x - 3, y - 1, 7, 3, "v"); c.rect(x - 1, y - 3, 3, 7, "v") }
     for (let x = 230; x < 414; x += 4) { c.vline(x, 182, 4, "v"); c.vline(x, 286, 4, "v") }
     // bureau du sage
     c.rect(262, 214, 114, 8, "B"); table(c, 262, 186, 114, 56, 28)
@@ -121,6 +132,7 @@ scene("biblio", { w: 640, h: 358, bg: "k" },
     // papiers tombés (on lit beaucoup ici)
     paper(c, 146, 160); paper(c, 80, 222); paper(c, 436, 154); paper(c, 236, 306)
   }),
+  layer("lumiere_feu", { light: true }, c => { c.ellipse(320, 172, 80, 14, "k") }),
   // ombres portées douces sous les meubles, côté opposé au feu
   layer("ombres", { shade: true }, c => {
     c.ellipse(320, 245, 56, 5, "k"); c.ellipse(122, 322, 46, 4, "k"); c.ellipse(526, 322, 44, 4, "k"); c.rect(26, 156, 588, 6, "k"); c.rect(26, 330, 588, 5, "k")
