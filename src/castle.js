@@ -212,8 +212,10 @@ class MidnightKing extends Enemy {
       ctx.globalAlpha = 0.3 + k * 0.5; ell(cx, cy, 10 + k * 30, 10 + k * 30, '#fff6c0'); ctx.restore();
       if (k > 0.75 && Math.floor(this.t * 24) % 2) return;
     }
-    ell(this.x, this.y, 16, 5, 'rgba(0,0,0,.45)');
     const fl = this.flash > 0, held = this.state === 'held' || this.state === 'down', bob = held ? 0 : Math.sin(this.t * 2) * 2;
+    // l'ombre : sous ses pieds quand il marche ou plane bas ; au sol, plus petite et plus pâle, quand il vole haut (phase 3)
+    if (this.alt > 30) { const k = clamp(1 - (this.alt - 30) / 40, 0.5, 1); ctx.globalAlpha = 0.3 + 0.15 * k; ell(this.x, this.y, 14 * k, 4 * k, '#000'); ctx.globalAlpha = 1; }
+    else ell(this.x, this.y - this.alt + bob + 1, 16, 5, 'rgba(0,0,0,.45)');
     if (IMG.boss_king) { // sprite PixelLab : tourné vers le héros ; bouclier d'ombre en phase 2
       // planche 256 × 256 : ligne 0 au repos, 1-8 déplacement, 9-15 coup de sceptre (quand il lance ses sorts)
       const P = G.player, row = held ? 0 : this.atk > 0 ? 9 + Math.min(6, Math.floor((0.7 - this.atk) / 0.1)) : (this.state === 'fly' || (this.state === 'float' && this.phase === 1)) ? 1 + Math.floor(this.t * 8) % 8 : 0;

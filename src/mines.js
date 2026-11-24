@@ -78,8 +78,8 @@ class BigBat extends Bat {
   draw() {
     ctx.save(); ctx.translate(this.x, this.y); ctx.scale(1.9, 1.9); ctx.translate(-this.x, -this.y);
     const al = this.alt; this.alt = al / 1.9; super.draw();
-    const y = this.y - this.alt + Math.sin(this.t * 10), fl = this.flash > 0; // des cristaux lui poussent sur la tête et le dos
-    hi(this.x, y, false, () => { for (const [x, h] of [[-5, 7], [-1, 10], [3, 7]]) { D(x, -14 - h, 3, h, fl ? '#fff' : '#b49aff'); D(x, -14 - h, 1, h, '#fff'); } });
+    if (!IMG.mob_bat) { const y = this.y - this.alt + Math.sin(this.t * 10), fl = this.flash > 0; // dessin de secours : des cristaux sur la tête (la planche PixelLab n'en a pas besoin)
+      hi(this.x, y, false, () => { for (const [x, h] of [[-5, 7], [-1, 10], [3, 7]]) { D(x, -14 - h, 3, h, fl ? '#fff' : '#b49aff'); D(x, -14 - h, 1, h, '#fff'); } }); }
     this.alt = al; ctx.restore();
     if (this.hp < this.maxHp) { R(half(this.x - 12), half(this.y - this.alt - 32), 24, 2, 'rgba(7,13,31,.8)'); R(half(this.x - 12), half(this.y - this.alt - 32), 24 * Math.max(0, this.hp) / this.maxHp, 2, '#b49aff'); }
   }

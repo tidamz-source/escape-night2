@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.16.9** : l'ombre du Roi Minuit reste sous ses pieds (plus petite et plus pâle quand il vole haut) ; la Chauve-souris de cristal n'a plus les trois cristaux dessinés par-dessus sa planche.
 - **8.16.8** : le Roi Minuit a une animation de déplacement en 8 directions et frappe de son sceptre à chaque sort (orbes, taches d'ombre).
 - **8.16.7** : les personnages (héros, PNJ, monstres, boss) sont lissés à l'affichage pour se fondre dans le décor peint ; zoom inchangé. Version de test test100 retirée.
 - **8.16.6** : marche en 8 directions pour Arthur, Jules, le crieur, le fossoyeur, Margot, Odette et le ramasseur de coquillages ; le Chevalier de fer marche vraiment et a un vrai coup d'épée (planches PixelLab).
