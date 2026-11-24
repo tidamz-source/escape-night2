@@ -213,12 +213,10 @@ class MidnightKing extends Enemy {
       if (k > 0.75 && Math.floor(this.t * 24) % 2) return;
     }
     const fl = this.flash > 0, held = this.state === 'held' || this.state === 'down', bob = held ? 0 : Math.sin(this.t * 2) * 2;
-    // l'ombre : sous ses pieds quand il marche ou plane bas ; au sol, plus petite et plus pâle, quand il vole haut (phase 3)
-    if (this.alt > 30) { const k = clamp(1 - (this.alt - 30) / 40, 0.5, 1); ctx.globalAlpha = 0.3 + 0.15 * k; ell(this.x, this.y, 14 * k, 4 * k, '#000'); ctx.globalAlpha = 1; }
-    else ell(this.x, this.y - this.alt + bob + 1, 16, 5, 'rgba(0,0,0,.45)');
+    { const k = clamp(1 - this.alt / 70, 0.45, 1); ctx.globalAlpha = 0.25 + 0.2 * k; ell(this.x, this.y, 16 * k, 5 * k, '#000'); ctx.globalAlpha = 1; } // il flotte : l'ombre reste au sol, plus petite et plus pâle quand il monte
     if (IMG.boss_king) { // sprite PixelLab : tourné vers le héros ; bouclier d'ombre en phase 2
-      // planche 256 × 256 : ligne 0 au repos, 1-8 déplacement, 9-15 coup de sceptre (quand il lance ses sorts)
-      const P = G.player, row = held ? 0 : this.atk > 0 ? 9 + Math.min(6, Math.floor((0.7 - this.atk) / 0.1)) : (this.state === 'fly' || (this.state === 'float' && this.phase === 1)) ? 1 + Math.floor(this.t * 8) % 8 : 0;
+      // planche 256 × 256 : ligne 0 au repos, 1-8 marche (non utilisée), 9-15 coup de sceptre (quand il lance ses sorts)
+      const P = G.player, row = held ? 0 : this.atk > 0 ? 9 + Math.min(6, Math.floor((0.7 - this.atk) / 0.1)) : 0; // il flotte sans animation (la marche PixelLab n'est pas utilisée)
       drawCell('boss_king', held ? 0 : plDir(P.x - this.x, P.y - this.y), row, 256, 256, this.x, this.y - this.alt + bob, 0.5, { foot: 69, flash: fl, rot: held ? Math.sin(this.t * 20) * 0.05 : 0 });
       if (this.phase === 2 && this.shield && !held) { ctx.globalAlpha = 0.28 + 0.08 * Math.sin(this.t * 4); ell(this.x, this.y - this.alt - 30 + bob, 34, 38, '#2a1d4a'); ctx.globalAlpha = 0.6; ctx.strokeStyle = '#c3b3ff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(this.x, this.y - this.alt - 30 + bob, 34, 38, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
     } else
