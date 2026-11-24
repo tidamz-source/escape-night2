@@ -233,7 +233,7 @@ class LookSpot { constructor(x, y, w, lines) { this.x = x; this.y = y; this.w = 
 // parler à quelqu'un par-dessus un grand meuble peint (le bureau du sage)
 class TalkSpot { constructor(x, y, w, who) { this.x = x; this.y = y; this.w = w; this.h = 10; this.solid = false; this.who = who; } canInteract() { return !this.who.dead; } interact(G) { this.who.interact(G); } update() {} draw() {} }
 // étals d'une boutique alignés sur une rangée
-function shopRow(A, shop, tx, ty, gap = 3) {
+function shopRow(A, shop, tx, ty, gap = 3, per = 99, rowGap = 2) { // per : articles par rangée, les suivants passent à la rangée d'en dessous
   const def = Shop.def(shop); let i = 0;
-  for (const e of def.items) { if (e.when && !Story.cond(e.when)) continue; A.ents.push(new ShopItem((tx + i * gap) * TS, ty * TS, shop, e)); i++; }
+  for (const e of def.items) { if (e.when && !Story.cond(e.when)) continue; A.ents.push(new ShopItem((tx + (i % per) * gap) * TS, (ty + Math.floor(i / per) * rowGap) * TS, shop, e)); i++; }
 }

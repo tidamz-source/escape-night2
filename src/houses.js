@@ -17,7 +17,14 @@ Object.assign(INTERIORS, {
   } },
   bungalow_b: { name: 'Bungalow', w: 14, h: 9, build(put) { put('bed', 4, 4.6, { empty: true }); put('table', 10, 6.6); } },
   // ----- Bourg-Luciole -----
-  auberge: { name: 'L\'auberge du Lampion', w: 20, h: 11, build(put, at, A) {
+  auberge: { name: 'L\'auberge du Lampion', w: 20, h: 11, paint: 'auberge', // peinte (assets/maps/auberge.png) ; l'aubergiste derrière son bar
+    lights: [[2.3, 5.9, 56], [8, 2.2, 24], [12, 2.2, 24], [11.2, 3.6, 18], [6.4, 8.1, 18], [14.5, 3.8, 18], [6.2, 2.6, 26], [14, 2.6, 26]],
+    people(put, at, A) {
+      const ab = npc(A, 9, 4.45, { look: 'aubergiste', talk: 'aubergiste' }); // le bar (OVERHEAD.auberge) lui cache les jambes
+      A.ents.push(new TalkSpot(9 * TS, 7 * TS, 5 * TS, ab)); // on lui parle par-dessus le bar
+      npc(A, 11, 8.6, { hero: () => Heroes.captive(1), talk: 'enfant1', when: 'freed3&!boss6' });
+    },
+    build(put, at, A) {
     put('window', 4, 2); put('window', 16, 2); put('fireplace', 10, 3.2);
     put('counter', 5, 5.4); npc(A, 5, 4.4, { look: 'aubergiste', talk: 'aubergiste' });
     put('table', 14, 6.6, { candle: true }); put('stool', 12.2, 7.4); put('stool', 15.8, 7.4);
@@ -39,12 +46,25 @@ Object.assign(INTERIORS, {
     npc(A, 10, 5.2, { look: 'sage', fn: sageTalk });
     npc(A, 15, 8, { hero: () => Heroes.captive(2), talk: 'enfant2', when: 'freed4&!boss6' });
   } },
-  forge: { name: 'La forge', w: 18, h: 11, dark: 0.18, build(put, at, A) {
+  forge: { name: 'La forge', w: 18, h: 11, dark: 0.18, paint: 'forge', // peinte (assets/maps/forge.png)
+    lights: [[10.1, 4.6, 80], [6.8, 2.6, 26], [13.8, 2.6, 26], [18.5, 3.7, 18], [1.7, 3, 16]],
+    people(put, at, A) {
+      npc(A, 10.5, 6.7, { look: 'forgeron', fn: forgeTalk }); // devant le foyer
+      shopRow(A, 'forge', 12.5, 7.7, 2);
+    },
+    build(put, at, A) {
     put('forge', 4, 3.6); put('anvil', 8, 5.6); put('barrel', 15, 4); put('crate', 16.2, 4.4); put('window', 12, 2);
     npc(A, 11, 4.6, { look: 'forgeron', fn: forgeTalk });
     shopRow(A, 'forge', 5, 8, 4);
   } },
-  epicerie: { name: 'Chez Mère Grenadine', w: 18, h: 11, build(put, at, A) {
+  epicerie: { name: 'Chez Mère Grenadine', w: 18, h: 11, paint: 'epicerie', // peinte (assets/maps/epicerie.png) ; l'épicière derrière son comptoir
+    lights: [[8, 2.3, 24], [12, 2.3, 24], [1.9, 3.3, 16], [6.6, 2.6, 30]],
+    people(put, at, A) {
+      const ep = npc(A, 5.5, 5.45, { look: 'epiciere', fn: shopNPC('epicerie') }); // le comptoir (OVERHEAD.epicerie) lui cache les jambes
+      A.ents.push(new TalkSpot(5 * TS, 8.1 * TS, 6 * TS, ep)); // on lui parle par-dessus le comptoir
+      shopRow(A, 'epicerie', 11.7, 6.7, 2, 3, 2); // deux rangées de trois, devant les étagères
+    },
+    build(put, at, A) {
     put('shelf', 4, 3.2); put('shelf', 14, 3.2); put('counter', 9, 5.4); put('barrel', 2, 9.4); put('crate', 16, 9.4); put('window', 9, 2);
     npc(A, 9, 4.4, { look: 'epiciere', fn: shopNPC('epicerie') });
     shopRow(A, 'epicerie', 5, 8, 3);
