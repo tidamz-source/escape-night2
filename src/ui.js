@@ -654,11 +654,10 @@ const UIMixin = {
     Heroes.order().forEach((id, i) => {
       const d = Heroes.def(id), x = 100 + i * 140, on = i === this.heroSel;
       panel(x - 62, 40, 124, 190, { on, fill: on ? UIC.sel : undefined });
-      ctx.globalAlpha = on ? 0.35 : 0.2; ell(x, 140, 34, 8, UIC.woodD); ctx.globalAlpha = 1;
-      drawHero(id, x, 140, 'down', on, this.t, 74 / heroHeight(id));
+      ctx.globalAlpha = on ? 0.35 : 0.2; ell(x, 140, 12, 3, UIC.woodD); ctx.globalAlpha = 1;
+      drawHero(id, x, 140, 'down', on, this.t, 2 / 3, 1, true); // à 100 % (1 pixel de la planche = 1 pixel de l'écran), sans lissage
       ptext(d.name, x, 152, { size: 10, align: 'center', bold: true, font: 't', color: on ? UIC.red : UIC.ink });
       const dl = wrap(d.desc, 112, 7.5 * UI_TXT); dl.forEach((l, k) => ptext(l, x, 170 + k * 10, { size: 7.5, align: 'center', color: UIC.soft }));
-      wrap(d.perk, 112, 7.5 * UI_TXT).forEach((l, k) => ptext(l, x, 174 + dl.length * 10 + k * 10, { size: 7.5, align: 'center', color: UIC.title, bold: true }));
     });
     if (Input.padVisible) woodBtn(8, 8, 58, 16, '◂ Retour', false, 6);
     text(Input.padVisible ? 'Touche un personnage pour le choisir, puis touche-le encore pour partir' : '◂ ▸ : choisir   ·   A : partir   ·   B : retour', W / 2, H - 14, { size: 7, align: 'center', color: '#c8b48a', shadowColor: UIC.dark });

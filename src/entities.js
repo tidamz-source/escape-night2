@@ -113,7 +113,7 @@ class Player {
   get perk() { return Heroes.def(); }
   body() { return { x: this.x - 6, y: this.y - 16, w: 12, h: 16 }; }
   atkBox() {
-    const x = this.x, y = this.y, k = this.perk.reach, e = Math.round(22 * (k - 1)); // Cam : portée +20 %
+    const x = this.x, y = this.y, k = this.perk.reach, e = Math.round(22 * (k - 1)); // reach : 1 pour tous les héros (plus de bonus de portée)
     switch (this.dir) {
       case 'down': return { x: x - 13, y: y - 4, w: 26, h: 20 + e };
       case 'up': return { x: x - 13, y: y - 38 - e, w: 26, h: 22 + e };
@@ -220,7 +220,7 @@ class Player {
       if (this.aim[0] && this.aim[1]) { this.look = (this.aim[1] > 0 ? 'down' : 'up') + '_' + (this.aim[0] > 0 ? 'right' : 'left'); this.diagT = 0.12; }
       else if ((this.diagT -= dt) <= 0 || !(this.look || '').includes('_')) this.look = this.dir; // petit délai : relâcher deux touches n'est jamais simultané
     }
-    const SPEED = 76 * this.perk.speed * (Inventory.has('bottes') ? 1.15 : 1) * (this.holding ? 0.55 : 1); // Rox : +10 % ; bottes de l'ermite : +15 %
+    const SPEED = 76 * this.perk.speed * (Inventory.has('bottes') ? 1.15 : 1) * (this.holding ? 0.55 : 1); // bottes de l'ermite : +15 %
     // accélération vive au démarrage, freinage plus doux à l'arrêt
     const ox = this.x, oy = this.y;
     const hit = this.glide(dt, G, input ? dx * SPEED : 0, input ? dy * SPEED : 0, input ? 20 : 9, input ? { x: dx, y: dy } : null);

@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.16.14** : écran de choix des héros : personnages à 100 % et sans lissage ; Camille et Roxane n'ont plus de pouvoir particulier (portée, vitesse et roulade identiques pour les trois héros).
 - **8.16.13** : le nid du corbeau est un sprite en pixel art (assets/deco/nid.png) : brindilles, plumes noires et la cloche d'argent.
 - **8.16.12** : procès du raton laveur : un nid de corbeau est visible en haut du grand arbre au nord des Collines ; le grappin le fait tomber (3e preuve : la cloche d'argent et des plumes noires).
 - **8.16.11** : procès du raton laveur : la plume est sur la porte de la bergerie, les traces et la confiture de mûres en haut près du gros rocher, plus d'indice dans l'arbre (2 preuves au lieu de 3).
