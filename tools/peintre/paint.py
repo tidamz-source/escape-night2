@@ -157,6 +157,19 @@ def paint(zone, out_dir, seed=1, opts=None):
     img[forest] = fc[forest]
 
     canvas = Image.fromarray(img.clip(0, 255).astype(np.uint8)).convert('RGBA')
+    FLOG = []
+    if o.get('layout'):   # carte des sols à la résolution du monde, pour le rendu pxl
+        lab = np.full((H, W), 'g', '<U1')
+        lab[sand] = 's'; lab[path] = 'd'; lab[bank] = 'n'; lab[wall] = 'N'; lab[lip] = 'm'
+        lab[water] = 'b'; lab[water & (dist_in <= 4)] = 'a'
+        deep = water & ((dist_in - 26) / 30 + (nz - 0.5) * 0.8 > 0.5); lab[deep] = 'c'
+        lab[forest] = 'F'
+        edge_g = np.zeros((H, W), bool)
+        for m in (sand, path): edge_g |= ndi.binary_dilation(m, iterations=3) & grass_area
+        lab[edge_g & (lab == 'g')] = 'e'
+        ao = ndi.gaussian_filter(forest.astype(float), 22)
+        lab[(lab == 'g') & (ao > 0.12)] = 'G'
+        LAYOUT = [''.join(r) for r in lab[::2, ::2]]
     draw = ImageDraw.Draw(canvas)
 
     def free_at(px, py, r=6):
@@ -181,6 +194,7 @@ def paint(zone, out_dir, seed=1, opts=None):
         draw.rectangle((px, py, px + 3, py + 1), fill=(150, 140, 120)); draw.rectangle((px, py + 2, px + 3, py + 3), fill=(120, 108, 84))
     def flower(px, py):
         col = FLOWERS[rng.randint(len(FLOWERS))]
+        FLOG.append({'t': 'flower', 'x': int(px) // 2, 'y': int(py) // 2, 'c': FLOWERS.index(col)})
         for _ in range(rng.randint(3, 6)):
             dx, dy = rng.randint(-7, 8), rng.randint(-5, 6)
             draw.rectangle((px + dx, py + dy + 2, px + dx + 1, py + dy + 3), fill=(92, 110, 30))
@@ -191,11 +205,13 @@ def paint(zone, out_dir, seed=1, opts=None):
 
     # --- sprites (triés par y) ; on garde les découpes « dessus »
     sprites = []   # (base_y, im, x, y, overhead)
+    LOG = []       # placements, pour l'export de la mise en page (pxl)
     TREES = ['tree_a', 'tree_b', 'tree_d', 'tree_e', 'tree_f', 'tree_h', 'tree_a', 'tree_e', 'tree_aut1']
     def tree_sprite(px, py, scale, dark=0.0, overhead=True, kinds=TREES):
         k = kinds[rng.randint(len(kinds))]
         im = load(k, scale, rng.rand() < 0.5, dark)
         sprites.append((py, im, px - im.width // 2, py - im.height + 4, overhead))
+        LOG.append({'t': 'tree', 'x': px // 2, 'y': py // 2, 's': round(scale, 2), 'dark': dark, 'over': overhead, 'aut': k.startswith('tree_aut')})
         return im
     def shadow(px, py, w, h=14, a=60):
         sh = Image.new('RGBA', canvas.size, (0, 0, 0, 0)); ImageDraw.Draw(sh).ellipse((px - w // 2, py - h // 2, px + w // 2, py + h // 2), fill=(30, 30, 10, a))
@@ -222,7 +238,7 @@ def paint(zone, out_dir, seed=1, opts=None):
             im = tree_sprite(px, py, rng.uniform(0.78, 0.9))
             shadows.alpha_composite(shadow(px, py - 4, int(im.width * 0.55), 16))
         elif k == 'rock':
-            im = load(['rock1', 'rock3', 'rock4'][rng.randint(3)], 1.0, rng.rand() < 0.5)
+            im = load(['rock1', 'rock3', 'rock4'][rng.randint(3)], 1.0, rng.rand() < 0.5); LOG.append({'t': 'rock', 'x': px // 2, 'y': py // 2})
             ra = np.array(im).astype(float); gray = ra[..., :3].mean(2, keepdims=True); ra[..., :3] = ra[..., :3] * 0.15 + gray * 0.8 + np.array((14, 12, 2)) ; im = Image.fromarray(ra.clip(0, 255).astype(np.uint8))
             sprites.append((py, im, px - im.width // 2, py - im.height + 2, False))
             shadows.alpha_composite(shadow(px, py, im.width, 8, 50))
@@ -232,7 +248,7 @@ def paint(zone, out_dir, seed=1, opts=None):
     for d in zone.get('decor', []):
         px, py = int(d['x'] * S), int(d['y'] * S)
         if d['k'] == 'palm':
-            im = load('palm2', 0.95, rng.rand() < 0.5)
+            im = load('palm2', 0.95, rng.rand() < 0.5); LOG.append({'t': 'palm', 'x': px // 2, 'y': py // 2})
             sprites.append((py, im, px - im.width // 2 + 6, py - im.height + 4, True))
             shadows.alpha_composite(shadow(px, py - 2, 34, 10))
             solids.append((d['x'], d['y']))
@@ -240,7 +256,7 @@ def paint(zone, out_dir, seed=1, opts=None):
     wy, wx = np.nonzero(water & (dist_in > 10) & (dist_in < 22))
     for _ in range(4):
         if not len(wy): break
-        i = rng.randint(len(wy)); im = load(['lily1', 'lily2'][rng.randint(2)], 1.0, rng.rand() < 0.5)
+        i = rng.randint(len(wy)); im = load(['lily1', 'lily2'][rng.randint(2)], 1.0, rng.rand() < 0.5); LOG.append({'t': 'lily', 'x': int(wx[i]) // 2, 'y': int(wy[i]) // 2})
         sprites.append((0, im, wx[i] - im.width // 2, wy[i] - im.height // 2, False))
     by, bx = np.nonzero(bank & ~wall & (dist_out >= 2) & (dist_out <= 5))
     placed = []
@@ -248,7 +264,7 @@ def paint(zone, out_dir, seed=1, opts=None):
         if len(placed) >= 4 or not len(by): break
         i = rng.randint(len(by)); px, py = bx[i], by[i]
         if kept(px, py) or any(abs(px - a) < 120 and abs(py - b) < 90 for a, b in placed): continue
-        placed.append((px, py)); im = load('cattail2', 1.0, rng.rand() < 0.5)
+        placed.append((px, py)); im = load('cattail2', 1.0, rng.rand() < 0.5); LOG.append({'t': 'reed', 'x': int(px) // 2, 'y': int(py) // 2})
         sprites.append((py, im, px - im.width // 2, py - im.height + 6, False))
 
     canvas.alpha_composite(shadows)
@@ -257,6 +273,8 @@ def paint(zone, out_dir, seed=1, opts=None):
         canvas.alpha_composite(im, (int(x), int(y)))
         if ov: over.append((int(x), int(y), im, base))
 
+    if o.get('layout'):
+        json.dump({'w': W // 2, 'h': H // 2, 'ground': LAYOUT, 'place': LOG + FLOG}, open(o['layout'], 'w'), default=lambda v: v.item() if hasattr(v, 'item') else str(v))
     # --- passe pixel art : résolution monde, palette du jeu, remontée ×2
     rgb = canvas.convert('RGB')
     small = rgb.resize((W // S, H // S), Image.BOX)
@@ -303,4 +321,5 @@ def paint(zone, out_dir, seed=1, opts=None):
     return final
 
 if __name__ == '__main__':
-    zone = json.load(open(sys.argv[1])); paint(zone, sys.argv[2], int(sys.argv[3]) if len(sys.argv) > 3 else 1)
+    zone = json.load(open(sys.argv[1]))
+    paint(zone, sys.argv[2], int(sys.argv[3]) if len(sys.argv) > 3 else 1, {'layout': sys.argv[4]} if len(sys.argv) > 4 else None)

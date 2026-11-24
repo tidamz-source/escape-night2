@@ -344,7 +344,11 @@ const PASSAGES = [
     build(T, r, ell) { ell(30, 21, 6, 4, '~'); ell(30, 21, 2.4, 1.9, '.'); },
     decor: { kinds: ['oak1', 'oak2'], trees: 10 },
     npcs: [['coquillages', 14, 10]],
-    spawn(A) { A.ents.push(new Post(30 * TS + 8, 22 * TS + 12), new Post(22 * TS + 8, 22 * TS)); A.ents.push(new Chest(30 * TS, 21 * TS, { flag: 'hp_ilot_dunes', give: 'piece_coeur', msg: null })); for (const [x, y] of [[8, 8], [33, 8]]) A.ents.push(new Decor(x * TS, y * TS, 'palm')); } },
+    spawn(A) { A.ents.push(new Post(30 * TS + 8, 22 * TS + 12), new Post(22 * TS + 8, 22 * TS)); A.ents.push(new Chest(30 * TS, 21 * TS, { flag: 'hp_ilot_dunes', give: 'piece_coeur', msg: null })); for (const [x, y] of [[8, 8], [33, 8]]) A.ents.push(new Decor(x * TS, y * TS, 'palm')); },
+    // carte peinte par tools/peintre (assets/maps/dunes.png) : mêmes collisions, arbres, rochers et palmiers peints
+    paint: 'dunes', arrive: { W: { x: 3 * TS, y: 15 * TS, dir: 'right' }, E: { x: 37 * TS, y: 15 * TS, dir: 'left' } },
+    paintNpcs: [['coquillages', 14, 10]],
+    paintSpawn(A) { A.ents.push(new Post(30 * TS + 8, 22 * TS + 12), new Post(22 * TS + 8, 22 * TS)); A.ents.push(new Chest(30 * TS, 21 * TS, { flag: 'hp_ilot_dunes', give: 'piece_coeur', msg: null })); for (const [x, y] of [[41, 406], [518, 188], [190, 337], [348, 177], [338, 115], [177, 165], [56, 165], [434, 187], [171, 429], [104, 413], [368, 59], [249, 388]]) A.ents.push(new Bush(x, y)); } },
   { id: 'lande', name: 'La Lande grise', seed: 211, themes: ['terres', 'lac'], axis: 'x', dark: 0.52,
     sides: { E: ['1', 'lac', 'lac_from_terres'], W: ['2', 'terres', 'terres_from_lac'] },
     build(T) { T.rect(2, 2, 36, 5, '#'); },
