@@ -54,7 +54,7 @@ function drawPL(key, x, y, di, t, alpha = 1, scale = 1, walking = false) {
   let c = m.c || 48; const k = scale * (m.child || 1) * CHAR_SC; let s = c * k, sx = di * c, sy = 0, foot = m.foot;
   if (walking && m.walk && IMG['plw_' + key]) { im = IMG['plw_' + key]; c = m.walkC || c; s = c * k; sx = di * c; sy = (Math.floor(t * 10) % m.walk) * c; foot = m.walkFoot || 0; } // cases de marche plus grandes (68 px), même échelle de personnage
   else if (m.anim && di === 0) { sx = (Math.floor(t * (m.fps || 6)) % m.anim) * c; sy = c; }
-  ctx.globalAlpha = alpha; ctx.drawImage(im, sx, sy, c, c, half(x - s / 2), half(y - s + foot * k), s, s); ctx.globalAlpha = 1; return true;
+  ctx.globalAlpha = alpha; smoothOn(); ctx.drawImage(im, sx, sy, c, c, half(x - s / 2), half(y - s + foot * k), s, s); smoothOff(); ctx.globalAlpha = 1; return true;
 }
 // une case d'une planche (boss, monstres) posée par les pieds en (x, y) ; k : échelle (0,5 = 1 pixel d'image par pixel d'écran)
 // o : { flip, rot, alpha, foot (marge sous les pieds, en px d'image), flash (silhouette blanche quand il est touché) }
@@ -72,8 +72,8 @@ function cellFoot(key, col, row, cw, ch) {
 function drawCell(key, col, row, cw, ch, x, y, k, o = {}) {
   const im = IMG[key]; if (!im) return false; const foot = o.foot === 'auto' ? cellFoot(key, col, row, cw, ch) : (o.foot || 0), w = cw * k, h = ch * k, dy = -h + foot * k;
   ctx.save(); ctx.translate(half(x), half(y)); if (o.flip) ctx.scale(-1, 1); if (o.rot) ctx.rotate(o.rot);
-  ctx.globalAlpha = o.alpha != null ? o.alpha : 1; ctx.drawImage(im, col * cw, row * ch, cw, ch, -w / 2, dy, w, h);
-  if (o.flash) { ctx.globalAlpha = 0.85; ctx.drawImage(whiteOf(key), col * cw, row * ch, cw, ch, -w / 2, dy, w, h); }
+  ctx.globalAlpha = o.alpha != null ? o.alpha : 1; smoothOn(); ctx.drawImage(im, col * cw, row * ch, cw, ch, -w / 2, dy, w, h);
+  if (o.flash) { ctx.globalAlpha = 0.85; ctx.drawImage(whiteOf(key), col * cw, row * ch, cw, ch, -w / 2, dy, w, h); } smoothOff();
   ctx.restore(); return true;
 }
 // monstres PixelLab (assets/mobs/<clé>.png) : ligne 0 = 8 directions au repos, lignes 1-8 = animation par direction, ligne 9 = pose spéciale

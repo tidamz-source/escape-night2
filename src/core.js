@@ -1,11 +1,14 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.16.6';
+const VERSION = 'v8.16.7';
 const W = 480, H = 270, SC = 2, TS = 16;
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
 cv.width = W * SC; cv.height = H * SC;
+// les personnages (héros, PNJ, monstres, boss) sont lissés à l'agrandissement pour se fondre dans le décor peint ; le reste reste net
+function smoothOn() { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
+function smoothOff() { ctx.imageSmoothingEnabled = false; }
 function resetT() { ctx.setTransform(SC, 0, 0, SC, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
 resetT();
 

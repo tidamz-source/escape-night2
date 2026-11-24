@@ -29,7 +29,7 @@ function drawHero(id, x, y, dir, moving, t, scale = 1, alpha = 1) {
   const f = sheetFrame(sh, name, t, still); if (!f) return;
   const k = scale * CHAR_SC * 1.4 / Number(sh.meta.scale || 1), w = f.w * k, h = f.h * k, foot = sh.meta.foot != null ? sh.meta.foot * k : sh.meta.scale === '1' || !sh.meta.scale ? scale : 0; // foot : marge transparente sous les pieds, pour poser les pieds sur l'ombre
   ctx.globalAlpha = alpha;
-  ctx.drawImage(im, f.x, f.y, f.w, f.h, half(x - w / 2), half(y - h + foot), w, h);
+  smoothOn(); ctx.drawImage(im, f.x, f.y, f.w, f.h, half(x - w / 2), half(y - h + foot), w, h); smoothOff();
   ctx.globalAlpha = 1;
 }
 function drawFace(who, mood, x, y, s = 1) {
