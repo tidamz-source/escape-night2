@@ -47,14 +47,18 @@ function room(name, MAP, decorFloor, decorTop, opts = {}) {
       if (border) { if (!isWall(tx, ty + 1) && isWall(tx, ty - 1)) c.hline(tx * TS, ty * TS + 15, TS, "Y"); if (!isWall(tx, ty - 1) && isWall(tx, ty + 1)) c.hline(tx * TS, ty * TS, TS, "Y"); if (!isWall(tx + 1, ty) && isWall(tx - 1, ty)) c.vline(tx * TS + 15, ty * TS, TS, "Y"); if (!isWall(tx - 1, ty) && isWall(tx + 1, ty)) c.vline(tx * TS, ty * TS, TS, "Y") }
     })),
     // tapis cramoisi à bordure d'or entre les portes (calculé sur le sol uniquement)
-    layer("tapis", c => (opts.carpets || []).forEach(([x0, y0, x1, y1]) => {
-      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-        if (!isFloor(x >> 4, y >> 4)) continue
-        const ex = Math.min(x - x0, x1 - 1 - x), ey = Math.min(y - y0, y1 - 1 - y), e = Math.min(ex, ey)
+    layer("tapis", c => {
+      const rects = opts.carpets || []; if (!rects.length) return
+      const inC = (x, y) => isFloor(x >> 4, y >> 4) && rects.some(([x0, y0, x1, y1]) => x >= x0 && x < x1 && y >= y0 && y < y1)
+      const edge = (x, y) => { for (let d = 0; d < 6; d++) if (!inC(x + d + 1, y) || !inC(x - d - 1, y) || !inC(x, y + d + 1) || !inC(x, y - d - 1)) return d; return 6 }
+      for (let y = 0; y < CH * TS; y++) for (let x = 0; x < CW * TS; x++) {
+        if (!inC(x, y)) continue
+        const e = edge(x, y), open = x <= 1 || x >= CW * TS - 2 || y <= 1 || y >= CH * TS - 2
         let k = e === 0 ? "R" : e === 1 ? "y" : e === 2 ? "R" : ((x + y) % 12 === 0 || (x - y + 1200) % 12 === 0) && e > 4 ? "e" : "r"
+        if (open && e < 3) k = "r"
         c.px(x, y, k)
       }
-    })),
+    }),
     layer("decor_sol", c => decorFloor && decorFloor(c, S)),
     // gouffres : rebord de marbre brisé au-dessus du noir
     layer("vide", c => each((tx, ty) => {
@@ -119,8 +123,6 @@ function room(name, MAP, decorFloor, decorTop, opts = {}) {
     })),
     layer("passages", { shade: true, density: 0.5 }, c => each((tx, ty) => { if (isFloor(tx, ty) && (ty <= 1 || ty >= 15 || tx <= 1 || tx >= 28)) c.rect(tx * TS, ty * TS, TS, TS, "k") })),
     layer("passages2", { shade: true }, c => each((tx, ty) => { if (isFloor(tx, ty) && (ty === 0 || ty === 16 || tx === 0 || tx === 29)) c.rect(tx * TS, ty * TS, TS, TS, "k") })),
-    // puits de clair de lune tombant des fenêtres gothiques
-    layer("lune", { light: true, density: 0.25 }, c => (opts.windows || []).forEach(x => { for (const X of [x, 480 - x]) if (isWall(X >> 4, 1) && !isWall(X >> 4, 2)) c.poly([X - 5, 32, X + 5, 32, X + 22, 120, X + 6, 120], "k") })),
     // arcs brisés des passages : piédroits de marbre sombre, archivolte dorée, petite horloge à la clé
     layer("portes", c => {
       const jamb = (x, y, h) => { c.rect(x, y, 6, h, "S"); c.vline(x, y, h, "y"); c.vline(x + 5, y, h, "x"); c.hline(x, y + h - 1, 6, "Y") }
@@ -148,13 +150,10 @@ function room(name, MAP, decorFloor, decorTop, opts = {}) {
         const cells = []; const st = [[tx, ty]]; seen.add(tx + ',' + ty)
         while (st.length) { const [x, y] = st.pop(); cells.push([x, y]); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const k = (x + dx) + ',' + (y + dy); if (at(x + dx, y + dy) === "k" && !seen.has(k)) { seen.add(k); st.push([x + dx, y + dy]) } } }
         const x0 = Math.min(...cells.map(p => p[0])) * 16, x1 = (Math.max(...cells.map(p => p[0])) + 1) * 16, y0 = Math.min(...cells.map(p => p[1])) * 16, y1 = (Math.max(...cells.map(p => p[1])) + 1) * 16
-        grandClock(c, (x0 + x1) / 2, y1, x1 - x0)
+        statue(c, (x0 + x1) / 2, y1, x1 - x0)
       })
     }),
     layer("decor_haut", c => decorTop && decorTop(c, S)),
-    glow("o", { r: 10, strength: 0.45, bands: 3 }),
-    glow("z", { r: 3, strength: 0.6, bands: 2 }),
-    glow("l", { r: 6, strength: 0.3, bands: 2 }),
   )
 }
 // ---------- éléments ----------
@@ -163,7 +162,20 @@ function clockFace(c, cx, cy, r, hour = 12) {
   for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283 - 1.5708; c.px(Math.round(cx + Math.cos(a) * (r - 1)), Math.round(cy + Math.sin(a) * (r - 1)), i % 3 ? "P" : "k") }
   const ah = (hour % 12) / 12 * 6.283 - 1.5708; c.line(cx, cy, Math.round(cx + Math.cos(ah) * (r - 3)), Math.round(cy + Math.sin(ah) * (r - 3)), "k"); c.line(cx, cy, Math.round(cx + Math.cos(-1.5708) * (r - 1)), Math.round(cy + Math.sin(-1.5708) * (r - 1)), "k"); c.px(cx, cy, "y")
 }
-// grande horloge à balancier, posée sur les cases solides
+// statue d'ange voilé sur un socle de marbre, posée sur les cases solides
+function statue(c, cx, base, w) {
+  const x0 = cx - w / 2 + 2, x1 = cx + w / 2 - 2
+  c.ellipse(cx, base - 2, w / 2, 5, "k")
+  c.rect(x0, base - 20, x1 - x0, 18, "s"); c.hline(x0, base - 20, x1 - x0, "y"); c.hline(x0, base - 19, x1 - x0, "S"); c.hline(x0, base - 3, x1 - x0, "x"); c.vline(x0, base - 20, 18, "S")
+  c.rect(x0 + 4, base - 14, x1 - x0 - 8, 8, "x"); c.box(x0 + 4, base - 14, x1 - x0 - 8, 8, "Y")
+  c.poly([cx - 9, base - 20, cx - 6, base - 46, cx, base - 52, cx + 6, base - 46, cx + 9, base - 20], "b")          // robe
+  c.line(cx - 6, base - 46, cx - 9, base - 20, "c"); c.line(cx, base - 50, cx - 2, base - 22, "a"); c.line(cx + 4, base - 44, cx + 6, base - 22, "a")
+  c.poly([cx - 6, base - 44, cx - 18, base - 58, cx - 14, base - 36], "a"); c.poly([cx + 6, base - 44, cx + 18, base - 58, cx + 14, base - 36], "a")  // ailes
+  c.line(cx - 6, base - 44, cx - 18, base - 58, "c"); c.line(cx + 6, base - 44, cx + 18, base - 58, "c")
+  c.circ(cx, base - 55, 4, "b"); c.poly([cx - 5, base - 55, cx, base - 61, cx + 5, base - 55, cx + 4, base - 50, cx - 4, base - 50], "a")       // voile
+  c.px(cx - 1, base - 54, "x"); c.px(cx + 1, base - 54, "x"); c.vline(cx - 1, base - 53, 3, "a")                                               // larmes de pierre
+}
+// (ancienne grande horloge, inutilisée)
 function grandClock(c, cx, base, w) {
   const x0 = cx - w / 2 + 4, x1 = cx + w / 2 - 4, top = base - 72
   c.ellipse(cx, base - 2, w / 2, 5, "k")
@@ -204,8 +216,8 @@ const northWall = (c, S, { win = [56, 168], por = [112], ill = [], hue = 0 } = {
 const swordsShield = (c, cx) => { c.line(cx - 9, 4, cx + 9, 22, "b"); c.line(cx + 9, 4, cx - 9, 22, "b"); c.hline(cx - 11, 18, 5, "y"); c.hline(cx + 7, 18, 5, "y"); c.poly([cx - 6, 6, cx + 6, 6, cx + 6, 14, cx, 21, cx - 6, 14], "R"); c.poly([cx - 4, 8, cx + 4, 8, cx + 4, 13, cx, 18, cx - 4, 13], "r"); c.vline(cx, 8, 10, "y"); c.hline(cx - 3, 11, 7, "y") }
 const keyInlay = (c, cx, cy) => { c.ellipse(cx - 24, cy, 10, 7, "y"); c.ellipse(cx - 24, cy, 6, 4, "s"); c.rect(cx - 14, cy - 2, 40, 4, "y"); c.rect(cx + 14, cy + 2, 4, 6, "y"); c.rect(cx + 22, cy + 2, 4, 8, "y"); c.hline(cx - 14, cy - 2, 40, "o") }
 const DECOR = {
-  entry: [c => romanRing(c, 240, 136, 46), (c, S) => northWall(c, S, { win: [56, 168], por: [112] })],
-  blast: [c => { hourglass(c, 120, 136, 12); hourglass(c, 360, 136, 12) }, (c, S) => northWall(c, S, { win: [72], por: [168], ill: [120] })],
+  entry: [c => {}, (c, S) => northWall(c, S, { win: [56, 168], por: [112] })],
+  blast: [c => {}, (c, S) => northWall(c, S, { win: [72], por: [168], ill: [120] })],
   sling: [c => {}, (c, S) => northWall(c, S, { win: [56, 152], ill: [104] })],
   // galerie des portraits : les cloisons des couloirs sont couvertes de tableaux
   gallery: [c => {}, (c, S) => { northWall(c, S, { win: [], por: [56, 104, 152, 200] }); for (const y of [80, 160]) for (let x = 56; x < 440; x += 40) if (S.isWall(x >> 4, y >> 4) && S.isWall((x + 12) >> 4, y >> 4)) portrait(c, x, y + 1, 12, 13, (x / 40 | 0) % 3 === 0 ? 1 : 0) }],
@@ -213,15 +225,15 @@ const DECOR = {
   // grande salle : tapis croisés, enluminures entre les fenêtres
   hall: [c => {}, (c, S) => northWall(c, S, { win: [56, 152], por: [104], ill: [184] })],
   swim: [c => {}, (c, S) => northWall(c, S, { win: [40, 120, 184], por: [80] })],
-  // frisbee : deux grandes horloges à balancier, vitrail au fond de l'alcôve
+  // frisbee : deux anges voilés sur leurs socles, vitrail au fond de l'alcôve
   frisbee: [c => {}, (c, S) => { northWall(c, S, { win: [136], ill: [72] }); windowG(c, 240) }],
   // armurerie : épées croisées sur écus, en paires
   armory: [c => {}, (c, S) => { northWall(c, S, { win: [184], por: [] }); pair(x => swordsShield(c, x), 64); pair(x => swordsShield(c, x), 128) }],
-  // Chevalier Minuit : un immense sablier de marqueterie au centre
-  papa: [c => hourglass(c, 240, 140, 30), (c, S) => northWall(c, S, { win: [56, 168], por: [112], hue: 1 })],
-  bigkey: [c => keyInlay(c, 240, 140), (c, S) => northWall(c, S, { win: [72, 168], ill: [120] })],
+  // Chevalier Minuit : portraits rouges
+  papa: [c => {}, (c, S) => northWall(c, S, { win: [56, 168], por: [112], hue: 1 })],
+  bigkey: [c => {}, (c, S) => northWall(c, S, { win: [72, 168], ill: [120] })],
   // salle du trône : la grande horloge arrêtée sur minuit, le dossier du trône contre le mur, portraits rouges
-  king: [c => romanRing(c, 240, 170, 50), (c, S) => {
+  king: [c => {}, (c, S) => {
       northWall(c, S, { win: [48, 112], por: [80, 176], hue: 1 })
       c.rect(222, 6, 36, 26, "R"); c.box(222, 6, 36, 26, "y"); c.rect(226, 10, 28, 22, "r"); c.poly([222, 6, 240, -2, 258, 6], "y")
       clockFace(c, 240, 16, 9, 12); c.px(240, 2, "o")
