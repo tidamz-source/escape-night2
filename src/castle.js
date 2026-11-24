@@ -251,11 +251,13 @@ class PapaAlly { // Papa, dans la salle du Roi : il suit le héros et attrape le
 //       [ARMURERIE]  [CHEVALIER MINUIT] [GRANDE CLÉ]     .
 //        [GRAPPIN]      [HALL]           [PALMES]    [FRISBEE]
 //        [PÉTARDS]     [ENTRÉE]       [LANCE-PIERRE] [GALERIE]
+// salles peintes façon château gothique (assets/maps/chateau_<salle>.png) ; le lance-pierre a sa variante avec le pont (SAVE.castleBridge)
+const CASTLE_PAINTED = ['blast', 'entry', 'sling', 'gallery', 'hook', 'hall', 'swim', 'frisbee', 'armory', 'papa', 'bigkey', 'king'];
 function buildCastleArea() {
   const br = { x: 2 * RW + 10, y: 3 * RH + 7 };
   return makeDungeon({
-    id: 'castle', zone: 'terres', name: 'Le Château de Minuit', theme: 'castle', seed: 97, rough: 0.15, moss: 40, dark: 0.36,
-    bossFlag: 'boss6', heartFlag: 'heart7', potLoot: 'potCastle',
+    id: 'castle', zone: 'terres', name: 'Le Château de Minuit', theme: 'castle', seed: 97, rough: 0, clean: true, moss: 40, dark: 0.36, // lisières droites (salles peintes)
+    bossFlag: 'boss6', heartFlag: 'heart7', potLoot: 'potCastle', paintRooms: Object.assign(Object.fromEntries(CASTLE_PAINTED.map(n => [n, 'chateau_' + n])), { sling: () => SAVE.castleBridge ? 'chateau_sling_pont' : 'chateau_sling' }),
     rooms: { blast: [0, 3], entry: [1, 3], sling: [2, 3], gallery: [3, 3], hook: [0, 2], hall: [1, 2], swim: [2, 2], frisbee: [3, 2], armory: [0, 1], papa: [1, 1], bigkey: [2, 1], king: [1, 0] },
     entry: 'entry', boss: 'king', bossShutter: false, prison: false,
     links: [['entry', 'blast'], ['entry', 'sling'], ['sling', 'gallery'], ['entry', 'hall'], ['hall', 'hook'], ['hall', 'swim'], ['swim', 'frisbee'],
