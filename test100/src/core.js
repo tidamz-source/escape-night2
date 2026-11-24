@@ -1,7 +1,9 @@
 'use strict';
 // ---------- constantes ----------
 const VERSION = 'test100-v8.16.6';
-let W = 480, H = 270; const SC = 2, TS = 16; const ZOOM = 2 / 3, UW = 480, UH = 270, VW = 720, VH = 405;
+let W = 480, H = 270; const SC = 2, TS = 16; const UW = 480, UH = 270; let ZOOM = 2 / 3, VW = 720, VH = 405;
+// test : dehors 67 % ; intérieurs, maisons, phare et donjons un peu plus gros (83 %)
+function setZoom(A) { const id = (A && A.id) || ''; ZOOM = A && (A.rooms || id.startsWith('in_') || id.startsWith('phare')) ? 5 / 6 : 2 / 3; VW = UW / ZOOM; VH = UH / ZOOM; }
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');

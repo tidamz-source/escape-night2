@@ -80,6 +80,7 @@ const G = {
   updateCam() {
     if (this.slide) return; // pendant le glissement entre deux salles, c'est updateSlide qui tient la caméra
     const P = this.player, A = this.area, f = this.camFocus || { x: P.x, y: P.y - 12 };
+    setZoom(A);
     if (A.rooms) { const rr = this.roomRect(); this.cam.x = rr.x - (VW - rr.w) / 2; this.cam.y = rr.y + 1 - (VH - rr.h) / 2; return; } // test : la salle au centre
     this.cam.x = A.w <= VW ? (A.w - VW) / 2 : clamp(f.x - VW / 2, 0, A.w - VW);
     this.cam.y = A.h <= VH ? (A.h - VH) / 2 - 8 : clamp(f.y - VH / 2, 0, A.h - VH);
@@ -414,7 +415,7 @@ const G = {
     }
     if (this.view === 'end') { this.drawEnd(); this.drawFade(); return; }
     if (this.view === 'credits') { this.drawCredits(); this.drawFade(); return; }
-    W = VW; H = VH; ctx.save(); ctx.scale(ZOOM, ZOOM); this.drawWorld(); ctx.restore(); W = UW; H = UH;
+    setZoom(this.area); W = VW; H = VH; ctx.save(); ctx.scale(ZOOM, ZOOM); this.drawWorld(); ctx.restore(); W = UW; H = UH;
     if (this.area && this.area.rooms && this.view === 'world') { const rr = this.slide ? { x: this.cam.x + (VW - this.roomRect().w) / 2, y: this.cam.y - 1 + (VH - this.roomRect().h) / 2, w: this.roomRect().w, h: this.roomRect().h } : this.roomRect(), x0 = (rr.x - this.cam.x) * ZOOM, y0 = (rr.y - this.cam.y) * ZOOM, x1 = x0 + rr.w * ZOOM, y1 = y0 + rr.h * ZOOM; R(0, 0, UW, y0, '#000'); R(0, y1, UW, UH - y1, '#000'); R(0, y0, x0, y1 - y0, '#000'); R(x1, y0, UW - x1, y1 - y0, '#000'); } // le reste en noir
     if (!this.isMontage && !(this.state === 'cut' && this.cut) && (this.lb || 0) < 0.3) this.drawHUD(); // pas d'interface pendant les cinématiques
     if (this.state === 'fish') Fishing.draw(this);
