@@ -192,10 +192,12 @@ class IronMole extends Enemy {
 //       [ARAIGNÉES]   [GRANDE SALLE]   .            .
 //        [GRAPPIN]  [CARREFOUR des wagonnets] [POTEAUX]  .
 //         [ARÈNE]      [ENTRÉE]     [CAISSE]     [PUITS]
+// salles peintes façon mine (assets/maps/mines_<salle>.png)
+const MINES_PAINTED = ['entry', 'arena', 'crate', 'shaft', 'hub', 'grappin', 'spider', 'posts', 'hall', 'boss', 'prison'];
 function buildMinesArea() {
   return makeDungeon({
-    id: 'mines', zone: 'montagne', name: 'Les Mines des gnomes', theme: 'mine', seed: 51, rough: 0.22, moss: 200, dark: 0.3,
-    bossFlag: 'boss3', heartFlag: 'heart4', potLoot: 'potMine',
+    id: 'mines', zone: 'montagne', name: 'Les Mines des gnomes', theme: 'mine', seed: 51, rough: 0, clean: true, moss: 200, dark: 0.3, // lisières droites (salles peintes)
+    bossFlag: 'boss3', heartFlag: 'heart4', potLoot: 'potMine', paintRooms: Object.fromEntries(MINES_PAINTED.map(n => [n, 'mines_' + n])),
     rooms: { entry: [1, 3], arena: [0, 3], crate: [2, 3], shaft: [3, 3], hub: [1, 2], grappin: [0, 2], spider: [0, 1], posts: [2, 2], hall: [1, 1], boss: [1, 0] },
     entry: 'entry', boss: 'boss',
     after(A) { A.fallVoid = true; }, // on peut tomber dans le vide : un demi-cœur, retour au bord
@@ -206,7 +208,7 @@ function buildMinesArea() {
       h.rect(3, 4, 24, 9, 'v'); h.rect(3, 6, 5, 5, '_'); h.rect(22, 6, 5, 5, '_');
       railLine(h, 11, 13, 11, 8); railLine(h, 11, 8, 6, 8); railLine(h, 11, 8, 23, 8); railLine(h, 19, 8, 19, 3);
       const p = room('posts');
-      p.rect(7, 2, 20, 1, 'W'); p.rect(7, 14, 20, 1, 'W'); p.rect(7, 3, 20, 11, 'v');
+      p.rect(2, 2, 26, 1, 'W'); p.rect(2, 14, 26, 1, 'W'); // bandes de mur sur toute la largeur : pas de marche qui dépasse p.rect(7, 3, 20, 11, 'v');
       p.rect(10, 7, 4, 3, '_'); p.rect(14, 3, 4, 3, '_'); p.rect(16, 9, 11, 5, '_');
       const g = room('grappin'); g.rect(16, 3, 11, 4, 'v'); g.rect(21, 3, 6, 3, '_');
       const c = room('crate'); c.rect(18, 2, 1, 5, 'W'); c.rect(20, 2, 1, 5, 'W'); c.set(19, 2, 'W');
@@ -259,7 +261,7 @@ function buildMinesArea() {
         ['posts', mk(Post, 'posts', 5, 10)], ['posts', mk(Post, 'posts', 12, 8)], ['posts', mk(Post, 'posts', 15, 4)], ['posts', mk(Post, 'posts', 17, 3)], ['posts', mk(Post, 'posts', 20, 10)],
         ['posts', new Shutter(h.door('posts', 'W').x, h.door('posts', 'W').y, 'h', () => G.area.arenaOn === h.R.posts)],
         ['posts', mk(Chest, 'posts', 24, 11, { flag: 'minesBigKey', give: 'bigkey:mines', big: true, reveal: 'arenaMBK', msg: [{ text: 'La grande clé des Mines ! Elle ouvre la porte de la Taupe de fer.' }] })],
-        ['prison', new Cage(cg.x, cg.y, { n: 3, boss: 'boss3', drawCaptive: (x, y, t) => drawHero(Heroes.captive(1), x, y, 'down', false, t) })],
+        ['prison', new Cage(cg.x, cg.y, { n: 3, boss: 'boss3', bind: 'ropes', drawCaptive: (x, y, t) => drawHero(Heroes.captive(1), x, y, 'down', false, t) })],
         ...lamps('entry', [[9, 3], [20, 3]]), ...lamps('arena', [[3, 8], [26, 8]]), ...lamps('crate', [[6, 3], [12, 3]]), ...lamps('shaft', [[14, 3]]),
         ...lamps('hub', [[4, 13], [25, 13], [24, 2]]), ...lamps('grappin', [[3, 8], [14, 3]]), ...lamps('posts', [[3, 4], [26, 13]]), ...lamps('spider', [[3, 3], [26, 3]]),
         ...lamps('hall', [[3, 3], [26, 3], [3, 13], [26, 13]]), ...lamps('boss', [[3, 3], [26, 3], [3, 13], [26, 13]]),
