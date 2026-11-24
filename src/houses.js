@@ -109,12 +109,43 @@ Object.assign(INTERIORS, {
     people(put, at, A) { npc(A, 7, 7.4, { look: 'mahaut', talk: 'villageois3' }); },
     build(put, at, A) { put('shelf', 4, 3.2); put('wheel', 10, 5); put('plant', 12, 7.4); npc(A, 7, 6.6, { look: 'mahaut', talk: 'villageois3' }); } },
   // ----- les autres zones -----
-  berger: { name: 'La bergerie', w: 14, h: 9, build(put, at, A) { put('fireplace', 4, 3.2); put('bed', 11, 4.6, { blanket: '#c8b898' }); put('bench', 7, 7.2); npc(A, 8, 5.6, { look: 'berger', quest: 'cloche' }); } },
-  bucheron: { name: 'La cabane du bûcheron', w: 14, h: 9, build(put, at, A) { put('fireplace', 10, 3.2); put('crate', 3, 5, { say: [{ text: 'Une pile de bûches bien rangées.' }] }); put('table', 5, 7.2); npc(A, 9, 6.4, { look: 'bucheron', quest: 'hache' }); } },
-  herboriste: { name: 'L\'herboristerie', w: 16, h: 10, build(put, at, A) { put('cauldron', 4, 4.6); put('shelf', 12, 3.2); put('plant', 2, 8.4); put('plant', 14, 8.4); npc(A, 8, 4.6, { look: 'herboriste', fn: herboristeTalk }); shopRow(A, 'herboriste', 5, 7.6, 3); } },
-  gnome: { name: 'La hutte du gnome', w: 12, h: 9, build(put, at, A) { put('table', 6, 5, { candle: true }); put('crate', 2, 7.4); put('barrel', 10, 7.4); npc(A, 6, 6.8, { gnome: true, quest: 'lettre' }); } },
-  pecheur: { name: 'La cabane du pêcheur', w: 14, h: 9, build(put, at, A) { put('nets', 4, 4); put('barrel', 11, 4.4); put('table', 9, 6.4, { food: true }); npc(A, 6, 6.6, { look: 'pecheur', fn: pecheurTalk }); } },
-  artificiere: { name: 'L\'atelier de l\'artificière', w: 18, h: 11, build(put, at, A) { put('rockets', 4, 4); put('rockets', 14, 4); put('barrel', 2, 8); put('table', 9, 5.6); npc(A, 9, 7, { look: 'artificiere', quest: 'feux' }); shopRow(A, 'artifices', 13, 8.4, 3); } },
+  berger: { name: 'La bergerie', w: 14, h: 9, paint: 'berger', // peinte (assets/maps/berger.png)
+    lights: [[6.2, 4.6, 60], [18.6, 4, 22], [10, 2.5, 26]],
+    spots: [[17.4, 7.4, 1.4, [{ text: 'Des cloches de moutons, de toutes les tailles. Un crochet est vide.' }]]],
+    people(put, at, A) { npc(A, 9.5, 6.4, { look: 'berger', quest: 'cloche' }); },
+    build(put, at, A) { put('fireplace', 4, 3.2); put('bed', 11, 4.6, { blanket: '#c8b898' }); put('bench', 7, 7.2); npc(A, 8, 5.6, { look: 'berger', quest: 'cloche' }); } },
+  bucheron: { name: 'La cabane du bûcheron', w: 14, h: 9, paint: 'bucheron', // peinte (assets/maps/bucheron.png)
+    lights: [[13.4, 4.8, 80], [16.5, 8.8, 20], [10, 2.5, 22]],
+    spots: [[7, 5.2, 1.6, [{ text: 'Une pile de bûches bien rangées.' }]]],
+    people(put, at, A) { npc(A, 10, 6.6, { look: 'bucheron', quest: 'hache' }); },
+    build(put, at, A) { put('fireplace', 10, 3.2); put('crate', 3, 5, { say: [{ text: 'Une pile de bûches bien rangées.' }] }); put('table', 5, 7.2); npc(A, 9, 6.4, { look: 'bucheron', quest: 'hache' }); } },
+  herboriste: { name: 'L\'herboristerie', w: 16, h: 10, paint: 'herboriste', // peinte (assets/maps/herboriste.png) ; l'herboriste derrière son comptoir
+    lights: [[4.1, 4.4, 40], [8.4, 3.4, 18], [8.4, 4.8, 18], [1.9, 3.3, 16], [8, 2.3, 22], [12, 2.3, 22], [13.4, 2.5, 26], [3.6, 9.4, 22], [16.6, 9.4, 22]],
+    spots: [[4.1, 5.6, 2, [{ text: 'Le chaudron bouillonne. Ça sent la menthe et le sous-bois.' }]]],
+    people(put, at, A) {
+      const hb = npc(A, 10.6, 4.45, { look: 'herboriste', fn: herboristeTalk }); // le comptoir (OVERHEAD.herboriste) lui cache les jambes
+      A.ents.push(new TalkSpot(8.5 * TS, 7 * TS, 4.5 * TS, hb));
+      shopRow(A, 'herboriste', 6.5, 8.2, 3);
+    },
+    build(put, at, A) { put('cauldron', 4, 4.6); put('shelf', 12, 3.2); put('plant', 2, 8.4); put('plant', 14, 8.4); npc(A, 8, 4.6, { look: 'herboriste', fn: herboristeTalk }); shopRow(A, 'herboriste', 5, 7.6, 3); } },
+  gnome: { name: 'La hutte du gnome', w: 12, h: 9, paint: 'gnome', dark: 0.15, // peinte (assets/maps/gnome.png)
+    lights: [[6.4, 5.8, 22], [11.4, 3, 26], [5.4, 3.5, 22], [16, 8.8, 30], [13.4, 4.8, 16], [2.4, 6, 12]],
+    spots: [[15.6, 8.4, 2, [{ text: 'Des cristaux qui brillent tout seuls. Le gnome les appelle « ses veilleuses ».' }]]],
+    people(put, at, A) { npc(A, 11, 7.2, { gnome: true, quest: 'lettre' }); },
+    build(put, at, A) { put('table', 6, 5, { candle: true }); put('crate', 2, 7.4); put('barrel', 10, 7.4); npc(A, 6, 6.8, { gnome: true, quest: 'lettre' }); } },
+  pecheur: { name: 'La cabane du pêcheur', w: 14, h: 9, paint: 'pecheur', dark: 0.12, // peinte (assets/maps/pecheur.png)
+    lights: [[6.6, 5.3, 34], [10, 3.4, 30]],
+    spots: [[4.5, 7.3, 2, [{ text: 'Des filets suspendus. Un crochet est vide : c\'est là qu\'allait le grand filet.' }]]],
+    people(put, at, A) { npc(A, 10, 6.8, { look: 'pecheur', fn: pecheurTalk }); },
+    build(put, at, A) { put('nets', 4, 4); put('barrel', 11, 4.4); put('table', 9, 6.4, { food: true }); npc(A, 6, 6.6, { look: 'pecheur', fn: pecheurTalk }); } },
+  artificiere: { name: 'L\'atelier de l\'artificière', w: 18, h: 11, paint: 'artificiere', // peint (assets/maps/artificiere.png) ; l'artificière derrière son comptoir
+    lights: [[8, 2.3, 22], [12, 2.3, 22], [12, 4.9, 18], [1.4, 3.6, 16], [1.4, 5.8, 16], [6.6, 2.4, 26], [16, 2, 30]],
+    people(put, at, A) {
+      const af = npc(A, 10.3, 4.45, { look: 'artificiere', quest: 'feux' }); // le comptoir (OVERHEAD.artificiere) lui cache les jambes
+      A.ents.push(new TalkSpot(8.5 * TS, 7.2 * TS, 4.5 * TS, af));
+      shopRow(A, 'artifices', 13.2, 7.6, 2);
+    },
+    build(put, at, A) { put('rockets', 4, 4); put('rockets', 14, 4); put('barrel', 2, 8); put('table', 9, 5.6); npc(A, 9, 7, { look: 'artificiere', quest: 'feux' }); shopRow(A, 'artifices', 13, 8.4, 3); } },
   // (le gardien du phare n'a plus de maison : il vit au rez-de-chaussée du phare, voir buildPhareFloor)
   ermite: { name: 'La cabane de l\'ermite', w: 12, h: 9, dark: 0.35, build(put, at, A) { put('cauldron', 3, 4.6); put('books', 9, 4); put('bed', 9.5, 7.6, { blanket: '#4a3a5a' }); npc(A, 6, 6, { look: 'ermite', quest: 'ombres' }); } },
 });
