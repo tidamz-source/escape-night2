@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.16.3';
+const VERSION = 'v8.16.4';
 const W = 480, H = 270, SC = 2, TS = 16;
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
@@ -54,6 +54,7 @@ const HERO_SHEETS = ['sacha', 'cam', 'rox'];
 const FACES = ['sacha', 'cam', 'rox', 'papa', 'amandine', 'claudine'].flatMap(w => ['smile', 'o', 'angry', 'wink'].map(m => `${w}_${m}`)).filter(k => k !== 'amandine_o' && k !== 'amandine_angry' && k !== 'amandine_wink' && k !== 'claudine_o' && k !== 'claudine_angry' && k !== 'claudine_wink');
 // PNJ PixelLab (assets/npc/pl/<clé>.png : 8 directions sur une ligne, l'animation d'attente de face en dessous)
 const PL_KEYS = ['bucheron_noaxe', 'garde', 'arthur', 'jules', 'lila', 'fantome', 'epiciere', 'sage', 'pierrette', 'fossoyeur', 'coquillages', 'hugo', 'herboriste', 'bucheron', 'gnome', 'firmin', 'gaelle', 'artificiere', 'gardien', 'ermite', 'vagabond', 'pauline', 'odette', 'lavandiere', 'crieur', 'forgeron', 'bastien', 'pervenche', 'margot', 'pecheur', 'berger', 'mahaut', 'gaspard', 'amandine', 'claudine', 'papa', 'aubergiste', 'lampions'];
+const PL_WALK = ['pauline', 'lavandiere', 'vagabond']; // PNJ qui ont une animation de marche
 // boss et monstres PixelLab (planches : 8 directions sur une ligne, animations en dessous)
 const BOSS_IMGS = [['boss_shadow', 'boss/shadow'], ['boss_queen', 'boss/queen'], ['boss_mole', 'boss/mole'], ['mob_boar', 'mobs/boar'], ['mob_raccoon', 'mobs/raccoon'], ['mob_bat', 'mobs/bat'], ['mob_shadow', 'mobs/shadow'], ['mob_wisp', 'mobs/wisp'], ['mob_squirrel', 'mobs/squirrel'], ['mob_crow', 'mobs/crow'], ['mob_gnome', 'mobs/gnome'], ['mob_spider', 'mobs/spider'], ['mob_crab', 'mobs/crab'], ['mob_eel', 'mobs/eel'], ['mob_skeleton', 'mobs/skeleton'], ['mob_gargoyle', 'mobs/gargoyle'], ['mob_dog', 'mobs/dog'], ['mob_sheep', 'mobs/sheep'], ['mob_ram', 'mobs/ram'], ['mob_chicken', 'mobs/chicken'], ['boss_king', 'boss/king'], ['boss_mknight', 'boss/mknight'], ['boss_iknight', 'boss/iknight'], ['boss_owl', 'boss/owl']];
 // icônes d'objets PixelLab (assets/items/<id>.png, recadrées)
@@ -84,6 +85,7 @@ function loadAssets() {
   for (const k of ITEM_ICONS) jobs.push(loadImage('item_' + k, `assets/items/${k}.png?v=${VERSION}`));
   for (const k of ITEM_VARIANTS) for (let v = 0; v < 8; v++) jobs.push(loadImage(`item_${k}_v${v}`, `assets/items/${k}_v${v}.png?v=${VERSION}`));
   for (const k of PL_KEYS) jobs.push(loadImage('pl_' + k, `assets/npc/pl/${k}.png?v=${VERSION}`));
+  for (const k of PL_WALK) jobs.push(loadImage('plw_' + k, `assets/npc/pl/${k}_walk.png?v=${VERSION}`)); // marche en 8 directions
   for (const k of NPC_SPRITES) jobs.push(loadImage('npc_' + k, `assets/npc/${k}.png?v=${VERSION}`));
   for (const k of SWIMMERS) for (const i of [0, 1]) jobs.push(loadImage('swim_' + k + i, `assets/swim/${k}${i}.png?v=${VERSION}`));
   for (const k of ['royaume', 'biblio', 'forge', 'epicerie', 'auberge', 'horloge', 'comptoir', 'mahaut', 'gaspard', 'pierrette', 'mamie', 'berger', 'bucheron', 'herboriste', 'gnome', 'pecheur', 'artificiere', 'collines', 'camping', 'route_nord', 'mobil_home', 'cote', 'dunes']) { jobs.push(loadImage('map_' + k, `assets/maps/${k}.png?v=${VERSION}`)); jobs.push(loadImage('map_' + k + '_dessus', `assets/maps/${k}_dessus.png?v=${VERSION}`)); }
