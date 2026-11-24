@@ -531,7 +531,7 @@ const WITNESSES = {
   pauline: ['Pauline', 'Mon cerf-volant s\'est pris dans un grand arbre des Collines, à l\'est. Il y avait un nid, là-haut, plein de trucs qui brillent !'],
   vagabond: ['Le vagabond', 'Cette nuit, j\'ai vu une ombre voler au-dessus des Collines, avec quelque chose qui tintait. Trop haut pour un raton, si tu veux mon avis.'],
 };
-const CLUES = { plume: 'Une plume noire, coincée dans la porte de la bergerie. Un raton n\'a pas de plumes…', mures: 'Près du gros rocher : des traces de pattes de raton, et de la confiture de mûres partout. Filou était bien ici à manger des mûres.' };
+const CLUES = { plume: 'Une plume noire, coincée dans la porte de la bergerie. Un raton n\'a pas de plumes…', mures: 'Près du gros rocher : des traces de pattes de raton, et de la confiture de mûres partout. Filou était bien ici à manger des mûres.', nid: 'Le nid tombe de l\'arbre. Dedans : la cloche d\'argent du berger, et des plumes noires !' };
 const Proces = {
   nT: () => Object.keys(WITNESSES).filter(k => (SAVE.procT || {})[k]).length,
   nC: () => Object.keys(CLUES).filter(k => (SAVE.procC || {})[k]).length,
@@ -543,7 +543,7 @@ const Proces = {
     G.ask([say('Le berger', 'Alors, enquêteur ? Devant tout le monde : qui a volé ma cloche ?')], ['Filou, le raton', 'Bastien', 'Le corbeau', 'Le vagabond'], i => {
       if (i !== 2) { SFX.nope(); return G.say([say('Le berger', i === 0 ? 'Filou ? Mais Mme Pervenche dit qu\'il mangeait des mûres… Tu n\'as pas de preuve. Réfléchis encore, et reviens.' : 'Quoi ? Mais enfin, il n\'a rien à voir là-dedans ! Réfléchis encore, et reviens.')]); }
       SQ.set('proces', 2); SAVE.ratonsAmis = true; SFX.bigheart();
-      G.say([say('Le berger', 'Le corbeau ! Bien sûr ! La plume noire, la cloche qui tintait dans le ciel… Filou est innocent.'), say('Filou', 'Krrr ! (Filou te fait un câlin. Il sent la mûre.)'), { text: 'Les ratons laveurs des Collines te font confiance : ils ne t\'attaqueront plus.' }]);
+      G.say([say('Le berger', 'Le corbeau ! Bien sûr ! La plume, le nid, la cloche qui tintait dans le ciel… Filou est innocent.'), say('Filou', 'Krrr ! (Filou te fait un câlin. Il sent la mûre.)'), { text: 'Les ratons laveurs des Collines te font confiance : ils ne t\'attaqueront plus.' }]);
     });
     return true;
   },
@@ -559,13 +559,14 @@ const Proces = {
       if (SQ.st('proces') === 1) {
         A.ents.push(villager2('bastien', 27 * TS + 8, 32 * TS), villager2('pervenche', 44 * TS + 8, 22 * TS));
         for (const [k, x, y] of [['plume', 16.9, 40.7], ['mures', 9.5, 11.2]]) if (!(SAVE.procC || {})[k]) A.ents.push(new ClueSpot(x * TS, y * TS, k));
+        if (!(SAVE.procC || {}).nid) A.ents.push(new CrowNest(44.6 * TS, 17.8 * TS)); // le nid du corbeau, en haut du grand arbre au nord
       }
     }
   },
 };
 function villager2(k, x, y) { return new NPC(x, y, { sq: k, look: k }); }
 Object.assign(LOOKS, { bastien: { skin: '#e0b48e', hair: '#c8742a', top: '#7a6a3a', legs: '#4a3a2a', hat: '#5a4a2a', child: true }, pervenche: { skin: '#f0c8a8', hair: '#c8c8d0', top: '#8a5aa8', legs: '#3a2a4a', long: true, bun: true } });
-class ClueSpot { // un indice à examiner : la plume sur la porte de la bergerie, la confiture de mûres près du gros rocher
+class ClueSpot { // un indice à examiner : la plume sur la porte de la bergerie, la confiture de mûres près du gros rocher (le nid : CrowNest)
   constructor(x, y, k) { this.x = x; this.y = y; this.k = k; this.w = 12; this.h = 8; this.t = 0; }
   get dead() { return !!(SAVE.procC || {})[this.k]; }
   canInteract() { return true; }
@@ -575,6 +576,31 @@ class ClueSpot { // un indice à examiner : la plume sur la porte de la bergerie
   }
   update(dt) { this.t += dt; }
   draw() { const y = this.y - (this.k === 'nid' ? 30 : 4); ctx.globalAlpha = 0.5 + 0.4 * Math.sin(this.t * 4); ell(this.x, y, 5, 5, '#ffe27a'); ctx.globalAlpha = 1; text('?', this.x, y - 5, { size: 8, align: 'center', bold: true, color: '#3a2a1a', shadow: false }); }
+}
+
+// le nid du corbeau, perché en haut du grand arbre : le grappin le fait tomber, et la cloche est dedans
+class CrowNest {
+  constructor(x, y) { this.x = x; this.gy = y; this.y = y + 6; this.w = 14; this.h = 8; this.t = 0; this.h0 = 50; this.fall = 0; this.vy = 0; } // y : pour passer devant le feuillage peint (Overhead) ; gy : le pied de l'arbre
+  get dead() { return !!(SAVE.procC || {}).nid; }
+  body() { return { x: this.x - 14, y: this.gy - this.h0 - 10, w: 28, h: this.h0 + 10 }; } // tout le tronc et le feuillage : le grappin l'attrape en visant l'arbre
+  canInteract() { return !this.fall; }
+  interact(G) { G.say([{ text: Inventory.has('grappin') ? 'Un nid de corbeau, tout en haut de l\'arbre. Quelque chose brille dedans… Le grappin pourrait l\'atteindre.' : 'Un nid de corbeau, tout en haut de l\'arbre. Quelque chose brille dedans… Trop haut pour l\'attraper à la main.' }]); }
+  onHook(G) { if (this.fall) return false; this.fall = 1; this.vy = -40; SFX.clank(); G.shake = 0.15; return true; }
+  update(dt, G) {
+    this.t += dt; if (!this.fall) return;
+    this.vy += 420 * dt; this.h0 -= this.vy * dt;
+    if (this.h0 <= 0) { this.h0 = 0; SFX.push(); G.parts.burst(this.x, this.gy, 10, { c: ['#6a4a2a', '#2a2a32', '#c8ccd8'], life: 0.5, r: 1.5 });
+      SAVE.procC = SAVE.procC || {}; SAVE.procC.nid = 1; persist(); SFX.secret(); Input.toast = { msg: `Preuve trouvée : ${Proces.nC()} / ${Object.keys(CLUES).length}`, t: 1.8 }; G.say([{ text: CLUES.nid }]); }
+  }
+  draw() {
+    const y = this.gy - this.h0, x = this.x + (this.fall ? 0 : 6);
+    if (this.fall && this.h0 > 4) { ctx.globalAlpha = 0.25; ell(x, this.gy, 9, 3, '#000'); ctx.globalAlpha = 1; }
+    ell(x, y - 2, 13, 6, '#2a1a0c'); ell(x, y - 2, 12, 5, '#5a3a1e'); ell(x, y - 4, 10, 3, '#2e1c0e'); // un nid rond : contour, brindilles, creux
+    for (const [dx, dy, w] of [[-14, -3, 5], [10, -3, 5], [-11, 1, 4], [7, 1, 4], [-6, -6, 4], [3, -7, 4], [-2, 2, 4]]) R(half(x + dx), half(y + dy), w, 1, '#9a7038');
+    R(half(x - 5), half(y - 10), 2, 5, '#1a1a22'); R(half(x - 2), half(y - 11), 2, 6, '#22222a'); R(half(x + 6), half(y - 9), 2, 4, '#1a1a22'); // plumes noires
+    R(half(x + 1), half(y - 9), 4, 4, '#c8ccd8'); R(half(x + 1), half(y - 9), 4, 1, '#fff'); // la cloche d'argent
+    if (!this.fall && Math.sin(this.t * 3) > 0.5) { R(half(x + 5), half(y - 13), 1, 3, '#fff'); R(half(x + 4), half(y - 12), 3, 1, '#fff'); } // elle brille
+  }
 }
 
 // ===== la harpe de Mahaut : retour au village =====
