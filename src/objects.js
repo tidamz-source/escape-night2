@@ -99,14 +99,14 @@ class Pickup {
   update(dt, G) {
     if (!this.settled) this.settle(G.area);
     this.t += dt; if (this.z < 0 || this.vy < 0) { this.vy += 300 * dt; this.z += this.vy * dt; if (this.z > 0) { this.z = 0; this.vy = 0; } }
-    if (this.t > 10 && !this.carried) this.dead = true;
     const P = G.player;
     if (rectHit({ x: this.x - 5, y: this.y - 8, w: 10, h: 10 }, P.body())) {
       this.dead = true; PICKUPS[this.kind].take(G);
       G.parts.burst(this.x, this.y - 4, 6, { c: this.kind === 'heart' ? ['#ff8ab0', '#fff'] : ['#ffe27a', '#fff'], life: 0.3, r: 1 });
     }
   }
-  draw() { if (this.t > 7 && Math.floor(this.t * 10) % 2) return; ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.3)'); PICKUPS[this.kind].draw(this.x, this.y + this.z + Math.sin(this.t * 4) * 0.6, this.t, this); }
+  draw() { ell(this.x, this.y, 3, 1, 'rgba(0,0,0,.3)'); // les objets tombés restent au sol jusqu'à ce qu'on les ramasse
+    PICKUPS[this.kind].draw(this.x, this.y + this.z + Math.sin(this.t * 4) * 0.6, this.t, this); }
 }
 const HeartPickup = Pickup; // ancien nom
 // matériau magique laissé par un boss, là où il est tombé ; ne disparaît pas
@@ -205,11 +205,11 @@ class Chest {
   drawPedestal() {
     ell(this.x, this.y + 2, 22, 5, 'rgba(0,0,0,.4)');
     hi(this.x, this.y, false, () => {
-      D(-38, -34, 76, 28, '#5a5468'); D(-38, -34, 76, 3, '#8a8498'); D(-38, -34, 3, 28, '#7a7488'); D(35, -34, 3, 28, '#3a3448');
-      D(-34, -30, 68, 20, '#6a6478'); for (const x of [-26, -6, 14]) D(x, -26, 12, 2, '#7a7488');
-      D(-38, -8, 76, 4, '#3a3448');
-      D(-18, -6, 36, 4, '#7a7488'); D(-18, -6, 36, 1, '#9a94a8'); D(-14, -2, 28, 4, '#6a6478'); D(-14, -2, 28, 1, '#8a8498'); D(-10, 2, 20, 3, '#5a5468'); // les marches
-      if (this.hidden) { const g = 0.5 + 0.5 * Math.sin(this.t * 2); D(-6, -24, 12, 2, `rgba(255,226,122,${0.25 + g * 0.3})`); D(-2, -28, 4, 10, `rgba(255,226,122,${0.15 + g * 0.2})`); }
+      // trois marches rondes empilées (du plus large au plus étroit) : flanc sombre puis dessus éclairé
+      for (const [cy, rx, ry, side, top, lip] of [[0, 42, 14, '#3a3448', '#6a6478', '#8a8498'], [-7, 32, 11, '#4a4458', '#7a7488', '#9a94a8'], [-14, 22, 8, '#5a5468', '#8a8498', '#aaa4b8']]) {
+        ell(0, cy, rx, ry, side); ell(0, cy - 6, rx, ry, top); ell(0, cy - 6, rx - 2, ry - 1, top); D(-rx * 0.5, cy - 6 - ry + 1, rx, 1, lip);
+      }
+      if (this.hidden) { const g = 0.5 + 0.5 * Math.sin(this.t * 2); D(-6, -21, 12, 2, `rgba(255,226,122,${0.25 + g * 0.3})`); D(-2, -25, 4, 10, `rgba(255,226,122,${0.15 + g * 0.2})`); }
     });
   }
   draw() {
@@ -297,9 +297,12 @@ class Sign {
     if (this.style === 'stone') {
       ell(this.x, this.y, 8, 2.5, 'rgba(0,0,0,.4)');
       hi(this.x, this.y, false, () => {
-        D(-12, -30, 24, 30, '#3a3354'); D(-14, -34, 28, 6, '#4a4266'); D(-14, -34, 28, 1, '#6a6290');
-        D(-12, -30, 3, 30, '#4a4266'); D(9, -28, 3, 28, '#262036');
-        for (let i = 0; i < 3; i++) D(-7, -24 + i * 6, 14, 2, '#8ff3ea');
+        D(-16, -4, 32, 4, '#3a3354'); D(-16, -4, 32, 1, '#5a5276');                                   // socle
+        D(-13, -38, 26, 34, '#6a6290'); D(-11, -42, 22, 4, '#6a6290'); D(-8, -44, 16, 2, '#6a6290');    // tablette arrondie en haut
+        D(-13, -38, 2, 34, '#8a82b0'); D(-11, -42, 2, 4, '#8a82b0'); D(11, -36, 2, 32, '#4a4266');
+        D(-9, -34, 18, 26, '#d8d0b8'); D(-9, -34, 18, 1, '#f4ecd4'); D(-9, -9, 18, 1, '#a89e86');     // plaque gravée claire
+        D(-2, -32, 4, 3, '#2a8a80'); D(-4, -31, 2, 1, '#2a8a80'); D(2, -31, 2, 1, '#2a8a80');         // rune luciole
+        for (const [x, y, w] of [[-7, -26, 14], [-7, -22, 11], [-7, -18, 13], [-7, -14, 9]]) { D(x, y, w, 1, '#4a4060'); for (let i = 0; i < w; i += 4) D(x + i + 2, y, 1, 1, '#d8d0b8'); } // lignes de texte gravées
       });
       return;
     }
@@ -308,11 +311,11 @@ class Sign {
 }
 
 class Brazier {
-  constructor(x, y) { this.x = x; this.y = y; this.w = 12; this.h = 6; this.solid = true; this.t = rand(0, 5); this.light = { r: 80, c: 'rgba(255,160,70,', flick: true, warm: true }; }
+  constructor(x, y) { this.x = x; this.y = y; this.w = 12; this.h = 6; this.solid = true; this.t = rand(0, 5); this.sp = rand(7, 11); this.light = { r: 80, c: 'rgba(255,160,70,', flick: true, warm: true }; }
   update(dt, G) { this.t += dt; if (Math.random() < dt * 4) G.parts.add({ x: this.x + rand(-3, 3), y: this.y - 20, vy: -18, vx: rand(-4, 4), life: 0.7, c: pick(['#ffb02e', '#ff7a1a', '#ffe9a0']), r: 1 }); }
   draw() {
     ell(this.x, this.y, 8, 2.5, 'rgba(0,0,0,.45)');
-    const f = Math.floor(this.t * 9) % 3;
+    const f = Math.floor(this.t * this.sp) % 3; // chaque brasero a son propre rythme : les flammes ne battent pas ensemble
     hi(this.x, this.y, false, () => {
       D(-6, -16, 12, 16, '#3a3354'); D(-6, -16, 3, 16, '#4a4266'); D(-10, -4, 20, 4, '#2b2540');
       D(-13, -24, 26, 8, '#4a4266'); D(-13, -24, 26, 2, '#6a6290'); D(-11, -18, 22, 2, '#2b2540');

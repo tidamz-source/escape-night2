@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.14.4';
+const VERSION = 'v8.14.5';
 const W = 480, H = 270, SC = 2, TS = 16;
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
