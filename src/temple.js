@@ -226,10 +226,12 @@ class HealSpring { // source de soin : on boit, toute la vie revient
   update(dt, G) { this.t += dt; if (Math.random() < dt * 6) G.parts.add({ x: this.x + rand(-10, 10), y: this.y - 10, vy: -20, life: 0.8, c: '#cfe0ff', r: 1 }); }
   draw() { ell(this.x, this.y, 16, 5, 'rgba(0,0,0,.35)'); hi(this.x, this.y, false, () => { D(-26, -16, 52, 16, '#4e8a90'); D(-26, -16, 52, 3, '#7ab8be'); D(-22, -14, 44, 10, '#2a8ad0'); for (let i = 0; i < 4; i++) D(-18 + ((i * 11 + Math.floor(this.t * 8)) % 36), -12 + (i % 2) * 3, 5, 1, '#cfe0ff'); D(-4, -40, 8, 26, '#4e8a90'); D(-8, -44, 16, 6, '#7ab8be'); }); }
 }
+// salles peintes façon temple englouti (assets/maps/temple_<salle>.png) ; les salles à bassins ont une variante « eau basse » (_bas)
+const TEMPLE_PAINTED = ['entry', 'arena', 'fountain', 'palmes', 'hub', 'dive', 'east', 'bigkey', 'gallery', 'cascade', 'boss', 'prison'], TEMPLE_LOW = ['entry', 'palmes', 'hub', 'dive', 'east', 'bigkey', 'cascade'];
 function buildTempleArea() {
   return makeDungeon({
-    id: 'temple', zone: 'lac', name: 'Le Temple englouti', theme: 'temple', seed: 67, rough: 0.2, moss: 140, dark: 0.32,
-    bossFlag: 'boss4', heartFlag: 'heart5', heartY: 236,
+    id: 'temple', zone: 'lac', name: 'Le Temple englouti', theme: 'temple', seed: 67, rough: 0, clean: true, moss: 140, dark: 0.32, // lisières droites (salles peintes)
+    bossFlag: 'boss4', heartFlag: 'heart5', heartY: 236, paintRooms: Object.fromEntries(TEMPLE_PAINTED.map(n => [n, TEMPLE_LOW.includes(n) ? () => 'temple_' + n + (SAVE.waterLow ? '_bas' : '') : 'temple_' + n])),
     rooms: { entry: [2, 3], arena: [1, 3], fountain: [0, 3], palmes: [3, 3], hub: [2, 2], dive: [1, 2], east: [3, 2], bigkey: [2, 1], gallery: [1, 1], cascade: [3, 1], boss: [2, 0] },
     entry: 'entry', boss: 'boss',
     links: [['entry', 'arena', { arena: true, at: 'b' }], ['arena', 'fountain'], ['entry', 'palmes', { key: 'templeDoor1' }], ['entry', 'hub'], ['hub', 'dive'], ['hub', 'east'], ['hub', 'bigkey', { key: 'templeDoor2' }], ['bigkey', 'gallery'], ['bigkey', 'cascade'], ['bigkey', 'boss', { big: true }]],
@@ -303,7 +305,7 @@ function buildTempleArea() {
         ['cascade', mk(Sign, 'cascade', 4, 7, [{ text: '« Eau haute : on traverse à la nage. Eau basse : le fond du bassin se découvre. Chaque manivelle règle toutes les eaux du temple. »' }])],
         ['cascade', new Chest(pos('cascade', 22 * TS + 8, 9 * TS).x, pos('cascade', 22 * TS + 8, 9 * TS).y, { flag: 'templeBigKey', give: 'bigkey:temple', big: true, reveal: ['waterLow', 'arenaTBK'], msg: [{ text: 'La grande clé du temple ! Elle ouvre le bassin de la Reine.' }] })],
         ['gallery', new DiveSpot(pos('gallery', 360, 104).x, pos('gallery', 360, 104).y, 'templeGallery', 'money:50', [{ text: 'Un coffret englouti : 50 écus !' }])],
-        ['prison', new Cage(cg.x, cg.y, { n: 4, boss: 'boss4', drawCaptive: (x, y, t) => drawHero(Heroes.captive(2), x, y, 'down', false, t) })],
+        ['prison', new Cage(cg.x, cg.y, { n: 4, boss: 'boss4', bind: 'kelp', drawCaptive: (x, y, t) => drawHero(Heroes.captive(2), x, y, 'down', false, t) })],
         ...br('boss', [[4, 3], [25, 3]]), ...br('entry', [[3, 3], [26, 3]]), ...br('hub', [[3, 2], [26, 2]]), ...br('palmes', [[3, 3], [26, 3]]), ...br('arena', [[14, 3]]), ...br('dive', [[26, 4]]),
         ...br('east', [[3, 4]]), ...br('bigkey', [[3, 3], [26, 3]]), ...br('gallery', [[3, 3], [26, 3]]), ...br('cascade', [[12, 3], [17, 3]]), ...br('fountain', [[10, 3], [19, 3]]),
       ];
