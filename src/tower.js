@@ -192,10 +192,12 @@ class Shock { // onde de choc au sol (Chevalier de fer, phase 2) : on la saute e
 //       [SECRET]     [GARGOUILLES]       .            .
 //       [TORCHES]  [MÈCHE (carrefour)] [BOULETS]  [GRANDE CLÉ]
 //        [ARÈNE]      [ENTRÉE]        [PÉTARDS]      .
+// salles peintes façon tour des artificiers (assets/maps/tour_<salle>.png)
+const TOWER_PAINTED = ['entry', 'arena', 'petards', 'hub', 'torches', 'balls', 'bigkey', 'gargoyle', 'secret', 'boss', 'prison'];
 function buildTowerArea() {
   return makeDungeon({
-    id: 'tower', zone: 'cote', name: 'La Tour des artificiers', theme: 'tower', seed: 83, rough: 0.18, moss: 60, dark: 0.34,
-    bossFlag: 'boss5', heartFlag: 'heart6', potLoot: 'potTower',
+    id: 'tower', zone: 'cote', name: 'La Tour des artificiers', theme: 'tower', seed: 83, rough: 0, clean: true, moss: 60, dark: 0.34, // lisières droites (salles peintes)
+    bossFlag: 'boss5', heartFlag: 'heart6', potLoot: 'potTower', paintRooms: Object.fromEntries(TOWER_PAINTED.map(n => [n, 'tour_' + n])),
     rooms: { entry: [1, 3], arena: [0, 3], petards: [2, 3], hub: [1, 2], torches: [0, 2], balls: [2, 2], bigkey: [3, 2], gargoyle: [1, 1], secret: [0, 1], boss: [1, 0] },
     entry: 'entry', boss: 'boss',
     links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'petards', { key: 'towerDoor1' }], ['entry', 'hub', { crack: 'towerWall1' }], ['hub', 'torches', { shut: () => !SAVE.fuseT }], ['hub', 'balls'], ['balls', 'bigkey', { crack: 'towerWall2' }], ['hub', 'gargoyle', { key: 'towerDoor2' }], ['gargoyle', 'secret', { crack: 'towerWall3' }], ['gargoyle', 'boss', { big: true }]],
@@ -240,7 +242,7 @@ function buildTowerArea() {
         ['bigkey', mk(Chest, 'bigkey', 14, 8, { flag: 'towerBigKey', give: 'bigkey:tower', big: true, reveal: 'arenaRBK', msg: [{ text: 'La grande clé de la tour ! Elle ouvre la salle du Chevalier de fer.' }] })],
         ['secret', mk(Chest, 'secret', 14, 8, { flag: 'towerHeart', give: 'piece_coeur', big: true, msg: null })],
         ['gargoyle', mk(Sign, 'gargoyle', 4, 8, [{ text: '« Ici dort la réserve secrète. »' }])],
-        ['prison', new Cage(cg.x, cg.y, { n: 5, boss: 'boss5', drawCaptive: (x, y) => { const im = IMG.npc_dog_down; if (im) ctx.drawImage(im, half(x - im.width / 5.2), half(y - im.height / 2.6), im.width / 2.6, im.height / 2.6); } })],
+        ['prison', new Cage(cg.x, cg.y, { n: 5, boss: 'boss5', bind: 'chains', drawCaptive: (x, y) => { const im = IMG.npc_dog_down; if (im) ctx.drawImage(im, half(x - im.width / 5.2), half(y - im.height / 2.6), im.width / 2.6, im.height / 2.6); } })],
         ...[['entry', 3, 3], ['entry', 26, 3], ['arena', 14, 3], ['petards', 3, 3], ['petards', 26, 8], ['hub', 26, 3], ['torches', 3, 3], ['balls', 3, 3], ['boss', 4, 3], ['boss', 25, 3], ['bigkey', 3, 8], ['gargoyle', 3, 3], ['gargoyle', 26, 3], ['secret', 14, 3]].map(([r, x, y]) => [r, mk(Brazier, r, x, y)]),
       ];
     },

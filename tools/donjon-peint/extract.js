@@ -3,7 +3,7 @@ const ctx={console, Math, Array, Object, Set, Map, TS:16, SAVE:{}, Plate:{held:(
 vm.createContext(ctx);
 const src=p=>fs.readFileSync(__dirname+'/../../src/'+p,'utf8');
 vm.runInContext(src('core.js').match(/function seeded[^\n]*/)[0], ctx);
-const w=src('world.js'); vm.runInContext(w.slice(w.indexOf('const RW'), w.indexOf('function railLine')).replace(/function buildForest[\s\S]*?\n}\n/,''), ctx);
+const w=src('world.js'); vm.runInContext(w.slice(w.indexOf('const RW'), w.indexOf('\n}\n', w.indexOf('function railLine')) + 3).replace(/function buildForest[\s\S]*?\n}\n/,''), ctx);
 // capture spec
 vm.runInContext(`var SPEC; function arenaStd(){} function bossArena(){} function makeDungeon(s){ SPEC=s; return {}; }`, ctx);
 // usage : node extract.js [fichier du donjon] [fonction]   (par défaut : cave.js buildCaveArea)
