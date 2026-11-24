@@ -30,7 +30,7 @@ const SIDE = {
   fantome: { name: 'Le fantôme de 3 h', giver: 'Un fantôme (pont-levis)', minFrag: 3, req: () => !!SAVE.drawbridge, done: s => s === 2,
              hint: () => `Réponds aux énigmes du fantôme du pont-levis (${SAVE.ghostQ || 0} / 3).` },
   proces:  { name: 'Le procès du raton laveur', giver: 'Le berger (Collines)', minFrag: 3, req: () => Quests.st('cloche') === 2, done: s => s === 2,
-             hint: () => `Interroge les 4 témoins (${Proces.nT()} / 4) et trouve les preuves (${Proces.nC()} / 3), puis désigne le coupable devant le berger.` },
+             hint: () => `Interroge les 4 témoins (${Proces.nT()} / 4) et trouve les preuves (${Proces.nC()} / ${Object.keys(CLUES).length}), puis désigne le coupable devant le berger.` },
 };
 
 // ===== dialogue avec les PNJ : les quêtes passent avant le reste =====
@@ -531,7 +531,7 @@ const WITNESSES = {
   pauline: ['Pauline', 'Mon cerf-volant s\'est pris dans un grand arbre des Collines, à l\'est. Il y avait un nid, là-haut, plein de trucs qui brillent !'],
   vagabond: ['Le vagabond', 'Cette nuit, j\'ai vu une ombre voler au-dessus des Collines, avec quelque chose qui tintait. Trop haut pour un raton, si tu veux mon avis.'],
 };
-const CLUES = { plume: 'Une plume noire, coincée dans la porte de la bergerie. Un raton n\'a pas de plumes…', mures: 'Des traces de pattes de raton, et du jus de mûre partout. Filou était bien ici à manger des mûres.', nid: 'Avec le grappin, tu fais tomber le nid du grand arbre. Dedans : la cloche d\'argent du berger, et des plumes noires !' };
+const CLUES = { plume: 'Une plume noire, coincée dans la porte de la bergerie. Un raton n\'a pas de plumes…', mures: 'Près du gros rocher : des traces de pattes de raton, et de la confiture de mûres partout. Filou était bien ici à manger des mûres.' };
 const Proces = {
   nT: () => Object.keys(WITNESSES).filter(k => (SAVE.procT || {})[k]).length,
   nC: () => Object.keys(CLUES).filter(k => (SAVE.procC || {})[k]).length,
@@ -539,11 +539,11 @@ const Proces = {
     const s = SQ.st('proces');
     if (s === 0 && SQ.open('proces') && SQ.st('gerard') !== 1) { G.say([say('Le berger', 'Catastrophe ! Ma cloche d\'argent a disparu. Tout le monde accuse Filou, le raton laveur du coin… mais je veux être juste.'), say('Le berger', 'Interroge les témoins, cherche des preuves dans les Collines, puis reviens me dire qui est le coupable. Attention : on n\'accuse pas quelqu\'un à la légère.')], () => SQ.start('proces', G)); return true; }
     if (s !== 1) return false;
-    if (this.nT() < 4 || this.nC() < 3) { G.say([say('Le berger', `Tu as interrogé ${this.nT()} témoin${this.nT() > 1 ? 's' : ''} sur 4 et trouvé ${this.nC()} preuve${this.nC() > 1 ? 's' : ''} sur 3. Continue ton enquête.`)]); return true; }
+    if (this.nT() < 4 || this.nC() < Object.keys(CLUES).length) { G.say([say('Le berger', `Tu as interrogé ${this.nT()} témoin${this.nT() > 1 ? 's' : ''} sur 4 et trouvé ${this.nC()} preuve${this.nC() > 1 ? 's' : ''} sur ${Object.keys(CLUES).length}. Continue ton enquête.`)]); return true; }
     G.ask([say('Le berger', 'Alors, enquêteur ? Devant tout le monde : qui a volé ma cloche ?')], ['Filou, le raton', 'Bastien', 'Le corbeau', 'Le vagabond'], i => {
       if (i !== 2) { SFX.nope(); return G.say([say('Le berger', i === 0 ? 'Filou ? Mais Mme Pervenche dit qu\'il mangeait des mûres… Tu n\'as pas de preuve. Réfléchis encore, et reviens.' : 'Quoi ? Mais enfin, il n\'a rien à voir là-dedans ! Réfléchis encore, et reviens.')]); }
       SQ.set('proces', 2); SAVE.ratonsAmis = true; SFX.bigheart();
-      G.say([say('Le berger', 'Le corbeau ! Bien sûr ! La plume, le nid, la cloche qui tintait dans le ciel… Filou est innocent.'), say('Filou', 'Krrr ! (Filou te fait un câlin. Il sent la mûre.)'), { text: 'Les ratons laveurs des Collines te font confiance : ils ne t\'attaqueront plus.' }]);
+      G.say([say('Le berger', 'Le corbeau ! Bien sûr ! La plume noire, la cloche qui tintait dans le ciel… Filou est innocent.'), say('Filou', 'Krrr ! (Filou te fait un câlin. Il sent la mûre.)'), { text: 'Les ratons laveurs des Collines te font confiance : ils ne t\'attaqueront plus.' }]);
     });
     return true;
   },
@@ -558,20 +558,20 @@ const Proces = {
       A.ents.push(new NPC(33 * TS + 8, 38 * TS, { sq: 'filou', draw: n => Raccoon.prototype.draw.call({ x: n.x, y: n.y, t: n.t, vx: 0, vy: 0, state: 'wander', flash: 0, face: 1 }), fn: G => G.say([say('Filou', SQ.st('proces') === 2 ? 'Krrr ! (Filou est tout content.)' : 'Krrr… (Filou baisse les oreilles. Il a l\'air triste, et il sent la mûre.)')]) }));
       if (SQ.st('proces') === 1) {
         A.ents.push(villager2('bastien', 27 * TS + 8, 32 * TS), villager2('pervenche', 44 * TS + 8, 22 * TS));
-        for (const [k, x, y] of [['plume', 8, 44], ['mures', 45, 36], ['nid', 44, 16]]) if (!(SAVE.procC || {})[k]) A.ents.push(new ClueSpot(x * TS + 8, y * TS, k));
+        for (const [k, x, y] of [['plume', 16.9, 40.7], ['mures', 9.5, 11.2]]) if (!(SAVE.procC || {})[k]) A.ents.push(new ClueSpot(x * TS, y * TS, k));
       }
     }
   },
 };
 function villager2(k, x, y) { return new NPC(x, y, { sq: k, look: k }); }
 Object.assign(LOOKS, { bastien: { skin: '#e0b48e', hair: '#c8742a', top: '#7a6a3a', legs: '#4a3a2a', hat: '#5a4a2a', child: true }, pervenche: { skin: '#f0c8a8', hair: '#c8c8d0', top: '#8a5aa8', legs: '#3a2a4a', long: true, bun: true } });
-class ClueSpot { // un indice à examiner (le nid se décroche au grappin)
+class ClueSpot { // un indice à examiner : la plume sur la porte de la bergerie, la confiture de mûres près du gros rocher
   constructor(x, y, k) { this.x = x; this.y = y; this.k = k; this.w = 12; this.h = 8; this.t = 0; }
   get dead() { return !!(SAVE.procC || {})[this.k]; }
   canInteract() { return true; }
   interact(G) {
     if (this.k === 'nid' && !Inventory.has('grappin')) return G.say([{ text: 'Un nid de corbeau, tout en haut d\'un grand arbre. Quelque chose brille dedans… Trop haut pour l\'attraper à la main.' }]);
-    SAVE.procC = SAVE.procC || {}; SAVE.procC[this.k] = 1; persist(); SFX.secret(); Input.toast = { msg: `Preuve trouvée : ${Proces.nC()} / 3`, t: 1.8 }; G.say([{ text: CLUES[this.k] }]);
+    SAVE.procC = SAVE.procC || {}; SAVE.procC[this.k] = 1; persist(); SFX.secret(); Input.toast = { msg: `Preuve trouvée : ${Proces.nC()} / ${Object.keys(CLUES).length}`, t: 1.8 }; G.say([{ text: CLUES[this.k] }]);
   }
   update(dt) { this.t += dt; }
   draw() { const y = this.y - (this.k === 'nid' ? 30 : 4); ctx.globalAlpha = 0.5 + 0.4 * Math.sin(this.t * 4); ell(this.x, y, 5, 5, '#ffe27a'); ctx.globalAlpha = 1; text('?', this.x, y - 5, { size: 8, align: 'center', bold: true, color: '#3a2a1a', shadow: false }); }
