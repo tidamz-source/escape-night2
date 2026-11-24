@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.16.5** : animations de marche des PNJ recalées (les images de marche PixelLab font 68 px, pas 48 : elles étaient coupées et décalées).
 - **8.16.4** : Pauline, Rosalie la lavandière et le vagabond ont une vraie animation de marche en 8 directions (planches PixelLab) quand ils se promènent.
 - **8.16.3** : six nouveaux intérieurs peints : la bergerie, la cabane du bûcheron, l'herboristerie (l'herboriste derrière son comptoir), la hutte du gnome, la cabane du pêcheur et l'atelier de l'artificière (derrière son comptoir) ; collisions, lumières et objets à regarder.
 - **8.16.2** : le gardien du phare n'a plus de maison à côté du phare : il vit au rez-de-chaussée du phare (fermé jusqu'à l'huile, on traverse son logis pour monter) et se promène sur la plage au pied du phare pour ses quêtes.
