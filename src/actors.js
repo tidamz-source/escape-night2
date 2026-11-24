@@ -263,9 +263,10 @@ class Cage {
   }
   // o.bind : 'chains' (chaînes scellées à deux poteaux de pierre), 'vines' (lianes nouées à deux pieux de bois) ou 'ropes' (cordes de chanvre sur deux étais de mine) au lieu d'une cage
   drawBound() {
-    const ch = this.o.bind === 'chains', ro = this.o.bind === 'ropes', A = ch ? '#4a4e5a' : ro ? '#7a5a34' : '#2f6a3a', B = ch ? '#8a8e9a' : ro ? '#b08a56' : '#5aa060', open = this.open;
+    const ch = this.o.bind === 'chains', ro = this.o.bind === 'ropes', ke = this.o.bind === 'kelp', A = ch ? '#4a4e5a' : ro ? '#7a5a34' : ke ? '#3a5a2a' : '#2f6a3a', B = ch ? '#8a8e9a' : ro ? '#b08a56' : ke ? '#7a9a3a' : '#5aa060', open = this.open;
     const rope = (x0, y0, x1, y1, sag = 0) => { const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / (ch ? 5 : 4))); for (let i = 0; i <= n; i++) { const k = i / n, x = x0 + (x1 - x0) * k, y = y0 + (y1 - y0) * k + Math.sin(k * Math.PI) * sag; if (ch) D(Math.round(x) - 2, Math.round(y) - 1, 4, 3, i % 2 ? A : B); else if (ro) D(Math.round(x) - 1, Math.round(y) - 1, 3, 3, i % 2 ? A : B); else { D(Math.round(x) - 1, Math.round(y) - 1, 3, 3, A); if (i % 3 === 1) D(Math.round(x) + 1, Math.round(y) - 3, 3, 2, B); } } };
     const post = x => {
+      if (ke) { D(x - 5, -46, 10, 46, '#4e7480'); D(x - 5, -46, 2, 46, '#94b8bc'); D(x + 3, -44, 2, 44, '#25404c'); D(x - 7, -50, 14, 4, '#68909a'); D(x - 7, -50, 14, 1, '#94b8bc'); D(x - 5, -8, 10, 8, '#2c5636'); D(x - 2, -30, 4, 3, '#e2d4c2'); rope(x - 3, -46, x - 4, -10, 2); return; }
       if (ch) { D(x - 5, -46, 10, 46, '#5a5468'); D(x - 5, -46, 2, 46, '#8a8498'); D(x + 3, -44, 2, 44, '#3a3448'); D(x - 6, -50, 12, 4, '#8a8498'); D(x - 2, -36, 4, 4, '#2a2a34'); }
       else if (ro) { D(x - 5, -48, 10, 48, '#7a4e2a'); D(x - 5, -48, 2, 48, '#9a6a3a'); D(x + 3, -46, 2, 46, '#4a2e18'); D(x - 7, -52, 14, 5, '#8a5a32'); D(x - 7, -52, 14, 1, '#b07a48'); for (const y of [-38, -24, -10]) D(x - 5, y, 10, 2, '#3a3d48'); }
       else { D(x - 4, -48, 8, 48, '#4e3e34'); D(x - 4, -48, 2, 48, '#6a5444'); D(x + 2, -46, 2, 46, '#2a201c'); D(x - 3, -52, 6, 4, '#4e3e34'); D(x - 6, -2, 4, 2, '#4e3e34'); D(x + 2, -2, 4, 2, '#4e3e34'); rope(x, -44, x - 2, -8, 2); }
