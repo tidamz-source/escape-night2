@@ -339,10 +339,12 @@ class DrawbridgeDeco { // poteaux du pont-levis, et le tablier relevé tant qu'i
 //            .      [TRÉSOR] [HAUTEURS] [GRANDE CLÉ]
 //            .      [FRISBEE] [MOULIN]  [LANTERNES]
 //            .      [ÉTANG]   [ENTRÉE]   [ARÈNE]
+// salles peintes façon forêt magique (assets/maps/bois_<salle>.png)
+const BOIS_PAINTED = ['entry', 'arena', 'pond', 'wind', 'frisbee', 'switches', 'bigkey', 'upper', 'treasure', 'boss', 'prison'];
 function buildBoisArea() {
   return makeDungeon({
     id: 'bois', zone: 'foret', name: 'Le Bois des murmures', theme: 'forest', seed: 33, rough: 0.3, moss: 420, dark: 0.36,
-    bossFlag: 'boss2', heartFlag: 'heart3', potLoot: 'potBois',
+    bossFlag: 'boss2', heartFlag: 'heart3', potLoot: 'potBois', paintRooms: Object.fromEntries(BOIS_PAINTED.map(n => [n, 'bois_' + n])),
     rooms: { entry: [2, 3], arena: [3, 3], pond: [1, 3], wind: [2, 2], frisbee: [1, 2], switches: [3, 2], bigkey: [3, 1], upper: [2, 1], treasure: [1, 1], boss: [2, 0] },
     entry: 'entry', boss: 'boss',
     links: [['entry', 'arena', { arena: true, at: 'b' }], ['entry', 'pond'], ['entry', 'wind'], ['wind', 'frisbee', { arena: true, at: 'b' }], ['wind', 'switches'], ['switches', 'bigkey', { shut: () => !SAVE.switchesB }], ['wind', 'upper', { key: 'boisK2' }], ['upper', 'treasure', { key: 'boisK1' }], ['upper', 'boss', { big: true }]],
