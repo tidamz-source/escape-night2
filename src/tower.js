@@ -157,7 +157,9 @@ class IronKnight extends Enemy {
     const fl = this.flash > 0, f = this.state === 'walk' ? Math.floor(this.t * 4) % 2 : 0, wob = this.state === 'stagger' ? Math.sin(this.t * 40) * 2 : 0, A = this.armor + (this.phase === 2 ? 2 : 0);
     if (IMG.boss_iknight) { // sprite PixelLab : tourné vers le héros ; il lève l'épée (léger recul) avant de frapper
       const P = G.player, up = this.state === 'wind', sl = this.state === 'slash';
-      drawCell('boss_iknight', plDir(P.x - this.x, P.y - this.y), 0, 128, 128, this.x + wob, this.y - f, 0.55, { foot: 3, flash: fl, rot: up ? -0.08 : sl ? 0.1 : 0 });
+      // planche 256 × 256 : ligne 0 au repos, lignes 1-8 marche, ligne 9 coup d'épée (toutes centrées sur le même point)
+      const row = sl ? 9 : this.state === 'walk' ? 1 + Math.floor(this.t * 8) % 8 : 0;
+      drawCell('boss_iknight', plDir(P.x - this.x, P.y - this.y), row, 256, 256, this.x + wob, this.y, 0.55, { foot: 67, flash: fl, rot: up ? -0.08 : 0 });
       if (this.armor < 4) for (let i = 0; i < 4 - this.armor; i++) if (Math.random() < 0.15) G.parts.add({ x: this.x + rand(-14, 14), y: this.y - rand(30, 60), vy: -12, life: 0.6, c: '#8ab8ff', r: 1 }); // la brume bleue s'échappe des pièces perdues
       return;
     }
