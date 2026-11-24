@@ -57,7 +57,7 @@ function buildCaveArea() {
         ['bigkey', new Shutter(h.door('bigkey', 'S').x, h.door('bigkey', 'S').y, 'v', () => G.area.arenaOn === h.R.bigkey)],
         ['bigkey', new Chest(bc.x, bc.y, { flag: 'caveBigKey', give: 'bigkey:cave', big: true, reveal: 'caveBigArena', msg: [{ text: 'La grande clé de la grotte ! Elle ouvre la porte du gardien.' }] })],
         ['treasure', mk(Chest, 'treasure', 14, 7, { flag: 'caveTreasure', give: 'money:50', msg: [{ text: 'Un trésor oublié : 50 écus !' }] })],
-        ['prison', new Cage(cg.x, cg.y, { n: 1, boss: 'boss', drawCaptive: (x, y) => drawSprite('amandine', x, y) })],
+        ['prison', new Cage(cg.x, cg.y, { n: 1, boss: 'boss', bind: 'chains', drawCaptive: (x, y) => drawSprite('amandine', x, y) })],
         ...br('entry', [[11, 3], [18, 3]]), ...br('arena', [[4, 7], [25, 9]]), ...br('hub', [[4, 3], [25, 3]]), ...br('block', [[11, 3], [18, 3]]), ...br('sling', [[10, 7], [19, 7]]),
         ...br('chasm', [[4, 11], [25, 11], [5, 2]]), ...br('twin', [[3, 3], [26, 3]]), ...br('treasure', [[14, 3]]), ...br('boss', [[4, 3], [25, 3], [4, 13], [25, 13]]),
       ];

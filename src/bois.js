@@ -343,7 +343,7 @@ class DrawbridgeDeco { // poteaux du pont-levis, et le tablier relevé tant qu'i
 const BOIS_PAINTED = ['entry', 'arena', 'pond', 'wind', 'frisbee', 'switches', 'bigkey', 'upper', 'treasure', 'boss', 'prison'];
 function buildBoisArea() {
   return makeDungeon({
-    id: 'bois', zone: 'foret', name: 'Le Bois des murmures', theme: 'forest', seed: 33, rough: 0.3, moss: 420, dark: 0.36,
+    id: 'bois', zone: 'foret', name: 'Le Bois des murmures', theme: 'forest', seed: 33, rough: 0, clean: true, moss: 420, dark: 0.36, // lisières droites (salles peintes)
     bossFlag: 'boss2', heartFlag: 'heart3', potLoot: 'potBois', paintRooms: Object.fromEntries(BOIS_PAINTED.map(n => [n, 'bois_' + n])),
     rooms: { entry: [2, 3], arena: [3, 3], pond: [1, 3], wind: [2, 2], frisbee: [1, 2], switches: [3, 2], bigkey: [3, 1], upper: [2, 1], treasure: [1, 1], boss: [2, 0] },
     entry: 'entry', boss: 'boss',
@@ -392,7 +392,7 @@ function buildBoisArea() {
         ['bigkey', new Shutter(h.door('bigkey', 'S').x, h.door('bigkey', 'S').y, 'v', () => G.area.arenaOn === h.R.bigkey)],
         ['bigkey', new Chest(bc.x, bc.y, { flag: 'boisBigKey', give: 'bigkey:bois', big: true, reveal: 'arenaBK', msg: [{ text: 'La grande clé du bois ! Elle ouvre le nid du Grand-Duc.' }] })],
         ['treasure', mk(Chest, 'treasure', 14, 8, { flag: 'boisTreasure', give: 'money:50', msg: [{ text: 'Un trésor d\'écureuil : 50 écus !' }] })],
-        ['prison', new Cage(cg.x, cg.y, { n: 2, boss: 'boss2', drawCaptive: (x, y) => drawSprite('claudine', x, y) })],
+        ['prison', new Cage(cg.x, cg.y, { n: 2, boss: 'boss2', bind: 'vines', drawCaptive: (x, y) => drawSprite('claudine', x, y) })],
         ...sh('entry', [[3, 7], [26, 9]]), ...sh('arena', [[3, 8], [26, 6]]), ...sh('pond', [[3, 6], [26, 8]]), ...sh('wind', [[3, 8], [26, 6]]), ...sh('frisbee', [[9, 9], [20, 9]]),
         ...sh('switches', [[3, 8], [26, 8]]), ...sh('upper', [[3, 8], [26, 8]]), ...sh('treasure', [[14, 4]]), ...sh('bigkey', [[3, 8], [26, 8]]), ...sh('boss', [[3, 3], [26, 3], [3, 13], [26, 13]]),
       ];
