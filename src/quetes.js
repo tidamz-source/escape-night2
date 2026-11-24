@@ -555,7 +555,7 @@ const Proces = {
   spawn(A) {
     if (SQ.st('proces') !== 1 && !(SQ.st('proces') === 2 && A.id === 'collines')) return;
     if (A.id === 'collines') {
-      A.ents.push(new NPC(33 * TS + 8, 38 * TS, { sq: 'filou', draw: n => Raccoon.prototype.draw.call({ x: n.x, y: n.y, t: n.t, vx: 0, vy: 0, state: 'wander', flash: 0, face: 1 }), fn: G => G.say([say('Filou', SQ.st('proces') === 2 ? 'Krrr ! (Filou est tout content.)' : 'Krrr… (Filou baisse les oreilles. Il a l\'air triste, et il sent la mûre.)')]) }));
+      A.ents.push(new NPC(33 * TS + 8, 38 * TS, { sq: 'filou', look: 'filou', speed: 22, fn: G => G.say([say('Filou', SQ.st('proces') === 2 ? 'Krrr ! (Filou est tout content.)' : 'Krrr… (Filou baisse les oreilles. Il a l\'air triste, et il sent la mûre.)')]) }));
       if (SQ.st('proces') === 1) {
         A.ents.push(villager2('bastien', 27 * TS + 8, 32 * TS), villager2('pervenche', 44 * TS + 8, 22 * TS));
         for (const [k, x, y] of [['plume', 16.9, 40.7], ['mures', 9.5, 11.2]]) if (!(SAVE.procC || {})[k]) A.ents.push(new ClueSpot(x * TS, y * TS, k));
