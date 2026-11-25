@@ -131,6 +131,7 @@ let AC = null, MASTER = null;
 function audioUnlock() {
   if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); MASTER = AC.createGain(); MASTER.gain.value = 0.5; MASTER.connect(AC.destination); } catch (_) { return; } }
   if (AC.state === 'suspended') AC.resume();
+  if (typeof sfxLoad === 'function') sfxLoad();
 }
 function tone(f, dur, o = {}) {
   if (!AC || PREFS.muted) return;
@@ -203,3 +204,23 @@ const SFX = {
   fall() { tone(700, 0.6, { to: 70, vol: 0.16 }); },
   bigheart() { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, { vol: 0.1, delay: i * 0.09, type: 'triangle' })); },
 };
+// ---------- sons ElevenLabs (assets/sfx/<nom>.mp3), le synthé reste en secours ----------
+const SFX_BUF = {}, SFX_VOL = { blip: 0.35, heartTick: 0.5, rail: 0.5, fuse: 0.6, wind: 0.7 };
+let sfxLoading = false;
+function sfxLoad() {
+  if (sfxLoading || !AC) return; sfxLoading = true;
+  for (const k of Object.keys(SFX)) {
+    fetch('assets/sfx/' + k + '.mp3').then(r => r.ok ? r.arrayBuffer() : null)
+      .then(a => a && new Promise((ok, ko) => AC.decodeAudioData(a, ok, ko)))
+      .then(b => { if (b) SFX_BUF[k] = b; }).catch(() => {});
+  }
+}
+for (const k of Object.keys(SFX)) {
+  const synth = SFX[k];
+  SFX[k] = function (...a) {
+    const b = SFX_BUF[k];
+    if (!b || !AC || PREFS.muted) return synth.apply(this, a);
+    const s = AC.createBufferSource(), g = AC.createGain();
+    s.buffer = b; g.gain.value = SFX_VOL[k] ?? 0.8; s.connect(g); g.connect(MASTER); s.start();
+  };
+}
