@@ -57,8 +57,30 @@ function beastPortrait(b, x, y, t) {
   ctx.save(); ctx.beginPath(); ctx.rect(x - 90, y - 48, 180, 54); ctx.clip();
   ctx.globalAlpha = 0.25; ell(x, y + 1, 22, 5, UIC.woodD); ctx.globalAlpha = 1;
   ctx.translate(x, y); ctx.scale(k, k);
-  try { e.x = 0; e.y = 0; e.t = t; e._px = 0; e._py = 0; e._di = 0; e._diT = 1; e.draw(); } catch (_) {}
+  try { e.x = 0; e.y = 0; e.t = 0; e.alt = 0; e._px = 0; e._py = 0; e._di = 0; e._diT = 1; e.draw(); } catch (_) {} // figé (pas d'animation), posé au sol (même ceux qui volent)
   ctx.restore();
+}
+// la tête de chaque créature, pour les cases du bestiaire : on la dessine une fois dans un coin de l'écran, on lit les pixels, on remet le coin en place
+const HEADS = {};
+function beastHead(b) {
+  if (HEADS[b.k] !== undefined) return HEADS[b.k];
+  let e = PORTRAITS[b.k]; if (e === undefined) { beastPortrait(b, -999, -999, 0); e = PORTRAITS[b.k]; }
+  if (!e) return (HEADS[b.k] = null);
+  const P = 256, saved = ctx.getImageData(0, 0, P, P), k = (e.pk || (b.boss ? 0.6 : b.mini ? 0.9 : 1.6)) * SC;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, P, P); ctx.beginPath(); ctx.rect(0, 0, P, P); ctx.clip(); ctx.translate(P / 2, P * 0.9); ctx.scale(k, k);
+  const sh = window.ell; window.ell = () => {}; // sans ombre au sol
+  try { e.x = 0; e.y = 0; e.t = 0; e.alt = 0; e._px = 0; e._py = 0; e._di = 0; e._diT = 1; e.flash = 0; e.draw(); } catch (_) {}
+  window.ell = sh; ctx.restore();
+  const im = ctx.getImageData(0, 0, P, P); ctx.putImageData(saved, 0, 0);
+  let x0 = P, y0 = P, x1 = -1, y1 = -1; const d = im.data;
+  for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) if (d[(y * P + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return (HEADS[b.k] = null);
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, side = Math.max(8, Math.round(Math.min(bw, bh) * 0.62)), cx = (x0 + x1) / 2;
+  const c = document.createElement('canvas'); c.width = c.height = side; const cc = c.getContext('2d');
+  const full = document.createElement('canvas'); full.width = full.height = P; full.getContext('2d').putImageData(im, 0, 0);
+  cc.drawImage(full, Math.round(cx - side / 2), y0, side, side, 0, 0, side, side); // le haut du corps : la tête
+  const sil = document.createElement('canvas'); sil.width = sil.height = side; const sc = sil.getContext('2d'); sc.drawImage(c, 0, 0); sc.globalCompositeOperation = 'source-in'; sc.fillStyle = '#3a2a1a'; sc.fillRect(0, 0, side, side);
+  return (HEADS[b.k] = { img: c, sil });
 }
 // ---------- habillage des menus : héroïque fantasy (fer, or, parchemin, rubis) ----------
 // pièces dessinées avec pxl : tools/ui/ui.px.js → assets/ui (coins, gemmes, curseur épée, cœurs, pad…)
@@ -426,14 +448,17 @@ const UIMixin = {
     BEASTS.forEach((b, k) => {
       const i = k % C, j = Math.floor(k / C), x = g.x0 + i * g.cw, y = g.y0 + j * g.ch, kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k];
       this.drawCell(x, y, g.cw, g.ch, k === this.psel, !!seen);
-      ptext(kills ? (Bestiary.full(b) ? '★' : String(kills)) : seen ? '?' : '', x + g.cw / 2 - 2, y + g.ch / 2 - 8, { size: kills ? 8 : 10, align: 'center', color: Bestiary.full(b) ? UIC.red : kills ? UIC.ink : UIC.mute, bold: true });
+      const hd = seen ? beastHead(b) : null, hs = g.ch - 10;
+      if (hd) { ctx.globalAlpha = kills ? 1 : 0.45; ctx.drawImage(kills ? hd.img : hd.sil, x + (g.cw - 4 - hs) / 2, y + 2, hs, hs); ctx.globalAlpha = 1; } // la tête de l'animal ; une silhouette s'il n'est pas encore vaincu
+      else ptext(seen ? '?' : '', x + g.cw / 2 - 2, y + g.ch / 2 - 8, { size: 10, align: 'center', color: UIC.mute, bold: true });
+      if (kills) ptext(Bestiary.full(b) ? '★' : String(kills), x + g.cw - 8, y + g.ch - 14, { size: 6.5, align: 'right', color: Bestiary.full(b) ? UIC.red : UIC.ink, bold: true });
       if (b.boss) R(x + 2, y + 2, 4, 4, UIC.gold); else if (b.mini) R(x + 2, y + 2, 4, 4, '#8a7a6a');
     });
     const b = BEASTS[this.psel], kills = Bestiary.kills(b.k), seen = kills || (SAVE.seen || {})[b.k], rx = 258;
     wrap('Récompenses chez Arthur, au village : 5, 12 et ' + BEASTS.length + ' fiches complètes.', 190, 6.5 * UI_TXT).forEach((l, i, a) => ptext(l, rx, 232 - (a.length - i) * 9, { size: 6.5, color: UIC.mute }));
     if (!seen) { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); wrap('Une créature que tu n\'as pas encore croisée.', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.mute })); return; }
     if (!kills) { ptext('???', rx, 62, { size: 9, bold: true, font: 't', color: UIC.mute }); wrap('Tu l\'as croisée. Bats-la pour en savoir plus.', 190, 7.5 * UI_TXT).forEach((l, i) => ptext(l, rx, 80 + i * 11, { size: 7.5, color: UIC.mute })); return; }
-    beastPortrait(b, 353, 204, this.t);
+    beastPortrait(b, 353, 204, 0);
     ptext(b.name, rx, 62, { size: 8, bold: true, font: 't', color: UIC.title });
     ptext((b.boss ? 'Gardien · ' : b.mini ? 'Mini-boss · ' : '') + b.zone, rx, 76, { size: 7, color: UIC.mute });
     ptext(`Vaincu${b.boss || b.mini ? '' : 's'} : ${kills}` + (b.boss || b.mini ? '' : ` / 10`), rx, 90, { size: 7.5 });
