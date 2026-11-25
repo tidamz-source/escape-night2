@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Escape Night 2 · Sons</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+:root { --bg: #14121c; --panel: #1f1b2b; --line: #352f47; --ink: #f2ead8; --muted: #a89fba; --accent: #ffcf4a; --ok: #7fe0a0; --swap: #ff9a5a; }
+* { box-sizing: border-box }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, sans-serif;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left)); }
+main { max-width: 860px; margin: 0 auto }
+h1 { font: 700 30px/1.1 'Pixelify Sans', system-ui; margin: 8px 0 6px; color: var(--accent) }
+h2 { font: 700 19px 'Pixelify Sans', system-ui; margin: 28px 0 10px; color: var(--muted); letter-spacing: .03em }
+.intro { color: var(--muted); margin: 0 0 8px; max-width: 68ch }
+.bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 14px 0 }
+.bar input { flex: 1 1 200px; background: var(--panel); border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 9px 12px; font: inherit }
+.row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px }
+.row.swapped { border-color: var(--swap) }
+.play { width: 48px; height: 48px; border-radius: 10px; border: 0; background: var(--accent); color: #241a00; font-size: 20px; cursor: pointer }
+.play:active { transform: scale(.94) }
+.play.on { background: var(--ok) }
+.name { font: 700 16px 'Pixelify Sans', system-ui }
+.name code { font: 12px ui-monospace, monospace; color: var(--muted); margin-left: 6px }
+.desc { color: var(--muted); font-size: 13.5px }
+.state { font-size: 12px; margin-top: 2px; color: var(--ok) }
+.swapped .state { color: var(--swap) }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end }
+.btn { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font: 600 13px system-ui; cursor: pointer; white-space: nowrap }
+.btn:hover { border-color: var(--muted) }
+.btn[hidden] { display: none }
+label.btn input { display: none }
+.toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--accent); color: #241a00; padding: 9px 16px; border-radius: 8px; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none }
+.toast.show { opacity: 1 }
+@media (max-width: 560px) { .row { grid-template-columns: 48px minmax(0, 1fr) } .acts { grid-column: 1 / -1; justify-content: flex-start } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Les sons du jeu</h1>
+  <p class="intro">Écoute chaque bruitage au volume du jeu. « Remplacer » charge ton propre fichier (mp3, wav, ogg…) : il est gardé dans ce navigateur et le jeu l'utilise aussitôt, sur cet appareil. Pour le rendre définitif pour tout le monde, télécharge-le et envoie-le à Claude.</p>
+  <div class="bar"><input id="q" type="search" placeholder="Chercher un son…" aria-label="Chercher un son"><button class="btn" id="stop" type="button">■ Stop</button></div>
+  <div id="list"></div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const VOL = { blip: 0.15, heartTick: 0.25, rail: 0.25, menu: 0.35, coin: 0.4, cart: 0.4, fuse: 0.4, wind: 0.45, push: 0.4 };
+const GROUPS = [
+  ['Combat', [
+    ['swing', "Coup d'épée", "Le héros donne un coup d'épée dans le vide."],
+    ['hit', 'Coup qui touche', "L'épée ou un projectile touche un monstre."],
+    ['kill', 'Monstre vaincu', 'Un ennemi disparaît après son dernier coup.'],
+    ['hurt', 'Héros blessé', 'Le héros perd un cœur.'],
+    ['stun', 'Étourdi', "Un ennemi ou un boss est sonné (grappin, contre-attaque)."],
+    ['tink', 'Ricochet', "Un coup rebondit sur une carapace, un mur ou un boss invulnérable."],
+    ['clank', 'Choc métallique', "Le grappin s'accroche, une armure prend un coup."],
+  ]],
+  ['Boss', [
+    ['roar', 'Rugissement', "Entrée d'un boss."],
+    ['bossHit', 'Boss touché', 'Un coup qui entame la vie du boss.'],
+    ['bossDie', 'Boss vaincu', 'Série d\'explosions à la mort du boss.'],
+    ['shoot', 'Tir ennemi', 'Un monstre ou un boss crache un projectile.'],
+    ['hoot', 'Hululement', 'Le grand hibou se réveille ou plonge.'],
+    ['dig', 'Sortie de terre', 'Une créature jaillit du sol.'],
+    ['clock', "Temps figé", "L'horloge arrête le temps."],
+  ]],
+  ['Outils', [
+    ['sling', 'Lance-pierre', 'Tir de caillou.'],
+    ['throw', 'Lancer', 'Lancer de boomerang, de canne à pêche ou d\'objet.'],
+    ['catch', 'Rattraper', 'Le boomerang revient, ou ramène un objet.'],
+    ['hook', 'Grappin', 'Le grappin part.'],
+    ['boom', 'Explosion', 'Une bombe explose, un rocher tombe.'],
+    ['fuse', 'Mèche', 'Une mèche ou une torche s\'allume.'],
+    ['cut', 'Herbe coupée', 'Un buisson ou une herbe est tranché.'],
+    ['dive', 'Plongeon', 'Le héros plonge sous l\'eau.'],
+  ]],
+  ['Objets et trésors', [
+    ['pickup', 'Ramasser', 'Le héros ramasse un objet.'],
+    ['coin', 'Pièce', 'Un écu ramassé.'],
+    ['chest', 'Coffre', 'Ouverture d\'un coffre.'],
+    ['bigheart', 'Grand trésor', 'Réceptacle de cœur, coupe, clé importante.'],
+    ['crystal', 'Cristal', 'Un cristal ou un relais s\'active.'],
+    ['drink', 'Boire', 'Potion, soupe, fontaine de soin.'],
+    ['heartTick', 'Cœur qui remonte', 'Petit tic quand la vie se remplit.'],
+    ['secret', 'Secret trouvé', 'Énigme résolue, troc réussi, record de pêche.'],
+    ['chime', 'Carillon', 'Moment important d\'une quête, épée chargée.'],
+  ]],
+  ['Boutique et interface', [
+    ['buy', 'Achat', 'Achat réussi chez un marchand.'],
+    ['nope', 'Refus', 'Pas assez d\'écus ou d\'ingrédients.'],
+    ['menu', 'Menu', 'Ouverture d\'un menu, choix dans une liste.'],
+    ['blip', 'Texte', 'Bip des lettres qui défilent dans les dialogues.'],
+  ]],
+  ['Décor et mécanismes', [
+    ['door', 'Porte', 'Passage d\'une porte.'],
+    ['locked', 'Verrouillé', 'Porte fermée à clé.'],
+    ['shutter', 'Herse de salle', 'Les portes d\'une salle de donjon se ferment ou s\'ouvrent.'],
+    ['gate', 'Grande grille', 'Une grande grille ou un pont-levis s\'ouvre.'],
+    ['push', 'Pousser', 'Un bloc de pierre glisse, une grille grince.'],
+    ['lever', 'Levier', 'Un levier ou un aiguillage bascule.'],
+    ['valve', 'Vanne', 'La vanne du temple fait monter ou baisser l\'eau.'],
+    ['cart', 'Wagonnet', 'Le wagonnet de la mine démarre.'],
+    ['rail', 'Rails', 'Petit clic régulier pendant le trajet en wagonnet.'],
+    ['fall', 'Chute', 'Le héros tombe dans un trou.'],
+    ['rift', 'Faille', 'Téléportation par une faille ou un relais.'],
+    ['splash', 'Éclaboussure', 'Quelque chose tombe dans l\'eau, un poisson mord.'],
+    ['wind', 'Bourrasque', 'Coup de vent sur la falaise.'],
+  ]],
+  ['Animaux', [
+    ['baa', 'Mouton', 'Un mouton bêle.'],
+    ['cluck', 'Poule', 'Une poule caquette.'],
+  ]],
+];
+
+let AC = null, MASTER = null, cur = null, curBtn = null;
+const BUF = {}, OVER = {};
+function ac() { if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); MASTER = AC.createGain(); MASTER.gain.value = 0.5; MASTER.connect(AC.destination); } if (AC.state === 'suspended') AC.resume(); return AC; }
+function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800); }
+
+// IndexedDB partagée avec le jeu (même origine)
+function db() { return new Promise((ok, ko) => { const r = indexedDB.open('escape-night2-sfx', 1); r.onupgradeneeded = () => r.result.createObjectStore('over'); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); }); }
+async function dbAll() { try { const d = await db(); return await new Promise(ok => { const out = {}, tx = d.transaction('over'), c = tx.objectStore('over').openCursor(); c.onsuccess = () => { const x = c.result; if (x) { out[x.key] = x.value; x.continue(); } }; tx.oncomplete = () => ok(out); tx.onerror = () => ok({}); }); } catch (_) { return {}; } }
+async function dbPut(k, v) { const d = await db(); return new Promise((ok, ko) => { const tx = d.transaction('over', 'readwrite'); tx.objectStore('over').put(v, k); tx.oncomplete = ok; tx.onerror = () => ko(tx.error); }); }
+async function dbDel(k) { const d = await db(); return new Promise(ok => { const tx = d.transaction('over', 'readwrite'); tx.objectStore('over').delete(k); tx.oncomplete = ok; tx.onerror = ok; }); }
+
+async function getBuf(k) {
+  if (BUF[k]) return BUF[k];
+  const a = OVER[k] ? await OVER[k].blob.arrayBuffer() : await fetch('assets/sfx/' + k + '.mp3').then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); });
+  return BUF[k] = await new Promise((ok, ko) => ac().decodeAudioData(a, ok, ko));
+}
+function stop() { if (cur) { try { cur.stop(); } catch (_) {} cur = null; } if (curBtn) { curBtn.classList.remove('on'); curBtn.textContent = '▶'; curBtn = null; } }
+async function play(k, btn) {
+  ac(); stop();
+  let b; try { b = await getBuf(k); } catch (_) { return toast('Fichier introuvable'); }
+  const s = AC.createBufferSource(), g = AC.createGain();
+  s.buffer = b; g.gain.value = VOL[k] ?? 0.55; s.connect(g); g.connect(MASTER); s.start();
+  cur = s; curBtn = btn; btn.classList.add('on'); btn.textContent = '■';
+  s.onended = () => { if (cur === s) stop(); };
+}
+function download(k) {
+  const blob = OVER[k] ? OVER[k].blob : null;
+  const ext = OVER[k] ? (OVER[k].name.split('.').pop() || 'mp3') : 'mp3';
+  const a = document.createElement('a');
+  a.href = blob ? URL.createObjectURL(blob) : 'assets/sfx/' + k + '.mp3'; a.download = k + '.' + ext;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function render() {
+  const list = document.getElementById('list'), q = document.getElementById('q').value.trim().toLowerCase();
+  list.innerHTML = '';
+  for (const [title, items] of GROUPS) {
+    const shown = items.filter(([k, n, d]) => !q || (k + ' ' + n + ' ' + d).toLowerCase().includes(q));
+    if (!shown.length) continue;
+    const h = document.createElement('h2'); h.textContent = title; list.appendChild(h);
+    for (const [k, n, d] of shown) {
+      const o = OVER[k], row = document.createElement('div'); row.className = 'row' + (o ? ' swapped' : '');
+      row.innerHTML = `<button class="play" type="button" aria-label="Écouter">▶</button>
+        <div><div class="name"></div><div class="desc"></div><div class="state"></div></div>
+        <div class="acts"><label class="btn">Remplacer<input type="file" accept="audio/*"></label><button class="btn reset" type="button">Revenir à l'original</button><button class="btn dl" type="button">Télécharger</button></div>`;
+      row.querySelector('.name').textContent = n; const c = document.createElement('code'); c.textContent = k; row.querySelector('.name').appendChild(c);
+      row.querySelector('.desc').textContent = d;
+      row.querySelector('.state').textContent = o ? 'Remplacé par « ' + o.name + ' »' : 'Son ElevenLabs d\'origine';
+      row.querySelector('.reset').hidden = !o;
+      const pb = row.querySelector('.play'); pb.onclick = () => (curBtn === pb ? stop() : play(k, pb));
+      row.querySelector('input').onchange = async e => {
+        const f = e.target.files[0]; if (!f) return;
+        try { await new Promise((ok, ko) => f.arrayBuffer().then(a => ac().decodeAudioData(a, ok, ko))); } catch (_) { return toast('Fichier audio illisible'); }
+        OVER[k] = { blob: f, name: f.name, at: Date.now() }; delete BUF[k];
+        try { await dbPut(k, OVER[k]); } catch (_) { toast('Impossible d\'enregistrer dans ce navigateur'); }
+        render(); toast('« ' + n + ' » remplacé'); const b2 = [...document.querySelectorAll('.row')].find(r => r.querySelector('code').textContent === k); if (b2) play(k, b2.querySelector('.play'));
+      };
+      row.querySelector('.reset').onclick = async () => { delete OVER[k]; delete BUF[k]; await dbDel(k); render(); toast('Son d\'origine remis'); };
+      row.querySelector('.dl').onclick = () => download(k);
+      list.appendChild(row);
+    }
+  }
+}
+document.getElementById('q').oninput = render;
+document.getElementById('stop').onclick = stop;
+dbAll().then(o => { Object.assign(OVER, o); render(); });
+render();
+</script>
+</body>
+</html>

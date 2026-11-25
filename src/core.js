@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.17.0';
+const VERSION = 'v8.17.1';
 const W = 480, H = 270, SC = 2, TS = 16;
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
@@ -209,8 +209,21 @@ const SFX_BUF = {}, SFX_VOL = { blip: 0.15, heartTick: 0.25, rail: 0.25, menu: 0
 let sfxLoading = false;
 function sfxLoad() {
   if (sfxLoading || !AC) return; sfxLoading = true;
+  // remplacements faits depuis sons.html (IndexedDB, même origine) prioritaires sur les fichiers du dépôt
+  const over = new Promise(ok => {
+    try {
+      const rq = indexedDB.open('escape-night2-sfx', 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore('over');
+      rq.onerror = () => ok({});
+      rq.onsuccess = () => {
+        const out = {}, tx = rq.result.transaction('over', 'readonly'), cur = tx.objectStore('over').openCursor();
+        cur.onsuccess = () => { const c = cur.result; if (c) { out[c.key] = c.value; c.continue(); } };
+        tx.oncomplete = () => ok(out); tx.onerror = () => ok({});
+      };
+    } catch (_) { ok({}); }
+  });
   for (const k of Object.keys(SFX)) {
-    fetch('assets/sfx/' + k + '.mp3').then(r => r.ok ? r.arrayBuffer() : null)
+    over.then(o => o[k] && o[k].blob ? o[k].blob.arrayBuffer() : fetch('assets/sfx/' + k + '.mp3').then(r => r.ok ? r.arrayBuffer() : null))
       .then(a => a && new Promise((ok, ko) => AC.decodeAudioData(a, ok, ko)))
       .then(b => { if (b) SFX_BUF[k] = b; }).catch(() => {});
   }
