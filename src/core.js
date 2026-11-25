@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.16.18';
+const VERSION = 'v8.17.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
@@ -205,7 +205,7 @@ const SFX = {
   bigheart() { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, { vol: 0.1, delay: i * 0.09, type: 'triangle' })); },
 };
 // ---------- sons ElevenLabs (assets/sfx/<nom>.mp3), le synthé reste en secours ----------
-const SFX_BUF = {}, SFX_VOL = { blip: 0.35, heartTick: 0.5, rail: 0.5, fuse: 0.6, wind: 0.7 };
+const SFX_BUF = {}, SFX_VOL = { blip: 0.15, heartTick: 0.25, rail: 0.25, menu: 0.35, coin: 0.4, cart: 0.4, fuse: 0.4, wind: 0.45, push: 0.4 };
 let sfxLoading = false;
 function sfxLoad() {
   if (sfxLoading || !AC) return; sfxLoading = true;
@@ -221,6 +221,6 @@ for (const k of Object.keys(SFX)) {
     const b = SFX_BUF[k];
     if (!b || !AC || PREFS.muted) return synth.apply(this, a);
     const s = AC.createBufferSource(), g = AC.createGain();
-    s.buffer = b; g.gain.value = SFX_VOL[k] ?? 0.8; s.connect(g); g.connect(MASTER); s.start();
+    s.buffer = b; g.gain.value = SFX_VOL[k] ?? 0.55; s.connect(g); g.connect(MASTER); s.start();
   };
 }
