@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.18.0** : Atelier Carte (tools/carte) : fond vide + bâtiments, arbres et rochers en PNG, collisions en polygone, portes, sorties, arrivées, coffres ; le jeu charge les cartes de assets/cartes (passage derrière avec transparence).
 - **8.17.2** : nouveaux sons choisis par Damien pour blip, menu, pickup, catch, shoot, hit et door.
 - **8.17.1** : page sons.html pour écouter chaque bruitage et le remplacer en direct (le jeu utilise le remplacement sur le même appareil).
 - **8.17.0** : 50 vrais bruitages générés avec ElevenLabs (assets/sfx), le synthé reste en secours si un fichier manque.

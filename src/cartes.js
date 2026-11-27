@@ -1,0 +1,85 @@
+// ---------- cartes composées (outil tools/carte) ----------
+// assets/cartes/index.json liste les cartes ; chaque carte : assets/cartes/<id>/carte.json + son fond (image ×2).
+// Une carte composée remplace le décor d'une zone (fond, collisions, portes, sorties, objets posés) ;
+// si la zone existe déjà dans le code, ses PNJ, monstres et quêtes restent.
+const CARTES = {};
+const CARTE_FTS = 4; // collisions fines : un carré de 4 px
+function loadCartes() {
+  return fetch(`assets/cartes/index.json?v=${VERSION}`).then(r => r.ok ? r.json() : []).catch(() => [])
+    .then(ids => Promise.all(ids.map(id => fetch(`assets/cartes/${id}/carte.json?v=${VERSION}`).then(r => r.json()).then(C => {
+      CARTES[id] = C;
+      const jobs = [loadImage('carte_' + id, `assets/cartes/${id}/${C.fond}?v=${VERSION}`)], seen = new Set();
+      for (const o of C.objets || []) if (!seen.has(o.src)) { seen.add(o.src); jobs.push(loadImage('cobj_' + o.src, `${o.src}?v=${VERSION}`)); }
+      return Promise.all(jobs);
+    }).catch(e => console.warn('carte illisible', id, e)))));
+}
+
+// un objet posé (bâtiment, arbre, rocher) : trié à sa ligne de pied, transparent quand on passe derrière
+class CarteObj {
+  constructor(o) { this.o = o; this.x = o.x + o.w * o.s / 2; this.y = o.base; this.a = 1; }
+  update(dt, G) {
+    const o = this.o, P = G.player; if (!o.fade || !P) return;
+    const w = o.w * o.s, h = o.h * o.s, behind = P.y < o.base && P.x > o.x && P.x < o.x + w && P.y > o.y + 6 && P.y - 26 < o.base;
+    this.a = lerp(this.a, behind ? 0.45 : 1, Math.min(1, dt * 10));
+  }
+  draw() {
+    const o = this.o, im = IMG['cobj_' + o.src]; if (!im) return;
+    const w = o.w * o.s, h = o.h * o.s;
+    ctx.globalAlpha = this.a;
+    if (o.flip) { ctx.save(); ctx.translate(o.x + w, o.y); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, w, h); ctx.restore(); }
+    else ctx.drawImage(im, o.x, o.y, w, h);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function inPoly(px, py, P) {
+  let c = false;
+  for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) c = !c; }
+  return c;
+}
+// grille fine : le sol peint du fond (cases de 16) puis les polygones des objets
+function carteFine(C, g) {
+  const k = TS / CARTE_FTS, F = [];
+  for (let y = 0; y < g.length * k; y++) { let row = ''; for (let x = 0; x < g[0].length * k; x++) { const t = g[Math.floor(y / k)][Math.floor(x / k)]; row += SOLID.has(t) ? t : '.'; } F.push(row.split('')); }
+  for (const o of C.objets || []) {
+    if (!o.poly || o.poly.length < 3) continue;
+    const xs = o.poly.map(p => p[0]), ys = o.poly.map(p => p[1]);
+    for (let cy = Math.max(0, Math.floor(Math.min(...ys) / CARTE_FTS)); cy <= Math.min(F.length - 1, Math.floor(Math.max(...ys) / CARTE_FTS)); cy++)
+      for (let cx = Math.max(0, Math.floor(Math.min(...xs) / CARTE_FTS)); cx <= Math.min(F[0].length - 1, Math.floor(Math.max(...xs) / CARTE_FTS)); cx++)
+        if (inPoly((cx + 0.5) * CARTE_FTS, (cy + 0.5) * CARTE_FTS, o.poly)) F[cy][cx] = '#';
+  }
+  return F.map(r => r.join(''));
+}
+
+function carteArea(C, old) {
+  const g = C.grille.map(r => r.split(''));
+  (C.sorties || []).forEach((s, i) => { const ch = String(i + 1); for (let ty = s.ty; ty < s.ty + s.th; ty++) for (let tx = s.tx; tx < s.tx + s.tw; tx++) if (g[ty] && g[ty][tx] != null) g[ty][tx] = ch; });
+  let A;
+  if (old) { A = old; A.g = g; A.cols = g[0].length; A.rows = g.length; A.w = A.cols * TS; A.h = A.rows * TS; }
+  else A = zoneArea(C.id, g, 'collines', { name: C.name || C.id, dark: C.dark });
+  if (C.name) A.name = C.name;
+  A.paint = 'carte_' + C.id; A.bushSpots = []; A.props = [];
+  A.fine = carteFine(C, g); A.fineTS = CARTE_FTS;
+  for (const a of C.arrivees || []) ZONE_ARRIVE[a.nom] = { x: a.x, y: a.y, dir: a.dir || 'down' };
+  const dep = (C.arrivees || []).find(a => a.nom === C.depart) || (C.arrivees || [])[0];
+  if (dep) A.start = { x: dep.x, y: dep.y, dir: dep.dir || 'down' };
+  A.exits = {};
+  (C.sorties || []).forEach((s, i) => { A.exits[String(i + 1)] = G => G.enter(s.vers, ZONE_ARRIVE[s.arrivee] || (G.areas[s.vers] && G.areas[s.vers].start)); });
+  A.houses = (C.portes || []).map(p => ({ id: p.vers, x: p.x, y: p.y, o: { w: p.w || 3, d: 1, painted: true, locked: p.ferme ? () => p.ferme : null } }));
+  const sp0 = old && old.spawn;
+  A.spawn = function () {
+    if (sp0) sp0.call(this); else this.ents = [];
+    this.ents = this.ents.filter(e => !(e instanceof Overhead) && !e.isHouse);
+    for (const h of this.houses) this.ents.push(Object.assign(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)), { hid: h.id }));
+    for (const o of C.objets || []) this.ents.push(new CarteObj(o));
+    for (const it of C.items || []) {
+      if (it.type === 'coffre') this.ents.push(new Chest(it.x, it.y, { flag: it.id || ('c_' + C.id + '_' + it.x + '_' + it.y), give: it.contenu || 'money' }));
+      else if (it.type === 'pot') this.ents.push(new Pot(it.x, it.y));
+      else if (it.type === 'buisson') this.ents.push(new Bush(it.x, it.y));
+      else if (it.type === 'panneau') this.ents.push(new Sign(it.x, it.y, [{ text: it.texte || '…' }], it.style));
+    }
+  };
+  if (old && old.syncTiles) A.syncTiles = () => {}; // l'ancien pont-levis peint n'existe plus sur une carte composée
+  return A;
+}
+function applyCartes(areas) { for (const id in CARTES) { try { areas[id] = carteArea(CARTES[id], areas[id]); } catch (e) { console.warn('carte', id, e); } } }

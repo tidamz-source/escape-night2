@@ -1,6 +1,6 @@
 'use strict';
 // ---------- constantes ----------
-const VERSION = 'v8.17.2';
+const VERSION = 'v8.18.0';
 const W = 480, H = 270, SC = 2, TS = 16;
 const CHAR_SC = 0.75; // personnages (héros, PNJ, monstres) : 1 pixel d'image = 1,5 pixel d'écran (150 %)
 const cv = document.getElementById('c');
@@ -96,6 +96,7 @@ function loadAssets() {
   for (const [k, f] of Object.entries(WANG_FILES)) jobs.push(loadImage('wang_' + k, `assets/tiles/${f}.png?v=${VERSION}`));
   for (const k of UI_IMGS) jobs.push(loadImage('ui_' + k, `assets/ui/${k}.png?v=${VERSION}`));
   jobs.push(loadData());
+  if (typeof loadCartes === 'function') jobs.push(loadCartes()); // cartes composées (tools/carte)
   return Promise.all(jobs).then(() => { if (IMG.deco_lamp) IMG.lamp = IMG.deco_lamp; }); // réverbère PixelLab du camping
 }
 

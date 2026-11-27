@@ -16,7 +16,8 @@ const G = {
     this.areas.lac = buildLacArea(); this.areas.cote = buildCoteArea(); this.areas.terres = buildTerresArea();
     this.areas.cave = buildCaveArea(); this.areas.bois = buildBoisArea(); this.areas.mines = buildMinesArea();
     this.areas.temple = buildTempleArea(); this.areas.tower = buildTowerArea(); this.areas.castle = buildCastleArea();
-    buildMonde(this.areas); // chemins entre les régions, sanctuaire des lucioles, grottes secrètes
+    buildMonde(this.areas);
+    if (typeof applyCartes === 'function') applyCartes(this.areas); // cartes composées (tools/carte) : remplacent le décor des zones
     for (let i = 0; i < 26; i++) this.flies.push({ x: rand(0, 768), y: rand(0, 900), p: rand(0, 6), s: rand(0.4, 1) });
     this.light = document.createElement('canvas'); this.light.width = W * SC; this.light.height = H * SC; this.lctx = this.light.getContext('2d');
     Bus.on('money:changed', () => { this.moneyFlash = 0.4; });
