@@ -205,10 +205,15 @@ function placeModel(m, wx, wy, e) {
   if (snapOn(e)) { x = Math.round(x / TS) * TS; const by = Math.round((y + m.base * m.s) / TS) * TS; y = by - m.base * m.s; }
   const o = { id: uid(), src: m.src, x: Math.round(x), y: Math.round(y), s: m.s, w: m.img.width, h: m.img.height, base: 0, poly: [], fade: !!m.fade, flip: false };
   o.base = Math.round(o.y + m.base * m.s); o.poly = m.poly.map(([px, py]) => [Math.round(o.x + px * m.s), Math.round(o.y + py * m.s)]);
+  if (m.pied) { o.pied = m.pied.map(([px, py]) => [Math.round(o.x + px * m.s), Math.round(o.y + py * m.s)]); syncBase(o); }
   S.objets.push(o); return o;
 }
-function moveObj(o, dx, dy) { o.x += dx; o.y += dy; o.base += dy; o.poly = o.poly.map(([x, y]) => [x + dx, y + dy]); }
-function flipObj(o) { const W = o.w * o.s; o.flip = !o.flip; o.poly = o.poly.map(([x, y]) => [Math.round(o.x + W - (x - o.x)), y]).reverse(); }
+function moveObj(o, dx, dy) { o.x += dx; o.y += dy; o.base += dy; o.poly = o.poly.map(([x, y]) => [x + dx, y + dy]); if (o.pied) o.pied = o.pied.map(([x, y]) => [x + dx, y + dy]); }
+// ligne de pied : une ligne brisée (o.pied) ou, à défaut, un trait horizontal à o.base
+function piedOf(o) { return o.pied && o.pied.length >= 2 ? o.pied : [[o.x, o.base], [o.x + o.w * o.s, o.base]]; }
+function footY(o, x) { const P = [...piedOf(o)].sort((a, b) => a[0] - b[0]); if (x <= P[0][0]) return P[0][1]; for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return x1 === x0 ? Math.max(y0, y1) : y0 + (y1 - y0) * (x - x0) / (x1 - x0); } return P[P.length - 1][1]; }
+function syncBase(o) { if (o.pied) o.base = Math.round(Math.max(...o.pied.map(p => p[1]))); }
+function flipObj(o) { const W = o.w * o.s; o.flip = !o.flip; o.poly = o.poly.map(([x, y]) => [Math.round(o.x + W - (x - o.x)), y]).reverse(); if (o.pied) o.pied = o.pied.map(([x, y]) => [Math.round(o.x + W - (x - o.x)), y]).reverse(); }
 
 // ---------- grille fine (comme dans le jeu) ----------
 const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P', 'T', 'h', 'q']);
@@ -242,7 +247,7 @@ function heroStep(dt) {
   hero.msg = '';
   for (const s of S.sorties) if (hero.x >= s.tx * TS && hero.x < (s.tx + s.tw) * TS && hero.y - 1 >= s.ty * TS && hero.y - 1 < (s.ty + s.th) * TS) hero.msg = `Sortie → ${s.vers || '?'} (${s.arrivee || 'départ'})`;
   for (const p of S.portes) if (Math.abs(hero.x - p.x) < 9 && Math.abs(hero.y - 6 - p.y) < 6 && dy < 0) hero.msg = `Porte → ${p.vers}${p.ferme ? ' (fermée)' : ''}`;
-  for (const o of S.objets) { if (!o.fade) { o._a = 1; continue; } const W = o.w * o.s, behind = hero.y < o.base && hero.x > o.x && hero.x < o.x + W && hero.y > o.y + 6 && hero.y - 26 < o.base; o._a = (o._a ?? 1) + ((behind ? 0.45 : 1) - (o._a ?? 1)) * Math.min(1, dt * 10); }
+  for (const o of S.objets) { if (!o.fade) { o._a = 1; continue; } const W = o.w * o.s, fy = footY(o, hero.x), behind = hero.y < fy && hero.x > o.x && hero.x < o.x + W && hero.y > o.y + 6 && hero.y - 26 < fy; o._a = (o._a ?? 1) + ((behind ? 0.45 : 1) - (o._a ?? 1)) * Math.min(1, dt * 10); }
 }
 
 // ---------- dessin ----------
@@ -263,7 +268,7 @@ function draw() {
     cx.globalAlpha = 1;
   }
   // objets + héros, triés par ligne de pied
-  const list = S.objets.map(o => ({ y: o.base, o }));
+  const list = S.objets.map(o => ({ y: test && hero.on ? footY(o, hero.x) : o.base, o }));
   if (test && hero.on) list.push({ y: hero.y, h: true });
   list.sort((a, b) => a.y - b.y);
   for (const it of list) {
@@ -278,7 +283,7 @@ function draw() {
   if (!test) {
     // collisions des objets
     if (col) for (const o of S.objets) if (o.poly.length > 2) { cx.beginPath(); o.poly.forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.closePath(); cx.fillStyle = 'rgba(255,95,176,.28)'; cx.fill(); cx.strokeStyle = '#ff5fb0'; cx.lineWidth = lw * 1.5; cx.stroke(); }
-    if ($('vBase').checked) for (const o of S.objets) { cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 1.5; cx.setLineDash([4 * lw, 3 * lw]); cx.beginPath(); cx.moveTo(o.x, o.base); cx.lineTo(o.x + o.w * o.s, o.base); cx.stroke(); cx.setLineDash([]); }
+    if ($('vBase').checked) for (const o of S.objets) { cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 1.5; cx.setLineDash([4 * lw, 3 * lw]); cx.beginPath(); piedOf(o).forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.stroke(); cx.setLineDash([]); }
   }
   if ($('vGrid').checked) { cx.strokeStyle = 'rgba(255,255,255,.12)'; cx.lineWidth = lw; cx.beginPath(); for (let x = 0; x <= S.cols; x++) { cx.moveTo(x * TS, 0); cx.lineTo(x * TS, MH); } for (let y = 0; y <= S.rows; y++) { cx.moveTo(0, y * TS); cx.lineTo(MW, y * TS); } cx.stroke(); }
   // portes, sorties, arrivées, coffres
@@ -289,7 +294,9 @@ function draw() {
   // sélection
   if (sel && !test) {
     cx.strokeStyle = '#ffd45c'; cx.lineWidth = lw * 2;
-    if (sel.k === 'obj') { const o = sel.o; cx.strokeRect(o.x, o.y, o.w * o.s, o.h * o.s); cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 3; cx.beginPath(); cx.moveTo(o.x - 6, o.base); cx.lineTo(o.x + o.w * o.s + 6, o.base); cx.stroke(); for (const [x, y] of o.poly) { cx.fillStyle = '#fff'; cx.fillRect(x - 3 * lw * 1.4, y - 3 * lw * 1.4, 6 * lw * 1.4, 6 * lw * 1.4); cx.strokeStyle = '#ff5fb0'; cx.lineWidth = lw * 1.5; cx.strokeRect(x - 3 * lw * 1.4, y - 3 * lw * 1.4, 6 * lw * 1.4, 6 * lw * 1.4); } const hs = 4 * lw * 1.4; for (let i = 0; i < o.poly.length && o.poly.length > 1; i++) { const a = o.poly[i], b = o.poly[(i + 1) % o.poly.length], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; cx.fillStyle = 'rgba(255,95,176,.9)'; cx.beginPath(); cx.arc(mx, my, hs, 0, 7); cx.fill(); cx.strokeStyle = '#fff'; cx.lineWidth = lw * 1.2; cx.beginPath(); cx.moveTo(mx - hs * 0.6, my); cx.lineTo(mx + hs * 0.6, my); cx.moveTo(mx, my - hs * 0.6); cx.lineTo(mx, my + hs * 0.6); cx.stroke(); } cx.fillStyle = '#36e0ff'; cx.fillRect(o.x + o.w * o.s + 4, o.base - 4 * lw * 1.4, 8 * lw * 1.4, 8 * lw * 1.4); }
+    if (sel.k === 'obj') { const o = sel.o; cx.strokeRect(o.x, o.y, o.w * o.s, o.h * o.s); cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 3; cx.beginPath(); piedOf(o).forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.stroke(); for (const [x, y] of o.poly) { cx.fillStyle = '#fff'; cx.fillRect(x - 3 * lw * 1.4, y - 3 * lw * 1.4, 6 * lw * 1.4, 6 * lw * 1.4); cx.strokeStyle = '#ff5fb0'; cx.lineWidth = lw * 1.5; cx.strokeRect(x - 3 * lw * 1.4, y - 3 * lw * 1.4, 6 * lw * 1.4, 6 * lw * 1.4); } const hs = 4 * lw * 1.4; for (let i = 0; i < o.poly.length && o.poly.length > 1; i++) { const a = o.poly[i], b = o.poly[(i + 1) % o.poly.length], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; cx.fillStyle = 'rgba(255,95,176,.9)'; cx.beginPath(); cx.arc(mx, my, hs, 0, 7); cx.fill(); cx.strokeStyle = '#fff'; cx.lineWidth = lw * 1.2; cx.beginPath(); cx.moveTo(mx - hs * 0.6, my); cx.lineTo(mx + hs * 0.6, my); cx.moveTo(mx, my - hs * 0.6); cx.lineTo(mx, my + hs * 0.6); cx.stroke(); } { const P = piedOf(o), hs2 = 4 * lw * 1.4; for (const [x, y] of P) { cx.fillStyle = '#36e0ff'; cx.fillRect(x - hs2 * 0.8, y - hs2 * 0.8, hs2 * 1.6, hs2 * 1.6); cx.strokeStyle = '#fff'; cx.lineWidth = lw; cx.strokeRect(x - hs2 * 0.8, y - hs2 * 0.8, hs2 * 1.6, hs2 * 1.6); }
+      for (let i = 0; i < P.length - 1; i++) { const mx = (P[i][0] + P[i + 1][0]) / 2, my = (P[i][1] + P[i + 1][1]) / 2; cx.fillStyle = 'rgba(54,224,255,.95)'; cx.beginPath(); cx.arc(mx, my, hs2, 0, 7); cx.fill(); cx.strokeStyle = '#0b2a33'; cx.lineWidth = lw * 1.2; cx.beginPath(); cx.moveTo(mx - hs2 * 0.6, my); cx.lineTo(mx + hs2 * 0.6, my); cx.moveTo(mx, my - hs2 * 0.6); cx.lineTo(mx, my + hs2 * 0.6); cx.stroke(); } }
+      cx.fillStyle = '#36e0ff'; cx.fillRect(o.x + o.w * o.s + 4, footY(o, o.x + o.w * o.s) - 4 * lw * 1.4, 8 * lw * 1.4, 8 * lw * 1.4); }
     if (sel.k === 'sortie') { const s = sel.o; cx.strokeRect(s.tx * TS - 2, s.ty * TS - 2, s.tw * TS + 4, s.th * TS + 4); }
     if (sel.k === 'porte') cx.strokeRect(sel.o.x - 12, sel.o.y - 12, 24, 20);
     if (sel.k === 'arrivee') cx.strokeRect(sel.o.x - 7, sel.o.y - 7, 14, 14);
@@ -325,7 +332,11 @@ cv.addEventListener('pointerdown', e => {
       const o = sel.o;
       const vi = o.poly.findIndex(p => near({ x: p[0], y: p[1] }, w, r));
       if (vi >= 0) { if (e.altKey || e.button === 2) { commit(); o.poly.splice(vi, 1); renderInsp(); return; } commit(); drag = { kind: 'vert', o, i: vi }; return; }
-      if (near({ x: o.x + o.w * o.s + 8, y: o.base }, w, r * 1.4) || (Math.abs(w.y - o.base) < r && w.x > o.x - 6 && w.x < o.x + o.w * o.s + 6 && e.ctrlKey)) { commit(); drag = { kind: 'base', o }; return; }
+      const P = piedOf(o), pv = P.findIndex(p => near({ x: p[0], y: p[1] }, w, r));
+      if (pv >= 0) { commit(); o.pied = P.map(p => [...p]); if (e.altKey || e.button === 2) { if (o.pied.length > 2) o.pied.splice(pv, 1); syncBase(o); renderInsp(); return; } drag = { kind: 'pvert', o, i: pv }; return; }
+      const pm = P.findIndex((a, i) => i < P.length - 1 && near({ x: (a[0] + P[i + 1][0]) / 2, y: (a[1] + P[i + 1][1]) / 2 }, w, r * 1.2));
+      if (pm >= 0) { commit(); o.pied = P.map(p => [...p]); o.pied.splice(pm + 1, 0, [Math.round(w.x), Math.round(w.y)]); drag = { kind: 'pvert', o, i: pm + 1 }; renderInsp(); return; }
+      if (near({ x: o.x + o.w * o.s + 8, y: footY(o, o.x + o.w * o.s) }, w, r * 1.4) || (Math.abs(w.y - o.base) < r && w.x > o.x - 6 && w.x < o.x + o.w * o.s + 6 && e.ctrlKey)) { commit(); drag = { kind: 'base', o, y0: w.y, base0: o.base, pied0: o.pied ? o.pied.map(p => [...p]) : null }; return; }
       const mi = o.poly.findIndex((a, i) => { const b = o.poly[(i + 1) % o.poly.length]; return near({ x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2 }, w, r * 1.2); });
       if (mi >= 0 && o.poly.length > 1) { commit(); o.poly.splice(mi + 1, 0, [Math.round(w.x), Math.round(w.y)]); drag = { kind: 'vert', o, i: mi + 1 }; renderInsp(); return; }
       if (o.poly.length < 3 && (e.ctrlKey || e.metaKey)) { commit(); o.poly.push([Math.round(w.x), Math.round(w.y)]); drag = { kind: 'vert', o, i: o.poly.length - 1 }; renderInsp(); return; }
@@ -350,7 +361,8 @@ cv.addEventListener('pointermove', e => {
   if (!drag) return;
   if (drag.kind === 'move') { const o = drag.o; let nx = drag.x0 + (w.x - drag.sx), ny = drag.y0 + (w.y - drag.sy); if (snapOn(e)) { nx = Math.round(nx / TS) * TS; const bo = o.base - o.y; ny = Math.round((ny + bo) / TS) * TS - bo; } moveObj(o, Math.round(nx) - o.x, Math.round(ny) - o.y); drag.moved = true; }
   if (drag.kind === 'vert') { drag.o.poly[drag.i] = [snap(w.x, e, 4), snap(w.y, e, 4)]; }
-  if (drag.kind === 'base') { drag.o.base = Math.round(w.y); renderInspSoft(); }
+  if (drag.kind === 'base') { const dy = Math.round(w.y - drag.y0); if (drag.pied0) { drag.o.pied = drag.pied0.map(([x, y]) => [x, y + dy]); syncBase(drag.o); } else drag.o.base = drag.base0 + dy; renderInspSoft(); }
+  if (drag.kind === 'pvert') { drag.o.pied[drag.i] = [snap(w.x, e, 4), snap(w.y, e, 4)]; syncBase(drag.o); renderInspSoft(); }
   if (drag.kind === 'paint') paintAt(w, e.buttons === 2);
   if (drag.kind === 'rect') { const a = drag.a, b = tileOf(w); drag.r = { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x) + 1, h: Math.abs(a.y - b.y) + 1 }; }
   if (drag.kind === 'moveTile') { const b = tileOf(w); drag.o.tx = drag.tx + b.x - drag.a.x; drag.o.ty = drag.ty + b.y - drag.a.y; }
@@ -406,7 +418,7 @@ function delSel() { if (!sel) return; commit(); const arr = { obj: S.objets, por
 // ---------- panneaux ----------
 function setMode(m) { mode = m; placing = null; sel = null; if (m === 'test') heroStart(); else hero.on = false; renderLeft(); renderInsp(); }
 const HINTS = {
-  obj: 'Glisse un objet de la bibliothèque sur la carte (ou clique-le puis clique sur la carte). Clic : choisir · glisser : déplacer · F : miroir · Ctrl+D : dupliquer · Suppr. Sur l\'objet choisi : tire les points roses (collision), clique sur un « + » au milieu d\'un bord (ou double-clique sur le bord) pour ajouter un point, Alt+clic sur un point pour le retirer ; tire la poignée bleue pour la ligne de pied.',
+  obj: 'Glisse un objet de la bibliothèque sur la carte (ou clique-le puis clique sur la carte). Clic : choisir · glisser : déplacer · F : miroir · Ctrl+D : dupliquer · Suppr. Sur l\'objet choisi : tire les points roses (collision), clique sur un « + » au milieu d\'un bord (ou double-clique sur le bord) pour ajouter un point, Alt+clic sur un point pour le retirer ; la ligne bleue (pied) se règle pareil : « + » bleus pour ajouter des points, carré bleu à droite pour la monter ou la descendre.',
   sol: 'Peins les zones du fond : clic = peindre, clic droit = effacer, Maj + glisser = rectangle.',
   porte: 'Clique sur le seuil d\'une porte (le perso y entre en montant). Glisse pour ajuster, puis choisis l\'intérieur à droite.',
   sortie: 'Trace un rectangle là où le perso quitte la carte (bord, grotte, escalier…), puis choisis la destination.',
@@ -473,22 +485,23 @@ function renderInsp() {
     const m = modelOf(o);
     I.innerHTML = `<div class="sect">Objet</div><p>${esc(m ? m.nom : o.src)}</p>` +
       `<div class="row">${fld('X', `<input id="fX" type="number" value="${o.x}">`)}${fld('Y', `<input id="fY" type="number" value="${o.y}">`)}</div>` +
-      fld('Ligne de pied (y)', `<input id="fBase" type="number" value="${o.base}">`) +
+      fld('Ligne de pied (y du point le plus bas)', `<input id="fBase" type="number" value="${o.base}">`) + `<p class="small">${piedOf(o).length} points. Clique un « + » bleu pour ajouter un point, Alt+clic sur un carré bleu pour le retirer. Le carré bleu à droite monte ou descend toute la ligne.</p><div class="row"><button class="btn" id="bFlat">Ligne droite</button></div>` +
       `<label class="chk"><input type="checkbox" id="fFade"${o.fade ? ' checked' : ''}> Transparent quand on passe derrière</label>` +
       `<div class="row"><button class="btn" id="bFlip">Miroir (F)</button><button class="btn" id="bDup">Dupliquer</button><button class="btn dan" id="bDel">Supprimer</button></div>` +
       `<div class="sect">Collision</div><p class="small">${o.poly.length} points. Clique un « + » au milieu d\'un bord pour ajouter un point et place-le en glissant · Alt+clic (ou clic droit) sur un point : le retirer. Autant de points que tu veux.</p>` +
       `<div class="row"><button class="btn" id="bBox">Boîte au pied</button><button class="btn" id="bNone">Aucune</button><button class="btn" id="bModel">Reprendre le modèle</button></div>` +
       `<div class="row"><button class="btn" id="bSave">Enregistrer comme modèle</button></div><p class="small">Pied, collision et transparence deviennent la règle pour les prochains « ${esc(m ? m.nom : '')} ».</p>`;
     const num = (id, fn) => { bindCommit(id); bind(id, v => { fn(+v); }); };
-    num('fX', v => moveObj(o, v - o.x, 0)); num('fY', v => moveObj(o, 0, v - o.y)); num('fBase', v => { o.base = v; });
+    num('fX', v => moveObj(o, v - o.x, 0)); num('fY', v => moveObj(o, 0, v - o.y)); num('fBase', v => { const dy = v - o.base; if (o.pied) o.pied = o.pied.map(([x, y]) => [x, y + dy]); o.base = v; });
     bind('fFade', v => { commit(); o.fade = v; }, 'change');
     $('bFlip').onclick = () => { commit(); flipObj(o); renderInsp(); };
     $('bDup').onclick = () => { commit(); const c = JSON.parse(JSON.stringify(o)); c.id = uid(); moveObj(c, TS, TS); S.objets.push(c); sel = { k: 'obj', o: c }; renderInsp(); };
+    $('bFlat').onclick = () => { commit(); o.pied = null; renderInsp(); };
     $('bDel').onclick = delSel;
     $('bBox').onclick = () => { commit(); const W = o.w * o.s, x0 = o.x + W * 0.22, x1 = o.x + W * 0.78; o.poly = [[x0, o.base - 10], [x1, o.base - 10], [x1, o.base + 2], [x0, o.base + 2]].map(p => p.map(Math.round)); renderInsp(); };
     $('bNone').onclick = () => { commit(); o.poly = []; renderInsp(); };
-    $('bModel').onclick = () => { if (!m) return; commit(); o.base = Math.round(o.y + m.base * o.s); o.poly = m.poly.map(([px, py]) => [Math.round(o.x + px * o.s), Math.round(o.y + py * o.s)]); o.fade = !!m.fade; if (o.flip) { o.flip = false; flipObj(o); } renderInsp(); };
-    $('bSave').onclick = () => { if (!m) return; const W = o.w * o.s; m.base = Math.round((o.base - o.y) / o.s); m.poly = o.poly.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]); if (o.flip) m.poly.reverse(); m.fade = o.fade; m.edited = true; if (m.isNew) idbPut('models', m.src, modelRecord(m)); toast('Modèle « ' + m.nom + ' » mis à jour'); };
+    $('bModel').onclick = () => { if (!m) return; commit(); o.base = Math.round(o.y + m.base * o.s); o.poly = m.poly.map(([px, py]) => [Math.round(o.x + px * o.s), Math.round(o.y + py * o.s)]); o.pied = m.pied ? m.pied.map(([px, py]) => [Math.round(o.x + px * o.s), Math.round(o.y + py * o.s)]) : null; syncBase(o); o.fade = !!m.fade; if (o.flip) { o.flip = false; flipObj(o); } renderInsp(); };
+    $('bSave').onclick = () => { if (!m) return; const W = o.w * o.s; m.base = Math.round((o.base - o.y) / o.s); m.poly = o.poly.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]); if (o.flip) m.poly.reverse(); m.pied = o.pied ? o.pied.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]) : null; if (m.pied && o.flip) m.pied.reverse(); m.fade = o.fade; m.edited = true; if (m.isNew) idbPut('models', m.src, modelRecord(m)); toast('Modèle « ' + m.nom + ' » mis à jour'); };
     return;
   }
   if (sel.k === 'porte') {
@@ -545,7 +558,7 @@ let impFiles = [];
 function askImport(files) { impFiles = files; $('impList').textContent = files.map(f => f.name).join(', '); $('dlgImp').showModal(); }
 $('fileImp').onchange = e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) askImport(f); };
 const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'objet';
-function modelRecord(m) { return { src: m.src, nom: m.nom, cat: m.cat, s: m.s, base: m.base, poly: m.poly, fade: m.fade, blob: m.blob }; }
+function modelRecord(m) { return { src: m.src, nom: m.nom, cat: m.cat, s: m.s, base: m.base, poly: m.poly, pied: m.pied || null, fade: m.fade, blob: m.blob }; }
 $('impGo').onclick = async () => {
   const cat = $('impCat').value, s = +$('impScale').value, fade = $('impFade').checked; let last = null;
   for (const f of impFiles) {
@@ -629,7 +642,7 @@ $('bExport').onclick = async () => {
   for (const m of MODELS.values()) {
     if (!(m.isNew || m.edited)) continue;
     if (m.isNew && m.blob) z.file(m.src, m.blob);
-    const rec = { src: m.src, nom: m.nom, cat: m.cat, s: m.s, base: m.base, poly: m.poly, fade: !!m.fade }, i = lib.findIndex(x => x.src === m.src);
+    const rec = { src: m.src, nom: m.nom, cat: m.cat, s: m.s, base: m.base, poly: m.poly, pied: m.pied || undefined, fade: !!m.fade }, i = lib.findIndex(x => x.src === m.src);
     if (i >= 0) lib[i] = rec; else lib.push(rec);
   }
   z.file('assets/cartes/objets/index.json', JSON.stringify(lib, null, 1));

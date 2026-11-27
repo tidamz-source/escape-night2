@@ -15,11 +15,19 @@ function loadCartes() {
 }
 
 // un objet posé (bâtiment, arbre, rocher) : trié à sa ligne de pied, transparent quand on passe derrière
+// la ligne de pied peut être brisée (o.pied) : le tri se fait à la hauteur de la ligne sous le héros
+function carteFootY(o, x) {
+  const P = o.pied && o.pied.length >= 2 ? [...o.pied].sort((a, b) => a[0] - b[0]) : null; if (!P) return o.base;
+  if (x <= P[0][0]) return P[0][1];
+  for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return x1 === x0 ? Math.max(y0, y1) : y0 + (y1 - y0) * (x - x0) / (x1 - x0); }
+  return P[P.length - 1][1];
+}
 class CarteObj {
   constructor(o) { this.o = o; this.x = o.x + o.w * o.s / 2; this.y = o.base; this.a = 1; }
   update(dt, G) {
-    const o = this.o, P = G.player; if (!o.fade || !P) return;
-    const w = o.w * o.s, h = o.h * o.s, behind = P.y < o.base && P.x > o.x && P.x < o.x + w && P.y > o.y + 6 && P.y - 26 < o.base;
+    const o = this.o, P = G.player; if (!P) return;
+    const fy = carteFootY(o, P.x); this.y = fy; if (!o.fade) return;
+    const w = o.w * o.s, behind = P.y < fy && P.x > o.x && P.x < o.x + w && P.y > o.y + 6 && P.y - 26 < fy;
     this.a = lerp(this.a, behind ? 0.45 : 1, Math.min(1, dt * 10));
   }
   draw() {
