@@ -9,7 +9,7 @@ function loadCartes() {
     .then(ids => Promise.all(ids.map(id => fetch(`assets/cartes/${id}/carte.json?v=${VERSION}`).then(r => r.json()).then(C => {
       CARTES[id] = C;
       const jobs = [loadImage('carte_' + id, `assets/cartes/${id}/${C.fond}?v=${VERSION}`)], seen = new Set();
-      for (const src of [...(C.objets || []).map(o => o.src), ...(C.ponts || []).flatMap(p => [p.bg, p.fg])]) if (src && !seen.has(src)) { seen.add(src); jobs.push(loadImage('cobj_' + src, `${src}?v=${VERSION}`)); }
+      for (const src of [...(C.objets || []).map(o => o.src), ...(C.ponts || []).flatMap(p => [p.bg, p.fg, p.leve])]) if (src && !seen.has(src)) { seen.add(src); jobs.push(loadImage('cobj_' + src, `${src}?v=${VERSION}`)); }
       return Promise.all(jobs);
     }).catch(e => console.warn('carte illisible', id, e)))));
 }
@@ -41,7 +41,7 @@ class CarteObj {
 }
 
 // ---------- pont-levis ----------
-// fermé : le pont levé est peint sur le fond, la zone reste de l'eau.
+// fermé : l'image du pont levé (leve), la zone reste de l'eau.
 // ouvert (SAVE[drapeau]) : le tablier (bg) passe sous le héros, les piliers (fg) par-dessus ; la zone devient praticable.
 // À l'ouverture sur place, le tablier s'abaisse depuis sa charnière.
 const pontOpen = p => !p.drapeau || !!SAVE[p.drapeau];
@@ -55,7 +55,11 @@ class PontBg {
       if (this.k >= 1) { this.anim = false; SFX.door(); G.shake = 0.3; G.parts.burst(this.x, p.y + p.h * p.s / 2, 18, { c: ['#cfe0ff', '#fff', '#8a6a4a'], life: 0.6, r: 2, up: 30 }); }
     }
   }
-  draw() { pontDraw(this.p, this.p.bg, this.k); }
+  draw() {
+    const p = this.p, im = p.leve && IMG['cobj_' + p.leve];
+    if (im && this.k < 1) { ctx.globalAlpha = 1 - this.k; ctx.drawImage(im, p.x, p.y, p.w * p.s, p.h * p.s); ctx.globalAlpha = 1; }
+    pontDraw(p, p.bg, this.k);
+  }
 }
 class PontFg {
   constructor(bg) { this.bg = bg; this.p = bg.p; this.x = bg.x; this.y = 1e9; } // toujours devant le héros

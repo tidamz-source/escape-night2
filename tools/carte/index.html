@@ -77,6 +77,7 @@ dialog .list .btn small { color: var(--mute) }
     <span class="doc" id="docname">aucune carte</span>
     <span class="sp"></span>
     <button class="btn" id="bUndo" title="Ctrl+Z">↶</button><button class="btn" id="bRedo" title="Ctrl+Maj+Z">↷</button>
+    <button class="btn" id="bFondTop">Fond…</button>
     <button class="btn" id="bOpen">Ouvrir…</button>
     <button class="btn" id="bNew">Nouvelle</button>
     <button class="btn pri" id="bExport">Exporter le zip</button>
@@ -120,7 +121,7 @@ dialog .list .btn small { color: var(--mute) }
 <input type="file" id="fileImp" accept="image/png,image/*" multiple hidden>
 <input type="file" id="fileFond" accept="image/*" hidden>
 <input type="file" id="fileVis" accept="image/png,image/*" hidden>
-<input type="file" id="filePontBg" accept="image/*" hidden><input type="file" id="filePontFg" accept="image/*" hidden><input type="file" id="filePontRepl" accept="image/*" hidden>
+<input type="file" id="filePontLeve" accept="image/*" hidden><input type="file" id="filePontBg" accept="image/*" hidden><input type="file" id="filePontFg" accept="image/*" hidden><input type="file" id="filePontRepl" accept="image/*" hidden>
 <input type="file" id="fileZip" accept=".zip" hidden>
 
 <script>
@@ -278,7 +279,7 @@ function draw() {
   cx.imageSmoothingEnabled = view.z < 2;
   const MW = S.cols * TS, MH = S.rows * TS;
   if (FOND) cx.drawImage(FOND, 0, 0, MW, MH); else { cx.fillStyle = '#2a3a2a'; cx.fillRect(0, 0, MW, MH); }
-  if (pontOuvert) for (const p of S.ponts) drawPontImg(p, p.bg);
+  for (const p of S.ponts) drawPontImg(p, pontOuvert ? p.bg : p.leve);
   const col = $('vCol').checked, test = mode === 'test';
   // sol : murs et eau
   if (col && !test || mode === 'sol') {
@@ -420,10 +421,12 @@ function segDist(p, a, b) { const [ax, ay] = a, [bx, by] = b, dx = bx - ax, dy =
 // glisser un modèle depuis la bibliothèque
 cv.addEventListener('dragover', e => e.preventDefault());
 cv.addEventListener('drop', e => {
-  e.preventDefault(); if (!S) return;
+  e.preventDefault();
   const src = e.dataTransfer.getData('text/x-model');
-  if (src && MODELS.get(src)) { setMode('obj'); commit(); const o = placeModel(MODELS.get(src), evW(e).x, evW(e).y, e); sel = { k: 'obj', o }; renderInsp(); return; }
-  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')); if (files.length) askImport(files);
+  if (src && MODELS.get(src) && S) { setMode('obj'); commit(); const o = placeModel(MODELS.get(src), evW(e).x, evW(e).y, e); sel = { k: 'obj', o }; renderInsp(); return; }
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(f.name)); if (!files.length) return;
+  if (files.length === 1 && (!S || !FOND || confirm('Utiliser cette image comme fond de carte ?\n\nAnnuler : l\'ajouter à la bibliothèque d\'objets.'))) return setFond(files[0]);
+  askImport(files);
 });
 
 // ---------- clavier ----------
@@ -454,7 +457,7 @@ const HINTS = {
   sortie: 'Trace un rectangle là où le perso quitte la carte (bord, grotte, escalier…), puis choisis la destination.',
   arrivee: 'Clique pour poser un point d\'arrivée (là où le perso apparaît en venant d\'ailleurs). L\'étoile marque le départ par défaut.',
   item: 'Choisis un type puis clique sur la carte.',
-  pont: 'Crée un pont avec ses deux images (tablier dessous, piliers dessus), place-le sur la rivière, puis trace la zone qui devient praticable quand il est ouvert (Maj + glisser, ou le bouton à gauche).',
+  pont: 'Crée un pont avec ses trois images (levé, tablier baissé dessous, piliers baissés dessus), place-le sur la rivière, puis trace la zone qui devient praticable quand il est ouvert (Maj + glisser, ou le bouton à gauche).',
   test: 'Flèches ou ZQSD pour marcher. Clique pour téléporter le perso. Les toits et feuillages s\'effacent quand tu passes derrière.',
 };
 function renderLeft() {
@@ -484,11 +487,11 @@ function renderLeft() {
   }
   if (mode === 'item') { L.insertAdjacentHTML('beforeend', `<div class="sect">Type</div><div class="row" id="bI"></div>`); for (const [t, n] of ITEM_TYPES) { const b = document.createElement('button'); b.className = 'btn' + (itemType === t ? ' on' : ''); b.textContent = n; b.onclick = () => { itemType = t; renderLeft(); }; $('bI').appendChild(b); } }
   if (mode === 'pont') {
-    L.insertAdjacentHTML('beforeend', `<div class="sect">Ponts</div><div class="row"><button class="btn" id="bPontNew" style="flex:1">+ Nouveau pont (2 PNG)</button></div><div class="row"><button class="btn${pontZone ? ' on' : ''}" id="bPontZone" style="flex:1">Tracer la zone praticable</button></div>`);
-    $('bPontNew').onclick = () => { toast('1/2 : le tablier (passe sous le perso)'); $('filePontBg').click(); };
+    L.insertAdjacentHTML('beforeend', `<div class="sect">Ponts</div><div class="row"><button class="btn" id="bPontNew" style="flex:1">+ Nouveau pont (3 PNG)</button></div><div class="row"><button class="btn${pontZone ? ' on' : ''}" id="bPontZone" style="flex:1">Tracer la zone praticable</button></div>`);
+    $('bPontNew').onclick = () => { toast('1/3 : le pont levé (fermé)'); $('filePontLeve').click(); };
     $('bPontZone').onclick = () => { if (!S.ponts.length) return toast('Crée d\'abord un pont'); if (!sel || sel.k !== 'pont') sel = { k: 'pont', o: S.ponts[S.ponts.length - 1] }; pontZone = !pontZone; renderLeft(); renderInsp(); };
   }
-  if (mode === 'test' || mode === 'pont') L.insertAdjacentHTML('beforeend', `<label class="chk"><input type="checkbox" id="vPont"${pontOuvert ? ' checked' : ''}> Montrer les ponts ouverts</label>`), $('vPont').onchange = e => { pontOuvert = e.target.checked; };
+  if (mode === 'test' || mode === 'pont') L.insertAdjacentHTML('beforeend', `<label class="chk"><input type="checkbox" id="vPont"${pontOuvert ? ' checked' : ''}> Montrer les ponts ouverts (décoché : levés)</label>`), $('vPont').onchange = e => { pontOuvert = e.target.checked; };
   if (mode === 'test') { L.insertAdjacentHTML('beforeend', `<div class="sect">Test</div><div class="row"><button class="btn" id="bRestart">Revenir au départ</button></div>`); $('bRestart').onclick = heroStart; }
 }
 let libCat = 'Tout';
@@ -579,12 +582,12 @@ function renderInsp() {
       `<div class="row">${fld('X', `<input id="fX" type="number" value="${o.x}">`)}${fld('Y', `<input id="fY" type="number" value="${o.y}">`)}</div>` +
       `<div class="sect">Zone praticable</div><p class="small">${o.zone ? `cases ${o.zone.tx},${o.zone.ty} · ${o.zone.tw}×${o.zone.th}` : 'pas encore tracée'}. Fermé, ces cases gardent ce que tu as peint en mode Sol (eau) ; ouvert, elles deviennent du sol.</p>` +
       `<div class="row"><button class="btn${pontZone ? ' on' : ''}" id="bZ">Tracer la zone</button></div>` +
-      `<div class="sect">Images</div><div class="row"><button class="btn" id="bRBg">Changer le tablier…</button><button class="btn" id="bRFg">Changer les piliers…</button></div>` +
+      `<div class="sect">Images</div><div class="row"><button class="btn" id="bRLeve">Changer le pont levé…</button><button class="btn" id="bRBg">Changer le tablier…</button><button class="btn" id="bRFg">Changer les piliers…</button></div>` +
       `<div class="row"><button class="btn dan" id="bDel">Supprimer</button></div>`;
     bindCommit('fDrap'); bind('fDrap', v => { o.drapeau = v.trim(); }); bind('fCh', v => { commit(); o.charniere = v; }, 'change'); bind('fPs', v => { commit(); o.s = +v; }, 'change');
     bind('fX', v => { o.x = +v; }); bind('fY', v => { o.y = +v; });
     $('bZ').onclick = () => { pontZone = !pontZone; renderLeft(); renderInsp(); };
-    $('bRBg').onclick = () => { pontRepl = { p: o, k: 'bg' }; $('filePontRepl').click(); }; $('bRFg').onclick = () => { pontRepl = { p: o, k: 'fg' }; $('filePontRepl').click(); };
+    $('bRLeve').onclick = () => { pontRepl = { p: o, k: 'leve' }; $('filePontRepl').click(); }; $('bRBg').onclick = () => { pontRepl = { p: o, k: 'bg' }; $('filePontRepl').click(); }; $('bRFg').onclick = () => { pontRepl = { p: o, k: 'fg' }; $('filePontRepl').click(); };
     $('bDel').onclick = delSel; return;
   }
   if (sel.k === 'item') {
@@ -629,22 +632,23 @@ $('impGo').onclick = async () => {
 async function toPng(f) { const i = await blobToImg(f), c = document.createElement('canvas'); c.width = i.width; c.height = i.height; c.getContext('2d').drawImage(i, 0, 0); return new Promise(ok => c.toBlob(ok, 'image/png')); }
 
 // ---------- ponts ----------
-let pontOuvert = true, pontZone = false, pontNewBg = null, pontRepl = null;
+let pontOuvert = true, pontZone = false, pontNewBg = null, pontNewLeve = null, pontRepl = null;
+$('filePontLeve').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; pontNewLeve = await pontModel(f, 'Pont (levé)'); toast('2/3 : le tablier baissé (passe sous le perso)'); $('filePontBg').click(); };
 function drawPontImg(p, src) { const m = MODELS.get(src); if (m) cx.drawImage(m.img, p.x, p.y, p.w * p.s, p.h * p.s); }
 async function pontModel(f, nom) {
   const blob = f.type === 'image/png' ? f : await toPng(f); let base = slug(f.name), src = `assets/cartes/objets/${base}.png`, n = 2; while (MODELS.has(src)) src = `assets/cartes/objets/${base}_${n++}.png`;
   const m = await addModel({ src, nom, cat: 'Ponts', s: 0.5, fade: false, url: URL.createObjectURL(blob), blob, isNew: true }); await idbPut('models', src, modelRecord(m)); return m;
 }
-$('filePontBg').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; pontNewBg = await pontModel(f, 'Pont (tablier)'); toast('2/2 : les piliers (passent devant le perso)'); $('filePontFg').click(); };
+$('filePontBg').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; pontNewBg = await pontModel(f, 'Pont (tablier)'); toast('3/3 : les piliers du pont baissé (passent devant le perso)'); $('filePontFg').click(); };
 $('filePontFg').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f || !pontNewBg || !S) return;
-  const fg = await pontModel(f, 'Pont (piliers)'), d = devicePixelRatio || 1, c = toW(cv.width / d / 2, cv.height / d / 2), bg = pontNewBg; pontNewBg = null;
-  commit(); const p = { id: uid(), bg: bg.src, fg: fg.src, s: 0.5, w: bg.img.width, h: bg.img.height, x: 0, y: 0, drapeau: 'drawbridge', charniere: 'droite', zone: null };
+  const fg = await pontModel(f, 'Pont (piliers)'), d = devicePixelRatio || 1, c = toW(cv.width / d / 2, cv.height / d / 2), bg = pontNewBg; pontNewBg = null; pontNewLeve = pontNewLeve;
+  commit(); const p = { id: uid(), leve: pontNewLeve ? pontNewLeve.src : null, bg: bg.src, fg: fg.src, s: 0.5, w: bg.img.width, h: bg.img.height, x: 0, y: 0, drapeau: 'drawbridge', charniere: 'droite', zone: null };
   p.x = Math.round((c.x - p.w * p.s / 2) / 8) * 8; p.y = Math.round((c.y - p.h * p.s / 2) / 8) * 8;
   if (fg.img.width !== bg.img.width || fg.img.height !== bg.img.height) toast('Attention : les deux images n\'ont pas la même taille');
-  S.ponts.push(p); sel = { k: 'pont', o: p }; renderLeft(); renderInsp();
+  pontNewLeve = null; S.ponts.push(p); sel = { k: 'pont', o: p }; renderLeft(); renderInsp();
 };
-$('filePontRepl').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f || !pontRepl) return; const m = await pontModel(f, pontRepl.k === 'bg' ? 'Pont (tablier)' : 'Pont (piliers)'); commit(); pontRepl.p[pontRepl.k] = m.src; if (pontRepl.k === 'bg') { pontRepl.p.w = m.img.width; pontRepl.p.h = m.img.height; } pontRepl = null; renderInsp(); };
+$('filePontRepl').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f || !pontRepl) return; const m = await pontModel(f, { bg: 'Pont (tablier)', fg: 'Pont (piliers)', leve: 'Pont (levé)' }[pontRepl.k]); commit(); pontRepl.p[pontRepl.k] = m.src; if (pontRepl.k === 'bg') { pontRepl.p.w = m.img.width; pontRepl.p.h = m.img.height; } pontRepl = null; renderInsp(); };
 
 // ---------- mettre à jour le visuel d'un modèle ----------
 // nouvelle image : les réglages (pied, collision) sont recalés à la nouvelle taille,
@@ -673,13 +677,15 @@ $('fileVis').onchange = async e => {
 };
 
 // ---------- fond ----------
-$('fileFond').onchange = async e => {
-  const f = e.target.files[0]; e.target.value = ''; if (!f || !S) return;
-  const img = await blobToImg(f); commit(); FOND = img; fondBlob = f.type === 'image/png' ? f : await toPng(f);
+$('fileFond').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (f) setFond(f); };
+async function setFond(f) {
+  let img; try { img = await blobToImg(f); } catch (_) { return toast('Image illisible : ' + f.name); }
+  if (!S) { const c = Math.round(img.width / 32), r = Math.round(img.height / 32); setDoc(newDoc(slug(f.name), f.name.replace(/\.[^.]+$/, ''), c, r), img, f.type === 'image/png' ? f : await toPng(f)); return toast(`Nouvelle carte ${c}×${r} cases créée avec ce fond`); }
+  commit(); FOND = img; fondBlob = f.type === 'image/png' ? f : await toPng(f);
   const c = Math.round(img.width / 32), r = Math.round(img.height / 32);
   if (c !== S.cols || r !== S.rows) { if (confirmResize(c, r)) resizeDoc(c, r); else toast('Fond étiré à la taille de la carte'); }
-  renderInsp(); autosave();
-};
+  renderInsp(); autosave(); toast('Fond chargé');
+}
 function confirmResize(c, r) { return true; } // la taille suit toujours le fond
 function resizeDoc(c, r) { S.grille = Array.from({ length: r }, (_, y) => Array.from({ length: c }, (_, x) => (S.grille[y] || '')[x] || '.').join('')); S.cols = c; S.rows = r; $('docname').textContent = `${S.name} · ${S.id} · ${c}×${r} cases`; fit(); toast(`Carte réglée sur le fond : ${c}×${r} cases`); }
 
@@ -687,7 +693,7 @@ function resizeDoc(c, r) { S.grille = Array.from({ length: r }, (_, y) => Array.
 $('bNew').onclick = () => { $('nId').value = ''; $('nName').value = ''; $('nFond').value = ''; $('dlgNew').showModal(); };
 $('nGo').onclick = async () => {
   const id = slug($('nId').value || 'carte'), name = $('nName').value || id; let cols = +$('nCols').value || 64, rows = +$('nRows').value || 48, img = null, blob = null;
-  const f = $('nFond').files[0]; if (f) { img = await blobToImg(f); blob = f.type === 'image/png' ? f : await toPng(f); cols = Math.round(img.width / 32); rows = Math.round(img.height / 32); }
+  const f = $('nFond').files[0]; if (f) { try { img = await blobToImg(f); } catch (_) { return toast('Image illisible : ' + f.name); } blob = f.type === 'image/png' ? f : await toPng(f); cols = Math.round(img.width / 32); rows = Math.round(img.height / 32); }
   $('dlgNew').close(); setDoc(newDoc(id, name, cols, rows), img, blob);
 };
 
@@ -706,7 +712,7 @@ $('bOpen').onclick = async () => {
 async function openRepo(id) {
   const C = await fetch(`${ROOT}assets/cartes/${id}/carte.json`, { cache: 'no-store' }).then(r => r.json());
   const blob = await fetch(`${ROOT}assets/cartes/${id}/${C.fond}`, { cache: 'no-store' }).then(r => r.blob());
-  for (const src of (C.ponts || []).flatMap(p => [p.bg, p.fg])) if (!MODELS.has(src)) await addModel({ src, nom: src.split('/').pop(), cat: 'Ponts', s: 0.5, fade: false });
+  for (const src of (C.ponts || []).flatMap(p => [p.bg, p.fg, p.leve]).filter(Boolean)) if (!MODELS.has(src)) await addModel({ src, nom: src.split('/').pop(), cat: 'Ponts', s: 0.5, fade: false });
   for (const o of C.objets) if (!MODELS.has(o.src)) await addModel({ src: o.src, nom: o.src.split('/').pop(), cat: 'Décor', s: o.s, fade: o.fade });
   delete C.fond; setDoc(C, await blobToImg(blob), blob);
 }
@@ -755,6 +761,7 @@ $('bExport').onclick = async () => {
   toast(`carte_${S.id}.zip prêt : envoie-le à Claude`);
 };
 
+$('bFondTop').onclick = () => $('fileFond').click();
 $('bUndo').onclick = doUndo; $('bRedo').onclick = doRedo;
 for (const id of ['vCol', 'vBase', 'vGrid']) $(id).onchange = () => {};
 addEventListener('resize', () => { resize(); });
