@@ -9,7 +9,7 @@ function loadCartes() {
     .then(ids => Promise.all(ids.map(id => fetch(`assets/cartes/${id}/carte.json?v=${VERSION}`).then(r => r.json()).then(C => {
       CARTES[id] = C;
       const jobs = [loadImage('carte_' + id, `assets/cartes/${id}/${C.fond}?v=${VERSION}`)], seen = new Set();
-      for (const o of C.objets || []) if (!seen.has(o.src)) { seen.add(o.src); jobs.push(loadImage('cobj_' + o.src, `${o.src}?v=${VERSION}`)); }
+      for (const src of [...(C.objets || []).map(o => o.src), ...(C.ponts || []).flatMap(p => [p.bg, p.fg])]) if (src && !seen.has(src)) { seen.add(src); jobs.push(loadImage('cobj_' + src, `${src}?v=${VERSION}`)); }
       return Promise.all(jobs);
     }).catch(e => console.warn('carte illisible', id, e)))));
 }
@@ -40,6 +40,42 @@ class CarteObj {
   }
 }
 
+// ---------- pont-levis ----------
+// fermé : le pont levé est peint sur le fond, la zone reste de l'eau.
+// ouvert (SAVE[drapeau]) : le tablier (bg) passe sous le héros, les piliers (fg) par-dessus ; la zone devient praticable.
+// À l'ouverture sur place, le tablier s'abaisse depuis sa charnière.
+const pontOpen = p => !p.drapeau || !!SAVE[p.drapeau];
+class PontBg {
+  constructor(p) { this.p = p; this.ground = true; this.x = p.x + p.w * p.s / 2; this.y = p.y; this.k = pontOpen(p) ? 1 : 0; this.anim = false; }
+  update(dt, G) {
+    const p = this.p;
+    if (pontOpen(p) && this.k < 1) {
+      if (!this.anim) { this.anim = true; SFX.gate(); }
+      this.k = Math.min(1, this.k + dt / 1.6); G.shake = Math.max(G.shake || 0, 0.06);
+      if (this.k >= 1) { this.anim = false; SFX.door(); G.shake = 0.3; G.parts.burst(this.x, p.y + p.h * p.s / 2, 18, { c: ['#cfe0ff', '#fff', '#8a6a4a'], life: 0.6, r: 2, up: 30 }); }
+    }
+  }
+  draw() { pontDraw(this.p, this.p.bg, this.k); }
+}
+class PontFg {
+  constructor(bg) { this.bg = bg; this.p = bg.p; this.x = bg.x; this.y = 1e9; } // toujours devant le héros
+  update() {}
+  draw() { if (this.bg.k > 0.85) { ctx.globalAlpha = (this.bg.k - 0.85) / 0.15; pontDraw(this.p, this.p.fg, 1); ctx.globalAlpha = 1; } }
+}
+function pontDraw(p, src, k) {
+  const im = src && IMG['cobj_' + src]; if (!im || k <= 0) return;
+  const w = p.w * p.s, h = p.h * p.s, side = p.charniere || 'droite', e = k * k * (3 - 2 * k);
+  ctx.save();
+  if (side === 'droite' || side === 'gauche') { const ww = w * e, x = side === 'droite' ? p.x + w - ww : p.x; ctx.drawImage(im, side === 'droite' ? im.width * (1 - e) : 0, 0, im.width * e, im.height, x, p.y, ww, h); }
+  else { const hh = h * e, y = side === 'bas' ? p.y + h - hh : p.y; ctx.drawImage(im, 0, side === 'bas' ? im.height * (1 - e) : 0, im.width, im.height * e, p.x, y, w, hh); }
+  ctx.restore();
+}
+function pontSync(A, C) { // les cases du pont : praticables quand il est ouvert
+  const g = A.g;
+  for (const p of C.ponts || []) { const z = p.zone; if (!z) continue; for (let ty = z.ty; ty < z.ty + z.th; ty++) for (let tx = z.tx; tx < z.tx + z.tw; tx++) if (g[ty] && g[ty][tx] != null) g[ty][tx] = pontOpen(p) ? 'b' : C.grille[ty][tx]; }
+  A.fine = carteFine(C, g);
+}
+
 function inPoly(px, py, P) {
   let c = false;
   for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) c = !c; }
@@ -68,6 +104,8 @@ function carteArea(C, old) {
   if (C.name) A.name = C.name;
   A.paint = 'carte_' + C.id; A.bushSpots = []; A.props = [];
   A.fine = carteFine(C, g); A.fineTS = CARTE_FTS;
+  A.syncTiles = () => pontSync(A, C); // appelé par la cible du pont-levis
+  pontSync(A, C);
   for (const a of C.arrivees || []) ZONE_ARRIVE[a.nom] = { x: a.x, y: a.y, dir: a.dir || 'down' };
   const dep = (C.arrivees || []).find(a => a.nom === C.depart) || (C.arrivees || [])[0];
   if (dep) A.start = { x: dep.x, y: dep.y, dir: dep.dir || 'down' };
@@ -77,7 +115,9 @@ function carteArea(C, old) {
   const sp0 = old && old.spawn;
   A.spawn = function () {
     if (sp0) sp0.call(this); else this.ents = [];
-    this.ents = this.ents.filter(e => !(e instanceof Overhead) && !e.isHouse);
+    this.ents = this.ents.filter(e => !(e instanceof Overhead) && !e.isHouse && !(typeof PaintedBridge !== 'undefined' && e instanceof PaintedBridge));
+    pontSync(this, C);
+    for (const p of C.ponts || []) { const bg = new PontBg(p); this.ents.push(bg, new PontFg(bg)); }
     for (const h of this.houses) this.ents.push(Object.assign(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)), { hid: h.id }));
     for (const o of C.objets || []) this.ents.push(new CarteObj(o));
     for (const it of C.items || []) {
@@ -87,7 +127,6 @@ function carteArea(C, old) {
       else if (it.type === 'panneau') this.ents.push(new Sign(it.x, it.y, [{ text: it.texte || '…' }], it.style));
     }
   };
-  if (old && old.syncTiles) A.syncTiles = () => {}; // l'ancien pont-levis peint n'existe plus sur une carte composée
   return A;
 }
 function applyCartes(areas) { for (const id in CARTES) { try { areas[id] = carteArea(CARTES[id], areas[id]); } catch (e) { console.warn('carte', id, e); } } }

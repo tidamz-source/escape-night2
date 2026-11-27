@@ -43,6 +43,9 @@ aside { background: var(--panel); overflow-y: auto; min-height: 0 }
 .lib .it.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) }
 .lib .it img { max-width: 92%; max-height: 74%; image-rendering: pixelated; pointer-events: none }
 .lib .it span { position: absolute; bottom: 1px; left: 2px; right: 2px; font: 9px var(--f-mono); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center }
+.lib .it .rm { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 5px; border: 0; background: rgba(18,16,25,.85); color: var(--danger); font-size: 11px; line-height: 18px; padding: 0; cursor: pointer; opacity: 0; transition: opacity .15s }
+.lib .it:hover .rm, .lib .it:focus-within .rm { opacity: 1 }
+@media (hover: none) { .lib .it .rm { opacity: 1 } }
 .lib .it.new::after { content: "nouveau"; position: absolute; top: 2px; right: 2px; font: 8px var(--f-mono); background: var(--ok); color: #062; padding: 0 3px; border-radius: 3px }
 #libcat { width: 100% }
 #stage { position: relative; overflow: hidden; background: #0b0a10; min-width: 0; min-height: 0 }
@@ -91,7 +94,7 @@ dialog .list .btn small { color: var(--mute) }
     <div class="legend" style="margin-top:8px">
       <div><i style="background:var(--c-wall)"></i>Mur / obstacle</div><div><i style="background:var(--c-water)"></i>Eau</div>
       <div><i style="background:var(--c-poly)"></i>Collision d'objet</div><div><i style="background:var(--c-base)"></i>Ligne de pied</div>
-      <div><i style="background:var(--c-door)"></i>Porte</div><div><i style="background:var(--c-exit)"></i>Sortie</div><div><i style="background:var(--c-arr)"></i>Arrivée</div>
+      <div><i style="background:var(--c-door)"></i>Porte</div><div><i style="background:var(--c-exit)"></i>Sortie</div><div><i style="background:var(--c-arr)"></i>Arrivée</div><div><i style="background:#ff9c1a"></i>Pont</div>
     </div>
   </aside>
   <main id="stage"><canvas id="cv"></canvas><div id="hud"></div><div id="toast"></div></main>
@@ -117,6 +120,7 @@ dialog .list .btn small { color: var(--mute) }
 <input type="file" id="fileImp" accept="image/png,image/*" multiple hidden>
 <input type="file" id="fileFond" accept="image/*" hidden>
 <input type="file" id="fileVis" accept="image/png,image/*" hidden>
+<input type="file" id="filePontBg" accept="image/*" hidden><input type="file" id="filePontFg" accept="image/*" hidden><input type="file" id="filePontRepl" accept="image/*" hidden>
 <input type="file" id="fileZip" accept=".zip" hidden>
 
 <script>
@@ -134,7 +138,7 @@ const REPO_MODELS = [
   ['assets/props/table.png', 'Table', 'Décor'], ['assets/props/campfire.png', 'Feu de camp', 'Décor'], ['assets/props/tent_b.png', 'Tente bleue', 'Bâtiments'], ['assets/props/tent_r.png', 'Tente rouge', 'Bâtiments'], ['assets/props/tent_y.png', 'Tente jaune', 'Bâtiments'],
   ['assets/deco/windmill.png', 'Moulin', 'Bâtiments'], ['assets/deco/lighthouse.png', 'Phare', 'Bâtiments'], ['assets/deco/shrine.png', 'Sanctuaire', 'Bâtiments'], ['assets/deco/glowshroom.png', 'Champignon', 'Décor'],
 ];
-const MODES = [['obj', 'Objets', '1'], ['sol', 'Sol', '2'], ['porte', 'Portes', '3'], ['sortie', 'Sorties', '4'], ['arrivee', 'Arrivées', '5'], ['item', 'Coffres…', '6'], ['test', 'Tester', '7']];
+const MODES = [['obj', 'Objets', '1'], ['sol', 'Sol', '2'], ['porte', 'Portes', '3'], ['sortie', 'Sorties', '4'], ['arrivee', 'Arrivées', '5'], ['item', 'Coffres…', '6'], ['test', 'Tester', '7'], ['pont', 'Ponts', '8']];
 const ITEM_TYPES = [['coffre', 'Coffre'], ['pot', 'Pot'], ['buisson', 'Buisson'], ['panneau', 'Panneau']];
 
 // ---------- état ----------
@@ -176,21 +180,33 @@ async function addModel(m) {
   if (m.base == null || !m.poly) Object.assign(m, defaultFoot(m.img, m.s), { base: m.base ?? defaultFoot(m.img, m.s).base });
   MODELS.set(m.src, m); return m;
 }
+// éléments retirés de la bibliothèque (ce navigateur) ; ceux du dépôt sortent aussi de assets/cartes/objets/index.json à l'export
+let REMOVED = new Set(); try { REMOVED = new Set(JSON.parse(localStorage.getItem('atelier-carte-retires') || '[]')); } catch (_) {}
+function saveRemoved() { try { localStorage.setItem('atelier-carte-retires', JSON.stringify([...REMOVED])); } catch (_) {} }
+async function removeModel(m) {
+  const n = S ? S.objets.filter(o => o.src === m.src).length : 0;
+  if (!confirm(`Retirer « ${m.nom} » de la bibliothèque ?` + (n ? `\n\nIl est posé ${n} fois sur cette carte : ces exemplaires seront supprimés aussi.` : ''))) return;
+  if (n) { commit(); S.objets = S.objets.filter(o => o.src !== m.src); if (sel && sel.k === 'obj' && sel.o.src === m.src) sel = null; }
+  MODELS.delete(m.src); if (placing === m) placing = null;
+  if (m.isNew) await idbDel('models', m.src);
+  REMOVED.add(m.src); saveRemoved();
+  renderLeft(); renderInsp(); autosave(); toast(`« ${m.nom} » retiré`);
+}
 async function loadLibrary() {
-  for (const [src, nom, cat] of REPO_MODELS) await addModel({ src, nom, cat, s: 0.5, fade: cat === 'Arbres' || cat === 'Bâtiments' });
-  try { const list = await fetch(ROOT + 'assets/cartes/objets/index.json', { cache: 'no-store' }).then(r => r.json()); for (const m of list) await addModel(Object.assign({}, m)); } catch (_) {}
+  for (const [src, nom, cat] of REPO_MODELS) if (!REMOVED.has(src)) await addModel({ src, nom, cat, s: 0.5, fade: cat === 'Arbres' || cat === 'Bâtiments' });
+  try { const list = await fetch(ROOT + 'assets/cartes/objets/index.json', { cache: 'no-store' }).then(r => r.json()); for (const m of list) if (!REMOVED.has(m.src)) await addModel(Object.assign({}, m)); } catch (_) {}
   const local = await idbAll('models').catch(() => ({}));
-  for (const k in local) { const m = local[k]; await addModel(Object.assign({}, m, { url: URL.createObjectURL(m.blob), isNew: true })); }
+  for (const k in local) { const m = local[k]; REMOVED.delete(k); await addModel(Object.assign({}, m, { url: URL.createObjectURL(m.blob), isNew: true })); }
   renderLeft();
 }
 function modelOf(o) { return MODELS.get(o.src); }
 
 // ---------- carte ----------
 function blankGrid(cols, rows) { return Array.from({ length: rows }, () => '.'.repeat(cols)); }
-function newDoc(id, name, cols, rows) { return { id, name, cols, rows, dark: 0.45, grille: blankGrid(cols, rows), objets: [], portes: [], sorties: [], arrivees: [], items: [], depart: '' }; }
+function newDoc(id, name, cols, rows) { return { id, name, cols, rows, dark: 0.45, ponts: [], grille: blankGrid(cols, rows), objets: [], portes: [], sorties: [], arrivees: [], items: [], depart: '' }; }
 function setDoc(doc, fondImg, blob) {
   S = doc; FOND = fondImg; fondBlob = blob || null; sel = null; undo = []; redo = [];
-  for (const k of ['objets', 'portes', 'sorties', 'arrivees', 'items']) S[k] = S[k] || [];
+  for (const k of ['objets', 'portes', 'sorties', 'arrivees', 'items', 'ponts']) S[k] = S[k] || [];
   $('docname').textContent = `${S.name || S.id} · ${S.id} · ${S.cols}×${S.rows} cases`;
   fit(); renderLeft(); renderInsp(); autosave();
 }
@@ -220,7 +236,8 @@ function flipObj(o) { const W = o.w * o.s; o.flip = !o.flip; o.poly = o.poly.map
 const SOLID = new Set(['#', '~', 'W', 's', 'k', 'v', 'P', 'T', 'h', 'q']);
 function inPoly(px, py, P) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) c = !c; } return c; }
 function solidAt(x, y) { // pour le test : sol + polygones
-  const t = (S.grille[Math.floor(y / TS)] || '')[Math.floor(x / TS)];
+  const tx = Math.floor(x / TS), ty = Math.floor(y / TS), t = (S.grille[ty] || '')[tx];
+  if (pontOuvert) for (const p of S.ponts) { const z = p.zone; if (z && tx >= z.tx && tx < z.tx + z.tw && ty >= z.ty && ty < z.ty + z.th) { for (const o of S.objets) if (o.poly.length > 2 && inPoly(x, y, o.poly)) return true; return false; } }
   if (t == null || SOLID.has(t)) return true;
   for (const o of S.objets) if (o.poly.length > 2 && inPoly(x, y, o.poly)) return true;
   return false;
@@ -261,6 +278,7 @@ function draw() {
   cx.imageSmoothingEnabled = view.z < 2;
   const MW = S.cols * TS, MH = S.rows * TS;
   if (FOND) cx.drawImage(FOND, 0, 0, MW, MH); else { cx.fillStyle = '#2a3a2a'; cx.fillRect(0, 0, MW, MH); }
+  if (pontOuvert) for (const p of S.ponts) drawPontImg(p, p.bg);
   const col = $('vCol').checked, test = mode === 'test';
   // sol : murs et eau
   if (col && !test || mode === 'sol') {
@@ -287,6 +305,8 @@ function draw() {
     if ($('vBase').checked) for (const o of S.objets) { cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 1.5; cx.setLineDash([4 * lw, 3 * lw]); cx.beginPath(); piedOf(o).forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.stroke(); cx.setLineDash([]); }
   }
   if ($('vGrid').checked) { cx.strokeStyle = 'rgba(255,255,255,.12)'; cx.lineWidth = lw; cx.beginPath(); for (let x = 0; x <= S.cols; x++) { cx.moveTo(x * TS, 0); cx.lineTo(x * TS, MH); } for (let y = 0; y <= S.rows; y++) { cx.moveTo(0, y * TS); cx.lineTo(MW, y * TS); } cx.stroke(); }
+  if (pontOuvert) for (const p of S.ponts) drawPontImg(p, p.fg); // premier plan : toujours devant le héros
+  if (!test) for (const p of S.ponts) { const W = p.w * p.s, H = p.h * p.s; cx.strokeStyle = '#ff9c1a'; cx.lineWidth = lw * 2; cx.setLineDash([6 * lw, 4 * lw]); cx.strokeRect(p.x, p.y, W, H); cx.setLineDash([]); if (p.zone) { const z = p.zone; cx.fillStyle = 'rgba(255,156,26,.22)'; cx.fillRect(z.tx * TS, z.ty * TS, z.tw * TS, z.th * TS); cx.strokeStyle = '#ff9c1a'; cx.strokeRect(z.tx * TS, z.ty * TS, z.tw * TS, z.th * TS); } label('pont · ' + (p.drapeau || 'toujours ouvert') + ' · charnière ' + (p.charniere || 'droite'), p.x, p.y - 14 / view.z, '#ff9c1a'); }
   // portes, sorties, arrivées, coffres
   for (const s of S.sorties) { cx.fillStyle = 'rgba(255,225,74,.28)'; cx.fillRect(s.tx * TS, s.ty * TS, s.tw * TS, s.th * TS); cx.strokeStyle = '#ffe14a'; cx.lineWidth = lw * 2; cx.strokeRect(s.tx * TS, s.ty * TS, s.tw * TS, s.th * TS); label(`→ ${s.vers || '?'}`, s.tx * TS + 2, s.ty * TS + 2, '#ffe14a'); }
   for (const p of S.portes) { const w = (p.w || 3) * TS; cx.fillStyle = 'rgba(95,224,160,.35)'; cx.fillRect(p.x - 9, p.y - 4, 18, 8); cx.strokeStyle = '#5fe0a0'; cx.lineWidth = lw * 2; cx.strokeRect(p.x - 9, p.y - 4, 18, 8); cx.beginPath(); cx.moveTo(p.x, p.y + 6); cx.lineTo(p.x, p.y - 10); cx.lineTo(p.x - 4, p.y - 6); cx.moveTo(p.x, p.y - 10); cx.lineTo(p.x + 4, p.y - 6); cx.stroke(); label('⌂ ' + (p.vers || '?'), p.x - 9, p.y + 6, '#5fe0a0'); }
@@ -302,6 +322,7 @@ function draw() {
     if (sel.k === 'porte') cx.strokeRect(sel.o.x - 12, sel.o.y - 12, 24, 20);
     if (sel.k === 'arrivee') cx.strokeRect(sel.o.x - 7, sel.o.y - 7, 14, 14);
     if (sel.k === 'item') cx.strokeRect(sel.o.x - 8, sel.o.y - 12, 16, 14);
+    if (sel.k === 'pont') cx.strokeRect(sel.o.x - 2, sel.o.y - 2, sel.o.w * sel.o.s + 4, sel.o.h * sel.o.s + 4);
   }
   // aperçus pendant un geste
   if (drag && drag.kind === 'rect' && drag.r) { const r = drag.r; cx.strokeStyle = drag.col || '#ffe14a'; cx.lineWidth = lw * 2; cx.setLineDash([5 * lw, 4 * lw]); cx.strokeRect(r.x * TS, r.y * TS, r.w * TS, r.h * TS); cx.setLineDash([]); }
@@ -354,6 +375,12 @@ cv.addEventListener('pointerdown', e => {
   if (mode === 'sortie') { const s = S.sorties.find(s => w.x >= s.tx * TS && w.x < (s.tx + s.tw) * TS && w.y >= s.ty * TS && w.y < (s.ty + s.th) * TS); if (s) { sel = { k: 'sortie', o: s }; commit(); drag = { kind: 'moveTile', o: s, a: tileOf(w), tx: s.tx, ty: s.ty }; renderInsp(); return; } drag = { kind: 'rect', a: tileOf(w), act: 'sortie' }; return; }
   if (mode === 'porte') { const p = S.portes.find(p => near(p, w, 12)); if (p) { sel = { k: 'porte', o: p }; commit(); drag = { kind: 'movePt', o: p, grid: 'door' }; renderInsp(); return; } commit(); const n = { x: 0, y: 0, w: 3, vers: '', ferme: '' }; doorPos(n, w, e); S.portes.push(n); sel = { k: 'porte', o: n }; renderInsp(); return; }
   if (mode === 'arrivee') { const a = S.arrivees.find(a => near(a, w, 9)); if (a) { sel = { k: 'arrivee', o: a }; commit(); drag = { kind: 'movePt', o: a, grid: 'half' }; renderInsp(); return; } commit(); const n = { nom: S.id + '_from_', x: snap(w.x, e, 8), y: snap(w.y, e, 8), dir: 'down' }; if (!S.arrivees.length) S.depart = n.nom; S.arrivees.push(n); sel = { k: 'arrivee', o: n }; renderInsp(); setTimeout(() => { const i = $('fNom'); if (i) { i.focus(); i.select(); } }, 30); return; }
+  if (mode === 'pont') {
+    if (pontZone || e.shiftKey) { if (!sel || sel.k !== 'pont') { sel = { k: 'pont', o: S.ponts[0] }; } if (sel && sel.o) { drag = { kind: 'rect', a: tileOf(w), act: 'pontzone', col: '#ff9c1a' }; } return; }
+    const p = [...S.ponts].reverse().find(p => w.x >= p.x && w.y >= p.y && w.x < p.x + p.w * p.s && w.y < p.y + p.h * p.s);
+    if (p) { sel = { k: 'pont', o: p }; commit(); drag = { kind: 'movePont', o: p, sx: w.x, sy: w.y, x0: p.x, y0: p.y, z0: p.zone && { ...p.zone } }; renderInsp(); return; }
+    sel = null; renderInsp(); panning = { x: e.clientX, y: e.clientY, ox: view.ox, oy: view.oy }; return;
+  }
   if (mode === 'item') { const it = S.items.find(a => near(a, { x: w.x, y: w.y + 5 }, 9)); if (it) { sel = { k: 'item', o: it }; commit(); drag = { kind: 'movePt', o: it, grid: 'item' }; renderInsp(); return; } commit(); const n = { type: itemType, x: snap(w.x, e, 8), y: snap(w.y, e, 8) }; if (itemType === 'coffre') Object.assign(n, { id: `c_${S.id}_${S.items.length + 1}`, contenu: 'money' }); if (itemType === 'panneau') n.texte = ''; S.items.push(n); sel = { k: 'item', o: n }; renderInsp(); return; }
 });
 cv.addEventListener('pointermove', e => {
@@ -366,6 +393,7 @@ cv.addEventListener('pointermove', e => {
   if (drag.kind === 'pvert') { drag.o.pied[drag.i] = [snap(w.x, e, 4), snap(w.y, e, 4)]; syncBase(drag.o); renderInspSoft(); }
   if (drag.kind === 'paint') paintAt(w, e.buttons === 2);
   if (drag.kind === 'rect') { const a = drag.a, b = tileOf(w); drag.r = { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x) + 1, h: Math.abs(a.y - b.y) + 1 }; }
+  if (drag.kind === 'movePont') { const p = drag.o; let nx = drag.x0 + (w.x - drag.sx), ny = drag.y0 + (w.y - drag.sy); if (snapOn(e)) { nx = Math.round(nx / 8) * 8; ny = Math.round(ny / 8) * 8; } p.x = Math.round(nx); p.y = Math.round(ny); if (drag.z0) { const dtx = Math.round((p.x - drag.x0) / TS), dty = Math.round((p.y - drag.y0) / TS); p.zone = { ...drag.z0, tx: drag.z0.tx + dtx, ty: drag.z0.ty + dty }; } }
   if (drag.kind === 'moveTile') { const b = tileOf(w); drag.o.tx = drag.tx + b.x - drag.a.x; drag.o.ty = drag.ty + b.y - drag.a.y; }
   if (drag.kind === 'movePt') { if (drag.grid === 'door') doorPos(drag.o, w, e); else { drag.o.x = snap(w.x, e, 8); drag.o.y = snap(w.y, e, 8); } renderInspSoft(); }
 });
@@ -375,6 +403,7 @@ cv.addEventListener('pointerup', e => {
   if (drag.kind === 'rect' && drag.r) {
     const r = drag.r;
     if (drag.act === 'sol') { for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) setCell(x, y, e.button === 2 ? '.' : brush.t); }
+    if (drag.act === 'pontzone' && sel && sel.k === 'pont') { commit(); sel.o.zone = { tx: r.x, ty: r.y, tw: r.w, th: r.h }; pontZone = false; renderLeft(); renderInsp(); }
     if (drag.act === 'sortie') { commit(); const s = { tx: r.x, ty: r.y, tw: r.w, th: r.h, vers: '', arrivee: '' }; S.sorties.push(s); sel = { k: 'sortie', o: s }; renderInsp(); }
   }
   if (drag.kind === 'move' && !drag.moved) undo.pop();
@@ -406,7 +435,7 @@ addEventListener('keydown', e => {
   if (ctrl && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
   if (ctrl && e.key.toLowerCase() === 'y') { e.preventDefault(); doRedo(); return; }
   if (ctrl && e.key.toLowerCase() === 'd' && sel && sel.k === 'obj') { e.preventDefault(); commit(); const o = JSON.parse(JSON.stringify(sel.o)); o.id = uid(); moveObj(o, TS, TS); S.objets.push(o); sel = { k: 'obj', o }; renderInsp(); return; }
-  if (mode !== 'test' && /^[1-7]$/.test(e.key) && !ctrl) { setMode(MODES[+e.key - 1][0]); return; }
+  if (mode !== 'test' && /^[1-8]$/.test(e.key) && !ctrl) { setMode(MODES[+e.key - 1][0]); return; }
   if (e.key === 'Escape') { placing = null; sel = null; renderLeft(); renderInsp(); return; }
   if ((e.key === 'Delete' || e.key === 'Backspace') && sel) { e.preventDefault(); delSel(); return; }
   if (e.key.toLowerCase() === 'f' && sel && sel.k === 'obj' && mode !== 'test') { commit(); flipObj(sel.o); renderInsp(); return; }
@@ -414,7 +443,7 @@ addEventListener('keydown', e => {
   if (sel && sel.k === 'obj' && e.key.startsWith('Arrow') && mode !== 'test') { e.preventDefault(); const st = e.shiftKey ? TS : 1; commit(); moveObj(sel.o, e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0); renderInsp(); }
 });
 addEventListener('keyup', e => { hero.keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = false; if (e.key === ' ') spaceDown = false; });
-function delSel() { if (!sel) return; commit(); const arr = { obj: S.objets, porte: S.portes, sortie: S.sorties, arrivee: S.arrivees, item: S.items }[sel.k]; arr.splice(arr.indexOf(sel.o), 1); sel = null; renderInsp(); }
+function delSel() { if (!sel) return; commit(); const arr = { pont: S.ponts, obj: S.objets, porte: S.portes, sortie: S.sorties, arrivee: S.arrivees, item: S.items }[sel.k]; arr.splice(arr.indexOf(sel.o), 1); sel = null; renderInsp(); }
 
 // ---------- panneaux ----------
 function setMode(m) { mode = m; placing = null; sel = null; if (m === 'test') heroStart(); else hero.on = false; renderLeft(); renderInsp(); }
@@ -425,6 +454,7 @@ const HINTS = {
   sortie: 'Trace un rectangle là où le perso quitte la carte (bord, grotte, escalier…), puis choisis la destination.',
   arrivee: 'Clique pour poser un point d\'arrivée (là où le perso apparaît en venant d\'ailleurs). L\'étoile marque le départ par défaut.',
   item: 'Choisis un type puis clique sur la carte.',
+  pont: 'Crée un pont avec ses deux images (tablier dessous, piliers dessus), place-le sur la rivière, puis trace la zone qui devient praticable quand il est ouvert (Maj + glisser, ou le bouton à gauche).',
   test: 'Flèches ou ZQSD pour marcher. Clique pour téléporter le perso. Les toits et feuillages s\'effacent quand tu passes derrière.',
 };
 function renderLeft() {
@@ -439,7 +469,7 @@ function renderLeft() {
     for (const m of MODELS.values()) {
       if (libCat !== 'Tout' && m.cat !== libCat) continue;
       const d = document.createElement('div'); d.className = 'it' + (placing === m ? ' sel' : '') + (m.isNew ? ' new' : ''); d.draggable = true; d.title = m.nom + ' — ' + m.src;
-      d.innerHTML = `<img alt=""><span></span>`; d.querySelector('img').src = m.img.src; d.querySelector('span').textContent = m.nom;
+      d.innerHTML = `<img alt=""><span></span><button class="rm" title="Retirer de la bibliothèque" aria-label="Retirer">✕</button>`; d.querySelector('.rm').onclick = ev => { ev.stopPropagation(); removeModel(m); }; d.querySelector('img').src = m.img.src; d.querySelector('span').textContent = m.nom;
       d.ondragstart = e => { e.dataTransfer.setData('text/x-model', m.src); placing = null; };
       d.onclick = () => { placing = placing === m ? null : m; sel = null; renderLeft(); renderInsp(); };
       $('lib').appendChild(d);
@@ -453,6 +483,12 @@ function renderLeft() {
     $('bBorder').onclick = () => { commit(); for (let x = 0; x < S.cols; x++) { setCell(x, 0, '#'); setCell(x, S.rows - 1, '#'); } for (let y = 0; y < S.rows; y++) { setCell(0, y, '#'); setCell(S.cols - 1, y, '#'); } };
   }
   if (mode === 'item') { L.insertAdjacentHTML('beforeend', `<div class="sect">Type</div><div class="row" id="bI"></div>`); for (const [t, n] of ITEM_TYPES) { const b = document.createElement('button'); b.className = 'btn' + (itemType === t ? ' on' : ''); b.textContent = n; b.onclick = () => { itemType = t; renderLeft(); }; $('bI').appendChild(b); } }
+  if (mode === 'pont') {
+    L.insertAdjacentHTML('beforeend', `<div class="sect">Ponts</div><div class="row"><button class="btn" id="bPontNew" style="flex:1">+ Nouveau pont (2 PNG)</button></div><div class="row"><button class="btn${pontZone ? ' on' : ''}" id="bPontZone" style="flex:1">Tracer la zone praticable</button></div>`);
+    $('bPontNew').onclick = () => { toast('1/2 : le tablier (passe sous le perso)'); $('filePontBg').click(); };
+    $('bPontZone').onclick = () => { if (!S.ponts.length) return toast('Crée d\'abord un pont'); if (!sel || sel.k !== 'pont') sel = { k: 'pont', o: S.ponts[S.ponts.length - 1] }; pontZone = !pontZone; renderLeft(); renderInsp(); };
+  }
+  if (mode === 'test' || mode === 'pont') L.insertAdjacentHTML('beforeend', `<label class="chk"><input type="checkbox" id="vPont"${pontOuvert ? ' checked' : ''}> Montrer les ponts ouverts</label>`), $('vPont').onchange = e => { pontOuvert = e.target.checked; };
   if (mode === 'test') { L.insertAdjacentHTML('beforeend', `<div class="sect">Test</div><div class="row"><button class="btn" id="bRestart">Revenir au départ</button></div>`); $('bRestart').onclick = heroStart; }
 }
 let libCat = 'Tout';
@@ -534,6 +570,23 @@ function renderInsp() {
     bind('fDir', v => { o.dir = v; }, 'change'); bind('fDepart', v => { S.depart = v ? o.nom : ''; }, 'change');
     bind('fX', v => { o.x = +v; }); bind('fY', v => { o.y = +v; }); $('bDel').onclick = delSel; return;
   }
+  if (sel.k === 'pont') {
+    I.innerHTML = `<div class="sect">Pont-levis</div>` +
+      fld('Ouvert quand ce drapeau est vrai (vide = toujours ouvert)', `<input id="fDrap" value="${esc(o.drapeau)}" placeholder="drawbridge">`) +
+      `<p class="small"><code>drawbridge</code> : la cible du pont-levis de Bourg-Luciole.</p>` +
+      fld('Charnière (le tablier s\'abaisse depuis ce côté)', `<select id="fCh">${['droite', 'gauche', 'haut', 'bas'].map(c => `<option${(o.charniere || 'droite') === c ? ' selected' : ''}>${c}</option>`).join('')}</select>`) +
+      fld('Échelle', `<select id="fPs"><option value="0.5"${o.s === 0.5 ? ' selected' : ''}>×2 (cartes peintes)</option><option value="1"${o.s === 1 ? ' selected' : ''}>×1</option></select>`) +
+      `<div class="row">${fld('X', `<input id="fX" type="number" value="${o.x}">`)}${fld('Y', `<input id="fY" type="number" value="${o.y}">`)}</div>` +
+      `<div class="sect">Zone praticable</div><p class="small">${o.zone ? `cases ${o.zone.tx},${o.zone.ty} · ${o.zone.tw}×${o.zone.th}` : 'pas encore tracée'}. Fermé, ces cases gardent ce que tu as peint en mode Sol (eau) ; ouvert, elles deviennent du sol.</p>` +
+      `<div class="row"><button class="btn${pontZone ? ' on' : ''}" id="bZ">Tracer la zone</button></div>` +
+      `<div class="sect">Images</div><div class="row"><button class="btn" id="bRBg">Changer le tablier…</button><button class="btn" id="bRFg">Changer les piliers…</button></div>` +
+      `<div class="row"><button class="btn dan" id="bDel">Supprimer</button></div>`;
+    bindCommit('fDrap'); bind('fDrap', v => { o.drapeau = v.trim(); }); bind('fCh', v => { commit(); o.charniere = v; }, 'change'); bind('fPs', v => { commit(); o.s = +v; }, 'change');
+    bind('fX', v => { o.x = +v; }); bind('fY', v => { o.y = +v; });
+    $('bZ').onclick = () => { pontZone = !pontZone; renderLeft(); renderInsp(); };
+    $('bRBg').onclick = () => { pontRepl = { p: o, k: 'bg' }; $('filePontRepl').click(); }; $('bRFg').onclick = () => { pontRepl = { p: o, k: 'fg' }; $('filePontRepl').click(); };
+    $('bDel').onclick = delSel; return;
+  }
   if (sel.k === 'item') {
     let h = `<div class="sect">${esc(ITEM_TYPES.find(t => t[0] === o.type)[1])}</div>`;
     if (o.type === 'coffre') h += fld('Drapeau (unique)', `<input id="fId2" value="${esc(o.id)}">`) + fld('Contenu (id d\'objet du jeu)', `<input id="fCont" value="${esc(o.contenu)}" placeholder="money, piece_coeur, cle…">`);
@@ -548,6 +601,7 @@ function modelInsp(m) { return fld('Échelle', `<select id="mS"><option value="0
 function bindModel(m) { bind('mS', v => { m.s = +v; if (m.isNew) idbPut('models', m.src, modelRecord(m)); }, 'change'); bind('mFade', v => { m.fade = v; if (m.isNew) idbPut('models', m.src, modelRecord(m)); }, 'change'); }
 function checks() {
   const w = [];
+  S.ponts.forEach((p, i) => { if (!p.zone) w.push(`Pont ${i + 1} : zone praticable à tracer.`); });
   if (!S.arrivees.length) w.push('Aucun point d\'arrivée : le perso ne saura pas où apparaître.');
   S.sorties.forEach((s, i) => { if (!s.vers) w.push(`Sortie ${i + 1} : destination manquante.`); });
   if (S.sorties.length > 9) w.push('Plus de 9 sorties : le jeu n\'en gère que 9.');
@@ -568,11 +622,29 @@ $('impGo').onclick = async () => {
     let name = slug(f.name), src = `assets/cartes/objets/${name}.png`, n = 2; while (MODELS.has(src)) src = `assets/cartes/objets/${name}_${n++}.png`;
     const blob = f.type === 'image/png' ? f : await toPng(f);
     const m = await addModel({ src, nom: f.name.replace(/\.[^.]+$/, ''), cat, s, fade, url: URL.createObjectURL(blob), blob, isNew: true });
-    if (m) { await idbPut('models', src, modelRecord(m)); last = m; }
+    if (m) { await idbPut('models', src, modelRecord(m)); REMOVED.delete(src); saveRemoved(); last = m; }
   }
   $('dlgImp').close(); libCat = cat; if (last) { placing = last; setMode('obj'); placing = last; } renderLeft(); renderInsp(); toast(impFiles.length + ' objet(s) ajouté(s)');
 };
 async function toPng(f) { const i = await blobToImg(f), c = document.createElement('canvas'); c.width = i.width; c.height = i.height; c.getContext('2d').drawImage(i, 0, 0); return new Promise(ok => c.toBlob(ok, 'image/png')); }
+
+// ---------- ponts ----------
+let pontOuvert = true, pontZone = false, pontNewBg = null, pontRepl = null;
+function drawPontImg(p, src) { const m = MODELS.get(src); if (m) cx.drawImage(m.img, p.x, p.y, p.w * p.s, p.h * p.s); }
+async function pontModel(f, nom) {
+  const blob = f.type === 'image/png' ? f : await toPng(f); let base = slug(f.name), src = `assets/cartes/objets/${base}.png`, n = 2; while (MODELS.has(src)) src = `assets/cartes/objets/${base}_${n++}.png`;
+  const m = await addModel({ src, nom, cat: 'Ponts', s: 0.5, fade: false, url: URL.createObjectURL(blob), blob, isNew: true }); await idbPut('models', src, modelRecord(m)); return m;
+}
+$('filePontBg').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; pontNewBg = await pontModel(f, 'Pont (tablier)'); toast('2/2 : les piliers (passent devant le perso)'); $('filePontFg').click(); };
+$('filePontFg').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f || !pontNewBg || !S) return;
+  const fg = await pontModel(f, 'Pont (piliers)'), d = devicePixelRatio || 1, c = toW(cv.width / d / 2, cv.height / d / 2), bg = pontNewBg; pontNewBg = null;
+  commit(); const p = { id: uid(), bg: bg.src, fg: fg.src, s: 0.5, w: bg.img.width, h: bg.img.height, x: 0, y: 0, drapeau: 'drawbridge', charniere: 'droite', zone: null };
+  p.x = Math.round((c.x - p.w * p.s / 2) / 8) * 8; p.y = Math.round((c.y - p.h * p.s / 2) / 8) * 8;
+  if (fg.img.width !== bg.img.width || fg.img.height !== bg.img.height) toast('Attention : les deux images n\'ont pas la même taille');
+  S.ponts.push(p); sel = { k: 'pont', o: p }; renderLeft(); renderInsp();
+};
+$('filePontRepl').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f || !pontRepl) return; const m = await pontModel(f, pontRepl.k === 'bg' ? 'Pont (tablier)' : 'Pont (piliers)'); commit(); pontRepl.p[pontRepl.k] = m.src; if (pontRepl.k === 'bg') { pontRepl.p.w = m.img.width; pontRepl.p.h = m.img.height; } pontRepl = null; renderInsp(); };
 
 // ---------- mettre à jour le visuel d'un modèle ----------
 // nouvelle image : les réglages (pied, collision) sont recalés à la nouvelle taille,
@@ -634,6 +706,7 @@ $('bOpen').onclick = async () => {
 async function openRepo(id) {
   const C = await fetch(`${ROOT}assets/cartes/${id}/carte.json`, { cache: 'no-store' }).then(r => r.json());
   const blob = await fetch(`${ROOT}assets/cartes/${id}/${C.fond}`, { cache: 'no-store' }).then(r => r.blob());
+  for (const src of (C.ponts || []).flatMap(p => [p.bg, p.fg])) if (!MODELS.has(src)) await addModel({ src, nom: src.split('/').pop(), cat: 'Ponts', s: 0.5, fade: false });
   for (const o of C.objets) if (!MODELS.has(o.src)) await addModel({ src: o.src, nom: o.src.split('/').pop(), cat: 'Décor', s: o.s, fade: o.fade });
   delete C.fond; setDoc(C, await blobToImg(blob), blob);
 }
@@ -667,7 +740,7 @@ $('bExport').onclick = async () => {
   z.file(base + 'fond.png', fondBlob);
   // bibliothèque partagée : modèles nouveaux ou retouchés
   let lib = []; try { lib = await fetch(ROOT + 'assets/cartes/objets/index.json', { cache: 'no-store' }).then(r => r.json()); } catch (_) {}
-  const used = new Set(C.objets.map(o => o.src));
+  lib = lib.filter(x => !REMOVED.has(x.src) || MODELS.has(x.src));
   for (const m of MODELS.values()) {
     if (!(m.isNew || m.edited)) continue;
     if (m.isNew && m.blob) z.file(m.src, m.blob);
