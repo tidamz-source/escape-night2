@@ -116,6 +116,7 @@ dialog .list .btn small { color: var(--mute) }
 </dialog>
 <input type="file" id="fileImp" accept="image/png,image/*" multiple hidden>
 <input type="file" id="fileFond" accept="image/*" hidden>
+<input type="file" id="fileVis" accept="image/png,image/*" hidden>
 <input type="file" id="fileZip" accept=".zip" hidden>
 
 <script>
@@ -467,7 +468,7 @@ function renderInsp() {
   const I = $('insp');
   if (!S) { I.innerHTML = `<div class="sect">Bienvenue</div><p class="small">Crée une nouvelle carte avec un fond vide, ou ouvre une carte existante (brouillon, carte du dépôt ou carte peinte du jeu à refaire).</p>`; return; }
   if (!sel) {
-    if (placing) { I.innerHTML = `<div class="sect">Pose</div><p>${esc(placing.nom)}</p><p class="small">Clique sur la carte pour poser (Alt : en poser plusieurs). Échap pour arrêter.</p>` + modelInsp(placing); bindModel(placing); return; }
+    if (placing) { I.innerHTML = `<div class="sect">Pose</div><p>${esc(placing.nom)}</p><p class="small">Clique sur la carte pour poser (Alt : en poser plusieurs). Échap pour arrêter.</p>` + modelInsp(placing) + `<div class="row"><button class="btn" id="bVis">Mettre à jour le visuel…</button></div>`; bindModel(placing); $('bVis').onclick = () => { visTarget = placing; $('fileVis').click(); }; return; }
     I.innerHTML = `<div class="sect">Carte</div>` +
       fld('Identifiant (zone du jeu)', `<input id="fId" value="${esc(S.id)}">`) + fld('Nom affiché', `<input id="fName" value="${esc(S.name)}">`) +
       fld('Nuit (0 clair → 1 sombre)', `<input id="fDark" type="number" step="0.05" min="0" max="1" value="${S.dark}">`) +
@@ -490,6 +491,7 @@ function renderInsp() {
       `<div class="row"><button class="btn" id="bFlip">Miroir (F)</button><button class="btn" id="bDup">Dupliquer</button><button class="btn dan" id="bDel">Supprimer</button></div>` +
       `<div class="sect">Collision</div><p class="small">${o.poly.length} points. Clique un « + » au milieu d\'un bord pour ajouter un point et place-le en glissant · Alt+clic (ou clic droit) sur un point : le retirer. Autant de points que tu veux.</p>` +
       `<div class="row"><button class="btn" id="bBox">Boîte au pied</button><button class="btn" id="bNone">Aucune</button><button class="btn" id="bModel">Reprendre le modèle</button></div>` +
+      `<div class="sect">Visuel</div><div class="row"><button class="btn" id="bVis">Mettre à jour le visuel…</button></div><p class="small">Remplace l'image de « ${esc(m ? m.nom : '')} » partout sur la carte ; pied et collision suivent.</p>` +
       `<div class="row"><button class="btn" id="bSave">Enregistrer comme modèle</button></div><p class="small">Pied, collision et transparence deviennent la règle pour les prochains « ${esc(m ? m.nom : '')} ».</p>`;
     const num = (id, fn) => { bindCommit(id); bind(id, v => { fn(+v); }); };
     num('fX', v => moveObj(o, v - o.x, 0)); num('fY', v => moveObj(o, 0, v - o.y)); num('fBase', v => { const dy = v - o.base; if (o.pied) o.pied = o.pied.map(([x, y]) => [x, y + dy]); o.base = v; });
@@ -501,6 +503,7 @@ function renderInsp() {
     $('bBox').onclick = () => { commit(); const W = o.w * o.s, x0 = o.x + W * 0.22, x1 = o.x + W * 0.78; o.poly = [[x0, o.base - 10], [x1, o.base - 10], [x1, o.base + 2], [x0, o.base + 2]].map(p => p.map(Math.round)); renderInsp(); };
     $('bNone').onclick = () => { commit(); o.poly = []; renderInsp(); };
     $('bModel').onclick = () => { if (!m) return; commit(); o.base = Math.round(o.y + m.base * o.s); o.poly = m.poly.map(([px, py]) => [Math.round(o.x + px * o.s), Math.round(o.y + py * o.s)]); o.pied = m.pied ? m.pied.map(([px, py]) => [Math.round(o.x + px * o.s), Math.round(o.y + py * o.s)]) : null; syncBase(o); o.fade = !!m.fade; if (o.flip) { o.flip = false; flipObj(o); } renderInsp(); };
+    $('bVis').onclick = () => { if (m) { visTarget = m; $('fileVis').click(); } };
     $('bSave').onclick = () => { if (!m) return; const W = o.w * o.s; m.base = Math.round((o.base - o.y) / o.s); m.poly = o.poly.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]); if (o.flip) m.poly.reverse(); m.pied = o.pied ? o.pied.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]) : null; if (m.pied && o.flip) m.pied.reverse(); m.fade = o.fade; m.edited = true; if (m.isNew) idbPut('models', m.src, modelRecord(m)); toast('Modèle « ' + m.nom + ' » mis à jour'); };
     return;
   }
@@ -570,6 +573,32 @@ $('impGo').onclick = async () => {
   $('dlgImp').close(); libCat = cat; if (last) { placing = last; setMode('obj'); placing = last; } renderLeft(); renderInsp(); toast(impFiles.length + ' objet(s) ajouté(s)');
 };
 async function toPng(f) { const i = await blobToImg(f), c = document.createElement('canvas'); c.width = i.width; c.height = i.height; c.getContext('2d').drawImage(i, 0, 0); return new Promise(ok => c.toBlob(ok, 'image/png')); }
+
+// ---------- mettre à jour le visuel d'un modèle ----------
+// nouvelle image : les réglages (pied, collision) sont recalés à la nouvelle taille,
+// chaque objet posé garde son pied au même endroit (milieu bas). Un PNG du dépôt hors assets/cartes/objets
+// devient une copie dans assets/cartes/objets, pour ne pas changer les autres décors du jeu.
+let visTarget = null;
+$('fileVis').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; const m = visTarget; visTarget = null; if (!f || !m) return;
+  const blob = f.type === 'image/png' ? f : await toPng(f), img = await blobToImg(blob);
+  commit();
+  const kx = img.width / m.img.width, ky = img.height / m.img.height, oldSrc = m.src;
+  m.base = Math.round(m.base * ky); m.poly = m.poly.map(([x, y]) => [Math.round(x * kx), Math.round(y * ky)]); if (m.pied) m.pied = m.pied.map(([x, y]) => [Math.round(x * kx), Math.round(y * ky)]);
+  if (!m.src.startsWith('assets/cartes/objets/')) { let base = slug(m.src.split('/').pop()), src = `assets/cartes/objets/${base}.png`, n = 2; while (MODELS.has(src)) src = `assets/cartes/objets/${base}_${n++}.png`; MODELS.delete(m.src); m.src = src; MODELS.set(src, m); }
+  m.img = img; m.mask = mask(img); m.blob = blob; m.url = img.src; m.isNew = true; m.edited = true;
+  await idbPut('models', m.src, modelRecord(m));
+  let n = 0;
+  for (const o of S ? S.objets : []) {
+    if (o.src !== oldSrc) continue; n++;
+    const W0 = o.w * o.s, cxw = o.x + W0 / 2, by = o.base, W1 = img.width * o.s;
+    const sx = (x) => cxw + (x - cxw) * kx, sy = (y) => by + (y - by) * ky;
+    o.poly = o.poly.map(([x, y]) => [Math.round(sx(x)), Math.round(sy(y))]); if (o.pied) o.pied = o.pied.map(([x, y]) => [Math.round(sx(x)), Math.round(sy(y))]);
+    o.y = Math.round(sy(o.y)); o.x = Math.round(cxw - W1 / 2); o.w = img.width; o.h = img.height; o.src = m.src;
+  }
+  renderLeft(); renderInsp(); autosave();
+  toast(`Visuel de « ${m.nom} » mis à jour` + (n ? ` (${n} sur la carte)` : ''));
+};
 
 // ---------- fond ----------
 $('fileFond').onchange = async e => {
