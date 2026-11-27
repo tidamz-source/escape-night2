@@ -583,7 +583,7 @@ function renderInsp() {
       `<div class="row">${fld('X', `<input id="fX" type="number" value="${o.x}">`)}${fld('Y', `<input id="fY" type="number" value="${o.y}">`)}</div>` +
       `<div class="sect">Zone praticable</div><p class="small">${o.zone ? `cases ${o.zone.tx},${o.zone.ty} · ${o.zone.tw}×${o.zone.th}` : 'pas encore tracée'}. Fermé, ces cases gardent ce que tu as peint en mode Sol (eau) ; ouvert, elles deviennent du sol.</p>` +
       `<div class="row"><button class="btn${pontZone ? ' on' : ''}" id="bZ">Tracer la zone</button></div>` +
-      `<div class="sect">Images</div><p class="small">${['leve', 'bg', 'fg'].map(k => `${{ leve: 'levé', bg: 'tablier', fg: 'piliers' }[k]} : ${o[k] ? esc(o[k].split('/').pop()) : '—'}`).join('<br>')}</p><div class="row"><button class="btn" id="bRImg">Changer les images…</button></div>` +
+      `<div class="sect">Images</div><p class="small">${['leve', 'bg', 'fg'].map(k => `${{ leve: 'levé', bg: 'tablier', fg: 'piliers' }[k]} : ${o[k] ? esc(o[k].split('/').pop()) + (MODELS.get(o[k]) ? ` (${MODELS.get(o[k]).img.width}×${MODELS.get(o[k]).img.height})` : ' (image introuvable)') : '—'}`).join('<br>')}</p><div class="row"><button class="btn" id="bRImg">Changer les images…</button></div>` +
       `<div class="row"><button class="btn dan" id="bDel">Supprimer</button></div>`;
     bindCommit('fDrap'); bind('fDrap', v => { o.drapeau = v.trim(); }); bind('fCh', v => { commit(); o.charniere = v; }, 'change'); bind('fPs', v => { commit(); o.s = +v; }, 'change');
     bind('fX', v => { o.x = +v; }); bind('fY', v => { o.y = +v; });
