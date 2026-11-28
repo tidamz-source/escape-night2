@@ -185,7 +185,7 @@ function inPoly(px, py, P) {
 function carteFine(C, g) {
   const k = TS / CARTE_FTS, F = [];
   for (let y = 0; y < g.length * k; y++) { let row = ''; for (let x = 0; x < g[0].length * k; x++) { const t = g[Math.floor(y / k)][Math.floor(x / k)]; row += SOLID.has(t) ? t : '.'; } F.push(row.split('')); }
-  for (const o of C.objets || []) {
+  for (const o of [...(C.objets || []), ...(C.ponts || [])]) { // objets et ponts (piliers) : leurs collisions
     if (!o.poly || o.poly.length < 3) continue;
     const xs = o.poly.map(p => p[0]), ys = o.poly.map(p => p[1]);
     for (let cy = Math.max(0, Math.floor(Math.min(...ys) / CARTE_FTS)); cy <= Math.min(F.length - 1, Math.floor(Math.max(...ys) / CARTE_FTS)); cy++)

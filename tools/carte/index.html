@@ -297,6 +297,7 @@ function solidAt(x, y) { // pour le test : sol + polygones
   if (t == null || SOLID.has(t)) return true;
   for (const d of S.portes) if (x >= d.x - 8 && x < d.x + 8 && y >= d.y - 6 && y <= d.y + 10) return false; // seuil des portes toujours libre
   for (const o of S.objets) if (o.poly.length > 2 && inPoly(x, y, o.poly)) return true;
+  for (const p of S.ponts) if (p.poly && p.poly.length > 2 && inPoly(x, y, p.poly)) return true;
   return false;
 }
 
@@ -369,6 +370,7 @@ function draw() {
   for (const it of S.items) if (it.type === 'fumee') fumeeOf(it).draw(cx);
   if ($('vGrid').checked) { cx.strokeStyle = 'rgba(255,255,255,.12)'; cx.lineWidth = lw; cx.beginPath(); for (let x = 0; x <= S.cols; x++) { cx.moveTo(x * TS, 0); cx.lineTo(x * TS, MH); } for (let y = 0; y <= S.rows; y++) { cx.moveTo(0, y * TS); cx.lineTo(MW, y * TS); } cx.stroke(); }
   if (pontOuvert) for (const p of S.ponts) if (!p.pied) drawPontImg(p, p.fg); // premier plan : toujours devant le héros
+  if (!test && $('vCol').checked) for (const p of S.ponts) if (p.poly && p.poly.length > 2) { cx.beginPath(); p.poly.forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.closePath(); cx.fillStyle = 'rgba(255,95,176,.28)'; cx.fill(); cx.strokeStyle = '#ff5fb0'; cx.lineWidth = lw * 1.5; cx.stroke(); }
   if (!test) for (const p of S.ponts) { const W = p.w * p.s, H = p.h * p.s; cx.strokeStyle = '#ff9c1a'; cx.lineWidth = lw * 2; cx.setLineDash([6 * lw, 4 * lw]); cx.strokeRect(p.x, p.y, W, H); cx.setLineDash([]); if (p.zone) { const z = p.zone; cx.fillStyle = 'rgba(255,156,26,.22)'; cx.fillRect(z.tx * TS, z.ty * TS, z.tw * TS, z.th * TS); cx.strokeStyle = '#ff9c1a'; cx.strokeRect(z.tx * TS, z.ty * TS, z.tw * TS, z.th * TS); } label('pont · ' + (p.drapeau || 'toujours ouvert') + ' · charnière ' + (p.charniere || 'droite'), p.x, p.y - 14 / view.z, '#ff9c1a'); }
   // portes, sorties, arrivées, coffres
   for (const s of S.sorties) { cx.fillStyle = 'rgba(255,225,74,.28)'; cx.fillRect(s.tx * TS, s.ty * TS, s.tw * TS, s.th * TS); cx.strokeStyle = '#ffe14a'; cx.lineWidth = lw * 2; cx.strokeRect(s.tx * TS, s.ty * TS, s.tw * TS, s.th * TS); label(`→ ${s.vers || '?'}`, s.tx * TS + 2, s.ty * TS + 2, '#ffe14a'); }
@@ -387,6 +389,7 @@ function draw() {
     if (sel.k === 'porte') cx.strokeRect(sel.o.x - 12, sel.o.y - 12, 24, 20);
     if (sel.k === 'arrivee') cx.strokeRect(sel.o.x - 7, sel.o.y - 7, 14, 14);
     if (sel.k === 'item') cx.strokeRect(sel.o.x - 8, sel.o.y - 12, 16, 14);
+    if (sel.k === 'pont' && sel.o.poly && sel.o.poly.length) { const Q = sel.o.poly, hs3 = 4 * lw * 1.4; for (const [x, y] of Q) { cx.fillStyle = '#fff'; cx.fillRect(x - hs3 * 0.75, y - hs3 * 0.75, hs3 * 1.5, hs3 * 1.5); cx.strokeStyle = '#ff5fb0'; cx.lineWidth = lw * 1.5; cx.strokeRect(x - hs3 * 0.75, y - hs3 * 0.75, hs3 * 1.5, hs3 * 1.5); } for (let i = 0; i < Q.length; i++) { const a = Q[i], b = Q[(i + 1) % Q.length], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; cx.fillStyle = 'rgba(255,95,176,.9)'; cx.beginPath(); cx.arc(mx, my, hs3, 0, 7); cx.fill(); cx.strokeStyle = '#fff'; cx.lineWidth = lw * 1.2; cx.beginPath(); cx.moveTo(mx - hs3 * 0.6, my); cx.lineTo(mx + hs3 * 0.6, my); cx.moveTo(mx, my - hs3 * 0.6); cx.lineTo(mx, my + hs3 * 0.6); cx.stroke(); } cx.strokeStyle = '#ffd45c'; cx.lineWidth = lw * 2; }
     if (sel.k === 'pont' && sel.o.pied) { const P = sel.o.pied, hs2 = 4 * lw * 1.4; cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 3; cx.beginPath(); P.forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.stroke();
       for (const [x, y] of P) { cx.fillStyle = '#36e0ff'; cx.fillRect(x - hs2 * 0.8, y - hs2 * 0.8, hs2 * 1.6, hs2 * 1.6); cx.strokeStyle = '#fff'; cx.lineWidth = lw; cx.strokeRect(x - hs2 * 0.8, y - hs2 * 0.8, hs2 * 1.6, hs2 * 1.6); }
       for (let i = 0; i < P.length - 1; i++) { const mx = (P[i][0] + P[i + 1][0]) / 2, my = (P[i][1] + P[i + 1][1]) / 2; cx.fillStyle = 'rgba(54,224,255,.95)'; cx.beginPath(); cx.arc(mx, my, hs2, 0, 7); cx.fill(); cx.strokeStyle = '#0b2a33'; cx.lineWidth = lw * 1.2; cx.beginPath(); cx.moveTo(mx - hs2 * 0.6, my); cx.lineTo(mx + hs2 * 0.6, my); cx.moveTo(mx, my - hs2 * 0.6); cx.lineTo(mx, my + hs2 * 0.6); cx.stroke(); }
@@ -451,13 +454,19 @@ cv.addEventListener('pointerdown', e => {
   if (mode === 'pont') {
     if (pontZone || e.shiftKey) { if (!sel || sel.k !== 'pont') { sel = { k: 'pont', o: S.ponts[0] }; } if (sel && sel.o) { drag = { kind: 'rect', a: tileOf(w), act: 'pontzone', col: '#ff9c1a' }; } return; }
     const p = [...S.ponts].reverse().find(p => w.x >= p.x && w.y >= p.y && w.x < p.x + p.w * p.s && w.y < p.y + p.h * p.s);
+    if (sel && sel.k === 'pont' && sel.o.poly && sel.o.poly.length) {
+      const q = sel.o, Q = q.poly, r = 7 / view.z, vi = Q.findIndex(([x, y]) => near({ x, y }, w, r));
+      if (vi >= 0) { commit(); if (e.altKey || e.button === 2) { Q.splice(vi, 1); renderInsp(); return; } drag = { kind: 'pqvert', o: q, i: vi }; return; }
+      const mi = Q.findIndex((a, i) => { const b = Q[(i + 1) % Q.length]; return near({ x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2 }, w, r * 1.2); });
+      if (mi >= 0) { commit(); Q.splice(mi + 1, 0, [Math.round(w.x), Math.round(w.y)]); drag = { kind: 'pqvert', o: q, i: mi + 1 }; renderInsp(); return; }
+    }
     if (sel && sel.k === 'pont' && sel.o.pied) {
       const q = sel.o, P = q.pied, r = 7 / view.z, vi = P.findIndex(([x, y]) => near({ x, y }, w, r));
       if (vi >= 0) { commit(); if (e.altKey || e.button === 2) { if (P.length > 2) P.splice(vi, 1); renderInsp(); return; } drag = { kind: 'ppvert', o: q, i: vi }; return; }
       const mi = P.findIndex((a, i) => i < P.length - 1 && near({ x: (a[0] + P[i + 1][0]) / 2, y: (a[1] + P[i + 1][1]) / 2 }, w, r * 1.2));
       if (mi >= 0) { commit(); P.splice(mi + 1, 0, [Math.round(w.x), Math.round(w.y)]); drag = { kind: 'ppvert', o: q, i: mi + 1 }; renderInsp(); return; }
     }
-    if (p) { sel = { k: 'pont', o: p }; commit(); drag = { kind: 'movePont', o: p, sx: w.x, sy: w.y, x0: p.x, y0: p.y, z0: p.zone && { ...p.zone }, pied0: p.pied && p.pied.map(q => [...q]) }; renderInsp(); return; }
+    if (p) { sel = { k: 'pont', o: p }; commit(); drag = { kind: 'movePont', o: p, sx: w.x, sy: w.y, x0: p.x, y0: p.y, z0: p.zone && { ...p.zone }, pied0: p.pied && p.pied.map(q => [...q]), poly0: p.poly && p.poly.map(q => [...q]) }; renderInsp(); return; }
     sel = null; renderInsp(); panning = { x: e.clientX, y: e.clientY, ox: view.ox, oy: view.oy }; return;
   }
   if (mode === 'item') { const it = S.items.find(a => near(a, { x: w.x, y: w.y + 5 }, 9)); if (it) { sel = { k: 'item', o: it }; commit(); drag = { kind: 'movePt', o: it, grid: 'item' }; renderInsp(); return; } commit(); const n = { type: itemType, x: snap(w.x, e, 8), y: snap(w.y, e, 8) }; if (itemType === 'coffre') Object.assign(n, { id: `c_${S.id}_${S.items.length + 1}`, contenu: 'money' }); if (itemType === 'panneau') n.texte = ''; S.items.push(n); sel = { k: 'item', o: n }; renderInsp(); return; }
@@ -474,8 +483,9 @@ cv.addEventListener('pointermove', e => {
   if (drag.kind === 'pvert') { drag.o.pied[drag.i] = [snap(w.x, e, 4), snap(w.y, e, 4)]; syncBase(drag.o); renderInspSoft(); }
   if (drag.kind === 'paint') paintAt(w, e.buttons === 2);
   if (drag.kind === 'rect') { const a = drag.a, b = tileOf(w); drag.r = { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x) + 1, h: Math.abs(a.y - b.y) + 1 }; }
+  if (drag.kind === 'pqvert') { drag.o.poly[drag.i] = [snap(w.x, e, 4), snap(w.y, e, 4)]; }
   if (drag.kind === 'ppvert') { drag.o.pied[drag.i] = [snap(w.x, e, 4), snap(w.y, e, 4)]; }
-  if (drag.kind === 'movePont') { const p = drag.o; let nx = drag.x0 + (w.x - drag.sx), ny = drag.y0 + (w.y - drag.sy); if (snapOn(e)) { nx = Math.round(nx / 8) * 8; ny = Math.round(ny / 8) * 8; } p.x = Math.round(nx); p.y = Math.round(ny); if (drag.pied0) p.pied = drag.pied0.map(([x, y]) => [x + p.x - drag.x0, y + p.y - drag.y0]); if (drag.z0) { const dtx = Math.round((p.x - drag.x0) / TS), dty = Math.round((p.y - drag.y0) / TS); p.zone = { ...drag.z0, tx: drag.z0.tx + dtx, ty: drag.z0.ty + dty }; } }
+  if (drag.kind === 'movePont') { const p = drag.o; let nx = drag.x0 + (w.x - drag.sx), ny = drag.y0 + (w.y - drag.sy); if (snapOn(e)) { nx = Math.round(nx / 8) * 8; ny = Math.round(ny / 8) * 8; } p.x = Math.round(nx); p.y = Math.round(ny); if (drag.pied0) p.pied = drag.pied0.map(([x, y]) => [x + p.x - drag.x0, y + p.y - drag.y0]); if (drag.poly0) p.poly = drag.poly0.map(([x, y]) => [x + p.x - drag.x0, y + p.y - drag.y0]); if (drag.z0) { const dtx = Math.round((p.x - drag.x0) / TS), dty = Math.round((p.y - drag.y0) / TS); p.zone = { ...drag.z0, tx: drag.z0.tx + dtx, ty: drag.z0.ty + dty }; } }
   if (drag.kind === 'moveTile') { const b = tileOf(w); drag.o.tx = drag.tx + b.x - drag.a.x; drag.o.ty = drag.ty + b.y - drag.a.y; }
   if (drag.kind === 'movePt') { if (drag.grid === 'door') doorPos(drag.o, w, e); else { drag.o.x = snap(w.x, e, 8); drag.o.y = snap(w.y, e, 8); } renderInspSoft(); }
 });
@@ -671,12 +681,14 @@ function renderInsp() {
       fld('Échelle', `<select id="fPs"><option value="0.5"${o.s === 0.5 ? ' selected' : ''}>×2 (cartes peintes)</option><option value="1"${o.s === 1 ? ' selected' : ''}>×1</option></select>`) +
       `<div class="row">${fld('X', `<input id="fX" type="number" value="${o.x}">`)}${fld('Y', `<input id="fY" type="number" value="${o.y}">`)}</div>` +
       `<div class="sect">Premier plan</div>` + (o.pied ? `<p class="small">Ligne de pied (${o.pied.length} points) : au-dessus de la ligne, le perso passe derrière les piliers ; en dessous, devant. Clique un « + » bleu pour ajouter un point, Alt+clic sur un carré pour le retirer.</p><div class="row"><button class="btn dan" id="bPpOff">Toujours devant (retirer la ligne)</button></div>` : `<p class="small">Les piliers passent toujours devant le perso.</p><div class="row"><button class="btn" id="bPpOn">+ Ligne de pied</button></div>`) +
+      `<div class="sect">Collision</div>` + (o.poly && o.poly.length ? `<p class="small">${o.poly.length} points (pilier, rambarde…) : on ne marche plus dessus. Clique un « + » rose pour ajouter un point, Alt+clic sur un point pour le retirer.</p><div class="row"><button class="btn dan" id="bPcOff">Retirer la collision</button></div>` : `<p class="small">Aucune : on peut marcher sur tout le pont.</p><div class="row"><button class="btn" id="bPcOn">+ Collision</button></div>`) +
       `<div class="sect">Zone praticable</div><p class="small">${o.zone ? `cases ${o.zone.tx},${o.zone.ty} · ${o.zone.tw}×${o.zone.th}` : 'pas encore tracée'}. Fermé, ces cases gardent ce que tu as peint en mode Sol (eau) ; ouvert, elles deviennent du sol.</p>` +
       `<div class="row"><button class="btn${pontZone ? ' on' : ''}" id="bZ">Tracer la zone</button></div>` +
       `<div class="sect">Images</div><p class="small">${['leve', 'bg', 'fg'].map(k => `${{ leve: 'levé', bg: 'tablier', fg: 'piliers' }[k]} : ${o[k] ? esc(o[k].split('/').pop()) + (MODELS.get(o[k]) ? ` (${MODELS.get(o[k]).img.width}×${MODELS.get(o[k]).img.height})` : ' (image introuvable)') : '—'}`).join('<br>')}</p><p class="small">Chute : ${(o.chute || []).length ? o.chute.length + ' image(s) (bridge_fall_1…)' : 'aucune — le tablier s\'allonge simplement'}</p><div class="row"><button class="btn" id="bRImg">Changer les images…</button></div>` +
       `<div class="row"><button class="btn dan" id="bDel">Supprimer</button></div>`;
     bindCommit('fDrap'); bind('fDrap', v => { o.drapeau = v.trim(); }); bind('fCh', v => { commit(); o.charniere = v; }, 'change'); bind('fPs', v => { commit(); o.s = +v; }, 'change');
     bind('fX', v => { o.x = +v; }); bind('fY', v => { o.y = +v; });
+    if (o.poly && o.poly.length) $('bPcOff').onclick = () => { commit(); o.poly = null; renderInsp(); }; else $('bPcOn').onclick = () => { commit(); const W = o.w * o.s, H = o.h * o.s, x0 = Math.round(o.x + W * 0.2), x1 = Math.round(o.x + W * 0.32), y0 = Math.round(o.y + H * 0.8), y1 = Math.round(o.y + H * 0.9); o.poly = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]; renderInsp(); };
     if (o.pied) $('bPpOff').onclick = () => { commit(); o.pied = null; renderInsp(); }; else $('bPpOn').onclick = () => { commit(); const W = o.w * o.s, y = Math.round(o.y + o.h * o.s * 0.82); o.pied = [[o.x, y], [Math.round(o.x + W / 2), y], [Math.round(o.x + W), y]]; renderInsp(); };
     $('bZ').onclick = () => { pontZone = !pontZone; renderLeft(); renderInsp(); };
     $('bRImg').onclick = () => { pontRepl = o; $('filePont').click(); };

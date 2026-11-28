@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.24.3** : Atelier Carte : collision en polygone sur les ponts (piliers), prise en compte dans le jeu.
 - **8.24.2** : pont-levis : tablier et piliers apparaissent ensemble, sans fondu.
 - **8.24.1** : chute du pont-levis deux fois plus rapide.
 - **8.24.0** : le pont-levis tombe vraiment (3 images de chute, accélération, choc et éclaboussures, rebond), la caméra va le voir avant les bulles ; l’Atelier reconnaît les fichiers bridge_fall_N.
