@@ -1394,7 +1394,54 @@
    "dir": "up"
   }
  ],
- "items": [],
+ "items": [
+  {
+   "type": "fumee",
+   "x": 389,
+   "y": 487,
+   "maison": "forge"
+  },
+  {
+   "type": "fumee",
+   "x": 307,
+   "y": 250,
+   "maison": "auberge"
+  },
+  {
+   "type": "fumee",
+   "x": 759,
+   "y": 242,
+   "taille": 1.6,
+   "vent": 0.2,
+   "maison": "bibliotheque"
+  },
+  {
+   "type": "fumee",
+   "x": 667,
+   "y": 530,
+   "maison": "epicerie"
+  },
+  {
+   "type": "fumee",
+   "x": 656,
+   "y": 89,
+   "taille": 1.45,
+   "maison": "comptoir"
+  },
+  {
+   "type": "fumee",
+   "x": 890,
+   "y": 540,
+   "taille": 1.15,
+   "maison": "mamie"
+  },
+  {
+   "type": "fumee",
+   "x": 316,
+   "y": 529,
+   "maison": "forge"
+  }
+ ],
  "depart": "village_place",
  "ponts": [
   {

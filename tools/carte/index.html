@@ -686,10 +686,10 @@ function renderInsp() {
     let h = `<div class="sect">${esc(ITEM_TYPES.find(t => t[0] === o.type)[1])}</div>`;
     if (o.type === 'coffre') h += fld('Drapeau (unique)', `<input id="fId2" value="${esc(o.id)}">`) + fld('Contenu (id d\'objet du jeu)', `<input id="fCont" value="${esc(o.contenu)}" placeholder="money, piece_coeur, cle…">`);
     if (o.type === 'panneau') h += fld('Texte', `<textarea id="fTxt">${esc(o.texte)}</textarea>`);
-    if (o.type === 'fumee') h += `<p class="small">Pose le point sur le haut de la cheminée. Chaque bouffée est tirée au hasard : jamais deux pareilles.</p>` + fld('Taille', `<input id="fFt" type="range" min="0.4" max="2" step="0.05" value="${o.taille || 1}">`) + fld('Vent (gauche ← → droite)', `<input id="fFv" type="range" min="-1" max="1" step="0.1" value="${o.vent || 0}">`);
+    if (o.type === 'fumee') h += `<p class="small">Pose le point sur le haut de la cheminée. Chaque bouffée est tirée au hasard : jamais deux pareilles.</p>` + fld('Taille', `<input id="fFt" type="range" min="0.4" max="2" step="0.05" value="${o.taille || 1}">`) + fld('Maison (pas de fumée quand elle est fermée / vide)', `<select id="fFm"><option value="">— toujours —</option>${[...new Set(S.portes.map(p => p.vers).filter(Boolean))].map(v => `<option${o.maison === v ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select>`) + fld('Vent (gauche ← → droite)', `<input id="fFv" type="range" min="-1" max="1" step="0.1" value="${o.vent || 0}">`);
     h += `<div class="row">${fld('X', `<input id="fX" type="number" value="${o.x}">`)}${fld('Y', `<input id="fY" type="number" value="${o.y}">`)}</div><div class="row"><button class="btn dan" id="bDel">Supprimer</button></div>`;
     I.innerHTML = h;
-    bindCommit('fId2'); bind('fId2', v => { o.id = v.trim(); }); bindCommit('fCont'); bind('fCont', v => { o.contenu = v.trim(); }); bindCommit('fTxt'); bind('fTxt', v => { o.texte = v; }); bindCommit('fFt'); bind('fFt', v => { o.taille = +v; }); bindCommit('fFv'); bind('fFv', v => { o.vent = +v; });
+    bindCommit('fId2'); bind('fId2', v => { o.id = v.trim(); }); bindCommit('fCont'); bind('fCont', v => { o.contenu = v.trim(); }); bindCommit('fTxt'); bind('fTxt', v => { o.texte = v; }); bindCommit('fFt'); bind('fFt', v => { o.taille = +v; }); bindCommit('fFv'); bind('fFv', v => { o.vent = +v; }); bind('fFm', v => { commit(); o.maison = v || undefined; }, 'change');
     bind('fX', v => { o.x = +v; }); bind('fY', v => { o.y = +v; }); $('bDel').onclick = delSel;
   }
 }

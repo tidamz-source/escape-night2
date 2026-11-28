@@ -61,7 +61,7 @@ class Fumee {
     this.puffs.push({ age: 0, life: 2.8 + Math.random() * 1.2, r: (4.2 + Math.random() * 2) * k, rise: (28 + Math.random() * 10) * k, sway: (1 + Math.random() * 2) * k, ph: Math.random() * 6.28, lobes });
   }
   update(dt) {
-    this.next -= dt; if (this.next <= 0) { this.spawn(); this.next = 1.3 + Math.random() * 0.9; }
+    this.next -= dt; if (this.next <= 0) { if (!this.on || this.on()) this.spawn(); this.next = 1.3 + Math.random() * 0.9; }
     for (const p of this.puffs) p.age += dt;
     this.puffs = this.puffs.filter(p => p.age < p.life);
   }
@@ -195,7 +195,7 @@ function carteArea(C, old) {
       if (it.type === 'coffre') this.ents.push(new Chest(it.x, it.y, { flag: it.id || ('c_' + C.id + '_' + it.x + '_' + it.y), give: it.contenu || 'money' }));
       else if (it.type === 'pot') this.ents.push(new Pot(it.x, it.y));
       else if (it.type === 'buisson') this.ents.push(new Bush(it.x, it.y));
-      else if (it.type === 'fumee') this.ents.push(Object.assign(new Fumee(it.x, it.y, it), { y: 1e9 - 5 })); // au-dessus des toits
+      else if (it.type === 'fumee') { const F = Object.assign(new Fumee(it.x, it.y, it), { y: 1e9 - 5 }), h = it.maison && this.houses.find(h => h.id === it.maison); if (h && h.o.locked) F.on = () => !h.o.locked(); if (F.on && !F.on()) F.puffs = []; this.ents.push(F); } // au-dessus des toits ; pas de fumée dans une maison vide (fermée)
       else if (it.type === 'panneau') this.ents.push(new Sign(it.x, it.y, [{ text: it.texte || '…' }], it.style));
     }
   };
