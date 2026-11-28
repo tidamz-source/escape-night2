@@ -156,7 +156,11 @@ function pontCutscene(G, bg, after) {
 class PontFg {
   constructor(bg) { this.bg = bg; this.p = bg.p; this.x = bg.x; this.y = 1e9; } // devant le héros, ou selon sa ligne de pied
   update(dt, G) { const P = G.player; this.y = this.p.pied && P && !P.swimming ? carteFootY(this.p, P.x) : 1e9; } // à la nage, tout le pont passe par-dessus
-  draw() { if (this.bg.k > 0.85) { ctx.globalAlpha = (this.bg.k - 0.85) / 0.15; pontDraw(this.p, this.p.fg, 1); ctx.globalAlpha = 1; } }
+  draw() {
+    const bg = this.bg, p = this.p;
+    if (p.chute && p.chute.length) { if (bg.k >= 1 || (bg.anim && bg.frameNow() === 'bg')) pontDraw(p, p.fg, 1); return; } // avec la chute : piliers en même temps que le tablier, sans fondu
+    if (bg.k > 0.85) { ctx.globalAlpha = (bg.k - 0.85) / 0.15; pontDraw(p, p.fg, 1); ctx.globalAlpha = 1; }
+  }
 }
 function pontDraw(p, src, k) {
   const im = src && IMG['cobj_' + src]; if (!im || k <= 0) return;
