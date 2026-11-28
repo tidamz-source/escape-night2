@@ -50,7 +50,7 @@ const G = {
     if (this.area && this.area.id !== id) Gerard.leave(this.area.id); // Gérard change de région quand on quitte la sienne
     this.area = this.areas[id]; this.area.arenaOn = null;
     this.room = this.area.rooms ? this.roomOf(pos.x, pos.y) : 0;
-    this.area.spawn(); worldSpawn(this.area);
+    this.area.spawn(); worldSpawn(this.area); if (this.area.afterSpawn) this.area.afterSpawn();
     if (this.area.zone) { spawnResources(this.area); peddlerSpawn(this.area); } // cueillette, minerai, colporteur
     const hp = this.player && !fresh ? this.player.hp : SAVE.maxHp;
     this.player = new Player(pos.x, pos.y, pos.dir); this.player.hp = Math.max(1, hp);

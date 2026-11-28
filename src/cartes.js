@@ -141,6 +141,7 @@ function carteArea(C, old) {
   const oldH = (old && old.houses) || [], lockOf = id => { const h = oldH.find(h => h.id === id); return h && h.o && h.o.locked; };
   A.houses = (C.portes || []).map(p => ({ id: p.vers, x: p.x, y: p.y, o: { w: p.w || 3, d: 1, painted: true, locked: p.ferme ? () => p.ferme : lockOf(p.vers) || null } }));
   const sp0 = old && old.spawn;
+  if (old) A.afterSpawn = () => carteRecale(A, C); // après les apparitions du monde et des quêtes (game.js)
   A.spawn = function () {
     if (sp0) sp0.call(this); else this.ents = [];
     this.ents = this.ents.filter(e => !(e instanceof Overhead) && !e.isHouse && !(typeof PaintedBridge !== 'undefined' && e instanceof PaintedBridge));
@@ -149,7 +150,7 @@ function carteArea(C, old) {
     for (const h of this.houses) this.ents.push(Object.assign(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)), { hid: h.id }));
     for (const o of C.objets || []) this.ents.push(new CarteObj(o));
     for (const o of C.objets || []) if (o.texte) this.ents.push(Object.assign(new Sign(o.x + o.w * o.s / 2, o.base, o.texte.split(/\n\s*\n/).map(t => ({ text: t.trim() })).filter(l => l.text)), { ghost: true, carteSign: true })); // pancarte de l'atelier : on lit son texte
-    if (old) carteRecale(this, C);
+
     for (const it of C.items || []) {
       if (it.type === 'coffre') this.ents.push(new Chest(it.x, it.y, { flag: it.id || ('c_' + C.id + '_' + it.x + '_' + it.y), give: it.contenu || 'money' }));
       else if (it.type === 'pot') this.ents.push(new Pot(it.x, it.y));
@@ -168,6 +169,7 @@ function carteRecale(A, C) {
     if (e instanceof Sign && !e.carteSign && told.some(o => Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y) < 48)) { e.dead = true; continue; } // la pancarte a son propre texte
     if (e instanceof Sign && e.ghost && !e.carteSign) { let best = null, bd = 48; for (const o of signs) { const d = Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y); if (d < bd) { bd = d; best = o; } } if (best) { e.x = best.x + best.w * best.s / 2; e.y = best.base; } else e.ghost = false; }
     if (typeof ClockTower !== 'undefined' && e instanceof ClockTower) { const t = (C.objets || []).find(o => o.cadran); if (t) { const ix = t.flip ? t.w - t.cadran[0] : t.cadran[0]; e.dial = [Math.round((t.x + ix * t.s - e.x) * 2), Math.round((t.y + t.cadran[1] * t.s - e.y) * 2)]; } } // le cadran animé sur celui de la tour posée
+    if (typeof CrowNest !== 'undefined' && e instanceof CrowNest) { let best = null, bd = 64; for (const o of C.objets || []) { if (!/arbre|tree|oak|pine|chene|sapin/i.test(o.src)) continue; const d = Math.abs(o.x + o.w * o.s / 2 - e.x) + Math.abs(o.base - e.gy) * 0.5; if (d < bd) { bd = d; best = o; } } if (best) { const dx = best.x + best.w * best.s / 2 - e.x, dy = best.base - 3 - e.gy; e.x += dx; e.gy += dy; e.y += dy; } } // le nid suit son arbre
     if (typeof PromoFlag !== 'undefined' && e instanceof PromoFlag) { const d = (C.portes || []).find(p => p.vers === e.shop); if (d) { e.x = d.x + 16; e.y = d.y + 6; } }
   }
 }
