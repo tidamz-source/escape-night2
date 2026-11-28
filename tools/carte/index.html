@@ -140,7 +140,46 @@ const REPO_MODELS = [
   ['assets/deco/windmill.png', 'Moulin', 'Bâtiments'], ['assets/deco/lighthouse.png', 'Phare', 'Bâtiments'], ['assets/deco/shrine.png', 'Sanctuaire', 'Bâtiments'], ['assets/deco/glowshroom.png', 'Champignon', 'Décor'],
 ];
 const MODES = [['obj', 'Objets', '1'], ['sol', 'Sol', '2'], ['porte', 'Portes', '3'], ['sortie', 'Sorties', '4'], ['arrivee', 'Arrivées', '5'], ['item', 'Coffres…', '6'], ['test', 'Tester', '7'], ['pont', 'Ponts', '8']];
-const ITEM_TYPES = [['coffre', 'Coffre'], ['pot', 'Pot'], ['buisson', 'Buisson'], ['panneau', 'Panneau']];
+const ITEM_TYPES = [['coffre', 'Coffre'], ['pot', 'Pot'], ['buisson', 'Buisson'], ['panneau', 'Panneau'], ['fumee', 'Fumée']];
+// ---------- fumée de cheminée procédurale (cartoon) : jamais deux bouffées pareilles ----------
+// chaque bouffée = un nuage de 2 à 4 boules, blanc ombré lavande, contour doux ; elle naît petite,
+// gonfle en montant en se balançant, puis rétrécit et disparaît. o.taille (1 = normal), o.vent (-1 gauche … 1 droite)
+const FUMEE_PAL = { w: '#fbf8ff', l: '#dcd6ea', m: '#b9b2cc', o: '#7f7896' };
+class Fumee {
+  constructor(x, y, o = {}) { this.x = this.fx = x; this.y = this.fy = y; this.k = o.taille || 1; this.vent = o.vent || 0; this.puffs = []; this.next = Math.random() * 1.2; this.ghost = false; this.warm = 0; for (let i = 0; i < 3; i++) this.update(0.6); }
+  spawn() {
+    const k = this.k, n = 2 + Math.floor(Math.random() * 3), lobes = [{ dx: 0, dy: 0, r: 1 }];
+    for (let i = 1; i < n; i++) { const a = (i / n) * Math.PI * 2 + Math.random() * 0.8; lobes.push({ dx: Math.cos(a) * (0.45 + Math.random() * 0.25), dy: Math.sin(a) * 0.3 + 0.15, r: 0.55 + Math.random() * 0.2 }); }
+    this.puffs.push({ age: 0, life: 2.8 + Math.random() * 1.2, r: (4.2 + Math.random() * 2) * k, rise: (28 + Math.random() * 10) * k, sway: (1 + Math.random() * 2) * k, ph: Math.random() * 6.28, lobes });
+  }
+  update(dt) {
+    this.next -= dt; if (this.next <= 0) { this.spawn(); this.next = 1.3 + Math.random() * 0.9; }
+    for (const p of this.puffs) p.age += dt;
+    this.puffs = this.puffs.filter(p => p.age < p.life);
+  }
+  draw(g = ctx) { for (const p of this.puffs) fumeePuff(g, this, p); }
+}
+function fumeePuff(g, F, p) {
+  const t = p.age / p.life, sz = t < 0.7 ? Math.sin(t / 0.7 * Math.PI / 2) : Math.cos((t - 0.7) / 0.3 * Math.PI / 2), r = 0.9 + sz * p.r; if (r < 1) return;
+  const cx = F.fx + Math.sin(t * Math.PI * 1.5 + p.ph) * p.sway + F.vent * t * t * 16 * F.k, cy = F.fy - t * p.rise; // fx/fy : la cheminée (y sert au tri)
+  const L = p.lobes.map(l => ({ x: cx + l.dx * r, y: cy + l.dy * r, r: r * l.r })), R = Math.ceil(r * 1.9) + 2, x0 = Math.round(cx) - R, y0 = Math.round(cy) - R, N = R * 2 + 1;
+  const m = new Array(N * N).fill(null);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const px = x0 + i + 0.5, py = y0 + j + 0.5; let best = null, bd = 0;
+    for (const l of L) { const d = Math.hypot(px - l.x, py - l.y) / l.r; if (d <= 1 && (!best || l.y + l.r * 0.3 > best.y + best.r * 0.3)) { best = l; bd = d; } }
+    if (!best) continue;
+    const sh = ((px - best.x) + (py - best.y)) / (best.r * 1.414);
+    m[j * N + i] = sh > 0.35 && bd > 0.45 ? 'm' : sh > 0.05 && bd > 0.55 ? 'l' : 'w';
+  }
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    let c = m[j * N + i];
+    if (!c) { if ((i > 0 && m[j * N + i - 1]) || (i < N - 1 && m[j * N + i + 1]) || (j > 0 && m[(j - 1) * N + i]) || (j < N - 1 && m[(j + 1) * N + i])) c = 'o'; else continue; }
+    g.fillStyle = FUMEE_PAL[c]; g.fillRect(x0 + i, y0 + j, 1, 1);
+  }
+}
+
+const FUMEES = new Map(); // item -> Fumee (aperçu animé)
+function fumeeOf(it) { let f = FUMEES.get(it); if (!f) { f = new Fumee(it.x, it.y, it); FUMEES.set(it, f); } f.fx = it.x; f.fy = it.y; f.k = it.taille || 1; f.vent = it.vent || 0; return f; }
 
 // ---------- état ----------
 let S = null;             // la carte : { id, name, cols, rows, dark, grille[], objets[], portes[], sorties[], arrivees[], items[], depart }
@@ -327,6 +366,7 @@ function draw() {
     if ($('vBase').checked) for (const o of S.objets) { cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 1.5; cx.setLineDash([4 * lw, 3 * lw]); cx.beginPath(); piedOf(o).forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.stroke(); cx.setLineDash([]); }
   }
   if (!test) for (const o of S.objets) if (o.texte) label('« ' + (o.texte.length > 24 ? o.texte.slice(0, 23) + '…' : o.texte) + ' »', o.x, o.y - 14 / view.z, '#d8c39a');
+  for (const it of S.items) if (it.type === 'fumee') fumeeOf(it).draw(cx);
   if ($('vGrid').checked) { cx.strokeStyle = 'rgba(255,255,255,.12)'; cx.lineWidth = lw; cx.beginPath(); for (let x = 0; x <= S.cols; x++) { cx.moveTo(x * TS, 0); cx.lineTo(x * TS, MH); } for (let y = 0; y <= S.rows; y++) { cx.moveTo(0, y * TS); cx.lineTo(MW, y * TS); } cx.stroke(); }
   if (pontOuvert) for (const p of S.ponts) if (!p.pied) drawPontImg(p, p.fg); // premier plan : toujours devant le héros
   if (!test) for (const p of S.ponts) { const W = p.w * p.s, H = p.h * p.s; cx.strokeStyle = '#ff9c1a'; cx.lineWidth = lw * 2; cx.setLineDash([6 * lw, 4 * lw]); cx.strokeRect(p.x, p.y, W, H); cx.setLineDash([]); if (p.zone) { const z = p.zone; cx.fillStyle = 'rgba(255,156,26,.22)'; cx.fillRect(z.tx * TS, z.ty * TS, z.tw * TS, z.th * TS); cx.strokeStyle = '#ff9c1a'; cx.strokeRect(z.tx * TS, z.ty * TS, z.tw * TS, z.th * TS); } label('pont · ' + (p.drapeau || 'toujours ouvert') + ' · charnière ' + (p.charniere || 'droite'), p.x, p.y - 14 / view.z, '#ff9c1a'); }
@@ -334,7 +374,7 @@ function draw() {
   for (const s of S.sorties) { cx.fillStyle = 'rgba(255,225,74,.28)'; cx.fillRect(s.tx * TS, s.ty * TS, s.tw * TS, s.th * TS); cx.strokeStyle = '#ffe14a'; cx.lineWidth = lw * 2; cx.strokeRect(s.tx * TS, s.ty * TS, s.tw * TS, s.th * TS); label(`→ ${s.vers || '?'}`, s.tx * TS + 2, s.ty * TS + 2, '#ffe14a'); }
   for (const p of S.portes) { const w = (p.w || 3) * TS; cx.fillStyle = 'rgba(95,224,160,.35)'; cx.fillRect(p.x - 9, p.y - 4, 18, 8); cx.strokeStyle = '#5fe0a0'; cx.lineWidth = lw * 2; cx.strokeRect(p.x - 9, p.y - 4, 18, 8); cx.beginPath(); cx.moveTo(p.x, p.y + 6); cx.lineTo(p.x, p.y - 10); cx.lineTo(p.x - 4, p.y - 6); cx.moveTo(p.x, p.y - 10); cx.lineTo(p.x + 4, p.y - 6); cx.stroke(); label('⌂ ' + (p.vers || '?'), p.x - 9, p.y + 6, '#5fe0a0'); }
   for (const a of S.arrivees) { cx.fillStyle = '#c38bff'; cx.beginPath(); cx.arc(a.x, a.y, 4, 0, 7); cx.fill(); const v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[a.dir || 'down']; cx.strokeStyle = '#c38bff'; cx.lineWidth = lw * 2; cx.beginPath(); cx.moveTo(a.x, a.y); cx.lineTo(a.x + v[0] * 10, a.y + v[1] * 10); cx.stroke(); label((a.nom === S.depart ? '★ ' : '') + (a.nom || '?'), a.x + 6, a.y - 4, '#c38bff'); }
-  if (!test) for (const it of S.items) { const c = { coffre: '#ffb347', pot: '#c08050', buisson: '#5aa060', panneau: '#d8c39a' }[it.type]; cx.fillStyle = c; cx.fillRect(it.x - 6, it.y - 10, 12, 10); cx.strokeStyle = '#000'; cx.lineWidth = lw; cx.strokeRect(it.x - 6, it.y - 10, 12, 10); label(it.type, it.x - 6, it.y + 1, c); }
+  if (!test) for (const it of S.items) { if (it.type === 'fumee') { cx.strokeStyle = '#dcd6ea'; cx.lineWidth = lw; cx.beginPath(); cx.arc(it.x, it.y, 3, 0, 7); cx.stroke(); continue; } const c = { coffre: '#ffb347', pot: '#c08050', buisson: '#5aa060', panneau: '#d8c39a' }[it.type]; cx.fillStyle = c; cx.fillRect(it.x - 6, it.y - 10, 12, 10); cx.strokeStyle = '#000'; cx.lineWidth = lw; cx.strokeRect(it.x - 6, it.y - 10, 12, 10); label(it.type, it.x - 6, it.y + 1, c); }
   // sélection
   if (sel && !test) {
     cx.strokeStyle = '#ffd45c'; cx.lineWidth = lw * 2;
@@ -498,7 +538,8 @@ const HINTS = {
   porte: 'Clique sur le seuil d\'une porte (le perso y entre en montant). Glisse pour ajuster, puis choisis l\'intérieur à droite.',
   sortie: 'Trace un rectangle là où le perso quitte la carte (bord, grotte, escalier…), puis choisis la destination.',
   arrivee: 'Clique pour poser un point d\'arrivée (là où le perso apparaît en venant d\'ailleurs). L\'étoile marque le départ par défaut.',
-  item: 'Choisis un type puis clique sur la carte.',
+  item: 'Choisis un type puis clique sur la carte. Fumée : clique sur le haut d\'une cheminée.',
+  fumee: '',
   pont: 'Crée un pont avec ses 3 fichiers bridge_up, bridge_down_BG et bridge_down_FG (choisis-les ensemble ou glisse-les sur la carte), place-le sur la rivière, puis trace la zone qui devient praticable quand il est ouvert (Maj + glisser, ou le bouton à gauche).',
   test: 'Flèches ou ZQSD pour marcher. Clique pour téléporter le perso. Les toits et feuillages s\'effacent quand tu passes derrière.',
 };
@@ -645,9 +686,10 @@ function renderInsp() {
     let h = `<div class="sect">${esc(ITEM_TYPES.find(t => t[0] === o.type)[1])}</div>`;
     if (o.type === 'coffre') h += fld('Drapeau (unique)', `<input id="fId2" value="${esc(o.id)}">`) + fld('Contenu (id d\'objet du jeu)', `<input id="fCont" value="${esc(o.contenu)}" placeholder="money, piece_coeur, cle…">`);
     if (o.type === 'panneau') h += fld('Texte', `<textarea id="fTxt">${esc(o.texte)}</textarea>`);
+    if (o.type === 'fumee') h += `<p class="small">Pose le point sur le haut de la cheminée. Chaque bouffée est tirée au hasard : jamais deux pareilles.</p>` + fld('Taille', `<input id="fFt" type="range" min="0.4" max="2" step="0.05" value="${o.taille || 1}">`) + fld('Vent (gauche ← → droite)', `<input id="fFv" type="range" min="-1" max="1" step="0.1" value="${o.vent || 0}">`);
     h += `<div class="row">${fld('X', `<input id="fX" type="number" value="${o.x}">`)}${fld('Y', `<input id="fY" type="number" value="${o.y}">`)}</div><div class="row"><button class="btn dan" id="bDel">Supprimer</button></div>`;
     I.innerHTML = h;
-    bindCommit('fId2'); bind('fId2', v => { o.id = v.trim(); }); bindCommit('fCont'); bind('fCont', v => { o.contenu = v.trim(); }); bindCommit('fTxt'); bind('fTxt', v => { o.texte = v; });
+    bindCommit('fId2'); bind('fId2', v => { o.id = v.trim(); }); bindCommit('fCont'); bind('fCont', v => { o.contenu = v.trim(); }); bindCommit('fTxt'); bind('fTxt', v => { o.texte = v; }); bindCommit('fFt'); bind('fFt', v => { o.taille = +v; }); bindCommit('fFv'); bind('fFv', v => { o.vent = +v; });
     bind('fX', v => { o.x = +v; }); bind('fY', v => { o.y = +v; }); $('bDel').onclick = delSel;
   }
 }
@@ -825,7 +867,7 @@ $('bUndo').onclick = doUndo; $('bRedo').onclick = doRedo;
 for (const id of ['vCol', 'vBase', 'vGrid']) $(id).onchange = () => {};
 addEventListener('resize', () => { resize(); });
 let last = performance.now();
-function loop(t) { const dt = Math.min(0.05, (t - last) / 1000); last = t; if (mode === 'test' && S) heroStep(dt); draw(); requestAnimationFrame(loop); }
+function loop(t) { const dt = Math.min(0.05, (t - last) / 1000); last = t; if (S) for (const it of S.items) if (it.type === 'fumee') fumeeOf(it).update(dt); if (mode === 'test' && S) heroStep(dt); draw(); requestAnimationFrame(loop); }
 resize(); renderLeft(); renderInsp(); loadLibrary(); requestAnimationFrame(loop);
 // reprendre le dernier brouillon
 idbAll('docs').then(async d => { const e = Object.values(d).sort((a, b) => b.at - a.at)[0]; if (e && !S) setDoc(e.state, e.fond ? await blobToImg(e.fond) : null, e.fond); }).catch(() => {});

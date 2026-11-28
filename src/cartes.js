@@ -49,6 +49,43 @@ class CarteObj {
   }
 }
 
+// ---------- fumée de cheminée procédurale (cartoon) : jamais deux bouffées pareilles ----------
+// chaque bouffée = un nuage de 2 à 4 boules, blanc ombré lavande, contour doux ; elle naît petite,
+// gonfle en montant en se balançant, puis rétrécit et disparaît. o.taille (1 = normal), o.vent (-1 gauche … 1 droite)
+const FUMEE_PAL = { w: '#fbf8ff', l: '#dcd6ea', m: '#b9b2cc', o: '#7f7896' };
+class Fumee {
+  constructor(x, y, o = {}) { this.x = this.fx = x; this.y = this.fy = y; this.k = o.taille || 1; this.vent = o.vent || 0; this.puffs = []; this.next = Math.random() * 1.2; this.ghost = false; this.warm = 0; for (let i = 0; i < 3; i++) this.update(0.6); }
+  spawn() {
+    const k = this.k, n = 2 + Math.floor(Math.random() * 3), lobes = [{ dx: 0, dy: 0, r: 1 }];
+    for (let i = 1; i < n; i++) { const a = (i / n) * Math.PI * 2 + Math.random() * 0.8; lobes.push({ dx: Math.cos(a) * (0.45 + Math.random() * 0.25), dy: Math.sin(a) * 0.3 + 0.15, r: 0.55 + Math.random() * 0.2 }); }
+    this.puffs.push({ age: 0, life: 2.8 + Math.random() * 1.2, r: (4.2 + Math.random() * 2) * k, rise: (28 + Math.random() * 10) * k, sway: (1 + Math.random() * 2) * k, ph: Math.random() * 6.28, lobes });
+  }
+  update(dt) {
+    this.next -= dt; if (this.next <= 0) { this.spawn(); this.next = 1.3 + Math.random() * 0.9; }
+    for (const p of this.puffs) p.age += dt;
+    this.puffs = this.puffs.filter(p => p.age < p.life);
+  }
+  draw(g = ctx) { for (const p of this.puffs) fumeePuff(g, this, p); }
+}
+function fumeePuff(g, F, p) {
+  const t = p.age / p.life, sz = t < 0.7 ? Math.sin(t / 0.7 * Math.PI / 2) : Math.cos((t - 0.7) / 0.3 * Math.PI / 2), r = 0.9 + sz * p.r; if (r < 1) return;
+  const cx = F.fx + Math.sin(t * Math.PI * 1.5 + p.ph) * p.sway + F.vent * t * t * 16 * F.k, cy = F.fy - t * p.rise; // fx/fy : la cheminée (y sert au tri)
+  const L = p.lobes.map(l => ({ x: cx + l.dx * r, y: cy + l.dy * r, r: r * l.r })), R = Math.ceil(r * 1.9) + 2, x0 = Math.round(cx) - R, y0 = Math.round(cy) - R, N = R * 2 + 1;
+  const m = new Array(N * N).fill(null);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const px = x0 + i + 0.5, py = y0 + j + 0.5; let best = null, bd = 0;
+    for (const l of L) { const d = Math.hypot(px - l.x, py - l.y) / l.r; if (d <= 1 && (!best || l.y + l.r * 0.3 > best.y + best.r * 0.3)) { best = l; bd = d; } }
+    if (!best) continue;
+    const sh = ((px - best.x) + (py - best.y)) / (best.r * 1.414);
+    m[j * N + i] = sh > 0.35 && bd > 0.45 ? 'm' : sh > 0.05 && bd > 0.55 ? 'l' : 'w';
+  }
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    let c = m[j * N + i];
+    if (!c) { if ((i > 0 && m[j * N + i - 1]) || (i < N - 1 && m[j * N + i + 1]) || (j > 0 && m[(j - 1) * N + i]) || (j < N - 1 && m[(j + 1) * N + i])) c = 'o'; else continue; }
+    g.fillStyle = FUMEE_PAL[c]; g.fillRect(x0 + i, y0 + j, 1, 1);
+  }
+}
+
 // ---------- pont-levis ----------
 // fermé : l'image du pont levé (leve), la zone reste de l'eau.
 // ouvert (SAVE[drapeau]) : le tablier (bg) passe sous le héros, les piliers (fg) par-dessus ; la zone devient praticable.
@@ -158,6 +195,7 @@ function carteArea(C, old) {
       if (it.type === 'coffre') this.ents.push(new Chest(it.x, it.y, { flag: it.id || ('c_' + C.id + '_' + it.x + '_' + it.y), give: it.contenu || 'money' }));
       else if (it.type === 'pot') this.ents.push(new Pot(it.x, it.y));
       else if (it.type === 'buisson') this.ents.push(new Bush(it.x, it.y));
+      else if (it.type === 'fumee') this.ents.push(Object.assign(new Fumee(it.x, it.y, it), { y: 1e9 - 5 })); // au-dessus des toits
       else if (it.type === 'panneau') this.ents.push(new Sign(it.x, it.y, [{ text: it.texte || '…' }], it.style));
     }
   };
