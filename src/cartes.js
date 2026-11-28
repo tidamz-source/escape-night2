@@ -57,7 +57,16 @@ const pontOpen = p => !p.drapeau || !!SAVE[p.drapeau];
 class PontBg {
   constructor(p) { this.p = p; this.ground = true; this.x = p.x + p.w * p.s / 2; this.y = p.y; this.k = pontOpen(p) ? 1 : 0; this.anim = false; }
   update(dt, G) {
-    const p = this.p;
+    const p = this.p, P = G.player, A = G.area;
+    // à la nage, on passe sous le pont ouvert : le tablier se dessine par-dessus le héros
+    // et ses cases restent de l'eau pour qui y entre en nageant (on ne grimpe pas sur le tablier depuis l'eau)
+    if (P && p.zone && A.ponts) {
+      const z = p.zone, tx = Math.floor(P.x / TS), ty = Math.floor((P.y - 2) / TS), inZ = pontOpen(p) && tx >= z.tx && tx < z.tx + z.tw && ty >= z.ty && ty < z.ty + z.th;
+      if (inZ && !this.inZ) A.pontUnder = !!this.wasSwim; else if (!inZ && this.inZ) A.pontUnder = false;
+      this.inZ = inZ; if (!inZ) this.wasSwim = P.swimming;
+      const under = pontOpen(p) && (P.swimming || (inZ && A.pontUnder));
+      this.ground = !under; this.y = under ? 1e9 - 1 : p.y;
+    }
     if (pontOpen(p) && this.k < 1) {
       if (!this.anim) { this.anim = true; SFX.gate(); }
       this.k = Math.min(1, this.k + dt / 1.6); G.shake = Math.max(G.shake || 0, 0.06);
@@ -120,6 +129,8 @@ function carteArea(C, old) {
   A.paint = 'carte_' + C.id; A.bushSpots = []; A.props = [];
   A.fine = carteFine(C, g); A.fineTS = CARTE_FTS;
   A.syncTiles = () => pontSync(A, C); // appelé par la cible du pont-levis
+  A.ponts = C.ponts || []; A.pontUnder = false;
+  if (A.ponts.length) { const base = Area.prototype.tile; A.tile = function (tx, ty) { const t = base.call(this, tx, ty); if (t === 'b' && this.pontUnder && this.ponts.some(p => p.zone && tx >= p.zone.tx && tx < p.zone.tx + p.zone.tw && ty >= p.zone.ty && ty < p.zone.ty + p.zone.th)) return '~'; return t; }; } // sous le pont, c'est de l'eau
   pontSync(A, C);
   for (const a of C.arrivees || []) ZONE_ARRIVE[a.nom] = { x: a.x, y: a.y, dir: a.dir || 'down' };
   const dep = (C.arrivees || []).find(a => a.nom === C.depart) || (C.arrivees || [])[0];
