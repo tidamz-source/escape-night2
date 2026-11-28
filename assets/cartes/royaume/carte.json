@@ -1,9 +1,9 @@
 {
- "id": "new_bourg",
- "name": "new_bourg",
+ "id": "royaume",
+ "name": "Bourg-Luciole",
  "cols": 64,
  "rows": 48,
- "dark": 0.45,
+ "dark": 0.5,
  "grille": [
   "##############################....##############################",
   "##############################....##############################",
@@ -1084,31 +1084,24 @@
    "ferme": ""
   },
   {
-   "x": 504,
-   "y": 400,
-   "w": 3,
-   "vers": "",
-   "ferme": "La porte est fermée à clé."
-  },
-  {
    "x": 632,
    "y": 160,
    "w": 3,
    "vers": "comptoir",
-   "ferme": "La porte est fermée à clé."
+   "ferme": ""
   },
   {
    "x": 793,
    "y": 187,
    "w": 3,
-   "vers": "",
+   "vers": "gaspard",
    "ferme": ""
   },
   {
    "x": 733,
    "y": 326,
    "w": 3,
-   "vers": "",
+   "vers": "bibliotheque",
    "ferme": ""
   },
   {
@@ -1116,6 +1109,27 @@
    "y": 610,
    "w": 3,
    "vers": "forge",
+   "ferme": ""
+  },
+  {
+   "x": 640,
+   "y": 616,
+   "w": 3,
+   "vers": "epicerie",
+   "ferme": ""
+  },
+  {
+   "x": 736,
+   "y": 616,
+   "w": 3,
+   "vers": "mahaut",
+   "ferme": ""
+  },
+  {
+   "x": 864,
+   "y": 610,
+   "w": 3,
+   "vers": "mamie",
    "ferme": ""
   }
  ],
@@ -1126,35 +1140,53 @@
    "tw": 4,
    "th": 3,
    "vers": "route_nord",
-   "arrivee": ""
+   "arrivee": "route_nord_from_royaume"
   },
   {
    "tx": 0,
    "ty": 22,
    "tw": 4,
    "th": 3,
-   "vers": "bois",
-   "arrivee": ""
+   "vers": "oree",
+   "arrivee": "oree_from_royaume"
   },
   {
    "tx": 30,
    "ty": 45,
    "tw": 4,
    "th": 3,
-   "vers": "lac",
-   "arrivee": ""
+   "vers": "pres",
+   "arrivee": "pres_from_royaume"
   }
  ],
  "arrivees": [
   {
-   "nom": "new_bourg_from_",
-   "x": 888,
-   "y": 424,
+   "nom": "village_place",
+   "x": 512,
+   "y": 496,
    "dir": "down"
+  },
+  {
+   "nom": "village_from_collines",
+   "x": 512,
+   "y": 64,
+   "dir": "down"
+  },
+  {
+   "nom": "village_from_foret",
+   "x": 88,
+   "y": 380,
+   "dir": "right"
+  },
+  {
+   "nom": "village_from_lac",
+   "x": 512,
+   "y": 704,
+   "dir": "up"
   }
  ],
  "items": [],
- "depart": "new_bourg_from_",
+ "depart": "village_place",
  "ponts": [
   {
    "id": "94upaj",

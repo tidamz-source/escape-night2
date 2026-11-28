@@ -101,6 +101,8 @@ function carteFine(C, g) {
       for (let cx = Math.max(0, Math.floor(Math.min(...xs) / CARTE_FTS)); cx <= Math.min(F[0].length - 1, Math.floor(Math.max(...xs) / CARTE_FTS)); cx++)
         if (inPoly((cx + 0.5) * CARTE_FTS, (cy + 0.5) * CARTE_FTS, o.poly)) F[cy][cx] = '#';
   }
+  // le seuil des portes reste toujours accessible, même si une collision d'objet le recouvre
+  for (const d of C.portes || []) for (let cy = Math.floor((d.y - 6) / CARTE_FTS); cy <= Math.floor((d.y + 10) / CARTE_FTS); cy++) for (let cx = Math.floor((d.x - 8) / CARTE_FTS); cx < Math.ceil((d.x + 8) / CARTE_FTS); cx++) if (F[cy] && F[cy][cx] === '#') F[cy][cx] = '.';
   return F.map(r => r.join(''));
 }
 
@@ -120,7 +122,9 @@ function carteArea(C, old) {
   if (dep) A.start = { x: dep.x, y: dep.y, dir: dep.dir || 'down' };
   A.exits = {};
   (C.sorties || []).forEach((s, i) => { A.exits[String(i + 1)] = G => G.enter(s.vers, ZONE_ARRIVE[s.arrivee] || (G.areas[s.vers] && G.areas[s.vers].start)); });
-  A.houses = (C.portes || []).map(p => ({ id: p.vers, x: p.x, y: p.y, o: { w: p.w || 3, d: 1, painted: true, locked: p.ferme ? () => p.ferme : null } }));
+  // une porte vers une maison que la zone avait déjà garde ses conditions (maison à louer, partie au camping…)
+  const oldH = (old && old.houses) || [], lockOf = id => { const h = oldH.find(h => h.id === id); return h && h.o && h.o.locked; };
+  A.houses = (C.portes || []).map(p => ({ id: p.vers, x: p.x, y: p.y, o: { w: p.w || 3, d: 1, painted: true, locked: p.ferme ? () => p.ferme : lockOf(p.vers) || null } }));
   const sp0 = old && old.spawn;
   A.spawn = function () {
     if (sp0) sp0.call(this); else this.ents = [];
@@ -129,6 +133,7 @@ function carteArea(C, old) {
     for (const p of C.ponts || []) { const bg = new PontBg(p); this.ents.push(bg, new PontFg(bg)); }
     for (const h of this.houses) this.ents.push(Object.assign(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)), { hid: h.id }));
     for (const o of C.objets || []) this.ents.push(new CarteObj(o));
+    if (old) carteRecale(this, C);
     for (const it of C.items || []) {
       if (it.type === 'coffre') this.ents.push(new Chest(it.x, it.y, { flag: it.id || ('c_' + C.id + '_' + it.x + '_' + it.y), give: it.contenu || 'money' }));
       else if (it.type === 'pot') this.ents.push(new Pot(it.x, it.y));
@@ -137,5 +142,14 @@ function carteArea(C, old) {
     }
   };
   return A;
+}
+// les éléments que la zone posait pour l'ancienne carte peinte : on les accorde au nouveau décor
+function carteRecale(A, C) {
+  const signs = (C.objets || []).filter(o => /pancarte|panneau|sign/i.test(o.src));
+  for (const e of A.ents) {
+    if ((typeof Target !== 'undefined' && e instanceof Target) || (typeof Relay !== 'undefined' && e instanceof Relay)) e.ghost = false; // plus peints sur le fond : on les dessine
+    if (e instanceof Sign && e.ghost) { let best = null, bd = 48; for (const o of signs) { const d = Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y); if (d < bd) { bd = d; best = o; } } if (best) { e.x = best.x + best.w * best.s / 2; e.y = best.base; } else e.ghost = false; }
+    if (typeof PromoFlag !== 'undefined' && e instanceof PromoFlag) { const d = (C.portes || []).find(p => p.vers === e.shop); if (d) { e.x = d.x + 16; e.y = d.y + 6; } }
+  }
 }
 function applyCartes(areas) { for (const id in CARTES) { try { areas[id] = carteArea(CARTES[id], areas[id]); } catch (e) { console.warn('carte', id, e); } } }

@@ -240,6 +240,7 @@ function solidAt(x, y) { // pour le test : sol + polygones
   const tx = Math.floor(x / TS), ty = Math.floor(y / TS), t = (S.grille[ty] || '')[tx];
   if (pontOuvert) for (const p of S.ponts) { const z = p.zone; if (z && tx >= z.tx && tx < z.tx + z.tw && ty >= z.ty && ty < z.ty + z.th) { for (const o of S.objets) if (o.poly.length > 2 && inPoly(x, y, o.poly)) return true; return false; } }
   if (t == null || SOLID.has(t)) return true;
+  for (const d of S.portes) if (x >= d.x - 8 && x < d.x + 8 && y >= d.y - 6 && y <= d.y + 10) return false; // seuil des portes toujours libre
   for (const o of S.objets) if (o.poly.length > 2 && inPoly(x, y, o.poly)) return true;
   return false;
 }
