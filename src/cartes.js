@@ -27,8 +27,12 @@ function carteFootY(o, x) {
   for (const [px, py] of P) { const d = Math.abs(px - x); if (d < nd) { nd = d; near = py; } }
   return near;
 }
+const hexRgba = h => { const c = (h || '#ffd27a').replace('#', ''); return `rgba(${parseInt(c.slice(0, 2), 16)},${parseInt(c.slice(2, 4), 16)},${parseInt(c.slice(4, 6), 16)},`; };
 class CarteObj {
-  constructor(o) { this.o = o; this.x = o.x + o.w * o.s / 2; this.y = o.base; this.a = 1; }
+  constructor(o) {
+    this.o = o; this.x = o.x + o.w * o.s / 2; this.y = o.base; this.a = 1;
+    if (o.lumiere) { const L = o.lumiere; this.light = { r: L.r || 48, c: hexRgba(L.c), flick: L.flick ? 2 : 0, warm: true }; this.lightPos = [L.x, L.y + 6]; } // lanterne posée dans l'atelier
+  }
   update(dt, G) {
     const o = this.o, P = G.player; if (!P) return;
     const fy = carteFootY(o, P.x); this.y = fy; if (!o.fade) return;
