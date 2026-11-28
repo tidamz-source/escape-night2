@@ -123,7 +123,7 @@ class PontBg {
     if (this.k >= 1) { this.anim = false; this.impact(G, 1); }
   }
   seq() { // [image, durée, choc] : de plus en plus vite, choc, petit rebond, posé
-    const c = this.p.chute; return [['leve', 0.5], [c[0], 0.3], [c[1], 0.17], [c[2], 0.09], ['bg', 0.16, 1], [c[2], 0.07], ['bg', 0.35, 2]];
+    const c = this.p.chute; return [['leve', 0.25], [c[0], 0.15], [c[1], 0.085], [c[2], 0.045], ['bg', 0.08, 1], [c[2], 0.035], ['bg', 0.175, 2]]; // 2× plus rapide (≈ 0,8 s)
   }
   frameNow() { if (this.k >= 1) return 'bg'; let acc = 0; for (const [k, d] of this.seq()) { if (this.t < acc + d) return k; acc += d; } return 'bg'; }
   impact(G, n) {
