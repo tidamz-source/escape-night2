@@ -3,7 +3,7 @@
 const DARK_K = 0.62; // < 1 : nuit moins sombre partout (1 = l'obscurité d'origine)
 const NIGHT = 0.40;  // un seul niveau de nuit pour tout le jeu (seules les lumières locales varient)
 // après la victoire finale : plein jour dehors, intérieurs éclairés, souterrains toujours dans la pénombre
-const nightLevel = A => !SAVE.boss6 ? NIGHT : A.rooms || A.secret || /^phare/.test(A.id) ? NIGHT : A.interior ? 0.15 : 0.05;
+const nightLevel = A => !SAVE.boss6 ? (A.carteDark != null ? A.carteDark : NIGHT) : A.rooms || A.secret || /^phare/.test(A.id) ? NIGHT : A.interior ? 0.15 : 0.05;
 const G = {
   state: 'boot', t: 0, areas: {}, area: null, player: null, parts: new Parts(),
   cam: { x: 0, y: 0 }, shake: 0, hitstop: 0, dialog: null, fade: null, slide: null, room: 0,

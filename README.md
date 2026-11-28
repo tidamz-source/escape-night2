@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.22.0** : le Camping passe sur la carte de l’Atelier (remise à l’échelle 38×28, feu de camp, lanternes, pancarte) ; le niveau de nuit de l’atelier est pris en compte (camping à 0,8).
 - **8.21.3** : arbres replacés à Bourg-Luciole et dans les Collines, ligne de pied du pont ; le nid du corbeau suit son arbre ; recalage après les apparitions des quêtes.
 - **8.21.2** : Atelier Carte : texte des pancartes (lu dans le jeu) et taille des objets réglable (poignée ou %).
 - **8.21.1** : scintillement des lanternes plus doux ; pont-levis : ligne de pied réglable pour le premier plan (Atelier Carte), nouveau premier plan du pont.

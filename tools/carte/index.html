@@ -211,7 +211,7 @@ function modelOf(o) { return MODELS.get(o.src); }
 
 // ---------- carte ----------
 function blankGrid(cols, rows) { return Array.from({ length: rows }, () => '.'.repeat(cols)); }
-function newDoc(id, name, cols, rows) { return { id, name, cols, rows, dark: 0.45, ponts: [], grille: blankGrid(cols, rows), objets: [], portes: [], sorties: [], arrivees: [], items: [], depart: '' }; }
+function newDoc(id, name, cols, rows) { return { id, name, cols, rows, dark: 0.4, ponts: [], grille: blankGrid(cols, rows), objets: [], portes: [], sorties: [], arrivees: [], items: [], depart: '' }; }
 function setDoc(doc, fondImg, blob) {
   S = doc; FOND = fondImg; fondBlob = blob || null; sel = null; undo = []; redo = [];
   for (const k of ['objets', 'portes', 'sorties', 'arrivees', 'items', 'ponts']) S[k] = S[k] || [];
@@ -552,7 +552,7 @@ function renderInsp() {
     if (placing) { I.innerHTML = `<div class="sect">Pose</div><p>${esc(placing.nom)}</p><p class="small">Clique sur la carte pour poser (Alt : en poser plusieurs). Échap pour arrêter.</p>` + modelInsp(placing) + `<div class="row"><button class="btn" id="bVis">Mettre à jour le visuel…</button></div>`; bindModel(placing); $('bVis').onclick = () => { visTarget = placing; $('fileVis').click(); }; return; }
     I.innerHTML = `<div class="sect">Carte</div>` +
       fld('Identifiant (zone du jeu)', `<input id="fId" value="${esc(S.id)}">`) + fld('Nom affiché', `<input id="fName" value="${esc(S.name)}">`) +
-      fld('Nuit (0 clair → 1 sombre)', `<input id="fDark" type="number" step="0.05" min="0" max="1" value="${S.dark}">`) +
+      fld('Nuit (0 clair → 1 noir ; le jeu est à 0,4)', `<input id="fDark" type="number" step="0.05" min="0" max="1" value="${S.dark}">`) +
       fld('Départ par défaut', `<select id="fDep">${S.arrivees.map(a => `<option${a.nom === S.depart ? ' selected' : ''}>${esc(a.nom)}</option>`).join('') || '<option value="">(pose une arrivée)</option>'}</select>`) +
       `<div class="row"><button class="btn" id="bFond">Changer le fond…</button></div>` +
       `<div class="sect">Contenu</div><p class="small">${S.objets.length} objets · ${S.portes.length} portes · ${S.sorties.length} sorties · ${S.arrivees.length} arrivées · ${S.items.length} coffres et objets</p>` + checks();
