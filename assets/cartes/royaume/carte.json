@@ -119,7 +119,11 @@
     ]
    ],
    "fade": false,
-   "flip": false
+   "flip": false,
+   "cadran": [
+    145,
+    265
+   ]
   },
   {
    "id": "b8ij4q",

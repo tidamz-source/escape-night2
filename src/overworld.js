@@ -162,7 +162,7 @@ class ClockTower {
     hi(this.x, this.y, false, () => {
       if (!this.painted) this.drawBody();
       // grand cadran (sur la tour peinte : à l'emplacement du cadran de l'image)
-      const cx = 0, cy = this.painted ? -162 : -160;
+      const cx = this.dial ? this.dial[0] : 0, cy = this.dial ? this.dial[1] : this.painted ? -162 : -160; // dial : cadran d'une tour posée dans l'atelier
       ctx.fillStyle = '#c8a040'; ctx.beginPath(); ctx.arc(cx, cy, 34, 0, 7); ctx.fill();
       ctx.fillStyle = sun ? '#fff6d8' : '#e8e0d0'; ctx.beginPath(); ctx.arc(cx, cy, 30, 0, 7); ctx.fill();
       for (let i = 0; i < 12; i++) { const b = i / 12 * Math.PI * 2; D(Math.round(cx + Math.sin(b) * 25) - 2, Math.round(cy - Math.cos(b) * 25) - 2, 4, 4, '#5a4a6a'); }
@@ -174,7 +174,7 @@ class ClockTower {
       const a1 = (this.hand / 12) * Math.PI * 2;
       ctx.strokeStyle = '#2a1d38'; ctx.lineCap = 'round'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.sin(a1) * 17, cy - Math.cos(a1) * 17); ctx.stroke();
       ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - 25); ctx.stroke();
-      D(-4, cy - 4, 8, 8, '#c8a040');
+      D(cx - 4, cy - 4, 8, 8, '#c8a040');
     });
     if (this.glow > 0) { // onde de lumière qui part du cadran, et rayons
       const k = 1.2 - this.glow, cy = this.y - 80;

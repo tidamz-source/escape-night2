@@ -153,6 +153,7 @@ function carteRecale(A, C) {
   for (const e of A.ents) {
     if ((typeof Target !== 'undefined' && e instanceof Target) || (typeof Relay !== 'undefined' && e instanceof Relay)) e.ghost = false; // plus peints sur le fond : on les dessine
     if (e instanceof Sign && e.ghost) { let best = null, bd = 48; for (const o of signs) { const d = Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y); if (d < bd) { bd = d; best = o; } } if (best) { e.x = best.x + best.w * best.s / 2; e.y = best.base; } else e.ghost = false; }
+    if (typeof ClockTower !== 'undefined' && e instanceof ClockTower) { const t = (C.objets || []).find(o => o.cadran); if (t) { const ix = t.flip ? t.w - t.cadran[0] : t.cadran[0]; e.dial = [Math.round((t.x + ix * t.s - e.x) * 2), Math.round((t.y + t.cadran[1] * t.s - e.y) * 2)]; } } // le cadran animé sur celui de la tour posée
     if (typeof PromoFlag !== 'undefined' && e instanceof PromoFlag) { const d = (C.portes || []).find(p => p.vers === e.shop); if (d) { e.x = d.x + 16; e.y = d.y + 6; } }
   }
 }
