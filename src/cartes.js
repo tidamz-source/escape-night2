@@ -148,6 +148,7 @@ function carteArea(C, old) {
     for (const p of C.ponts || []) { const bg = new PontBg(p); this.ents.push(bg, new PontFg(bg)); }
     for (const h of this.houses) this.ents.push(Object.assign(new House(h.x, h.y, Object.assign({ interior: h.id }, h.o)), { hid: h.id }));
     for (const o of C.objets || []) this.ents.push(new CarteObj(o));
+    for (const o of C.objets || []) if (o.texte) this.ents.push(Object.assign(new Sign(o.x + o.w * o.s / 2, o.base, o.texte.split(/\n\s*\n/).map(t => ({ text: t.trim() })).filter(l => l.text)), { ghost: true, carteSign: true })); // pancarte de l'atelier : on lit son texte
     if (old) carteRecale(this, C);
     for (const it of C.items || []) {
       if (it.type === 'coffre') this.ents.push(new Chest(it.x, it.y, { flag: it.id || ('c_' + C.id + '_' + it.x + '_' + it.y), give: it.contenu || 'money' }));
@@ -160,11 +161,12 @@ function carteArea(C, old) {
 }
 // les éléments que la zone posait pour l'ancienne carte peinte : on les accorde au nouveau décor
 function carteRecale(A, C) {
-  const signs = (C.objets || []).filter(o => /pancarte|panneau|sign/i.test(o.src));
+  const signs = (C.objets || []).filter(o => /pancarte|panneau|sign/i.test(o.src) && !o.texte), told = (C.objets || []).filter(o => o.texte);
   if ((C.objets || []).some(o => o.lumiere)) A.ents = A.ents.filter(e => !(typeof LightSpot !== 'undefined' && e instanceof LightSpot)); // les lanternes posées remplacent les lumières invisibles de l'ancienne carte
   for (const e of A.ents) {
     if ((typeof Target !== 'undefined' && e instanceof Target) || (typeof Relay !== 'undefined' && e instanceof Relay)) e.ghost = false; // plus peints sur le fond : on les dessine
-    if (e instanceof Sign && e.ghost) { let best = null, bd = 48; for (const o of signs) { const d = Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y); if (d < bd) { bd = d; best = o; } } if (best) { e.x = best.x + best.w * best.s / 2; e.y = best.base; } else e.ghost = false; }
+    if (e instanceof Sign && !e.carteSign && told.some(o => Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y) < 48)) { e.dead = true; continue; } // la pancarte a son propre texte
+    if (e instanceof Sign && e.ghost && !e.carteSign) { let best = null, bd = 48; for (const o of signs) { const d = Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y); if (d < bd) { bd = d; best = o; } } if (best) { e.x = best.x + best.w * best.s / 2; e.y = best.base; } else e.ghost = false; }
     if (typeof ClockTower !== 'undefined' && e instanceof ClockTower) { const t = (C.objets || []).find(o => o.cadran); if (t) { const ix = t.flip ? t.w - t.cadran[0] : t.cadran[0]; e.dial = [Math.round((t.x + ix * t.s - e.x) * 2), Math.round((t.y + t.cadran[1] * t.s - e.y) * 2)]; } } // le cadran animé sur celui de la tour posée
     if (typeof PromoFlag !== 'undefined' && e instanceof PromoFlag) { const d = (C.portes || []).find(p => p.vers === e.shop); if (d) { e.x = d.x + 16; e.y = d.y + 6; } }
   }

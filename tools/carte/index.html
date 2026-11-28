@@ -238,6 +238,14 @@ function moveObj(o, dx, dy) { if (o.lumiere) { o.lumiere.x += dx; o.lumiere.y +=
 // ligne de pied : une ligne brisée (o.pied) ou, à défaut, un trait horizontal à o.base
 function piedOf(o) { return o.pied && o.pied.length >= 2 ? o.pied : [[o.x, o.base], [o.x + o.w * o.s, o.base]]; }
 function footY(o, x) { const P = piedOf(o); let best = -Infinity, near = P[0][1], nd = Infinity; for (let i = 0; i < P.length - 1; i++) { const [x0, y0] = P[i], [x1, y1] = P[i + 1]; if (x >= Math.min(x0, x1) && x <= Math.max(x0, x1)) best = Math.max(best, x1 === x0 ? Math.max(y0, y1) : y0 + (y1 - y0) * (x - x0) / (x1 - x0)); } if (best > -Infinity) return best; for (const [px, py] of P) { const d = Math.abs(px - x); if (d < nd) { nd = d; near = py; } } return near; }
+// changer la taille d'un objet : le milieu de son pied ne bouge pas
+function scaleObj(o, ns) {
+  ns = Math.max(0.05, Math.min(4, Math.round(ns * 1000) / 1000)); const k = ns / o.s, ax = o.x + o.w * o.s / 2, ay = o.base, f = ([x, y]) => [Math.round(ax + (x - ax) * k), Math.round(ay + (y - ay) * k)];
+  o.poly = o.poly.map(f); if (o.pied) o.pied = o.pied.map(f);
+  if (o.lumiere) { const [lx, ly] = f([o.lumiere.x, o.lumiere.y]); o.lumiere.x = lx; o.lumiere.y = ly; o.lumiere.r = Math.round(o.lumiere.r * k); }
+  o.y = Math.round(ay + (o.y - ay) * k); o.s = ns; o.x = Math.round(ax - o.w * ns / 2);
+}
+const SIGN_RE = /pancarte|panneau|sign/i;
 function syncBase(o) { if (o.pied) o.base = Math.round(Math.max(...o.pied.map(p => p[1]))); }
 function flipObj(o) { const W = o.w * o.s; o.flip = !o.flip; if (o.lumiere) o.lumiere.x = Math.round(o.x + W - (o.lumiere.x - o.x)); o.poly = o.poly.map(([x, y]) => [Math.round(o.x + W - (x - o.x)), y]).reverse(); if (o.pied) o.pied = o.pied.map(([x, y]) => [Math.round(o.x + W - (x - o.x)), y]).reverse(); }
 
@@ -318,6 +326,7 @@ function draw() {
     if (col) for (const o of S.objets) if (o.poly.length > 2) { cx.beginPath(); o.poly.forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.closePath(); cx.fillStyle = 'rgba(255,95,176,.28)'; cx.fill(); cx.strokeStyle = '#ff5fb0'; cx.lineWidth = lw * 1.5; cx.stroke(); }
     if ($('vBase').checked) for (const o of S.objets) { cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 1.5; cx.setLineDash([4 * lw, 3 * lw]); cx.beginPath(); piedOf(o).forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.stroke(); cx.setLineDash([]); }
   }
+  if (!test) for (const o of S.objets) if (o.texte) label('« ' + (o.texte.length > 24 ? o.texte.slice(0, 23) + '…' : o.texte) + ' »', o.x, o.y - 14 / view.z, '#d8c39a');
   if ($('vGrid').checked) { cx.strokeStyle = 'rgba(255,255,255,.12)'; cx.lineWidth = lw; cx.beginPath(); for (let x = 0; x <= S.cols; x++) { cx.moveTo(x * TS, 0); cx.lineTo(x * TS, MH); } for (let y = 0; y <= S.rows; y++) { cx.moveTo(0, y * TS); cx.lineTo(MW, y * TS); } cx.stroke(); }
   if (pontOuvert) for (const p of S.ponts) if (!p.pied) drawPontImg(p, p.fg); // premier plan : toujours devant le héros
   if (!test) for (const p of S.ponts) { const W = p.w * p.s, H = p.h * p.s; cx.strokeStyle = '#ff9c1a'; cx.lineWidth = lw * 2; cx.setLineDash([6 * lw, 4 * lw]); cx.strokeRect(p.x, p.y, W, H); cx.setLineDash([]); if (p.zone) { const z = p.zone; cx.fillStyle = 'rgba(255,156,26,.22)'; cx.fillRect(z.tx * TS, z.ty * TS, z.tw * TS, z.th * TS); cx.strokeStyle = '#ff9c1a'; cx.strokeRect(z.tx * TS, z.ty * TS, z.tw * TS, z.th * TS); } label('pont · ' + (p.drapeau || 'toujours ouvert') + ' · charnière ' + (p.charniere || 'droite'), p.x, p.y - 14 / view.z, '#ff9c1a'); }
@@ -330,6 +339,7 @@ function draw() {
   if (sel && !test) {
     cx.strokeStyle = '#ffd45c'; cx.lineWidth = lw * 2;
     if (sel.k === 'obj' && sel.o.lumiere) { const L = sel.o.lumiere, h = 6 * lw * 1.4; cx.save(); cx.translate(L.x, L.y); cx.rotate(Math.PI / 4); cx.fillStyle = L.c; cx.fillRect(-h / 2, -h / 2, h, h); cx.strokeStyle = '#000'; cx.lineWidth = lw * 1.5; cx.strokeRect(-h / 2, -h / 2, h, h); cx.restore(); cx.strokeStyle = L.c; cx.lineWidth = lw; cx.setLineDash([3 * lw, 3 * lw]); cx.beginPath(); cx.arc(L.x, L.y, L.r, 0, 7); cx.stroke(); cx.setLineDash([]); cx.strokeStyle = '#ffd45c'; cx.lineWidth = lw * 2; }
+    if (sel.k === 'obj') { const o = sel.o, hz = 7 * lw * 1.4; cx.fillStyle = '#fff'; cx.fillRect(o.x + o.w * o.s - hz / 2, o.y + o.h * o.s - hz / 2, hz, hz); cx.strokeStyle = '#ffd45c'; cx.lineWidth = lw * 2; cx.strokeRect(o.x + o.w * o.s - hz / 2, o.y + o.h * o.s - hz / 2, hz, hz); cx.beginPath(); cx.moveTo(o.x + o.w * o.s - hz * 0.25, o.y + o.h * o.s + hz * 0.25); cx.lineTo(o.x + o.w * o.s + hz * 0.25, o.y + o.h * o.s - hz * 0.25); cx.stroke(); }
     if (sel.k === 'obj') { const o = sel.o; cx.strokeRect(o.x, o.y, o.w * o.s, o.h * o.s); cx.strokeStyle = '#36e0ff'; cx.lineWidth = lw * 3; cx.beginPath(); piedOf(o).forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.stroke(); for (const [x, y] of o.poly) { cx.fillStyle = '#fff'; cx.fillRect(x - 3 * lw * 1.4, y - 3 * lw * 1.4, 6 * lw * 1.4, 6 * lw * 1.4); cx.strokeStyle = '#ff5fb0'; cx.lineWidth = lw * 1.5; cx.strokeRect(x - 3 * lw * 1.4, y - 3 * lw * 1.4, 6 * lw * 1.4, 6 * lw * 1.4); } const hs = 4 * lw * 1.4; for (let i = 0; i < o.poly.length && o.poly.length > 1; i++) { const a = o.poly[i], b = o.poly[(i + 1) % o.poly.length], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; cx.fillStyle = 'rgba(255,95,176,.9)'; cx.beginPath(); cx.arc(mx, my, hs, 0, 7); cx.fill(); cx.strokeStyle = '#fff'; cx.lineWidth = lw * 1.2; cx.beginPath(); cx.moveTo(mx - hs * 0.6, my); cx.lineTo(mx + hs * 0.6, my); cx.moveTo(mx, my - hs * 0.6); cx.lineTo(mx, my + hs * 0.6); cx.stroke(); } { const P = piedOf(o), hs2 = 4 * lw * 1.4; for (const [x, y] of P) { cx.fillStyle = '#36e0ff'; cx.fillRect(x - hs2 * 0.8, y - hs2 * 0.8, hs2 * 1.6, hs2 * 1.6); cx.strokeStyle = '#fff'; cx.lineWidth = lw; cx.strokeRect(x - hs2 * 0.8, y - hs2 * 0.8, hs2 * 1.6, hs2 * 1.6); }
       for (let i = 0; i < P.length - 1; i++) { const mx = (P[i][0] + P[i + 1][0]) / 2, my = (P[i][1] + P[i + 1][1]) / 2; cx.fillStyle = 'rgba(54,224,255,.95)'; cx.beginPath(); cx.arc(mx, my, hs2, 0, 7); cx.fill(); cx.strokeStyle = '#0b2a33'; cx.lineWidth = lw * 1.2; cx.beginPath(); cx.moveTo(mx - hs2 * 0.6, my); cx.lineTo(mx + hs2 * 0.6, my); cx.moveTo(mx, my - hs2 * 0.6); cx.lineTo(mx, my + hs2 * 0.6); cx.stroke(); } }
       cx.fillStyle = '#36e0ff'; cx.fillRect(o.x + o.w * o.s + 4, footY(o, o.x + o.w * o.s) - 4 * lw * 1.4, 8 * lw * 1.4, 8 * lw * 1.4); }
@@ -373,6 +383,7 @@ cv.addEventListener('pointerdown', e => {
     if (placing) { commit(); const o = placeModel(placing, w.x, w.y, e); if (!e.altKey) { placing = null; sel = { k: 'obj', o }; renderLeft(); } renderInsp(); return; }
     if (sel && sel.k === 'obj') {
       const o = sel.o;
+      if (near({ x: o.x + o.w * o.s, y: o.y + o.h * o.s }, w, r * 1.3)) { commit(); drag = { kind: 'scale', o, s0: o.s, ax: o.x + o.w * o.s / 2, hw0: o.w * o.s / 2 }; return; }
       if (o.lumiere && near(o.lumiere, w, r * 1.3)) { commit(); drag = { kind: 'light', o }; return; }
       const vi = o.poly.findIndex(p => near({ x: p[0], y: p[1] }, w, r));
       if (vi >= 0) { if (e.altKey || e.button === 2) { commit(); o.poly.splice(vi, 1); renderInsp(); return; } commit(); drag = { kind: 'vert', o, i: vi }; return; }
@@ -418,6 +429,7 @@ cv.addEventListener('pointermove', e => {
   if (drag.kind === 'move') { const o = drag.o; let nx = drag.x0 + (w.x - drag.sx), ny = drag.y0 + (w.y - drag.sy); if (snapOn(e)) { nx = Math.round(nx / TS) * TS; const bo = o.base - o.y; ny = Math.round((ny + bo) / TS) * TS - bo; } moveObj(o, Math.round(nx) - o.x, Math.round(ny) - o.y); drag.moved = true; }
   if (drag.kind === 'vert') { drag.o.poly[drag.i] = [snap(w.x, e, 4), snap(w.y, e, 4)]; }
   if (drag.kind === 'base') { const dy = Math.round(w.y - drag.y0); if (drag.pied0) { drag.o.pied = drag.pied0.map(([x, y]) => [x, y + dy]); syncBase(drag.o); } else drag.o.base = drag.base0 + dy; renderInspSoft(); }
+  if (drag.kind === 'scale') { const k = Math.max(4, w.x - drag.ax) / drag.hw0; let ns = drag.s0 * k; if (!e.shiftKey) ns = Math.round(ns * 20) / 20; scaleObj(drag.o, ns); renderInspSoft(); }
   if (drag.kind === 'light') { drag.o.lumiere.x = Math.round(w.x); drag.o.lumiere.y = Math.round(w.y); }
   if (drag.kind === 'pvert') { drag.o.pied[drag.i] = [snap(w.x, e, 4), snap(w.y, e, 4)]; syncBase(drag.o); renderInspSoft(); }
   if (drag.kind === 'paint') paintAt(w, e.buttons === 2);
@@ -532,7 +544,7 @@ function bind(id, fn, ev = 'input') { const el = $(id); if (el) el.addEventListe
 function bindCommit(id) { const el = $(id); if (el) el.addEventListener('focus', () => commit(), { once: true }); }
 function arrivalNames(zone) { const out = new Set(); out.add(`${zone}_from_${S.id}`); if (zone === S.id) for (const a of S.arrivees) out.add(a.nom); return [...out]; }
 
-function renderInspSoft() { if (!sel) return; const o = sel.o; for (const [id, v] of [['fX', o.x], ['fY', o.y], ['fBase', o.base]]) { const el = $(id); if (el && document.activeElement !== el) el.value = v; } }
+function renderInspSoft() { if (!sel) return; const o = sel.o; for (const [id, v] of [['fX', o.x], ['fY', o.y], ['fBase', o.base], ['fSc', sel.k === 'obj' && modelOf(o) ? Math.round(o.s / modelOf(o).s * 100) : undefined]]) { const el = $(id); if (el && v !== undefined && document.activeElement !== el) el.value = v; } }
 function renderInsp() {
   const I = $('insp');
   if (!S) { I.innerHTML = `<div class="sect">Bienvenue</div><p class="small">Crée une nouvelle carte avec un fond vide, ou ouvre une carte existante (brouillon, carte du dépôt ou carte peinte du jeu à refaire).</p>`; return; }
@@ -560,6 +572,8 @@ function renderInsp() {
       `<div class="row"><button class="btn" id="bFlip">Miroir (F)</button><button class="btn" id="bDup">Dupliquer</button><button class="btn dan" id="bDel">Supprimer</button></div>` +
       `<div class="sect">Collision</div><p class="small">${o.poly.length} points. Clique un « + » au milieu d\'un bord pour ajouter un point et place-le en glissant · Alt+clic (ou clic droit) sur un point : le retirer. Autant de points que tu veux.</p>` +
       `<div class="row"><button class="btn" id="bBox">Boîte au pied</button><button class="btn" id="bNone">Aucune</button><button class="btn" id="bModel">Reprendre le modèle</button></div>` +
+      fld('Taille', `<div class="row" style="margin:0"><input id="fSc" type="number" min="5" max="800" step="5" value="${Math.round(o.s / (m ? m.s : o.s) * 100)}" style="width:90px"> % <button class="btn" id="bSc100">100 %</button></div>`) + `<p class="small">Ou tire le carré blanc en bas à droite de l'objet (Maj : sans paliers de 5 %).</p>` +
+      (SIGN_RE.test(o.src) || o.texte ? `<div class="sect">Texte de la pancarte</div>` + fld('Ce qu\'on lit en s\'approchant (ligne vide = bulle suivante)', `<textarea id="fTexte" placeholder="« À l\'ouest : la Forêt. »">${esc(o.texte || '')}</textarea>`) : '') +
       `<div class="sect">Lumière</div>` + (o.lumiere ? `<div class="row">${fld('Couleur', `<input id="fLc" type="color" value="${o.lumiere.c}">`)}${fld('Rayon', `<input id="fLr" type="number" min="8" max="200" step="2" value="${o.lumiere.r}">`)}</div><label class="chk"><input type="checkbox" id="fLf"${o.lumiere.flick ? ' checked' : ''}> Scintillement aléatoire</label><div class="row"><button class="btn" id="bLc0">Jaune</button><button class="btn dan" id="bLoff">Retirer la lumière</button></div><p class="small">Tire le losange coloré pour placer la flamme. La lumière se voit la nuit dans le jeu (et en mode Tester).</p>` : `<div class="row"><button class="btn" id="bLon">+ Ajouter une lumière</button></div>`) +
       `<div class="sect">Visuel</div><div class="row"><button class="btn" id="bVis">Mettre à jour le visuel…</button></div><p class="small">Remplace l'image de « ${esc(m ? m.nom : '')} » partout sur la carte ; pied et collision suivent.</p>` +
       `<div class="row"><button class="btn" id="bSave">Enregistrer comme modèle</button></div><p class="small">Pied, collision et transparence deviennent la règle pour les prochains « ${esc(m ? m.nom : '')} ».</p>`;
@@ -574,9 +588,11 @@ function renderInsp() {
     $('bNone').onclick = () => { commit(); o.poly = []; renderInsp(); };
     $('bModel').onclick = () => { if (!m) return; commit(); o.base = Math.round(o.y + m.base * o.s); o.poly = m.poly.map(([px, py]) => [Math.round(o.x + px * o.s), Math.round(o.y + py * o.s)]); o.pied = m.pied ? m.pied.map(([px, py]) => [Math.round(o.x + px * o.s), Math.round(o.y + py * o.s)]) : null; syncBase(o); o.fade = !!m.fade; o.lumiere = m.lumiere ? { ...m.lumiere, x: Math.round(o.x + m.lumiere.x * o.s), y: Math.round(o.y + m.lumiere.y * o.s) } : null; if (o.flip) { o.flip = false; flipObj(o); } renderInsp(); };
     $('bVis').onclick = () => { if (m) { visTarget = m; $('fileVis').click(); } };
+    bindCommit('fSc'); bind('fSc', v => { const n = +v; if (n >= 5) scaleObj(o, (m ? m.s : o.s) * n / 100); }); $('bSc100').onclick = () => { if (!m) return; commit(); scaleObj(o, m.s); renderInsp(); };
+    if ($('fTexte')) { bindCommit('fTexte'); bind('fTexte', v => { o.texte = v.trim() ? v : undefined; }); }
     if (o.lumiere) { bind('fLc', v => { o.lumiere.c = v; }); bind('fLr', v => { o.lumiere.r = Math.max(8, +v); }); bind('fLf', v => { commit(); o.lumiere.flick = v; }, 'change'); $('bLc0').onclick = () => { commit(); o.lumiere.c = '#ffd27a'; renderInsp(); }; $('bLoff').onclick = () => { commit(); o.lumiere = null; renderInsp(); }; bindCommit('fLc'); bindCommit('fLr'); }
     else $('bLon').onclick = () => { commit(); const W = o.w * o.s, d = m ? defaultLight(m) : null; o.lumiere = d ? { ...d, x: Math.round(o.x + (o.flip ? m.img.width - d.x : d.x) * o.s), y: Math.round(o.y + d.y * o.s) } : { x: Math.round(o.x + W / 2), y: Math.round(o.y + 8), r: 48, c: '#ffd27a', flick: true }; renderInsp(); };
-    $('bSave').onclick = () => { if (!m) return; const W = o.w * o.s; m.base = Math.round((o.base - o.y) / o.s); m.poly = o.poly.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]); if (o.flip) m.poly.reverse(); m.pied = o.pied ? o.pied.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]) : null; if (m.pied && o.flip) m.pied.reverse(); m.fade = o.fade; m.lumiere = o.lumiere ? { ...o.lumiere, x: Math.round(((o.flip ? o.x + W - (o.lumiere.x - o.x) : o.lumiere.x) - o.x) / o.s), y: Math.round((o.lumiere.y - o.y) / o.s) } : null; m.edited = true; if (m.isNew) idbPut('models', m.src, modelRecord(m)); toast('Modèle « ' + m.nom + ' » mis à jour'); };
+    $('bSave').onclick = () => { if (!m) return; m.s = o.s; const W = o.w * o.s; m.base = Math.round((o.base - o.y) / o.s); m.poly = o.poly.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]); if (o.flip) m.poly.reverse(); m.pied = o.pied ? o.pied.map(([x, y]) => [Math.round(((o.flip ? o.x + W - (x - o.x) : x) - o.x) / o.s), Math.round((y - o.y) / o.s)]) : null; if (m.pied && o.flip) m.pied.reverse(); m.fade = o.fade; m.lumiere = o.lumiere ? { ...o.lumiere, x: Math.round(((o.flip ? o.x + W - (o.lumiere.x - o.x) : o.lumiere.x) - o.x) / o.s), y: Math.round((o.lumiere.y - o.y) / o.s) } : null; m.edited = true; if (m.isNew) idbPut('models', m.src, modelRecord(m)); toast('Modèle « ' + m.nom + ' » mis à jour'); };
     return;
   }
   if (sel.k === 'porte') {
