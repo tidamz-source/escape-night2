@@ -1475,6 +1475,11 @@
      204,
      380
     ]
+   ],
+   "chute": [
+    "assets/cartes/objets/bridge_fall_1.png",
+    "assets/cartes/objets/bridge_fall_2.png",
+    "assets/cartes/objets/bridge_fall_3.png"
    ]
   }
  ],

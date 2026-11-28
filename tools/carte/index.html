@@ -673,7 +673,7 @@ function renderInsp() {
       `<div class="sect">Premier plan</div>` + (o.pied ? `<p class="small">Ligne de pied (${o.pied.length} points) : au-dessus de la ligne, le perso passe derrière les piliers ; en dessous, devant. Clique un « + » bleu pour ajouter un point, Alt+clic sur un carré pour le retirer.</p><div class="row"><button class="btn dan" id="bPpOff">Toujours devant (retirer la ligne)</button></div>` : `<p class="small">Les piliers passent toujours devant le perso.</p><div class="row"><button class="btn" id="bPpOn">+ Ligne de pied</button></div>`) +
       `<div class="sect">Zone praticable</div><p class="small">${o.zone ? `cases ${o.zone.tx},${o.zone.ty} · ${o.zone.tw}×${o.zone.th}` : 'pas encore tracée'}. Fermé, ces cases gardent ce que tu as peint en mode Sol (eau) ; ouvert, elles deviennent du sol.</p>` +
       `<div class="row"><button class="btn${pontZone ? ' on' : ''}" id="bZ">Tracer la zone</button></div>` +
-      `<div class="sect">Images</div><p class="small">${['leve', 'bg', 'fg'].map(k => `${{ leve: 'levé', bg: 'tablier', fg: 'piliers' }[k]} : ${o[k] ? esc(o[k].split('/').pop()) + (MODELS.get(o[k]) ? ` (${MODELS.get(o[k]).img.width}×${MODELS.get(o[k]).img.height})` : ' (image introuvable)') : '—'}`).join('<br>')}</p><div class="row"><button class="btn" id="bRImg">Changer les images…</button></div>` +
+      `<div class="sect">Images</div><p class="small">${['leve', 'bg', 'fg'].map(k => `${{ leve: 'levé', bg: 'tablier', fg: 'piliers' }[k]} : ${o[k] ? esc(o[k].split('/').pop()) + (MODELS.get(o[k]) ? ` (${MODELS.get(o[k]).img.width}×${MODELS.get(o[k]).img.height})` : ' (image introuvable)') : '—'}`).join('<br>')}</p><p class="small">Chute : ${(o.chute || []).length ? o.chute.length + ' image(s) (bridge_fall_1…)' : 'aucune — le tablier s\'allonge simplement'}</p><div class="row"><button class="btn" id="bRImg">Changer les images…</button></div>` +
       `<div class="row"><button class="btn dan" id="bDel">Supprimer</button></div>`;
     bindCommit('fDrap'); bind('fDrap', v => { o.drapeau = v.trim(); }); bind('fCh', v => { commit(); o.charniere = v; }, 'change'); bind('fPs', v => { commit(); o.s = +v; }, 'change');
     bind('fX', v => { o.x = +v; }); bind('fY', v => { o.y = +v; });
@@ -733,18 +733,22 @@ async function pontModel(f, nom) {
 }
 // les fichiers se reconnaissent à leur nom : bridge_up (levé), bridge_down_BG (tablier), bridge_down_FG (piliers)
 const PONT_KEYS = [['leve', /bridge[_ -]?up/i, 'Pont (levé)'], ['bg', /bridge[_ -]?down[_ -]?bg/i, 'Pont (tablier)'], ['fg', /bridge[_ -]?down[_ -]?fg/i, 'Pont (piliers)']];
-const isPontFile = f => PONT_KEYS.some(([, re]) => re.test(f.name));
+const FALL_RE = /bridge[_ -]?fall[_ -]?(\d+)/i;
+const isPontFile = f => PONT_KEYS.some(([, re]) => re.test(f.name)) || FALL_RE.test(f.name);
 async function pontFromFiles(files) {
   if (!S) return toast('Ouvre ou crée d\'abord une carte');
   const got = {};
-  for (const f of files) { const k = PONT_KEYS.find(([, re]) => re.test(f.name)); if (k) got[k[0]] = await pontModel(f, k[2]); }
+  const falls = [];
+  for (const f of files) { const fm = f.name.match(FALL_RE); if (fm) { falls[+fm[1] - 1] = (await pontModel(f, 'Pont (chute ' + fm[1] + ')')).src; continue; } const k = PONT_KEYS.find(([, re]) => re.test(f.name)); if (k) got[k[0]] = await pontModel(f, k[2]); }
+  if (falls.length && !got.bg && pontRepl === null && sel && sel.k === 'pont') pontRepl = sel.o;
   if (pontRepl) { // changer les images d'un pont existant
-    const p = pontRepl; pontRepl = null; if (!Object.keys(got).length) return toast('Noms attendus : bridge_up, bridge_down_BG, bridge_down_FG');
+    const p = pontRepl; pontRepl = null; if (falls.length) { commit(); p.chute = falls.filter(Boolean); }
+    if (!Object.keys(got).length) { renderInsp(); return toast(falls.length ? `${p.chute.length} images de chute ajoutées` : 'Noms attendus : bridge_up, bridge_down_BG, bridge_down_FG, bridge_fall_1…'); }
     commit(); for (const k in got) p[k] = got[k].src; const ref = got.bg || got.leve || got.fg; p.w = ref.img.width; p.h = ref.img.height; renderInsp(); return toast('Images du pont mises à jour');
   }
   if (!got.bg || !got.fg) return toast('Il manque ' + [!got.bg && 'bridge_down_BG', !got.fg && 'bridge_down_FG'].filter(Boolean).join(' et '));
   const d = devicePixelRatio || 1, c = toW(cv.width / d / 2, cv.height / d / 2), bg = got.bg;
-  commit(); const p = { id: uid(), leve: got.leve ? got.leve.src : null, bg: bg.src, fg: got.fg.src, s: 0.5, w: bg.img.width, h: bg.img.height, x: 0, y: 0, drapeau: 'drawbridge', charniere: 'droite', zone: null };
+  commit(); const p = { id: uid(), chute: falls.filter(Boolean), leve: got.leve ? got.leve.src : null, bg: bg.src, fg: got.fg.src, s: 0.5, w: bg.img.width, h: bg.img.height, x: 0, y: 0, drapeau: 'drawbridge', charniere: 'droite', zone: null };
   p.x = Math.round((c.x - p.w * p.s / 2) / 8) * 8; p.y = Math.round((c.y - p.h * p.s / 2) / 8) * 8;
   S.ponts.push(p); if (mode !== 'pont') setMode('pont'); sel = { k: 'pont', o: p }; renderLeft(); renderInsp();
   toast('Pont ajouté au centre de la vue' + (got.leve ? '' : ' (sans bridge_up)') + ' : place-le puis trace sa zone');

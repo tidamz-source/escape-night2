@@ -9,7 +9,7 @@ function loadCartes() {
     .then(ids => Promise.all(ids.map(id => fetch(`assets/cartes/${id}/carte.json?v=${VERSION}`).then(r => r.json()).then(C => {
       CARTES[id] = C;
       const jobs = [loadImage('carte_' + id, `assets/cartes/${id}/${C.fond}?v=${VERSION}`)], seen = new Set();
-      for (const src of [...(C.objets || []).map(o => o.src), ...(C.ponts || []).flatMap(p => [p.bg, p.fg, p.leve])]) if (src && !seen.has(src)) { seen.add(src); jobs.push(loadImage('cobj_' + src, `${src}?v=${VERSION}`)); }
+      for (const src of [...(C.objets || []).map(o => o.src), ...(C.ponts || []).flatMap(p => [p.bg, p.fg, p.leve, ...(p.chute || [])])]) if (src && !seen.has(src)) { seen.add(src); jobs.push(loadImage('cobj_' + src, `${src}?v=${VERSION}`)); }
       return Promise.all(jobs);
     }).catch(e => console.warn('carte illisible', id, e)))));
 }
@@ -104,17 +104,54 @@ class PontBg {
       const under = pontOpen(p) && (P.swimming || (inZ && A.pontUnder));
       this.ground = !under; this.y = under ? 1e9 - 1 : p.y;
     }
-    if (pontOpen(p) && this.k < 1) {
-      if (!this.anim) { this.anim = true; SFX.gate(); }
-      this.k = Math.min(1, this.k + dt / 1.6); G.shake = Math.max(G.shake || 0, 0.06);
-      if (this.k >= 1) { this.anim = false; SFX.door(); G.shake = 0.3; G.parts.burst(this.x, p.y + p.h * p.s / 2, 18, { c: ['#cfe0ff', '#fff', '#8a6a4a'], life: 0.6, r: 2, up: 30 }); }
+    if (!this.cut) this.step(dt, G);
+  }
+  // l'ouverture : avec les images de chute (p.chute), le pont tombe en accélérant, claque sur l'eau et rebondit ;
+  // sinon le tablier s'allonge depuis sa charnière
+  step(dt, G) {
+    const p = this.p; if (!pontOpen(p) || this.k >= 1) return;
+    if (!this.anim) { this.anim = true; this.t = 0; this.hit = 0; SFX.gate(); }
+    this.t += dt;
+    if (p.chute && p.chute.length) {
+      const seq = this.seq(), end = seq.reduce((s, f) => s + f[1], 0); let acc = 0;
+      for (const [k, d, fx] of seq) { if (this.t < acc + d) { if (fx && this.hit < fx) { this.hit = fx; this.impact(G, fx); } break; } acc += d; }
+      G.shake = Math.max(G.shake || 0, this.t < 1 ? 0.03 : 0);
+      if (this.t >= end) { this.k = 1; this.anim = false; } else this.k = Math.min(0.99, this.t / end);
+      return;
     }
+    this.k = Math.min(1, this.k + dt / 1.6); G.shake = Math.max(G.shake || 0, 0.06);
+    if (this.k >= 1) { this.anim = false; this.impact(G, 1); }
+  }
+  seq() { // [image, durée, choc] : de plus en plus vite, choc, petit rebond, posé
+    const c = this.p.chute; return [['leve', 0.5], [c[0], 0.3], [c[1], 0.17], [c[2], 0.09], ['bg', 0.16, 1], [c[2], 0.07], ['bg', 0.35, 2]];
+  }
+  frameNow() { if (this.k >= 1) return 'bg'; let acc = 0; for (const [k, d] of this.seq()) { if (this.t < acc + d) return k; acc += d; } return 'bg'; }
+  impact(G, n) {
+    const p = this.p, z = p.zone, x = z ? (z.tx + z.tw / 2) * TS : this.x, y = z ? (z.ty + z.th) * TS : p.y + p.h * p.s * 0.75;
+    if (n === 1) { SFX.door(); SFX.splash && SFX.splash(); G.shake = 0.45; G.parts.burst(x, y, 26, { c: ['#cfe0ff', '#fff', '#8fc8ff'], life: 0.7, r: 2, up: 70, g: 220 }); G.parts.burst(x, y - 4, 12, { c: ['#8a6a4a', '#b08a5a', '#d8c39a'], life: 0.5, r: 1.5, up: 30 }); }
+    else { G.shake = 0.15; G.parts.burst(x, y, 8, { c: ['#cfe0ff', '#fff'], life: 0.4, r: 1.5, up: 30 }); }
   }
   draw() {
-    const p = this.p, im = p.leve && IMG['cobj_' + p.leve];
-    if (im && this.k < 1) { ctx.globalAlpha = 1 - this.k; ctx.drawImage(im, p.x, p.y, p.w * p.s, p.h * p.s); ctx.globalAlpha = 1; }
+    const p = this.p;
+    if (p.chute && p.chute.length && this.k < 1 && this.anim) { const f = this.frameNow(), src = f === 'leve' ? p.leve : f === 'bg' ? p.bg : f, im = src && IMG['cobj_' + src]; if (im) ctx.drawImage(im, p.x, p.y, p.w * p.s, p.h * p.s); return; }
+    const im = p.leve && IMG['cobj_' + p.leve];
+    if (im && this.k < 1) { ctx.globalAlpha = p.chute ? 1 : 1 - this.k; ctx.drawImage(im, p.x, p.y, p.w * p.s, p.h * p.s); ctx.globalAlpha = 1; if (p.chute) return; }
     pontDraw(p, p.bg, this.k);
   }
+}
+// la cible touchée : la caméra glisse jusqu'au pont, il tombe, puis on revient au héros et on parle
+function pontCutscene(G, bg, after) {
+  const P = G.player, p = bg.p, from = { x: P.x, y: P.y - 12 }, to = { x: p.x + p.w * p.s / 2, y: p.y + p.h * p.s / 2 }, e = k => k * k * (3 - 2 * k);
+  bg.cut = true; G.camFocus = { ...from };
+  const pan = Math.min(1.2, 0.4 + Math.hypot(to.x - from.x, to.y - from.y) / 300);
+  G.cut = { t: 0, fallEnd: 0,
+    update: dt => { const c = G.cut; c.t += dt; G.parts.update(dt);
+      if (c.t < pan) { const k = e(c.t / pan); G.camFocus = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }; }
+      else if (bg.k < 1) bg.step(dt, G);
+      else { c.fallEnd = c.fallEnd || c.t; const u = c.t - c.fallEnd - 0.6; if (u > 0) { const k = e(Math.min(1, u / pan)); G.camFocus = { x: to.x + (from.x - to.x) * k, y: to.y + (from.y - to.y) * k }; if (u >= pan) { G.cut = null; G.camFocus = null; G.state = 'play'; bg.cut = false; if (after) after(); return; } } }
+      if (G.shake > 0) G.shake -= dt; G.updateCam(); },
+    draw: () => {} };
+  G.state = 'cut';
 }
 class PontFg {
   constructor(bg) { this.bg = bg; this.p = bg.p; this.x = bg.x; this.y = 1e9; } // devant le héros, ou selon sa ligne de pied
@@ -206,6 +243,7 @@ function carteRecale(A, C) {
   const signs = (C.objets || []).filter(o => /pancarte|panneau|sign/i.test(o.src) && !o.texte), told = (C.objets || []).filter(o => o.texte);
   if ((C.objets || []).some(o => o.lumiere)) A.ents = A.ents.filter(e => !(typeof LightSpot !== 'undefined' && e instanceof LightSpot)); // les lanternes posées remplacent les lumières invisibles de l'ancienne carte
   for (const e of A.ents) {
+    if (typeof Target !== 'undefined' && e instanceof Target && !e.pontWrapped) { const bg = A.ents.find(b => b instanceof PontBg && b.p.drapeau === e.flag); if (bg) { const orig = e.onHit; e.pontWrapped = true; e.onHit = G => { G.area.syncTiles(); pontCutscene(G, bg, () => orig && orig(G)); }; } } // le pont tombe avant les bulles
     if ((typeof Target !== 'undefined' && e instanceof Target) || (typeof Relay !== 'undefined' && e instanceof Relay)) e.ghost = false; // plus peints sur le fond : on les dessine
     if (e instanceof Sign && !e.carteSign && told.some(o => Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y) < 48)) { e.dead = true; continue; } // la pancarte a son propre texte
     if (e instanceof Sign && e.ghost && !e.carteSign) { let best = null, bd = 48; for (const o of signs) { const d = Math.hypot(o.x + o.w * o.s / 2 - e.x, o.base - e.y); if (d < bd) { bd = d; best = o; } } if (best) { e.x = best.x + best.w * best.s / 2; e.y = best.base; } else e.dead = true; } // panneau peint sur l'ancien fond sans pancarte posée : il disparaît
