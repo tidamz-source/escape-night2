@@ -279,7 +279,14 @@
     64
    ]
   ],
-  "fade": true
+  "fade": true,
+  "lumiere": {
+   "x": 10,
+   "y": 15,
+   "r": 48,
+   "c": "#ffd27a",
+   "flick": true
+  }
  },
  {
   "src": "assets/cartes/objets/maison_gaspard.png",

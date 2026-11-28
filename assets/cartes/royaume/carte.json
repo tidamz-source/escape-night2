@@ -63,27 +63,27 @@
    "s": 0.5,
    "w": 331,
    "h": 449,
-   "base": 410,
+   "base": 412,
    "poly": [
     [
      452,
-     344
+     340
     ],
     [
      460,
      336
     ],
     [
-     476,
-     328
+     480,
+     336
     ],
     [
      536,
-     328
+     336
     ],
     [
      556,
-     344
+     336
     ],
     [
      556,
@@ -120,6 +120,40 @@
    ],
    "fade": false,
    "flip": false,
+   "pied": [
+    [
+     432,
+     384
+    ],
+    [
+     452,
+     384
+    ],
+    [
+     452,
+     400
+    ],
+    [
+     468,
+     412
+    ],
+    [
+     524,
+     412
+    ],
+    [
+     536,
+     404
+    ],
+    [
+     556,
+     404
+    ],
+    [
+     596,
+     404
+    ]
+   ],
    "cadran": [
     145,
     265
@@ -702,7 +736,7 @@
      704
     ]
    ],
-   "fade": true,
+   "fade": false,
    "flip": false,
    "pied": [
     [
@@ -774,7 +808,7 @@
      320
     ]
    ],
-   "fade": true,
+   "fade": false,
    "flip": false,
    "pied": [
     [
@@ -906,7 +940,7 @@
      468
     ]
    ],
-   "fade": true,
+   "fade": false,
    "flip": false,
    "pied": [
     [
@@ -1032,44 +1066,263 @@
    ]
   },
   {
-   "id": "16zv2h",
-   "src": "assets/cartes/objets/pancarte.png",
-   "x": 545,
-   "y": 676,
+   "id": "6drjez",
+   "src": "assets/cartes/objets/lanterne.png",
+   "x": 400,
+   "y": 242,
    "s": 0.5,
-   "w": 38,
-   "h": 57,
-   "base": 693,
+   "w": 20,
+   "h": 66,
+   "base": 272,
    "poly": [
     [
-     549,
-     695
+     402,
+     264
     ],
     [
-     560,
-     695
+     408,
+     264
     ],
     [
-     560,
-     704
+     408,
+     274
     ],
     [
-     549,
-     704
+     402,
+     274
     ]
    ],
-   "fade": true,
+   "fade": false,
    "flip": false,
-   "pied": [
+   "lumiere": {
+    "x": 405,
+    "y": 250,
+    "r": 48,
+    "c": "#ffd27a",
+    "flick": true
+   }
+  },
+  {
+   "id": "4apunw",
+   "src": "assets/cartes/objets/lanterne.png",
+   "x": 592,
+   "y": 242,
+   "s": 0.5,
+   "w": 20,
+   "h": 66,
+   "base": 272,
+   "poly": [
     [
-     545,
-     693
+     594,
+     264
     ],
     [
-     565,
-     693
+     600,
+     264
+    ],
+    [
+     600,
+     274
+    ],
+    [
+     594,
+     274
     ]
-   ]
+   ],
+   "fade": false,
+   "flip": false,
+   "lumiere": {
+    "x": 597,
+    "y": 250,
+    "r": 48,
+    "c": "#ffd27a",
+    "flick": true
+   }
+  },
+  {
+   "id": "03uxek",
+   "src": "assets/cartes/objets/lanterne.png",
+   "x": 592,
+   "y": 466,
+   "s": 0.5,
+   "w": 20,
+   "h": 66,
+   "base": 496,
+   "poly": [
+    [
+     594,
+     488
+    ],
+    [
+     600,
+     488
+    ],
+    [
+     600,
+     498
+    ],
+    [
+     594,
+     498
+    ]
+   ],
+   "fade": false,
+   "flip": false,
+   "lumiere": {
+    "x": 597,
+    "y": 474,
+    "r": 48,
+    "c": "#ffd27a",
+    "flick": true
+   }
+  },
+  {
+   "id": "cfyuo3",
+   "src": "assets/cartes/objets/lanterne.png",
+   "x": 400,
+   "y": 466,
+   "s": 0.5,
+   "w": 20,
+   "h": 66,
+   "base": 496,
+   "poly": [
+    [
+     402,
+     488
+    ],
+    [
+     408,
+     488
+    ],
+    [
+     408,
+     498
+    ],
+    [
+     402,
+     498
+    ]
+   ],
+   "fade": false,
+   "flip": false,
+   "lumiere": {
+    "x": 405,
+    "y": 474,
+    "r": 48,
+    "c": "#ffd27a",
+    "flick": true
+   }
+  },
+  {
+   "id": "bytlwa",
+   "src": "assets/cartes/objets/lanterne.png",
+   "x": 896,
+   "y": 338,
+   "s": 0.5,
+   "w": 20,
+   "h": 66,
+   "base": 368,
+   "poly": [
+    [
+     898,
+     360
+    ],
+    [
+     904,
+     360
+    ],
+    [
+     904,
+     370
+    ],
+    [
+     898,
+     370
+    ]
+   ],
+   "fade": false,
+   "flip": false,
+   "lumiere": {
+    "x": 901,
+    "y": 346,
+    "r": 48,
+    "c": "#ffd27a",
+    "flick": true
+   }
+  },
+  {
+   "id": "jm1p6n",
+   "src": "assets/cartes/objets/lanterne.png",
+   "x": 560,
+   "y": 658,
+   "s": 0.5,
+   "w": 20,
+   "h": 66,
+   "base": 688,
+   "poly": [
+    [
+     562,
+     680
+    ],
+    [
+     568,
+     680
+    ],
+    [
+     568,
+     690
+    ],
+    [
+     562,
+     690
+    ]
+   ],
+   "fade": false,
+   "flip": false,
+   "lumiere": {
+    "x": 565,
+    "y": 666,
+    "r": 48,
+    "c": "#ffd27a",
+    "flick": true
+   }
+  },
+  {
+   "id": "hhzdni",
+   "src": "assets/cartes/objets/lanterne.png",
+   "x": 96,
+   "y": 402,
+   "s": 0.5,
+   "w": 20,
+   "h": 66,
+   "base": 432,
+   "poly": [
+    [
+     98,
+     424
+    ],
+    [
+     104,
+     424
+    ],
+    [
+     104,
+     434
+    ],
+    [
+     98,
+     434
+    ]
+   ],
+   "fade": false,
+   "flip": false,
+   "lumiere": {
+    "x": 101,
+    "y": 410,
+    "r": 48,
+    "c": "#ffd27a",
+    "flick": true
+   }
   }
  ],
  "portes": [
