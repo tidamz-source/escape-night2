@@ -598,7 +598,7 @@ const UIMixin = {
   },
   drawDebug() {
     woodBg();
-    ribbon(W / 2, 8, { donjons: 'Donjons · debug', combats: 'Combats · debug' }[Debug.page] || 'Menu debug', 8, 't');
+    ribbon(W / 2, 8, { donjons: 'Donjons · debug', combats: 'Combats · debug', cartes: 'Cartes · debug' }[Debug.page] || 'Menu debug', 8, 't');
     wtext('Sacha, invincible · rien n\'est sauvegardé', W / 2, 29, { size: 7, align: 'center', color: '#d9bf8c' });
     this.drawMenu(Debug.items(), W / 2, 44);
   },
@@ -845,13 +845,15 @@ const Debug = {
   items() {
     if (this.page === 'donjons') return [...this.DUNGEONS.map(k => G.areas[k].name), 'Retour'];
     if (this.page === 'combats') return [...this.FIGHTS.map(f => f.name), 'Retour'];
-    return ['Donjons', 'Combats de boss', 'Concours de pêche', 'Retour'];
+    if (this.page === 'cartes') return [...Object.keys(CARTES).map(k => CARTES[k].name || k), 'Retour'];
+    return ['Donjons', 'Combats de boss', 'Concours de pêche', 'Cartes de l\'atelier', 'Retour'];
   },
   pick(i, G, back) {
     const n = this.items().length; if (i === n - 1) return back();
     if (this.page === 'donjons') { const k = this.DUNGEONS[i]; return G.fadeTo(() => this.dungeon(i, k)); }
     if (this.page === 'combats') { const f = this.FIGHTS[i]; return G.fadeTo(() => this.start(f)); }
-    if (i === 0) { this.page = 'donjons'; G.menu = 0; } else if (i === 1) { this.page = 'combats'; G.menu = 0; } else G.fadeTo(() => this.contest());
+    if (this.page === 'cartes') { const k = Object.keys(CARTES)[i]; return G.fadeTo(() => { this.base(); G.debug = true; G.view = 'world'; G.enter(k, G.areas[k].start, true); G.updateCam(true); G.banner = { text: (CARTES[k].name || k) + ' · debug', t: 1.6 }; }); }
+    if (i === 0) { this.page = 'donjons'; G.menu = 0; } else if (i === 1) { this.page = 'combats'; G.menu = 0; } else if (i === 3) { this.page = 'cartes'; G.menu = 0; } else G.fadeTo(() => this.contest());
   },
   dungeon(i, k) {
     this.base();

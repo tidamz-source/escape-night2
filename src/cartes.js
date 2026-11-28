@@ -17,10 +17,15 @@ function loadCartes() {
 // un objet posé (bâtiment, arbre, rocher) : trié à sa ligne de pied, transparent quand on passe derrière
 // la ligne de pied peut être brisée (o.pied) : le tri se fait à la hauteur de la ligne sous le héros
 function carteFootY(o, x) {
-  const P = o.pied && o.pied.length >= 2 ? [...o.pied].sort((a, b) => a[0] - b[0]) : null; if (!P) return o.base;
-  if (x <= P[0][0]) return P[0][1];
-  for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return x1 === x0 ? Math.max(y0, y1) : y0 + (y1 - y0) * (x - x0) / (x1 - x0); }
-  return P[P.length - 1][1];
+  const P = o.pied && o.pied.length >= 2 ? o.pied : null; if (!P) return o.base;
+  let best = -Infinity, near = null, nd = Infinity;
+  for (let i = 0; i < P.length - 1; i++) {
+    const [x0, y0] = P[i], [x1, y1] = P[i + 1];
+    if (x >= Math.min(x0, x1) && x <= Math.max(x0, x1)) best = Math.max(best, x1 === x0 ? Math.max(y0, y1) : y0 + (y1 - y0) * (x - x0) / (x1 - x0));
+  }
+  if (best > -Infinity) return best;
+  for (const [px, py] of P) { const d = Math.abs(px - x); if (d < nd) { nd = d; near = py; } }
+  return near;
 }
 class CarteObj {
   constructor(o) { this.o = o; this.x = o.x + o.w * o.s / 2; this.y = o.base; this.a = 1; }

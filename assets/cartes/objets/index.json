@@ -1,1 +1,632 @@
-[]
+[
+ {
+  "src": "assets/cartes/objets/arbre1.png",
+  "nom": "arbre1",
+  "cat": "Décor",
+  "s": 0.5,
+  "base": 122,
+  "poly": [
+   [
+    32,
+    90
+   ],
+   [
+    48,
+    90
+   ],
+   [
+    64,
+    90
+   ],
+   [
+    64,
+    122
+   ],
+   [
+    32,
+    122
+   ]
+  ],
+  "pied": [
+   [
+    8,
+    66
+   ],
+   [
+    24,
+    82
+   ],
+   [
+    40,
+    98
+   ],
+   [
+    32,
+    122
+   ],
+   [
+    48,
+    122
+   ],
+   [
+    64,
+    122
+   ],
+   [
+    56,
+    106
+   ],
+   [
+    64,
+    90
+   ],
+   [
+    88,
+    66
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/arbre1_miroir.png",
+  "nom": "arbre1-Miroir",
+  "cat": "Décor",
+  "s": 0.5,
+  "base": 113,
+  "poly": [
+   [
+    21,
+    82
+   ],
+   [
+    76,
+    82
+   ],
+   [
+    76,
+    117
+   ],
+   [
+    21,
+    117
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/auberge.png",
+  "nom": "auberge",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 118,
+  "poly": [
+   [
+    62,
+    222
+   ],
+   [
+    218,
+    222
+   ],
+   [
+    218,
+    262
+   ],
+   [
+    62,
+    262
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/bibliotheque.png",
+  "nom": "bibliotheque",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 246,
+  "poly": [
+   [
+    0,
+    106
+   ],
+   [
+    304,
+    106
+   ],
+   [
+    304,
+    250
+   ],
+   [
+    272,
+    250
+   ],
+   [
+    264,
+    274
+   ],
+   [
+    208,
+    274
+   ],
+   [
+    208,
+    250
+   ],
+   [
+    176,
+    226
+   ],
+   [
+    136,
+    226
+   ],
+   [
+    96,
+    226
+   ],
+   [
+    96,
+    250
+   ],
+   [
+    0,
+    250
+   ]
+  ],
+  "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/boutique_mahaut.png",
+  "nom": "boutique_mahaut",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 243,
+  "poly": [
+   [
+    106,
+    207
+   ],
+   [
+    374,
+    207
+   ],
+   [
+    374,
+    247
+   ],
+   [
+    106,
+    247
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/bridge_down_bg.png",
+  "nom": "Pont (tablier)",
+  "cat": "Ponts",
+  "s": 0.5,
+  "base": 241,
+  "poly": [
+   [
+    95,
+    205
+   ],
+   [
+    338,
+    205
+   ],
+   [
+    338,
+    245
+   ],
+   [
+    95,
+    245
+   ]
+  ],
+  "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/bridge_down_fg.png",
+  "nom": "Pont (piliers)",
+  "cat": "Ponts",
+  "s": 0.5,
+  "base": 216,
+  "poly": [
+   [
+    95,
+    180
+   ],
+   [
+    338,
+    180
+   ],
+   [
+    338,
+    220
+   ],
+   [
+    95,
+    220
+   ]
+  ],
+  "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/bridge_up.png",
+  "nom": "Pont (levé)",
+  "cat": "Ponts",
+  "s": 0.5,
+  "base": 241,
+  "poly": [
+   [
+    95,
+    205
+   ],
+   [
+    338,
+    205
+   ],
+   [
+    338,
+    245
+   ],
+   [
+    95,
+    245
+   ]
+  ],
+  "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/comptoir_amandine.png",
+  "nom": "comptoir_amandine",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 238,
+  "poly": [
+   [
+    61,
+    202
+   ],
+   [
+    215,
+    202
+   ],
+   [
+    215,
+    242
+   ],
+   [
+    61,
+    242
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/forge.png",
+  "nom": "forge",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 267,
+  "poly": [
+   [
+    98,
+    231
+   ],
+   [
+    347,
+    231
+   ],
+   [
+    347,
+    271
+   ],
+   [
+    98,
+    271
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/lanterne.png",
+  "nom": "lanterne",
+  "cat": "Décor",
+  "s": 0.5,
+  "base": 60,
+  "poly": [
+   [
+    4,
+    44
+   ],
+   [
+    16,
+    44
+   ],
+   [
+    16,
+    64
+   ],
+   [
+    4,
+    64
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/maison_gaspard.png",
+  "nom": "maison_gaspard",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 137,
+  "poly": [
+   [
+    51,
+    101
+   ],
+   [
+    181,
+    101
+   ],
+   [
+    181,
+    141
+   ],
+   [
+    51,
+    141
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/maison_mamie.png",
+  "nom": "maison_mamie",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 183,
+  "poly": [
+   [
+    42,
+    147
+   ],
+   [
+    148,
+    147
+   ],
+   [
+    148,
+    187
+   ],
+   [
+    42,
+    187
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/maison_poule.png",
+  "nom": "maison_poule",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 135,
+  "poly": [
+   [
+    56,
+    99
+   ],
+   [
+    199,
+    99
+   ],
+   [
+    199,
+    139
+   ],
+   [
+    56,
+    139
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/pancarte.png",
+  "nom": "pancarte",
+  "cat": "Décor",
+  "s": 0.5,
+  "base": 34,
+  "poly": [
+   [
+    8,
+    38
+   ],
+   [
+    30,
+    38
+   ],
+   [
+    30,
+    56
+   ],
+   [
+    8,
+    56
+   ]
+  ],
+  "pied": [
+   [
+    0,
+    34
+   ],
+   [
+    40,
+    34
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/puits.png",
+  "nom": "puits",
+  "cat": "Décor",
+  "s": 0.5,
+  "base": 74,
+  "poly": [
+   [
+    13,
+    54
+   ],
+   [
+    47,
+    54
+   ],
+   [
+    47,
+    78
+   ],
+   [
+    13,
+    78
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/rocher.png",
+  "nom": "rocher",
+  "cat": "Décor",
+  "s": 0.5,
+  "base": 48,
+  "poly": [
+   [
+    19,
+    35
+   ],
+   [
+    66,
+    35
+   ],
+   [
+    66,
+    52
+   ],
+   [
+    19,
+    52
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/tour.png",
+  "nom": "tour",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 435,
+  "poly": [
+   [
+    73,
+    399
+   ],
+   [
+    258,
+    399
+   ],
+   [
+    258,
+    439
+   ],
+   [
+    73,
+    439
+   ]
+  ],
+  "fade": true
+ },
+ {
+  "src": "assets/cartes/objets/bridge_up_2.png",
+  "nom": "Pont (levé)",
+  "cat": "Ponts",
+  "s": 0.5,
+  "base": 241,
+  "poly": [
+   [
+    95,
+    205
+   ],
+   [
+    338,
+    205
+   ],
+   [
+    338,
+    245
+   ],
+   [
+    95,
+    245
+   ]
+  ],
+  "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/bridge_down_fg_2.png",
+  "nom": "Pont (piliers)",
+  "cat": "Ponts",
+  "s": 0.5,
+  "base": 216,
+  "poly": [
+   [
+    95,
+    180
+   ],
+   [
+    338,
+    180
+   ],
+   [
+    338,
+    220
+   ],
+   [
+    95,
+    220
+   ]
+  ],
+  "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/bridge_down_bg_2.png",
+  "nom": "Pont (tablier)",
+  "cat": "Ponts",
+  "s": 0.5,
+  "base": 241,
+  "poly": [
+   [
+    95,
+    205
+   ],
+   [
+    338,
+    205
+   ],
+   [
+    338,
+    245
+   ],
+   [
+    95,
+    245
+   ]
+  ],
+  "fade": false
+ }
+]
