@@ -27,6 +27,7 @@ PWA jouable en paysage sur mobile, ordinateur et manette.
 - **Donjon 6, le Château de Minuit** (défilé au sud-ouest du lac, éboulement à faire sauter) : 4 × 3 salles, horloges qui figent la salle, une aile par outil pour les cinq sceaux, le Chevalier Minuit (Papa ensorcelé), le Roi Minuit en 3 phases, le lever du soleil, le retour au camping et le générique.
 
 ## Version 8 : la grande mise à jour
+- **8.21.0** : les Collines passent sur la nouvelle carte de l’Atelier (porte de la bergerie, 4 sorties, arrivées, lanternes, panneaux recalés).
 - **8.20.5** : Bourg-Luciole : 7 lanternes (lumière scintillante), tour et arbres retouchés ; les lumières invisibles de l’ancienne carte sont retirées.
 - **8.20.4** : nouveaux visuels du pont-levis de Bourg-Luciole (levé, tablier, premier plan).
 - **8.20.3** : à la nage, on passe sous le pont-levis ouvert (le tablier passe devant le héros, on ne grimpe pas dessus depuis l’eau).

@@ -557,5 +557,90 @@
    ]
   ],
   "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/lanterne_colline.png",
+  "nom": "lanterne_colline",
+  "cat": "Décor",
+  "s": 0.5,
+  "base": 84,
+  "poly": [
+   [
+    10,
+    61
+   ],
+   [
+    37,
+    61
+   ],
+   [
+    37,
+    88
+   ],
+   [
+    10,
+    88
+   ]
+  ],
+  "lumiere": {
+   "x": 24,
+   "y": 21,
+   "r": 48,
+   "c": "#ffd27a",
+   "flick": true
+  },
+  "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/maison_berger.png",
+  "nom": "maison_berger",
+  "cat": "Bâtiments",
+  "s": 0.5,
+  "base": 271,
+  "poly": [
+   [
+    71,
+    235
+   ],
+   [
+    253,
+    235
+   ],
+   [
+    253,
+    275
+   ],
+   [
+    71,
+    275
+   ]
+  ],
+  "fade": false
+ },
+ {
+  "src": "assets/cartes/objets/barrieres.png",
+  "nom": "barrieres",
+  "cat": "Décor",
+  "s": 0.5,
+  "base": 25,
+  "poly": [
+   [
+    18,
+    13
+   ],
+   [
+    63,
+    13
+   ],
+   [
+    63,
+    29
+   ],
+   [
+    18,
+    29
+   ]
+  ],
+  "fade": false
  }
 ]
